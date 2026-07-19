@@ -1,27 +1,174 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Calendar, Timer, Download } from "lucide-react";
-import { FloatingParticles } from "./floating-particles";
-import { CircuitLines } from "./circuit-lines";
+import { ArrowRight, Calendar, Timer, Download, Zap } from "lucide-react";
 import { useParallax, useMousePosition } from "@/hooks/use-animations";
 
+/* ───────────────────── Matrix Rain Column ───────────────────── */
+function MatrixRain() {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    let w = (canvas.width = window.innerWidth);
+    let h = (canvas.height = window.innerHeight);
+    const cols = Math.floor(w / 18);
+    const drops: number[] = Array.from({ length: cols }, () => Math.random() * -100);
+    const chars = "01アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン";
+
+    const draw = () => {
+      ctx.fillStyle = "rgba(0,0,0,0.06)";
+      ctx.fillRect(0, 0, w, h);
+      ctx.font = "14px monospace";
+
+      for (let i = 0; i < drops.length; i++) {
+        const char = chars[Math.floor(Math.random() * chars.length)];
+        const x = i * 18;
+        const y = drops[i] * 18;
+
+        // Gradient: head is bright pink, tail fades to dark purple
+        const brightness = Math.random();
+        if (brightness > 0.95) {
+          ctx.fillStyle = "#F2D2AE"; // gold flash
+        } else if (brightness > 0.8) {
+          ctx.fillStyle = "#D64D8D"; // cyber pink
+        } else {
+          ctx.fillStyle = "rgba(114,31,76,0.4)"; // dark purple
+        }
+
+        ctx.fillText(char, x, y);
+
+        if (y > h && Math.random() > 0.975) {
+          drops[i] = 0;
+        }
+        drops[i]++;
+      }
+    };
+
+    const id = setInterval(draw, 50);
+    const onResize = () => {
+      w = canvas.width = window.innerWidth;
+      h = canvas.height = window.innerHeight;
+    };
+    window.addEventListener("resize", onResize);
+    return () => {
+      clearInterval(id);
+      window.removeEventListener("resize", onResize);
+    };
+  }, []);
+
+  return (
+    <canvas
+      ref={canvasRef}
+      className="absolute inset-0 z-[1] pointer-events-none"
+      style={{ opacity: 0.35, mixBlendMode: "screen" }}
+    />
+  );
+}
+
+/* ───────────────────── Energy Pulse Rings ───────────────────── */
+function EnergyPulseRings() {
+  return (
+    <div className="absolute inset-0 z-[3] pointer-events-none flex items-center justify-center">
+      {[0, 1, 2, 3, 4].map((i) => (
+        <div
+          key={i}
+          className="absolute rounded-full border"
+          style={{
+            width: `${300 + i * 120}px`,
+            height: `${300 + i * 120}px`,
+            borderColor: i % 2 === 0 ? "rgba(214,77,141,0.12)" : "rgba(242,210,174,0.06)",
+            animation: `energy-pulse ${4 + i * 0.8}s ease-in-out infinite`,
+            animationDelay: `${i * 0.6}s`,
+          }}
+        />
+      ))}
+    </div>
+  );
+}
+
+/* ───────────────────── Neon Flicker Text ───────────────────── */
+function NeonFlickerText({ text, className = "" }: { text: string; className?: string }) {
+  const [flicker, setFlicker] = useState(false);
+
+  useEffect(() => {
+    const doFlicker = () => {
+      setFlicker(true);
+      setTimeout(() => setFlicker(false), 100 + Math.random() * 150);
+    };
+    const id = setInterval(doFlicker, 3000 + Math.random() * 4000);
+    return () => clearInterval(id);
+  }, []);
+
+  return (
+    <span
+      className={className}
+      style={{
+        opacity: flicker ? 0.3 : 1,
+        transition: "opacity 0.05s",
+        textShadow: flicker
+          ? "none"
+          : "0 0 7px #D64D8D, 0 0 20px rgba(214,77,141,0.5), 0 0 40px rgba(214,77,141,0.2)",
+      }}
+    >
+      {text}
+    </span>
+  );
+}
+
+/* ───────────────────── Scanline Horizontal Sweep ───────────────────── */
+function ScanlineSweep() {
+  return (
+    <div
+      className="absolute inset-0 z-[6] pointer-events-none overflow-hidden"
+      style={{ mixBlendMode: "screen" }}
+    >
+      <div
+        className="absolute left-0 right-0 h-[2px]"
+        style={{
+          background: "linear-gradient(90deg, transparent, rgba(214,77,141,0.4), rgba(242,210,174,0.3), rgba(214,77,141,0.4), transparent)",
+          animation: "scanline-sweep 6s linear infinite",
+        }}
+      />
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   HERO SECTION — Full Immersive Retro Arcade Portal
+   ═══════════════════════════════════════════════════════════════ */
 export function HeroSection() {
   const [isLoaded, setIsLoaded] = useState(false);
-  const [gateImgReady, setGateImgReady] = useState(false);
   const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+  const [typedText, setTypedText] = useState("");
   const logoRef = useRef<HTMLDivElement>(null);
-  const parallaxOffset = useParallax(0.2);
+  const parallaxOffset = useParallax(0.15);
   const mouse = useMousePosition(logoRef);
+
+  const fullTagline = "CODE. CREATE. INNOVATE. ELEVATE.";
 
   useEffect(() => {
     const t = setTimeout(() => setIsLoaded(true), 300);
-    // Gate image fades in with delay (after gate intro finishes)
-    const t2 = setTimeout(() => setGateImgReady(true), 1200);
-    return () => { clearTimeout(t); clearTimeout(t2); };
+    return () => clearTimeout(t);
   }, []);
+
+  // Typewriter for tagline
+  useEffect(() => {
+    if (!isLoaded) return;
+    let i = 0;
+    const id = setInterval(() => {
+      i++;
+      setTypedText(fullTagline.slice(0, i));
+      if (i >= fullTagline.length) clearInterval(id);
+    }, 60);
+    return () => clearInterval(id);
+  }, [isLoaded]);
 
   // Countdown
   useEffect(() => {
@@ -40,40 +187,42 @@ export function HeroSection() {
     return () => clearInterval(id);
   }, []);
 
-  const tiltX = (mouse.y - 0.5) * -10;
-  const tiltY = (mouse.x - 0.5) * 10;
+  const tiltX = (mouse.y - 0.5) * -8;
+  const tiltY = (mouse.x - 0.5) * 8;
 
   return (
     <section className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden bg-black select-none">
 
-      {/* ===== LAYER 0: Deep gradient background ===== */}
-      <div className="absolute inset-0 z-0 bg-gradient-to-b from-[#040616] via-black to-black" />
-
-      {/* ===== LAYER 1: Gate temple — faded atmospheric backdrop ===== */}
-      <div
-        className="absolute inset-0 z-[1] flex items-center justify-center pointer-events-none"
-        style={{
-          opacity: gateImgReady ? 1 : 0,
-          transition: "opacity 3s ease-in-out",
-        }}
-      >
+      {/* ===== BG 0: Full-screen gate temple image ===== */}
+      <div className="absolute inset-0 z-0">
         <img
           src="/gate-temple.png"
           alt=""
           aria-hidden="true"
-          className="w-[750px] md:w-[950px] lg:w-[1200px] h-auto object-contain select-none"
+          className="absolute inset-0 w-full h-full object-cover object-center select-none"
           style={{
-            opacity: 0.11,
-            transform: `translateY(${-30 + (-parallaxOffset * 0.12)}px) scale(1.05)`,
-            transition: "transform 0.3s ease-out",
-            filter: "blur(1.5px) saturate(0.8) brightness(0.6)",
-            maskImage: "radial-gradient(ellipse 75% 70% at center 45%, black 25%, transparent 80%)",
-            WebkitMaskImage: "radial-gradient(ellipse 75% 70% at center 45%, black 25%, transparent 80%)",
+            opacity: 0.3,
+            transform: `scale(1.08) translateY(${-parallaxOffset * 0.08}px)`,
+            transition: "transform 0.4s ease-out",
+            filter: "saturate(1.3) brightness(0.5) hue-rotate(-5deg)",
+          }}
+        />
+        {/* Gradient overlays for depth */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/40 to-black" />
+        <div className="absolute inset-0 bg-gradient-to-r from-black/50 via-transparent to-black/50" />
+        {/* Vignette */}
+        <div
+          className="absolute inset-0"
+          style={{
+            background: "radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.8) 100%)",
           }}
         />
       </div>
 
-      {/* ===== LAYER 2: Retro perspective grid ===== */}
+      {/* ===== BG 1: Matrix rain ===== */}
+      <MatrixRain />
+
+      {/* ===== BG 2: Retro perspective grid ===== */}
       <div className="absolute inset-0 z-[2] pointer-events-none">
         <div
           className="retro-grid"
@@ -81,172 +230,161 @@ export function HeroSection() {
         />
       </div>
 
-      {/* ===== LAYER 3: Circuit wire animations ===== */}
-      <CircuitLines />
+      {/* ===== BG 3: Energy pulse rings ===== */}
+      <EnergyPulseRings />
 
-      {/* ===== LAYER 4: Floating particles ===== */}
-      <FloatingParticles />
+      {/* ===== BG 4: CRT scanlines ===== */}
+      <div className="absolute inset-0 z-[4] pointer-events-none crt-scanlines" style={{ opacity: 0.08 }} />
 
-      {/* ===== LAYER 5: CRT scanlines ===== */}
-      <div className="absolute inset-0 z-[5] pointer-events-none crt-scanlines" style={{ opacity: 0.05 }} />
+      {/* ===== BG 5: Horizontal scanline sweep ===== */}
+      <ScanlineSweep />
 
-      {/* ===== LAYER 6: Radial glow behind center ===== */}
+      {/* ===== BG 6: Ambient center glow ===== */}
       <div
-        className="absolute z-[6] pointer-events-none rounded-full"
+        className="absolute z-[5] pointer-events-none rounded-full"
         style={{
-          width: "800px",
-          height: "600px",
+          width: "900px",
+          height: "700px",
           left: "50%",
-          top: "35%",
-          transform: `translate(-50%, -50%) translateY(${-parallaxOffset * 0.1}px)`,
-          background: "radial-gradient(ellipse, rgba(214,77,141,0.06) 0%, rgba(114,31,76,0.02) 40%, transparent 70%)",
+          top: "40%",
+          transform: `translate(-50%, -50%)`,
+          background: "radial-gradient(ellipse, rgba(214,77,141,0.1) 0%, rgba(114,31,76,0.04) 40%, transparent 70%)",
         }}
       />
 
-      {/* ===== LAYER 7: Animated rotating arcs around logo ===== */}
-      <div
-        className="absolute z-[7] pointer-events-none"
-        style={{
-          width: "550px",
-          height: "550px",
-          left: "50%",
-          top: "35%",
-          transform: `translate(-50%, -50%) translateY(${-parallaxOffset * 0.08}px)`,
-        }}
-      >
-        {/* Outer ring */}
-        <svg className="absolute inset-0 w-full h-full" viewBox="0 0 550 550" fill="none">
-          <circle cx="275" cy="275" r="250" stroke="#721F4C" strokeWidth="0.5" strokeDasharray="6 25" opacity="0.15">
-            <animateTransform attributeName="transform" type="rotate" values="0 275 275;360 275 275" dur="80s" repeatCount="indefinite" />
-          </circle>
-          <circle cx="275" cy="275" r="230" stroke="#4A1C3A" strokeWidth="0.5" strokeDasharray="3 35" opacity="0.1">
-            <animateTransform attributeName="transform" type="rotate" values="360 275 275;0 275 275" dur="60s" repeatCount="indefinite" />
-          </circle>
-        </svg>
-
-        {/* Corner tick marks */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-px h-4 bg-gradient-to-b from-[#D64D8D]/20 to-transparent" />
-        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-px h-4 bg-gradient-to-t from-[#D64D8D]/20 to-transparent" />
-        <div className="absolute left-0 top-1/2 -translate-y-1/2 h-px w-4 bg-gradient-to-r from-[#D64D8D]/20 to-transparent" />
-        <div className="absolute right-0 top-1/2 -translate-y-1/2 h-px w-4 bg-gradient-to-l from-[#D64D8D]/20 to-transparent" />
-      </div>
-
-      {/* ===== LAYER 8: Left HUD Telemetry Column ===== */}
-      <div className="hidden xl:flex flex-col gap-6 absolute left-10 top-[28%] z-10 w-52 font-mono text-[9px] text-[#D64D8D]/40 text-left border-l border-[#721F4C]/30 pl-5 py-4">
-        <div className="space-y-1 text-[#F2D2AE]/60 font-semibold tracking-wider">
-          <div>// PROTOCOL LOG</div>
-          <div className="h-[1px] bg-[#721F4C]/40 w-16" />
+      {/* ===== Left HUD ===== */}
+      <div className="hidden xl:flex flex-col gap-4 absolute left-8 top-[22%] z-10 w-56 font-mono text-[9px] text-[#D64D8D]/50 text-left border-l border-[#D64D8D]/20 pl-4 py-3">
+        <div className="text-[#F2D2AE]/70 font-bold tracking-[0.25em] text-[8px]">// SYSTEM_INITIALIZE</div>
+        <div className="h-px bg-gradient-to-r from-[#D64D8D]/40 to-transparent w-20" />
+        <div className="space-y-1.5">
+          <div className="flex gap-2"><span className="text-[#D64D8D]">&gt;</span> <span>CORE_LOAD: <span className="text-[#F2D2AE]/80">SUCCESS</span></span></div>
+          <div className="flex gap-2"><span className="text-[#D64D8D]">&gt;</span> <span>PORTAL_GATE: <span className="text-green-400">OPEN</span></span></div>
+          <div className="flex gap-2"><span className="text-[#D64D8D]">&gt;</span> <span>ARENAS_ACTIVE: <span className="text-[#F2D2AE]/80">25+</span></span></div>
+          <div className="flex gap-2"><span className="text-[#D64D8D]">&gt;</span> <span>MODE: <span className="text-[#D64D8D]">RETRO_ARCADE</span></span></div>
+          <div className="flex gap-2"><span className="text-[#D64D8D]">&gt;</span> <span className="animate-pulse text-[#F2D2AE]/60">AWAITING_REGISTRATION...</span></div>
         </div>
-        <div className="space-y-2 select-none pointer-events-none">
-          <div className="flex gap-2"><span className="text-[#D64D8D]/60">&gt;</span> <span>SYS.INIT: OK</span></div>
-          <div className="flex gap-2"><span className="text-[#D64D8D]/60">&gt;</span> <span>PEENYA_NODE: UP</span></div>
-          <div className="flex gap-2"><span className="text-[#D64D8D]/60">&gt;</span> <span>SEC_SHIELD: 98.2%</span></div>
-          <div className="flex gap-2"><span className="text-[#D64D8D]/60">&gt;</span> <span className="animate-pulse">DECRYPTING...</span></div>
-        </div>
-        <div className="text-[8px] text-[#4A1C3A] leading-relaxed mt-2 uppercase">
-          <div>LOC: BENGALURU, IN</div>
-          <div>NET: PRAVRUTTI_GATE_01</div>
-          <div>PORT: 2026//ACTIVE</div>
+        <div className="text-[7px] text-white/20 mt-3 space-y-0.5 font-mono">
+          <div>LOC: 13.0294° N, 77.5401° E</div>
+          <div>NET: PRAVRUTTI_SECURE_NODE</div>
+          <div>EST_ATTENDANCE: 5000+</div>
         </div>
       </div>
 
-      {/* ===== LAYER 9: Right HUD Telemetry Column ===== */}
-      <div className="hidden xl:flex flex-col gap-6 absolute right-10 top-[28%] z-10 w-52 font-mono text-[9px] text-[#D64D8D]/40 text-right border-r border-[#721F4C]/30 pr-5 py-4">
-        <div className="space-y-1 text-[#F2D2AE]/60 font-semibold tracking-wider">
-          <div>// STATUS OVERVIEW</div>
-          <div className="h-[1px] bg-[#721F4C]/40 w-16 ml-auto" />
+      {/* ===== Right HUD ===== */}
+      <div className="hidden xl:flex flex-col gap-4 absolute right-8 top-[22%] z-10 w-56 font-mono text-[9px] text-[#D64D8D]/50 text-right border-r border-[#D64D8D]/20 pr-4 py-3">
+        <div className="text-[#F2D2AE]/70 font-bold tracking-[0.25em] text-[8px]">// REGISTRATION_DESK</div>
+        <div className="h-px bg-gradient-to-l from-[#D64D8D]/40 to-transparent w-20 ml-auto" />
+        <div className="space-y-1.5">
+          <div>STATUS: <span className="text-green-400">LIVE</span></div>
+          <div>PRIZE_POOL: <span className="text-[#F2D2AE]/90">₹2,00,000+</span></div>
+          <div>EVENTS_ARENA: <span className="text-[#D64D8D]">ONLINE</span></div>
+          <div>HOST_NEXUS: <span className="text-[#F2D2AE]/70">PEENYA_CAMPUS</span></div>
         </div>
-        <div className="space-y-2 select-none pointer-events-none">
-          <div>STABILITY: STABLE</div>
-          <div>BANDWIDTH: OPTIMAL</div>
-          <div>HOST: RUAS_NEXUS</div>
-          <div className="text-[#D64D8D]/60">CORPUS: OPERATIONAL</div>
-        </div>
-        <div className="space-y-1 mt-2 text-[8px]">
-          <div className="text-white/20">0x7F 0x02 0xAA 0x1B</div>
-          <div className="text-white/20">0x04 0xF2 0xD2 0xAE</div>
-          <div className="text-white/20">0x9C 0x72 0x1F 0x4C</div>
+        {/* Mini bar graph */}
+        <div className="flex items-end gap-1 justify-end mt-2 h-6">
+          {[40, 65, 30, 80, 55, 90, 45, 70, 60, 85].map((h, i) => (
+            <div
+              key={i}
+              className="w-1 bg-[#D64D8D]/30 rounded-t-sm"
+              style={{
+                height: `${h}%`,
+                animation: `bar-pulse ${1.5 + i * 0.2}s ease-in-out infinite alternate`,
+              }}
+            />
+          ))}
         </div>
       </div>
 
-      {/* ===== MAIN CONTENT ===== */}
-      <div className="relative z-10 w-full max-w-5xl mx-auto px-6 pt-20 pb-12 flex flex-col items-center text-center">
+      {/* ═══════════════════ MAIN CONTENT ═══════════════════ */}
+      <div className="relative z-10 w-full max-w-5xl mx-auto px-6 pt-16 pb-10 flex flex-col items-center text-center">
 
-        {/* University pill */}
+        {/* "INSERT COIN" arcade prompt */}
         <div
-          className={`mb-6 transition-all duration-1000 ${isLoaded ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-4"}`}
+          className={`mb-4 transition-all duration-1000 ${isLoaded ? "opacity-100" : "opacity-0"}`}
         >
-          <span className="inline-flex items-center gap-2 font-mono text-[8px] md:text-[9px] tracking-[0.3em] uppercase text-[#D64D8D]/70 border border-[#721F4C]/25 bg-[#150B1E]/20 backdrop-blur-sm px-3.5 py-1 rounded-full">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#D64D8D] animate-pulse" />
-            Ramaiah University of Applied Sciences
-          </span>
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-[#D64D8D]/30 bg-[#150B1E]/40 backdrop-blur-md">
+            <Zap className="w-3 h-3 text-[#D64D8D] animate-pulse" />
+            <span className="font-mono text-[8px] tracking-[0.4em] uppercase text-[#D64D8D]/80">
+              Ramaiah University of Applied Sciences
+            </span>
+            <Zap className="w-3 h-3 text-[#D64D8D] animate-pulse" />
+          </div>
         </div>
 
-        {/* THE LOGO */}
+        {/* ── THE LOGO ── */}
         <div
           ref={logoRef}
-          className={`relative mb-1 cursor-default transition-all duration-[2.5s] ${isLoaded ? "opacity-100 scale-100" : "opacity-0 scale-95"}`}
-          style={{ transitionDelay: "0.2s" }}
+          className={`relative mb-2 cursor-default transition-all duration-[2s] ${isLoaded ? "opacity-100 scale-100" : "opacity-0 scale-90"}`}
+          style={{ transitionDelay: "0.3s" }}
         >
-          {/* Ambient glow */}
+          {/* Pulsing glow behind logo */}
           <div
-            className="absolute -inset-16 pointer-events-none"
+            className="absolute -inset-20 pointer-events-none rounded-full"
             style={{
-              background: "radial-gradient(ellipse at center, rgba(214,77,141,0.04) 0%, transparent 65%)",
-              filter: "blur(25px)",
+              background: "radial-gradient(ellipse at center, rgba(214,77,141,0.08) 0%, transparent 60%)",
+              filter: "blur(40px)",
+              animation: "logo-breathe 4s ease-in-out infinite",
             }}
           />
 
           <img
             src="/pravrutti-logo.jpeg"
             alt="Pravrutti 2.0"
-            className="relative w-[320px] md:w-[440px] lg:w-[540px] h-auto object-contain select-none"
+            className="relative w-[300px] md:w-[420px] lg:w-[520px] h-auto object-contain select-none"
             draggable={false}
             style={{
               transform: mouse.active
-                ? `perspective(1000px) rotateX(${tiltX}deg) rotateY(${tiltY}deg) translateY(${-parallaxOffset * 0.08}px)`
-                : `translateY(${-parallaxOffset * 0.08}px)`,
-              transition: mouse.active ? "transform 0.15s ease-out" : "transform 0.6s ease-out",
-              filter: "drop-shadow(0 0 40px rgba(214,77,141,0.18)) drop-shadow(0 0 80px rgba(114,31,76,0.08))",
-              maskImage: "radial-gradient(ellipse 85% 80% at center, black 50%, transparent 100%)",
-              WebkitMaskImage: "radial-gradient(ellipse 85% 80% at center, black 50%, transparent 100%)",
+                ? `perspective(1000px) rotateX(${tiltX}deg) rotateY(${tiltY}deg) translateY(${-parallaxOffset * 0.06}px)`
+                : `translateY(${-parallaxOffset * 0.06}px)`,
+              transition: mouse.active ? "transform 0.12s ease-out" : "transform 0.5s ease-out",
+              filter: "drop-shadow(0 0 30px rgba(214,77,141,0.25)) drop-shadow(0 0 60px rgba(114,31,76,0.12))",
+              maskImage: "radial-gradient(ellipse 85% 82% at center, black 55%, transparent 100%)",
+              WebkitMaskImage: "radial-gradient(ellipse 85% 82% at center, black 55%, transparent 100%)",
             }}
           />
         </div>
 
-        {/* Tagline */}
+        {/* ── Tagline with typewriter ── */}
         <div
-          className={`mb-2.5 transition-all duration-1000 ${isLoaded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"}`}
+          className={`mb-3 h-8 md:h-10 transition-all duration-700 ${isLoaded ? "opacity-100" : "opacity-0"}`}
           style={{ transitionDelay: "0.6s" }}
         >
-          <h1
-            className="glitch-text font-orbitron text-base md:text-xl lg:text-2xl font-black tracking-[0.15em] text-[#F2D2AE]"
-            data-text="CODE. CREATE. INNOVATE. ELEVATE."
-          >
-            CODE. CREATE. INNOVATE. ELEVATE.
+          <h1 className="font-orbitron text-sm md:text-xl lg:text-2xl font-black tracking-[0.15em] text-[#F2D2AE] inline-block">
+            <NeonFlickerText text={typedText} />
+            <span className="inline-block w-[2px] h-[1em] bg-[#D64D8D] ml-1 align-middle" style={{ animation: "blink-caret 0.6s step-end infinite" }} />
           </h1>
         </div>
 
-        {/* Description */}
+        {/* ── "EXPERIENCE INNOVATION" sub-tagline ── */}
+        <div
+          className={`mb-5 transition-all duration-1000 ${isLoaded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}
+          style={{ transitionDelay: "0.9s" }}
+        >
+          <p className="font-mono text-[9px] md:text-[11px] tracking-[0.5em] uppercase text-[#D64D8D]/60">
+            &lt; experience innovation /&gt;
+          </p>
+        </div>
+
+        {/* ── Description ── */}
         <p
-          className={`max-w-lg text-[10px] md:text-xs text-[#F7EEE4]/40 leading-relaxed font-mono mb-6 transition-all duration-1000 ${isLoaded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"}`}
-          style={{ transitionDelay: "0.8s" }}
+          className={`max-w-md text-[10px] md:text-xs text-[#F7EEE4]/35 leading-relaxed font-mono mb-5 transition-all duration-1000 ${isLoaded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"}`}
+          style={{ transitionDelay: "1s" }}
         >
           Step through the gate into RUAS Peenya campus.
           <br className="hidden md:block" />
           25+ technical arenas &bull; ₹2,00,000+ prize pool &bull; 3 days.
         </p>
 
-        {/* Countdown */}
+        {/* ── Countdown ── */}
         <div
-          className={`mb-6 transition-all duration-1000 ${isLoaded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"}`}
-          style={{ transitionDelay: "1s" }}
+          className={`mb-5 transition-all duration-1000 ${isLoaded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"}`}
+          style={{ transitionDelay: "1.1s" }}
         >
-          <div className="flex items-center justify-center gap-2 mb-2.5">
-            <Timer className="w-3 h-3 text-[#D64D8D]/60 animate-pulse" />
-            <span className="font-mono text-[7px] tracking-[0.3em] uppercase text-[#721F4C]">Portal Opens In</span>
+          <div className="flex items-center justify-center gap-2 mb-2">
+            <Timer className="w-3 h-3 text-[#D64D8D]/70 animate-pulse" />
+            <span className="font-mono text-[7px] tracking-[0.4em] uppercase text-[#721F4C]">Portal Opens In</span>
           </div>
-          <div className="flex gap-2.5 md:gap-3">
+          <div className="flex gap-2 md:gap-3">
             {[
               { v: timeLeft.days, l: "DAYS" },
               { v: timeLeft.hours, l: "HRS" },
@@ -254,9 +392,16 @@ export function HeroSection() {
               { v: timeLeft.seconds, l: "SEC" },
             ].map((t) => (
               <div key={t.l} className="flex flex-col items-center">
-                <div className="relative w-12 md:w-14 h-12 md:h-14 flex items-center justify-center rounded-lg border border-[#4A1C3A]/30 bg-[#0a0412]/50 backdrop-blur-sm overflow-hidden group hover:border-[#D64D8D]/30 transition-colors">
+                <div className="relative w-12 md:w-14 h-12 md:h-14 flex items-center justify-center rounded border border-[#D64D8D]/20 bg-black/60 backdrop-blur-sm overflow-hidden group hover:border-[#D64D8D]/50 transition-all hover:shadow-[0_0_20px_rgba(214,77,141,0.2)]">
                   <div className="absolute inset-0 crt-scanlines opacity-10 pointer-events-none" />
-                  <span className="relative font-vt323 text-xl md:text-2xl text-[#F2D2AE] tabular-nums group-hover:text-[#D64D8D] transition-colors">{String(t.v).padStart(2, "0")}</span>
+                  {/* Corner brackets */}
+                  <div className="absolute top-0 left-0 w-2 h-2 border-t border-l border-[#D64D8D]/40" />
+                  <div className="absolute top-0 right-0 w-2 h-2 border-t border-r border-[#D64D8D]/40" />
+                  <div className="absolute bottom-0 left-0 w-2 h-2 border-b border-l border-[#D64D8D]/40" />
+                  <div className="absolute bottom-0 right-0 w-2 h-2 border-b border-r border-[#D64D8D]/40" />
+                  <span className="relative font-vt323 text-xl md:text-2xl text-[#F2D2AE] tabular-nums group-hover:text-[#D64D8D] transition-colors">
+                    {String(t.v).padStart(2, "0")}
+                  </span>
                 </div>
                 <span className="font-mono text-[6px] tracking-[0.2em] text-[#4A1C3A] mt-1 uppercase">{t.l}</span>
               </div>
@@ -264,26 +409,26 @@ export function HeroSection() {
           </div>
         </div>
 
-        {/* Date */}
+        {/* ── Date ── */}
         <div
-          className={`mb-6 transition-all duration-1000 ${isLoaded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"}`}
-          style={{ transitionDelay: "1.2s" }}
+          className={`mb-5 transition-all duration-1000 ${isLoaded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"}`}
+          style={{ transitionDelay: "1.3s" }}
         >
-          <span className="inline-flex items-center gap-2 font-mono text-[9px] md:text-[10px] tracking-[0.15em] text-[#F7EEE4]/25 border border-[#4A1C3A]/20 bg-[#150B1E]/10 px-3.5 py-1 rounded-full">
-            <Calendar className="w-3 h-3 text-[#721F4C]" />
+          <span className="inline-flex items-center gap-2 font-mono text-[9px] md:text-[10px] tracking-[0.15em] text-[#F7EEE4]/25 border border-[#4A1C3A]/25 bg-black/30 backdrop-blur-sm px-3.5 py-1 rounded-full">
+            <Calendar className="w-3 h-3 text-[#D64D8D]/60" />
             15th, 16th &amp; 17th October 2026
           </span>
         </div>
 
-        {/* CTA Buttons */}
+        {/* ── CTA Buttons ── */}
         <div
-          className={`flex flex-wrap items-center justify-center gap-3.5 transition-all duration-1000 ${isLoaded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"}`}
-          style={{ transitionDelay: "1.4s" }}
+          className={`flex flex-wrap items-center justify-center gap-3 transition-all duration-1000 ${isLoaded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"}`}
+          style={{ transitionDelay: "1.5s" }}
         >
           <Link href="/events">
             <Button
               size="lg"
-              className="arcade-btn-primary rounded-xl font-orbitron text-[9px] md:text-[10px] px-7 md:px-9 py-4 h-auto font-black tracking-[0.15em] cursor-pointer"
+              className="arcade-btn-primary rounded-lg font-orbitron text-[9px] md:text-[10px] px-7 md:px-9 py-4 h-auto font-black tracking-[0.15em] cursor-pointer"
             >
               EXPLORE EVENTS <ArrowRight className="w-3.5 h-3.5 ml-2" />
             </Button>
@@ -291,16 +436,16 @@ export function HeroSection() {
           <a href="/Pravrutti_Main_Brochure.pdf" download>
             <Button
               size="lg"
-              className="arcade-btn rounded-xl font-orbitron text-[9px] md:text-[10px] px-7 md:px-9 py-4 h-auto font-black tracking-[0.15em] text-[#F2D2AE] cursor-pointer"
+              className="arcade-btn rounded-lg font-orbitron text-[9px] md:text-[10px] px-7 md:px-9 py-4 h-auto font-black tracking-[0.15em] text-[#F2D2AE] cursor-pointer"
             >
               <Download className="w-3.5 h-3.5 mr-2" /> BROCHURE
             </Button>
           </a>
         </div>
 
-        {/* Stats */}
+        {/* ── Stats bar ── */}
         <div
-          className={`mt-10 pt-6 border-t border-[#4A1C3A]/15 w-full max-w-xl transition-all duration-1000 ${isLoaded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}`}
+          className={`mt-8 pt-5 border-t border-[#D64D8D]/10 w-full max-w-lg transition-all duration-1000 ${isLoaded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}`}
           style={{ transitionDelay: "1.8s" }}
         >
           <div className="grid grid-cols-3 gap-3">
@@ -310,20 +455,27 @@ export function HeroSection() {
               { v: "₹2L+", l: "Prize Pool", c: "text-[#BF8A1B]" },
             ].map((s) => (
               <div key={s.l} className="text-center group cursor-default">
-                <div className={`text-lg md:text-2xl font-orbitron font-black ${s.c} group-hover:scale-105 transition-transform`}>{s.v}</div>
-                <div className="text-[8px] font-mono tracking-[0.2em] text-[#F7EEE4]/20 uppercase mt-0.5">{s.l}</div>
+                <div className={`text-lg md:text-2xl font-orbitron font-black ${s.c} group-hover:scale-110 transition-transform`}>
+                  {s.v}
+                </div>
+                <div className="text-[7px] font-mono tracking-[0.2em] text-[#F7EEE4]/20 uppercase mt-0.5">{s.l}</div>
               </div>
             ))}
           </div>
         </div>
       </div>
 
-      {/* Scroll indicator */}
-      <div className={`absolute bottom-4 left-1/2 -translate-x-1/2 z-10 flex flex-col items-center gap-1 transition-all duration-1000 ${isLoaded ? "opacity-30" : "opacity-0"}`} style={{ transitionDelay: "2.5s" }}>
-        <span className="font-mono text-[7px] tracking-[0.3em] uppercase text-[#4A1C3A]">Scroll</span>
-        <div className="w-3.5 h-6 rounded-full border border-[#4A1C3A]/30 flex items-start justify-center p-0.5">
-          <div className="w-0.5 h-1 rounded-full bg-[#D64D8D]/50 animate-bounce" />
-        </div>
+      {/* ── Arcade "INSERT COIN" blinking prompt ── */}
+      <div
+        className={`absolute bottom-6 left-1/2 -translate-x-1/2 z-10 flex flex-col items-center gap-2 transition-all duration-1000 ${isLoaded ? "opacity-100" : "opacity-0"}`}
+        style={{ transitionDelay: "2.5s" }}
+      >
+        <span
+          className="font-arcade text-[7px] md:text-[8px] tracking-[0.3em] uppercase text-[#D64D8D]/70"
+          style={{ animation: "arcade-blink 1.2s step-end infinite" }}
+        >
+          ▼ SCROLL TO EXPLORE ▼
+        </span>
       </div>
     </section>
   );
