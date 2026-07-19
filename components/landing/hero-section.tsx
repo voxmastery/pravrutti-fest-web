@@ -201,20 +201,20 @@ export function HeroSection() {
           aria-hidden="true"
           className="absolute inset-0 w-full h-full object-cover object-center select-none"
           style={{
-            opacity: 0.3,
+            opacity: 0.7,
             transform: `scale(1.08) translateY(${-parallaxOffset * 0.08}px)`,
             transition: "transform 0.4s ease-out",
-            filter: "saturate(1.3) brightness(0.5) hue-rotate(-5deg)",
+            filter: "saturate(1.1) brightness(0.65)",
           }}
         />
         {/* Gradient overlays for depth */}
-        <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/40 to-black" />
-        <div className="absolute inset-0 bg-gradient-to-r from-black/50 via-transparent to-black/50" />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-black/90" />
+        <div className="absolute inset-0 bg-gradient-to-r from-black/30 via-transparent to-black/30" />
         {/* Vignette */}
         <div
           className="absolute inset-0"
           style={{
-            background: "radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.8) 100%)",
+            background: "radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.85) 100%)",
           }}
         />
       </div>
@@ -328,7 +328,7 @@ export function HeroSection() {
           />
 
           <img
-            src="/pravrutti-logo.jpeg"
+            src="/pravrutti-logo.png"
             alt="Pravrutti 2.0"
             className="relative w-[300px] md:w-[420px] lg:w-[520px] h-auto object-contain select-none"
             draggable={false}
@@ -338,8 +338,6 @@ export function HeroSection() {
                 : `translateY(${-parallaxOffset * 0.06}px)`,
               transition: mouse.active ? "transform 0.12s ease-out" : "transform 0.5s ease-out",
               filter: "drop-shadow(0 0 30px rgba(214,77,141,0.25)) drop-shadow(0 0 60px rgba(114,31,76,0.12))",
-              maskImage: "radial-gradient(ellipse 85% 82% at center, black 55%, transparent 100%)",
-              WebkitMaskImage: "radial-gradient(ellipse 85% 82% at center, black 55%, transparent 100%)",
             }}
           />
         </div>

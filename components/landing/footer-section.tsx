@@ -41,7 +41,7 @@ export function FooterSection() {
           <div className="col-span-2 space-y-5">
             <Link href="/" className="inline-block">
               <img
-                src="/pravrutti-logo.jpeg"
+                src="/pravrutti-logo.png"
                 alt="Pravrutti 2.0"
                 className="h-12 w-auto object-contain"
                 style={{ filter: "drop-shadow(0 0 10px rgba(214, 77, 141, 0.2))" }}

@@ -44,15 +44,25 @@ export function Navigation() {
           : "max-w-[1400px] bg-transparent"
       }`}>
         <div className={`flex items-center justify-between px-5 lg:px-7 transition-all ${isScrolled ? "h-14" : "h-20"}`}>
-          {/* Logo */}
-          <Link href="/" className="flex items-center gap-2.5 group">
-            <img
-              src="/pravrutti-logo.jpeg"
-              alt="Pravrutti 2.0"
-              className="h-7 md:h-8 w-auto object-contain transition-transform group-hover:scale-105"
-              style={{ filter: "drop-shadow(0 0 8px rgba(214, 77, 141, 0.2))" }}
-            />
-          </Link>
+          {/* Logo Section */}
+          <div className="flex items-center gap-3.5">
+            <a href="https://www.msruas.ac.in" target="_blank" rel="noopener noreferrer" className="transition-transform hover:scale-105">
+              <img
+                src="/ruas-logo-white-trans.png"
+                alt="RUAS Logo"
+                className="h-[22px] md:h-[28px] w-auto object-contain"
+              />
+            </a>
+            <div className="h-5 w-px bg-white/20" />
+            <Link href="/" className="flex items-center gap-2 group">
+              <img
+                src="/pravrutti-logo.png"
+                alt="Pravrutti 2.0"
+                className="h-[28px] md:h-[35px] w-auto object-contain transition-transform group-hover:scale-105"
+                style={{ filter: "drop-shadow(0 0 8px rgba(214, 77, 141, 0.2))" }}
+              />
+            </Link>
+          </div>
 
           {/* Desktop nav */}
           <div className="hidden md:flex items-center gap-7">

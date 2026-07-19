@@ -73,7 +73,7 @@ export default function AboutPage() {
             <div className="relative z-10 space-y-4 max-w-sm">
               <div className="w-56 mx-auto overflow-hidden rounded-xl border-2 border-[#D64D8D]/40 p-1 bg-black">
                 <img
-                  src="/pravrutti-logo.jpeg"
+                  src="/pravrutti-logo.png"
                   alt="Pravrutti Logo Cabinet Emblem"
                   className="w-full h-auto object-contain rounded-lg"
                 />
