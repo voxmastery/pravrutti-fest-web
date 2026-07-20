@@ -358,14 +358,14 @@ export function HeroSection() {
           className={`mb-5 transition-all duration-1000 ${isLoaded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}
           style={{ transitionDelay: "0.9s" }}
         >
-          <p className="font-mono text-[9px] md:text-[11px] tracking-[0.5em] uppercase text-[#D64D8D]/60">
+          <p className="font-mono text-[9px] md:text-[11px] tracking-[0.5em] uppercase text-[#D64D8D]/80">
             &lt; experience innovation /&gt;
           </p>
         </div>
 
         {/* ── Description ── */}
         <p
-          className={`max-w-md text-[10px] md:text-xs text-[#F7EEE4]/35 leading-relaxed font-mono mb-5 transition-all duration-1000 ${isLoaded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"}`}
+          className={`max-w-md text-[10px] md:text-xs text-[#F7EEE4]/60 leading-relaxed font-mono mb-5 transition-all duration-1000 ${isLoaded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"}`}
           style={{ transitionDelay: "1s" }}
         >
           Step through the gate into RUAS Peenya campus.
@@ -380,7 +380,7 @@ export function HeroSection() {
         >
           <div className="flex items-center justify-center gap-2 mb-2">
             <Timer className="w-3 h-3 text-[#D64D8D]/70 animate-pulse" />
-            <span className="font-mono text-[7px] tracking-[0.4em] uppercase text-[#721F4C]">Portal Opens In</span>
+            <span className="font-mono text-[7px] tracking-[0.4em] uppercase text-[#D64D8D]/70">Portal Opens In</span>
           </div>
           <div className="flex gap-2 md:gap-3">
             {[
@@ -401,7 +401,7 @@ export function HeroSection() {
                     {String(t.v).padStart(2, "0")}
                   </span>
                 </div>
-                <span className="font-mono text-[6px] tracking-[0.2em] text-[#4A1C3A] mt-1 uppercase">{t.l}</span>
+                <span className="font-mono text-[6px] tracking-[0.2em] text-[#F7EEE4]/40 mt-1 uppercase">{t.l}</span>
               </div>
             ))}
           </div>
@@ -412,7 +412,7 @@ export function HeroSection() {
           className={`mb-5 transition-all duration-1000 ${isLoaded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"}`}
           style={{ transitionDelay: "1.3s" }}
         >
-          <span className="inline-flex items-center gap-2 font-mono text-[9px] md:text-[10px] tracking-[0.15em] text-[#F7EEE4]/25 border border-[#4A1C3A]/25 bg-black/30 backdrop-blur-sm px-3.5 py-1 rounded-full">
+          <span className="inline-flex items-center gap-2 font-mono text-[9px] md:text-[10px] tracking-[0.15em] text-[#F7EEE4]/60 border border-[#4A1C3A]/35 bg-black/30 backdrop-blur-sm px-3.5 py-1 rounded-full">
             <Calendar className="w-3 h-3 text-[#D64D8D]/60" />
             15th, 16th &amp; 17th October 2026
           </span>
@@ -456,7 +456,7 @@ export function HeroSection() {
                 <div className={`text-lg md:text-2xl font-orbitron font-black ${s.c} group-hover:scale-110 transition-transform`}>
                   {s.v}
                 </div>
-                <div className="text-[7px] font-mono tracking-[0.2em] text-[#F7EEE4]/20 uppercase mt-0.5">{s.l}</div>
+                <div className="text-[7px] font-mono tracking-[0.2em] text-[#F7EEE4]/50 uppercase mt-0.5">{s.l}</div>
               </div>
             ))}
           </div>
