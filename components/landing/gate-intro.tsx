@@ -1,172 +1,236 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import { Zap, Lock, Unlock, ShieldAlert, Sparkles } from "lucide-react";
 
 export function GateIntro({ onComplete }: { onComplete: () => void }) {
-  const [phase, setPhase] = useState<"hold" | "beam" | "open" | "reveal" | "done">("hold");
   const [progress, setProgress] = useState(0);
+  const [phase, setPhase] = useState<"loading" | "glitch" | "warp" | "done">("loading");
+  const [logText, setLogText] = useState("INITIALIZING CORE SYSTEMS...");
+  const canvasRef = useRef<HTMLCanvasElement>(null);
 
+  // Terminal log sequence
   useEffect(() => {
-    // Loading progress speed
-    const loadInterval = setInterval(() => {
-      setProgress((p) => {
-        if (p >= 100) {
-          clearInterval(loadInterval);
-          return 100;
-        }
-        return p + 2;
-      });
-    }, 20);
+    const logs = [
+      "INITIALIZING PEENYA QUANTUM NODE...",
+      "AUTHENTICATING RUAS GATEWAY PROTOCOL...",
+      "CALIBRATING 25+ TECH ARENAS...",
+      "SYNCHRONIZING PRIZE POOL MATRIX...",
+      "PORTAL ENERGY AT MAXIMUM...",
+      "ACCESS GRANTED // ENGAGING HYPER-GATE"
+    ];
 
-    const t1 = setTimeout(() => setPhase("beam"), 1400);
-    const t2 = setTimeout(() => setPhase("open"), 2000);
-    const t3 = setTimeout(() => setPhase("reveal"), 3200);
-    const t4 = setTimeout(() => {
-      setPhase("done");
-      onComplete();
-    }, 4000);
+    let logIndex = 0;
+    const logInterval = setInterval(() => {
+      if (logIndex < logs.length) {
+        setLogText(logs[logIndex]);
+        logIndex++;
+      }
+    }, 400);
+
+    return () => clearInterval(logInterval);
+  }, []);
+
+  // Loading progress
+  useEffect(() => {
+    const start = Date.now();
+    const duration = 2400; // 2.4s total load time for snappy feel
+
+    const timer = setInterval(() => {
+      const elapsed = Date.now() - start;
+      const pct = Math.min(100, Math.floor((elapsed / duration) * 100));
+      setProgress(pct);
+
+      if (pct >= 100) {
+        clearInterval(timer);
+        setPhase("glitch");
+        setTimeout(() => setPhase("warp"), 300);
+        setTimeout(() => {
+          setPhase("done");
+          onComplete();
+        }, 1100);
+      }
+    }, 16);
+
+    return () => clearInterval(timer);
+  }, [onComplete]);
+
+  // Particle vortex & energy grid on Canvas
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    let animId: number;
+    let width = (canvas.width = window.innerWidth);
+    let height = (canvas.height = window.innerHeight);
+
+    const particles: Array<{
+      x: number;
+      y: number;
+      angle: number;
+      dist: number;
+      speed: number;
+      size: number;
+      color: string;
+    }> = [];
+
+    // Create 150 energy particles in radial formation
+    const colors = ["#D64D8D", "#F2D2AE", "#721F4C", "#AC355D", "#ffffff"];
+    for (let i = 0; i < 160; i++) {
+      particles.push({
+        x: 0,
+        y: 0,
+        angle: Math.random() * Math.PI * 2,
+        dist: Math.random() * Math.max(width, height) * 0.7,
+        speed: 1.5 + Math.random() * 3,
+        size: 1 + Math.random() * 2.5,
+        color: colors[Math.floor(Math.random() * colors.length)],
+      });
+    }
+
+    const render = () => {
+      ctx.fillStyle = "rgba(4, 6, 22, 0.25)";
+      ctx.fillRect(0, 0, width, height);
+
+      const centerX = width / 2;
+      const centerY = height / 2;
+
+      // Draw particle vortex sucking into center portal
+      particles.forEach((p) => {
+        p.angle += 0.015;
+        p.dist -= p.speed;
+        if (p.dist <= 0) {
+          p.dist = Math.max(width, height) * 0.6;
+          p.angle = Math.random() * Math.PI * 2;
+        }
+
+        const px = centerX + Math.cos(p.angle) * p.dist;
+        const py = centerY + Math.sin(p.angle) * p.dist;
+
+        ctx.beginPath();
+        ctx.arc(px, py, p.size, 0, Math.PI * 2);
+        ctx.fillStyle = p.color;
+        ctx.shadowBlur = 10;
+        ctx.shadowColor = p.color;
+        ctx.fill();
+      });
+
+      animId = requestAnimationFrame(render);
+    };
+
+    render();
+
+    const handleResize = () => {
+      if (!canvas) return;
+      width = canvas.width = window.innerWidth;
+      height = canvas.height = window.innerHeight;
+    };
+    window.addEventListener("resize", handleResize);
 
     return () => {
-      clearInterval(loadInterval);
-      [t1, t2, t3, t4].forEach(clearTimeout);
+      cancelAnimationFrame(animId);
+      window.removeEventListener("resize", handleResize);
     };
-  }, [onComplete]);
+  }, []);
 
   if (phase === "done") return null;
 
-  const isOpening = phase === "open" || phase === "reveal";
-  const isRevealing = phase === "reveal";
-
   return (
     <div
-      className="fixed inset-0 z-[9999] bg-black overflow-hidden select-none pointer-events-none"
-      style={{
-        opacity: isRevealing ? 0 : 1,
-        transition: isRevealing ? "opacity 0.8s ease-in-out" : undefined,
-      }}
+      className={`fixed inset-0 z-[9999] overflow-hidden select-none bg-[#040616] flex items-center justify-center transition-all duration-700 ${
+        phase === "warp" ? "scale-150 opacity-0 blur-md" : "scale-100 opacity-100"
+      }`}
     >
-      {/* LEFT GATE PANEL */}
+      {/* Background vortex canvas */}
+      <canvas ref={canvasRef} className="absolute inset-0 pointer-events-none z-0" />
+
+      {/* Cyber Grid Lines */}
       <div
-        className="absolute top-0 left-0 w-1/2 h-full overflow-hidden border-r border-[#D64D8D]/30"
+        className="absolute inset-0 z-0 pointer-events-none opacity-20"
         style={{
-          transform: isOpening ? "translateX(-100%)" : "translateX(0)",
-          transition: "transform 1.4s cubic-bezier(0.77, 0, 0.175, 1)",
+          backgroundImage:
+            "linear-gradient(to right, #721F4C 1px, transparent 1px), linear-gradient(to bottom, #721F4C 1px, transparent 1px)",
+          backgroundSize: "60px 60px",
         }}
-      >
-        {/* Background Image - Left Half */}
-        <div
-          className="absolute inset-0 bg-black"
-          style={{
-            backgroundImage: "url('/gate-temple.png')",
-            backgroundSize: "200vw 100vh",
-            backgroundPosition: "left center",
-            backgroundRepeat: "no-repeat",
-            filter: "brightness(0.85) saturate(1.1)",
-          }}
-        />
+      />
 
-        {/* Dark overlay & grid details */}
-        <div className="absolute inset-0 bg-black/10" />
-        <div className="absolute inset-0 crt-scanlines opacity-10" />
-        
-        {/* Ambient side glow */}
-        <div className="absolute inset-y-0 right-0 w-[80px] bg-gradient-to-l from-[#D64D8D]/15 to-transparent" />
-        
-        {/* Cyberpunk corner details */}
-        <div className="absolute top-10 left-10 w-10 h-10 border-l-2 border-t-2 border-[#D64D8D]/40" />
-        <div className="absolute bottom-10 left-10 w-10 h-10 border-l-2 border-b-2 border-[#D64D8D]/40" />
-        
-        {/* System log */}
-        <div className="absolute bottom-12 left-12 font-mono text-[9px] tracking-[0.3em] text-[#D64D8D]/60 uppercase">
-          <div>SYS://GATE.SEC.A</div>
-          <div className="text-white/30 mt-1">ESTABLISHING LINK...</div>
-        </div>
-      </div>
+      {/* CRT Scanlines */}
+      <div className="absolute inset-0 crt-scanlines opacity-15 pointer-events-none z-10" />
 
-      {/* RIGHT GATE PANEL */}
-      <div
-        className="absolute top-0 right-0 w-1/2 h-full overflow-hidden border-l border-[#D64D8D]/30"
-        style={{
-          transform: isOpening ? "translateX(100%)" : "translateX(0)",
-          transition: "transform 1.4s cubic-bezier(0.77, 0, 0.175, 1)",
-        }}
-      >
-        {/* Background Image - Right Half */}
-        <div
-          className="absolute inset-0 bg-black"
-          style={{
-            backgroundImage: "url('/gate-temple.png')",
-            backgroundSize: "200vw 100vh",
-            backgroundPosition: "right center",
-            backgroundRepeat: "no-repeat",
-            filter: "brightness(0.85) saturate(1.1)",
-          }}
-        />
-
-        {/* Dark overlay & grid details */}
-        <div className="absolute inset-0 bg-black/10" />
-        <div className="absolute inset-0 crt-scanlines opacity-10" />
-
-        {/* Ambient side glow */}
-        <div className="absolute inset-y-0 left-0 w-[80px] bg-gradient-to-r from-[#D64D8D]/15 to-transparent" />
-
-        {/* Cyberpunk corner details */}
-        <div className="absolute top-10 right-10 w-10 h-10 border-r-2 border-t-2 border-[#D64D8D]/40" />
-        <div className="absolute bottom-10 right-10 w-10 h-10 border-r-2 border-b-2 border-[#D64D8D]/40" />
-
-        {/* System status */}
-        <div className="absolute bottom-12 right-12 text-right font-mono text-[9px] tracking-[0.3em] text-[#D64D8D]/60 uppercase">
-          <div>SYS://GATE.SEC.B</div>
-          <div className="text-[#F2D2AE]/60 mt-1">ACCESS GRANTED</div>
-        </div>
-      </div>
-
-      {/* Central Laser Beam (where panels meet) */}
-      {!isOpening && (
-        <div
-          className="absolute left-1/2 top-0 bottom-0 -translate-x-1/2 z-10"
-          style={{
-            width: phase === "beam" ? "40px" : "2px",
-            background: phase === "beam"
-              ? "linear-gradient(90deg, transparent, rgba(214,77,141,0.5), #fff, rgba(214,77,141,0.5), transparent)"
-              : "linear-gradient(180deg, transparent, #D64D8D, #F2D2AE, #D64D8D, transparent)",
-            boxShadow: phase === "beam"
-              ? "0 0 30px #D64D8D, 0 0 60px #D64D8D"
-              : "0 0 15px rgba(214,77,141,0.5)",
-            transition: "width 0.4s ease-out, background 0.3s ease",
-            opacity: 0.9,
-          }}
-        />
+      {/* Glitch Overlay Flash on Finish */}
+      {phase === "glitch" && (
+        <div className="absolute inset-0 z-50 bg-[#D64D8D]/20 backdrop-invert mix-blend-difference pointer-events-none animate-pulse" />
       )}
 
-      {/* UI Overlay: Loading progress */}
-      <div
-        className="absolute inset-0 z-20 flex flex-col items-center justify-center pointer-events-none"
-        style={{
-          opacity: isOpening ? 0 : 1,
-          transition: "opacity 0.4s ease-out",
-        }}
-      >
-        {/* Glow backdrop behind loader */}
-        <div className="absolute w-[300px] h-[300px] bg-[#D64D8D]/5 rounded-full blur-[80px]" />
-
-        <div className="relative mt-80 flex flex-col items-center gap-3">
-          {/* Circular scanner ring */}
-          <div className="absolute -inset-8 border border-[#D64D8D]/20 rounded-full animate-spin [animation-duration:10s]" />
+      {/* Center Portal Iris Core */}
+      <div className="relative z-20 flex flex-col items-center justify-center p-6 text-center max-w-xl">
+        
+        {/* Holographic Glowing Ring */}
+        <div className="relative w-64 h-64 md:w-80 md:h-80 flex items-center justify-center mb-8">
           
-          <div className="w-48 h-[2px] bg-[#4A1C3A]/40 rounded-full overflow-hidden">
+          {/* Outer Orbit Ring */}
+          <div className="absolute inset-0 rounded-full border border-[#D64D8D]/40 border-dashed animate-[spin_12s_linear_infinite]" />
+          
+          {/* Reverse Orbit Ring */}
+          <div className="absolute inset-4 rounded-full border border-[#F2D2AE]/30 border-dotted animate-[spin_8s_linear_infinite_reverse]" />
+          
+          {/* Glowing Radial Core */}
+          <div className="absolute inset-8 rounded-full bg-gradient-to-tr from-[#721F4C] via-[#D64D8D]/20 to-[#F2D2AE]/10 blur-xl animate-pulse" />
+
+          {/* Central Crest / Emblem */}
+          <div className="relative z-10 flex flex-col items-center gap-2">
+            <div className="p-4 rounded-2xl border border-[#D64D8D]/60 bg-black/60 backdrop-blur-md shadow-[0_0_40px_rgba(214,77,141,0.4)]">
+              <img
+                src="/pravrutti-logo.png"
+                alt="Pravrutti Logo"
+                className="w-32 md:w-44 h-auto object-contain drop-shadow-[0_0_15px_rgba(214,77,141,0.6)]"
+              />
+            </div>
+          </div>
+
+          {/* Progress Percentage Display around Portal */}
+          <div className="absolute -bottom-3 px-4 py-1 rounded-full bg-black/80 border border-[#D64D8D]/60 backdrop-blur-md shadow-[0_0_20px_rgba(214,77,141,0.4)] flex items-center gap-2">
+            {progress < 100 ? (
+              <Lock className="w-3.5 h-3.5 text-[#D64D8D] animate-pulse" />
+            ) : (
+              <Unlock className="w-3.5 h-3.5 text-green-400" />
+            )}
+            <span className="font-mono text-xs md:text-sm font-bold text-[#F2D2AE] tracking-widest tabular-nums">
+              {progress}%
+            </span>
+          </div>
+        </div>
+
+        {/* Terminal Log Output */}
+        <div className="w-full space-y-3">
+          {/* Progress Bar Container */}
+          <div className="relative w-full h-2 bg-[#150B1E] rounded-full overflow-hidden border border-[#721F4C]/60 p-0.5">
             <div
-              className="h-full bg-gradient-to-r from-[#721F4C] via-[#D64D8D] to-[#F2D2AE]"
-              style={{
-                width: `${progress}%`,
-                transition: "width 0.05s linear",
-              }}
+              className="h-full bg-gradient-to-r from-[#721F4C] via-[#D64D8D] to-[#F2D2AE] rounded-full transition-all duration-75 shadow-[0_0_12px_#D64D8D]"
+              style={{ width: `${progress}%` }}
             />
           </div>
-          <span className="font-mono text-[9px] tracking-[0.4em] text-[#F2D2AE] tabular-nums">
-            DECRYPTING PORTAL... {progress}%
-          </span>
+
+          {/* Live Log Message */}
+          <div className="h-6 flex items-center justify-center gap-2 font-mono text-[10px] md:text-xs tracking-[0.25em] text-[#D64D8D] uppercase">
+            <Sparkles className="w-3 h-3 text-[#F2D2AE] animate-spin" />
+            <span>{logText}</span>
+          </div>
         </div>
+
+        {/* Skip Intro Button */}
+        <button
+          onClick={() => {
+            setPhase("done");
+            onComplete();
+          }}
+          className="mt-8 px-4 py-1.5 rounded-full border border-white/10 hover:border-[#D64D8D]/60 bg-black/40 hover:bg-[#D64D8D]/20 text-[9px] font-mono text-white/50 hover:text-[#F2D2AE] tracking-[0.3em] uppercase transition-all duration-300 pointer-events-auto cursor-pointer"
+        >
+          [ SKIP INTRO ]
+        </button>
+
       </div>
     </div>
   );
