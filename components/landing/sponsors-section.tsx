@@ -48,12 +48,12 @@ function SponsorCard({ sponsor, index }: { sponsor: typeof sponsors[0]; index: n
             <ExternalLink className="w-4 h-4 text-[#F7EEE4]/20 group-hover:text-[#F2D2AE] transition-colors" />
           </div>
 
-          <h3 className="text-lg font-orbitron font-black text-[#F7EEE4] group-hover:text-[#F2D2AE] transition-colors tracking-wider mb-2">
+          <h3 className="text-xl font-orbitron font-black text-[#F7EEE4] group-hover:text-[#F2D2AE] transition-colors tracking-wider mb-2">
             {sponsor.name}
           </h3>
-          <p className="text-xs text-[#F7EEE4]/40 leading-relaxed font-mono flex-1">{meta.desc}</p>
+          <p className="text-sm text-[#F7EEE4]/65 leading-relaxed font-mono flex-1">{meta.desc}</p>
 
-          <div className="mt-6 pt-4 border-t border-[#4A1C3A]/40 font-mono text-[9px] tracking-[0.2em] uppercase text-[#721F4C] group-hover:text-[#D64D8D] transition-colors">
+          <div className="mt-6 pt-4 border-t border-[#4A1C3A]/40 font-mono text-xs tracking-[0.2em] uppercase text-[#D64D8D]/80 group-hover:text-[#D64D8D] transition-colors">
             Visit Website →
           </div>
         </div>
@@ -71,7 +71,7 @@ export function SponsorsSection() {
 
       <div className="relative z-10 max-w-[1200px] mx-auto px-6">
         <div ref={headerRef} className="reveal-up text-center max-w-3xl mx-auto mb-20">
-          <span className="inline-flex items-center gap-3 font-mono text-[10px] tracking-[0.3em] uppercase text-[#D64D8D] mb-6">
+          <span className="inline-flex items-center gap-3 font-mono text-xs md:text-sm tracking-[0.28em] uppercase text-[#D64D8D] mb-6">
             <span className="w-10 h-px bg-[#721F4C]" />
             PARTNERS
             <span className="w-10 h-px bg-[#721F4C]" />

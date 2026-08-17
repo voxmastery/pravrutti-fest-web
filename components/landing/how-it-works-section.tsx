@@ -63,8 +63,13 @@ function StepCard({ step, index }: { step: typeof steps[0]; index: number }) {
         {/* Number + Icon */}
         <div className="flex justify-between items-center mb-8">
           <span
-            className="text-5xl font-orbitron font-black opacity-20 group-hover:opacity-50 transition-opacity"
-            style={{ color: step.color }}
+            className="text-5xl md:text-6xl font-orbitron font-black transition-all"
+            style={{
+              color: step.color,
+              // Solid, full-opacity numerals with a matching glow. These used to sit at
+              // opacity-20, which made 02 and 03 all but invisible on the dark panel.
+              textShadow: `0 0 18px ${step.color}66, 0 0 42px ${step.color}33`,
+            }}
           >
             {step.number}
           </span>
@@ -83,7 +88,7 @@ function StepCard({ step, index }: { step: typeof steps[0]; index: number }) {
           {step.title}
         </h3>
 
-        <p className="text-sm text-[#F7EEE4]/50 leading-relaxed font-mono">
+        <p className="text-base text-[#F7EEE4]/70 leading-relaxed font-mono">
           {step.description}
         </p>
 
@@ -104,14 +109,14 @@ export function HowItWorksSection() {
   const ctaRef = useScrollReveal();
 
   return (
-    <section className="relative py-28 lg:py-36 bg-[#040616] overflow-hidden border-t border-[#4A1C3A]/40">
+    <section className="relative py-28 lg:py-36 bg-[#0A0818] overflow-hidden border-t border-[#4A1C3A]/40">
       {/* Background ambient */}
       <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-[#721F4C]/8 rounded-full blur-[150px] pointer-events-none" />
 
       <div className="relative z-10 max-w-[1200px] mx-auto px-6">
         {/* Header */}
         <div ref={headerRef} className="reveal-up text-center max-w-3xl mx-auto mb-20">
-          <span className="inline-flex items-center gap-3 font-mono text-[10px] tracking-[0.3em] uppercase text-[#D64D8D] mb-6">
+          <span className="inline-flex items-center gap-3 font-mono text-xs md:text-sm tracking-[0.28em] uppercase text-[#D64D8D] mb-6">
             <span className="w-10 h-px bg-[#721F4C]" />
             HOW TO PARTICIPATE
             <span className="w-10 h-px bg-[#721F4C]" />
@@ -119,7 +124,7 @@ export function HowItWorksSection() {
           <h2 className="text-4xl md:text-6xl font-orbitron font-black tracking-wider">
             THREE <span className="text-stroke">STEPS</span>
           </h2>
-          <p className="mt-6 text-base md:text-lg text-[#F7EEE4]/50 font-mono max-w-xl mx-auto">
+          <p className="mt-6 text-base md:text-lg text-[#F7EEE4]/70 font-mono max-w-xl mx-auto">
             From choosing your challenge to winning prizes — here's your roadmap.
           </p>
         </div>
