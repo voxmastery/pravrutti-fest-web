@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Calendar, Timer, Download, Zap } from "lucide-react";
+import { ArrowRight, Calendar, Timer, Download, Zap, Trophy } from "lucide-react";
 import { useParallax, useMousePosition } from "@/hooks/use-animations";
 
 /* ───────────────────── Matrix Rain Column ───────────────────── */
@@ -67,7 +67,16 @@ function MatrixRain() {
     <canvas
       ref={canvasRef}
       className="absolute inset-0 z-[1] pointer-events-none"
-      style={{ opacity: 0.35, mixBlendMode: "screen" }}
+      style={{
+        // Dialled well back and masked away from the centre: at full strength the
+        // katakana ran straight through the headline and fought the copy.
+        opacity: 0.16,
+        mixBlendMode: "screen",
+        maskImage:
+          "radial-gradient(ellipse 62% 58% at 50% 48%, transparent 20%, rgba(0,0,0,0.55) 55%, #000 85%)",
+        WebkitMaskImage:
+          "radial-gradient(ellipse 62% 58% at 50% 48%, transparent 20%, rgba(0,0,0,0.55) 55%, #000 85%)",
+      }}
     />
   );
 }
@@ -147,11 +156,11 @@ export function HeroSection() {
   const [isLoaded, setIsLoaded] = useState(false);
   const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
   const [typedText, setTypedText] = useState("");
-  const logoRef = useRef<HTMLDivElement>(null);
+  const logoRef = useRef<HTMLHeadingElement>(null);
   const parallaxOffset = useParallax(0.15);
   const mouse = useMousePosition(logoRef);
 
-  const fullTagline = "CODE. CREATE. INNOVATE. ELEVATE.";
+  const fullTagline = "3 DAYS · 25+ ARENAS · ONE NATIONAL STAGE";
 
   useEffect(() => {
     const t = setTimeout(() => setIsLoaded(true), 300);
@@ -253,8 +262,8 @@ export function HeroSection() {
       />
 
       {/* ===== Left HUD ===== */}
-      <div className="hidden xl:flex flex-col gap-4 absolute left-8 top-[22%] z-10 w-56 font-mono text-[9px] text-[#D64D8D]/50 text-left border-l border-[#D64D8D]/20 pl-4 py-3">
-        <div className="text-[#F2D2AE]/70 font-bold tracking-[0.25em] text-[8px]">// SYSTEM_INITIALIZE</div>
+      <div className="hidden xl:flex flex-col gap-4 absolute left-8 top-[22%] z-10 w-60 font-mono text-[11px] text-[#D64D8D]/70 text-left border-l border-[#D64D8D]/20 pl-4 py-3">
+        <div className="text-[#F2D2AE]/80 font-bold tracking-[0.25em] text-[10px]">// SYSTEM_INITIALIZE</div>
         <div className="h-px bg-gradient-to-r from-[#D64D8D]/40 to-transparent w-20" />
         <div className="space-y-1.5">
           <div className="flex gap-2"><span className="text-[#D64D8D]">&gt;</span> <span>CORE_LOAD: <span className="text-[#F2D2AE]/80">SUCCESS</span></span></div>
@@ -263,7 +272,7 @@ export function HeroSection() {
           <div className="flex gap-2"><span className="text-[#D64D8D]">&gt;</span> <span>MODE: <span className="text-[#D64D8D]">RETRO_ARCADE</span></span></div>
           <div className="flex gap-2"><span className="text-[#D64D8D]">&gt;</span> <span className="animate-pulse text-[#F2D2AE]/60">AWAITING_REGISTRATION...</span></div>
         </div>
-        <div className="text-[7px] text-white/20 mt-3 space-y-0.5 font-mono">
+        <div className="text-[10px] text-white/35 mt-3 space-y-1 font-mono">
           <div>LOC: 13.0294° N, 77.5401° E</div>
           <div>NET: PRAVRUTTI_SECURE_NODE</div>
           <div>EST_ATTENDANCE: 5000+</div>
@@ -271,8 +280,8 @@ export function HeroSection() {
       </div>
 
       {/* ===== Right HUD ===== */}
-      <div className="hidden xl:flex flex-col gap-4 absolute right-8 top-[22%] z-10 w-56 font-mono text-[9px] text-[#D64D8D]/50 text-right border-r border-[#D64D8D]/20 pr-4 py-3">
-        <div className="text-[#F2D2AE]/70 font-bold tracking-[0.25em] text-[8px]">// REGISTRATION_DESK</div>
+      <div className="hidden xl:flex flex-col gap-4 absolute right-8 top-[22%] z-10 w-60 font-mono text-[11px] text-[#D64D8D]/70 text-right border-r border-[#D64D8D]/20 pr-4 py-3">
+        <div className="text-[#F2D2AE]/80 font-bold tracking-[0.25em] text-[10px]">// REGISTRATION_DESK</div>
         <div className="h-px bg-gradient-to-l from-[#D64D8D]/40 to-transparent w-20 ml-auto" />
         <div className="space-y-1.5">
           <div>STATUS: <span className="text-green-400">LIVE</span></div>
@@ -296,27 +305,45 @@ export function HeroSection() {
       </div>
 
       {/* ═══════════════════ MAIN CONTENT ═══════════════════ */}
-      <div className="relative z-10 w-full max-w-5xl mx-auto px-6 pt-16 pb-10 flex flex-col items-center text-center">
+      {/* Legibility scrim — guarantees the copy has clean ground to sit on no
+          matter how busy the temple photograph is behind it. */}
+      <div
+        className="absolute z-[7] pointer-events-none inset-0"
+        style={{
+          background:
+            "radial-gradient(ellipse 58% 62% at 50% 50%, rgba(5,3,9,0.78) 0%, rgba(5,3,9,0.55) 45%, transparent 78%)",
+        }}
+      />
+
+      {/* pt clears the 80px transparent header. It was pt-28 (112px), which on top
+          of the header's own empty lower half read as a large dead gap under the nav. */}
+      <div className="relative z-10 w-full max-w-5xl mx-auto px-5 sm:px-6 pt-[88px] pb-12 flex flex-col items-center text-center">
 
         {/* "INSERT COIN" arcade prompt */}
         <div
           className={`mb-4 transition-all duration-1000 ${isLoaded ? "opacity-100" : "opacity-0"}`}
         >
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-[#D64D8D]/30 bg-[#150B1E]/40 backdrop-blur-md">
-            <Zap className="w-3 h-3 text-[#D64D8D] animate-pulse" />
-            <span className="font-mono text-[8px] tracking-[0.4em] uppercase text-[#D64D8D]/80">
+          {/* Tracking tightens on small screens so the university name can carry a
+              readable size instead of being shrunk to fit the letter-spacing. */}
+          <div className="inline-flex items-center gap-2 sm:gap-2.5 px-3.5 sm:px-5 py-2 rounded-full border border-[#D64D8D]/40 bg-[#150B1E]/60 backdrop-blur-md">
+            <Zap className="hidden sm:block w-3.5 h-3.5 text-[#D64D8D] animate-pulse shrink-0" />
+            {/* Kept deliberately below the wordmark's width — this is an eyebrow,
+                and at md:text-lg/0.14em it measured wider than the logo itself. */}
+            <span className="font-mono text-[13px] sm:text-sm md:text-base tracking-[0.04em] sm:tracking-[0.1em] uppercase text-[#F2D2AE] leading-tight">
               Ramaiah University of Applied Sciences
             </span>
-            <Zap className="w-3 h-3 text-[#D64D8D] animate-pulse" />
+            <Zap className="hidden sm:block w-3.5 h-3.5 text-[#D64D8D] animate-pulse shrink-0" />
           </div>
         </div>
 
-        {/* ── THE LOGO ── */}
-        <div
+        {/* ── THE LOGO — this is the page's real h1; the wordmark lives in the
+               artwork, so the accessible/SEO heading rides along as sr-only text ── */}
+        <h1
           ref={logoRef}
-          className={`relative mb-2 cursor-default transition-all duration-[2s] ${isLoaded ? "opacity-100 scale-100" : "opacity-0 scale-90"}`}
+          className={`relative mb-3 cursor-default transition-all duration-[2s] ${isLoaded ? "opacity-100 scale-100" : "opacity-0 scale-90"}`}
           style={{ transitionDelay: "0.3s" }}
         >
+          <span className="sr-only">Pravrutti 2.0 — National Tech Fest, Ramaiah University of Applied Sciences</span>
           {/* Pulsing glow behind logo */}
           <div
             className="absolute -inset-20 pointer-events-none rounded-full"
@@ -330,7 +357,9 @@ export function HeroSection() {
           <img
             src="/pravrutti-logo.png"
             alt="Pravrutti 2.0"
-            className="relative w-[300px] md:w-[420px] lg:w-[520px] h-auto object-contain select-none"
+            className="relative w-[280px] sm:w-[380px] md:w-[460px] lg:w-[560px] h-auto object-contain select-none"
+            width={1600}
+            height={800}
             draggable={false}
             style={{
               transform: mouse.active
@@ -340,37 +369,33 @@ export function HeroSection() {
               filter: "drop-shadow(0 0 30px rgba(214,77,141,0.25)) drop-shadow(0 0 60px rgba(114,31,76,0.12))",
             }}
           />
-        </div>
+        </h1>
 
-        {/* ── Tagline with typewriter ── */}
+        {/* ── Typewriter strapline.
+               The logo lockup already carries "CODE. CREATE. INNOVATE. ELEVATE."
+               and "NATIONAL TECH FEST", so echoing either here just stacked the
+               same words three times. This line adds the thing the artwork can't:
+               where it is and who it's open to. ── */}
         <div
-          className={`mb-3 h-8 md:h-10 transition-all duration-700 ${isLoaded ? "opacity-100" : "opacity-0"}`}
+          className={`mb-6 h-8 md:h-10 flex items-center transition-all duration-700 ${isLoaded ? "opacity-100" : "opacity-0"}`}
           style={{ transitionDelay: "0.6s" }}
         >
-          <h1 className="font-orbitron text-sm md:text-xl lg:text-2xl font-black tracking-[0.15em] text-[#F2D2AE] inline-block">
+          <p className="font-orbitron text-sm sm:text-base md:text-xl font-black tracking-[0.12em] text-[#F2D2AE] inline-block">
             <NeonFlickerText text={typedText} />
-            <span className="inline-block w-[2px] h-[1em] bg-[#D64D8D] ml-1 align-middle" style={{ animation: "blink-caret 0.6s step-end infinite" }} />
-          </h1>
-        </div>
-
-        {/* ── "EXPERIENCE INNOVATION" sub-tagline ── */}
-        <div
-          className={`mb-5 transition-all duration-1000 ${isLoaded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}
-          style={{ transitionDelay: "0.9s" }}
-        >
-          <p className="font-mono text-[9px] md:text-[11px] tracking-[0.5em] uppercase text-[#D64D8D]/80">
-            &lt; experience innovation /&gt;
+            <span
+              className="inline-block w-[2px] h-[1em] bg-[#D64D8D] ml-1 align-middle"
+              style={{ animation: "blink-caret 0.6s step-end infinite" }}
+            />
           </p>
         </div>
 
         {/* ── Description ── */}
         <p
-          className={`max-w-md text-[10px] md:text-xs text-[#F7EEE4]/60 leading-relaxed font-mono mb-5 transition-all duration-1000 ${isLoaded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"}`}
+          className={`max-w-xl text-sm md:text-base text-[#F7EEE4]/75 leading-relaxed font-mono mb-6 transition-all duration-1000 ${isLoaded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"}`}
           style={{ transitionDelay: "1s" }}
         >
-          Step through the gate into RUAS Peenya campus.
-          <br className="hidden md:block" />
-          25+ technical arenas &bull; ₹2,00,000+ prize pool &bull; 3 days.
+          Step through the gate into the RUAS Peenya campus, Bengaluru — open to
+          students from across the country.
         </p>
 
         {/* ── Countdown ── */}
@@ -378,11 +403,11 @@ export function HeroSection() {
           className={`mb-5 transition-all duration-1000 ${isLoaded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"}`}
           style={{ transitionDelay: "1.1s" }}
         >
-          <div className="flex items-center justify-center gap-2 mb-2">
-            <Timer className="w-3 h-3 text-[#D64D8D]/70 animate-pulse" />
-            <span className="font-mono text-[7px] tracking-[0.4em] uppercase text-[#D64D8D]/70">Portal Opens In</span>
+          <div className="flex items-center justify-center gap-2 mb-3">
+            <Timer className="w-4 h-4 text-[#D64D8D] animate-pulse" />
+            <span className="font-mono text-[11px] md:text-xs tracking-[0.3em] uppercase text-[#D64D8D]">Portal Opens In</span>
           </div>
-          <div className="flex gap-2 md:gap-3">
+          <div className="flex gap-2.5 md:gap-3">
             {[
               { v: timeLeft.days, l: "DAYS" },
               { v: timeLeft.hours, l: "HRS" },
@@ -390,18 +415,18 @@ export function HeroSection() {
               { v: timeLeft.seconds, l: "SEC" },
             ].map((t) => (
               <div key={t.l} className="flex flex-col items-center">
-                <div className="relative w-12 md:w-14 h-12 md:h-14 flex items-center justify-center rounded border border-[#D64D8D]/20 bg-black/60 backdrop-blur-sm overflow-hidden group hover:border-[#D64D8D]/50 transition-all hover:shadow-[0_0_20px_rgba(214,77,141,0.2)]">
+                <div className="relative w-16 md:w-20 h-16 md:h-20 flex items-center justify-center rounded-lg border border-[#D64D8D]/30 bg-black/60 backdrop-blur-sm overflow-hidden group hover:border-[#D64D8D]/60 transition-all hover:shadow-[0_0_20px_rgba(214,77,141,0.2)]">
                   <div className="absolute inset-0 crt-scanlines opacity-10 pointer-events-none" />
                   {/* Corner brackets */}
-                  <div className="absolute top-0 left-0 w-2 h-2 border-t border-l border-[#D64D8D]/40" />
-                  <div className="absolute top-0 right-0 w-2 h-2 border-t border-r border-[#D64D8D]/40" />
-                  <div className="absolute bottom-0 left-0 w-2 h-2 border-b border-l border-[#D64D8D]/40" />
-                  <div className="absolute bottom-0 right-0 w-2 h-2 border-b border-r border-[#D64D8D]/40" />
-                  <span className="relative font-vt323 text-xl md:text-2xl text-[#F2D2AE] tabular-nums group-hover:text-[#D64D8D] transition-colors">
+                  <div className="absolute top-0 left-0 w-2.5 h-2.5 border-t border-l border-[#D64D8D]/50" />
+                  <div className="absolute top-0 right-0 w-2.5 h-2.5 border-t border-r border-[#D64D8D]/50" />
+                  <div className="absolute bottom-0 left-0 w-2.5 h-2.5 border-b border-l border-[#D64D8D]/50" />
+                  <div className="absolute bottom-0 right-0 w-2.5 h-2.5 border-b border-r border-[#D64D8D]/50" />
+                  <span className="relative font-orbitron font-black text-2xl md:text-3xl text-[#F2D2AE] tabular-nums group-hover:text-[#D64D8D] transition-colors">
                     {String(t.v).padStart(2, "0")}
                   </span>
                 </div>
-                <span className="font-mono text-[6px] tracking-[0.2em] text-[#F7EEE4]/40 mt-1 uppercase">{t.l}</span>
+                <span className="font-mono text-[10px] md:text-xs tracking-[0.2em] text-[#F7EEE4]/60 mt-1.5 uppercase">{t.l}</span>
               </div>
             ))}
           </div>
@@ -412,10 +437,69 @@ export function HeroSection() {
           className={`mb-5 transition-all duration-1000 ${isLoaded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"}`}
           style={{ transitionDelay: "1.3s" }}
         >
-          <span className="inline-flex items-center gap-2 font-mono text-[9px] md:text-[10px] tracking-[0.15em] text-[#F7EEE4]/60 border border-[#4A1C3A]/35 bg-black/30 backdrop-blur-sm px-3.5 py-1 rounded-full">
-            <Calendar className="w-3 h-3 text-[#D64D8D]/60" />
+          <span className="inline-flex items-center gap-2 font-mono text-xs md:text-sm tracking-[0.12em] text-[#F7EEE4]/85 border border-[#4A1C3A]/60 bg-black/40 backdrop-blur-sm px-4 py-1.5 rounded-full">
+            <Calendar className="w-4 h-4 text-[#D64D8D]" />
             15th, 16th &amp; 17th October 2026
           </span>
+        </div>
+
+        {/* ── PRIZE POOL — the headline attraction ── */}
+        <div
+          className={`w-full max-w-3xl mb-7 transition-all duration-1000 ${isLoaded ? "opacity-100 translate-y-0 scale-100" : "opacity-0 translate-y-8 scale-95"}`}
+          style={{ transitionDelay: "1.4s" }}
+        >
+          <div className="relative rounded-2xl border-2 border-[#BF8A1B]/45 bg-gradient-to-b from-[#2B122C]/80 via-[#150B1E]/85 to-black/85 backdrop-blur-md px-5 py-6 sm:px-9 sm:py-7 overflow-hidden">
+            {/* Warm glow behind the number */}
+            <div
+              className="absolute inset-x-0 top-0 h-full pointer-events-none"
+              style={{
+                background: "radial-gradient(ellipse at 30% 40%, rgba(242,210,174,0.16) 0%, transparent 62%)",
+              }}
+            />
+            <div className="absolute inset-0 crt-scanlines opacity-[0.07] pointer-events-none" />
+            {/* Corner brackets */}
+            <div className="absolute top-0 left-0 w-5 h-5 border-t-2 border-l-2 border-[#F2D2AE]/60 rounded-tl-2xl" />
+            <div className="absolute bottom-0 right-0 w-5 h-5 border-b-2 border-r-2 border-[#F2D2AE]/60 rounded-br-2xl" />
+
+            <div className="relative flex flex-col sm:flex-row items-center sm:items-stretch justify-between gap-5 sm:gap-6">
+              {/* Prize pool — dominant */}
+              <div className="text-center sm:text-left min-w-0">
+                <div className="flex items-center justify-center sm:justify-start gap-2 mb-1.5">
+                  <Trophy className="w-4 h-4 md:w-5 md:h-5 text-[#F2D2AE]" />
+                  <span className="font-mono text-[11px] md:text-sm tracking-[0.28em] uppercase text-[#F2D2AE]">
+                    Total Prize Pool
+                  </span>
+                </div>
+                <div
+                  className="font-orbitron font-black leading-none text-[2.5rem] sm:text-5xl md:text-6xl tracking-tight whitespace-nowrap"
+                  style={{
+                    background: "linear-gradient(180deg, #FFF3E0 0%, #F2D2AE 45%, #BF8A1B 100%)",
+                    WebkitBackgroundClip: "text",
+                    backgroundClip: "text",
+                    color: "transparent",
+                    filter: "drop-shadow(0 0 22px rgba(242,210,174,0.35))",
+                  }}
+                >
+                  ₹2,00,000+
+                </div>
+              </div>
+
+              {/* Divider */}
+              <div className="hidden sm:block w-px self-stretch bg-gradient-to-b from-transparent via-[#BF8A1B]/55 to-transparent" />
+              <div className="sm:hidden h-px w-3/4 bg-gradient-to-r from-transparent via-[#BF8A1B]/55 to-transparent" />
+
+              {/* Event count — secondary, but panelled so it reads as its own
+                  stat instead of floating against the band's edge. */}
+              <div className="shrink-0 flex flex-col items-center justify-center text-center rounded-xl border border-[#D64D8D]/30 bg-[#D64D8D]/[0.07] px-5 py-3">
+                <div className="font-orbitron font-black leading-none text-4xl sm:text-5xl text-[#D64D8D] drop-shadow-[0_0_18px_rgba(214,77,141,0.45)]">
+                  25+
+                </div>
+                <span className="font-mono text-[11px] md:text-xs tracking-[0.22em] uppercase text-[#F7EEE4]/85 mt-2 whitespace-nowrap">
+                  Tech Events
+                </span>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* ── CTA Buttons ── */}
@@ -426,17 +510,17 @@ export function HeroSection() {
           <Link href="/events">
             <Button
               size="lg"
-              className="arcade-btn-primary rounded-lg font-orbitron text-[9px] md:text-[10px] px-7 md:px-9 py-4 h-auto font-black tracking-[0.15em] cursor-pointer"
+              className="arcade-btn-primary rounded-lg font-orbitron text-xs md:text-sm px-7 md:px-9 py-5 h-auto font-black tracking-[0.12em] cursor-pointer"
             >
-              EXPLORE EVENTS <ArrowRight className="w-3.5 h-3.5 ml-2" />
+              EXPLORE EVENTS <ArrowRight className="w-4 h-4 ml-2" />
             </Button>
           </Link>
           <a href="/Pravrutti_Main_Brochure.pdf" download>
             <Button
               size="lg"
-              className="arcade-btn rounded-lg font-orbitron text-[9px] md:text-[10px] px-7 md:px-9 py-4 h-auto font-black tracking-[0.15em] text-[#F2D2AE] cursor-pointer"
+              className="arcade-btn rounded-lg font-orbitron text-xs md:text-sm px-7 md:px-9 py-5 h-auto font-black tracking-[0.12em] text-[#F2D2AE] cursor-pointer"
             >
-              <Download className="w-3.5 h-3.5 mr-2" /> BROCHURE
+              <Download className="w-4 h-4 mr-2" /> BROCHURE
             </Button>
           </a>
         </div>
@@ -449,18 +533,27 @@ export function HeroSection() {
           <div className="grid grid-cols-3 gap-3">
             {[
               { v: "5000+", l: "Participants", c: "text-[#F2D2AE]" },
-              { v: "25+", l: "Tech Events", c: "text-[#D64D8D]" },
-              { v: "₹2L+", l: "Prize Pool", c: "text-[#BF8A1B]" },
+              { v: "3", l: "Days", c: "text-[#D64D8D]" },
+              { v: "20+", l: "Clubs", c: "text-[#BF8A1B]" },
             ].map((s) => (
               <div key={s.l} className="text-center group cursor-default">
-                <div className={`text-lg md:text-2xl font-orbitron font-black ${s.c} group-hover:scale-110 transition-transform`}>
+                <div className={`text-2xl md:text-3xl font-orbitron font-black ${s.c} group-hover:scale-110 transition-transform`}>
                   {s.v}
                 </div>
-                <div className="text-[7px] font-mono tracking-[0.2em] text-[#F7EEE4]/50 uppercase mt-0.5">{s.l}</div>
+                <div className="text-[10px] md:text-xs font-mono tracking-[0.2em] text-[#F7EEE4]/60 uppercase mt-1">{s.l}</div>
               </div>
             ))}
           </div>
         </div>
+      </div>
+
+      {/* ── HUD corner framing — reads the whole viewport as an instrument panel
+             and gives the composition a defined edge ── */}
+      <div className="absolute inset-4 md:inset-6 z-[8] pointer-events-none">
+        <div className="absolute top-0 left-0 w-8 h-8 md:w-12 md:h-12 border-t-2 border-l-2 border-[#D64D8D]/35 rounded-tl-lg" />
+        <div className="absolute top-0 right-0 w-8 h-8 md:w-12 md:h-12 border-t-2 border-r-2 border-[#D64D8D]/35 rounded-tr-lg" />
+        <div className="absolute bottom-0 left-0 w-8 h-8 md:w-12 md:h-12 border-b-2 border-l-2 border-[#D64D8D]/35 rounded-bl-lg" />
+        <div className="absolute bottom-0 right-0 w-8 h-8 md:w-12 md:h-12 border-b-2 border-r-2 border-[#D64D8D]/35 rounded-br-lg" />
       </div>
 
       {/* ── Arcade "INSERT COIN" blinking prompt ── */}
@@ -469,7 +562,7 @@ export function HeroSection() {
         style={{ transitionDelay: "2.5s" }}
       >
         <span
-          className="font-arcade text-[7px] md:text-[8px] tracking-[0.3em] uppercase text-[#D64D8D]/70"
+          className="font-arcade text-[9px] md:text-[11px] tracking-[0.25em] uppercase text-[#D64D8D]"
           style={{ animation: "arcade-blink 1.2s step-end infinite" }}
         >
           ▼ SCROLL TO EXPLORE ▼
