@@ -72,6 +72,12 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
+        {/* The intro screen shows this immediately — preloading it means the
+            wordmark is decoded before the overlay is even composited. */}
+        <link rel="preload" as="image" href="/pravrutti-logo.png" fetchPriority="high" />
+        <link rel="preload" as="image" href="/gate-temple.png" />
+      </head>
       <body className={`
         ${instrumentSans.variable} 
         ${instrumentSerif.variable} 
