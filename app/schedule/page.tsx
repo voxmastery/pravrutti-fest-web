@@ -41,9 +41,10 @@ export default function SchedulePage() {
       <div className="relative z-10 flex-1 w-full max-w-[1200px] mx-auto px-6 py-32 lg:py-40">
         {/* Header */}
         <div className={`mb-12 text-center transition-all duration-700 ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}>
-          <span className="inline-flex items-center gap-3 text-xs font-orbitron tracking-widest text-[#D64D8D] uppercase font-bold mb-6 mx-auto">
+          <span className="inline-flex items-center gap-3 text-sm font-orbitron tracking-widest text-[#D64D8D] uppercase font-bold mb-6 mx-auto">
             <span className="w-8 h-px bg-[#721F4C]" />
             ARENA STAGE MAP
+            <span className="w-8 h-px bg-[#721F4C]" />
           </span>
           <h1 className="text-4xl md:text-7xl font-orbitron tracking-wider text-[#F7EEE4] mb-6 font-black">
             PRAVRUTTI <span className="text-stroke">SCHEDULE</span>
@@ -56,7 +57,7 @@ export default function SchedulePage() {
         {/* Advisory Box */}
         <div className="max-w-2xl mx-auto mb-12 p-4 rounded-xl border border-[#D64D8D]/40 bg-[#150B1E]/90 flex gap-4 items-center justify-center shadow-xl shadow-[#721F4C]/15 cyber-box">
           <Info className="w-5 h-5 text-[#F2D2AE] shrink-0" />
-          <p className="text-xs md:text-sm text-[#F7EEE4]/80 text-center font-sharetech">
+          <p className="text-sm md:text-base text-[#F7EEE4]/85 text-center font-sharetech">
             Timings are subject to minor adjustments on event day. Please reach venues 15 mins prior.
           </p>
         </div>
@@ -70,19 +71,19 @@ export default function SchedulePage() {
               </div>
               <div>
                 <h3 className="text-xl font-extrabold text-[#F7EEE4] tracking-wide">Official Level Map</h3>
-                <p className="text-xs text-[#D64D8D] font-mono uppercase tracking-widest font-bold mt-1">15th, 16th &amp; 17th October 2026</p>
+                <p className="text-sm text-[#D64D8D] font-mono uppercase tracking-widest font-bold mt-1">15th, 16th &amp; 17th October 2026</p>
               </div>
             </div>
 
             <a href="/Schedule.jpeg" download="Pravrutti_Schedule_2026.jpeg">
-              <Button size="sm" className="rounded-xl text-white font-orbitron text-xs px-6 h-11 cursor-pointer font-bold uppercase tracking-widest arcade-btn-magenta border-[#D64D8D] hover:text-white">
+              <Button size="sm" className="rounded-xl text-white font-orbitron text-sm px-6 h-12 cursor-pointer font-bold uppercase tracking-widest arcade-btn-magenta border-[#D64D8D] hover:text-white">
                 <Download className="w-4 h-4 mr-2" /> DOWNLOAD MAP
               </Button>
             </a>
           </div>
 
           {/* Schedule Image Container */}
-          <div className="relative rounded-2xl overflow-hidden border border-[#721F4C]/50 bg-[#040616]">
+          <div className="relative rounded-2xl overflow-hidden border border-[#721F4C]/50 bg-[#0A0818]">
             <img
               src="/Schedule.jpeg"
               alt="Pravrutti Techfest Event Schedule Map"

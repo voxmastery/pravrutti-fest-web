@@ -15,7 +15,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Search, Info, Users, Phone, ShieldAlert, Download, User, IndianRupee } from "lucide-react";
+import { Search, Info, Users, Phone, ShieldAlert, Download, User, IndianRupee, Mail } from "lucide-react";
 
 export default function EventsPage() {
   const [isVisible, setIsVisible] = useState(false);
@@ -97,6 +97,7 @@ export default function EventsPage() {
           <span className="inline-flex items-center gap-3 text-xs font-orbitron tracking-widest text-[#D64D8D] uppercase font-bold mb-6 mx-auto">
             <span className="w-8 h-px bg-[#721F4C]" />
             LEVEL STAGE SELECT
+            <span className="w-8 h-px bg-[#721F4C]" />
           </span>
           <h1 className="text-4xl md:text-7xl font-orbitron tracking-wider text-[#F7EEE4] mb-6 font-black">
             PRAVRUTTI <span className="text-stroke">EVENTS</span>
@@ -109,13 +110,13 @@ export default function EventsPage() {
         {/* Advisory Alert */}
         <div className="max-w-3xl mx-auto mb-12 p-4 rounded-xl border border-[#D64D8D]/40 bg-[#150B1E]/95 flex gap-4 items-center justify-center shadow-xl shadow-[#721F4C]/15 cyber-box">
           <Info className="w-5 h-5 text-[#F2D2AE] shrink-0" />
-          <p className="text-xs md:text-sm text-[#F7EEE4]/80 text-center font-sharetech">
+          <p className="text-sm md:text-base text-[#F7EEE4]/85 text-center font-sharetech">
             Please refer to the <a href="/schedule" className="font-bold text-[#F2D2AE] underline hover:text-white">Event Schedule</a> before registering to avoid overlaps.
           </p>
         </div>
 
         {/* Guidelines / Info Banner */}
-        <div className="max-w-3xl mx-auto grid md:grid-cols-2 gap-4 p-5 rounded-2xl border border-[#4A1C3A] bg-[#150B1E]/40 backdrop-blur-sm mb-12 text-xs md:text-sm cyber-box">
+        <div className="max-w-3xl mx-auto grid md:grid-cols-2 gap-4 p-5 rounded-2xl border border-[#4A1C3A] bg-[#150B1E]/40 backdrop-blur-sm mb-12 text-sm md:text-base cyber-box">
           <div className="flex gap-3 items-start">
             <Info className="w-4 h-4 text-[#D64D8D] shrink-0 mt-0.5" />
             <span className="text-[#F7EEE4]/70 font-sharetech">Kindly review event rulebooks carefully before registration.</span>
@@ -123,6 +124,17 @@ export default function EventsPage() {
           <div className="flex gap-3 items-start">
             <Users className="w-4 h-4 text-[#D64D8D] shrink-0 mt-0.5" />
             <span className="text-[#F7EEE4]/70 font-sharetech">Group events allow up to 4 members per team including the lead.</span>
+          </div>
+          <div className="flex gap-3 items-start md:col-span-2">
+            <Mail className="w-4 h-4 text-[#D64D8D] shrink-0 mt-0.5" />
+            <span className="text-[#F7EEE4]/70 font-sharetech">
+              After you register, your entry stays &ldquo;in process&rdquo; until we verify the payment.
+              Once your payment has been confirmed, you will receive an email confirmation.{" "}
+              <a href="/tickets" className="font-bold text-[#F2D2AE] underline hover:text-white">
+                Track your registrations
+              </a>
+              .
+            </span>
           </div>
         </div>
 
@@ -135,20 +147,25 @@ export default function EventsPage() {
                 placeholder="Search level database..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-11 pr-4 py-2 border-[#4A1C3A] bg-[#150B1E]/95 backdrop-blur-sm rounded-full text-xs font-sharetech focus:border-[#D64D8D] focus:ring-0 focus-visible:ring-0 h-11 text-[#F7EEE4]"
+                className="pl-11 pr-4 py-2 border-[#4A1C3A] bg-[#150B1E]/95 backdrop-blur-sm rounded-full text-base font-sharetech focus:border-[#D64D8D] focus:ring-0 focus-visible:ring-0 h-12 text-[#F7EEE4]"
               />
             </div>
           </div>
 
           {/* Tabs Navigation */}
           <Tabs defaultValue={categories[0]} className="w-full">
-            <div className="flex justify-center mb-8">
-              <TabsList className="bg-[#150B1E]/80 backdrop-blur-md border border-[#4A1C3A] p-1.5 rounded-xl flex flex-wrap justify-center h-auto font-orbitron">
+            {/* Category rail.
+                The triggers are `whitespace-nowrap` and far too wide to wrap sensibly
+                on a phone, so below md the rail scrolls horizontally (bleeding to the
+                screen edges to advertise that it scrolls) instead of wrapping into a
+                clipped, stuck-looking block. From md up it wraps and centres as before. */}
+            <div className="mb-8 -mx-6 px-6 md:mx-0 md:px-0 overflow-x-auto md:overflow-visible no-scrollbar md:flex md:justify-center">
+              <TabsList className="bg-[#150B1E]/80 backdrop-blur-md border border-[#4A1C3A] p-1.5 rounded-xl flex w-max md:w-fit md:flex-wrap md:justify-center h-auto gap-1.5 font-orbitron snap-x snap-mandatory">
                 {categories.map((cat) => (
                   <TabsTrigger
                     key={cat}
                     value={cat}
-                    className="rounded-lg px-5 py-2.5 text-xs md:text-sm font-bold tracking-wider cursor-pointer focus-visible:ring-0 data-[state=active]:bg-[#D64D8D] data-[state=active]:text-white"
+                    className="flex-none snap-start rounded-lg px-4 sm:px-5 py-3 text-sm md:text-base font-bold tracking-wider cursor-pointer focus-visible:ring-0 data-[state=active]:bg-[#D64D8D] data-[state=active]:text-white"
                   >
                     {cat}
                   </TabsTrigger>
@@ -170,29 +187,37 @@ export default function EventsPage() {
                         >
                           {/* Inner Content */}
                           <div className="p-6 space-y-4">
-                            <div className="flex justify-between items-start">
-                              <Badge className={`rounded-full px-2.5 py-0.5 text-[9px] uppercase tracking-wider font-orbitron ${getBadgeColors(event.type)}`} variant="outline">
+                            <div className="flex justify-between items-center gap-2">
+                              <Badge className={`rounded-full px-3 py-1 text-[11px] uppercase tracking-wider font-orbitron ${getBadgeColors(event.type)}`} variant="outline">
                                 {event.type}
                               </Badge>
-                              <span className="text-[10px] font-mono text-[#F2D2AE] uppercase font-bold">{event.fee}</span>
+                              <span
+                                className={`shrink-0 font-orbitron uppercase font-black rounded-full px-3 py-1.5 text-base ${
+                                  event.fee.toLowerCase().startsWith("free")
+                                    ? "text-[#7BE3A8] bg-[#12B76A]/15 border border-[#12B76A]/45"
+                                    : "text-[#F2D2AE] bg-[#BF8A1B]/15 border border-[#BF8A1B]/45"
+                                }`}
+                              >
+                                {event.fee}
+                              </span>
                             </div>
-                            
+
                             <div>
-                              <h3 className="text-xl font-orbitron font-extrabold text-[#F7EEE4] group-hover:text-[#F2D2AE] transition-colors duration-300 tracking-wide">
+                              <h3 className="text-xl md:text-2xl font-orbitron font-extrabold text-[#F7EEE4] group-hover:text-[#F2D2AE] transition-colors duration-300 tracking-wide">
                                 {event.name}
                               </h3>
-                              <span className="text-[10px] text-[#D64D8D] font-mono tracking-widest uppercase block mt-1.5 font-bold">
+                              <span className="text-xs text-[#D64D8D] font-mono tracking-widest uppercase block mt-2 font-bold">
                                 {event.subCategory}
                               </span>
                             </div>
 
-                            <p className="text-xs md:text-sm text-[#F7EEE4]/60 line-clamp-3 leading-relaxed text-justify font-sharetech">
+                            <p className="text-sm md:text-base text-[#F7EEE4]/70 line-clamp-3 leading-relaxed font-sharetech">
                               {event.description}
                             </p>
                           </div>
 
                           {/* Footer Action Buttons using arcade-btn and tactile outlines */}
-                          <div className="p-4 bg-[#040616]/75 border-t border-[#4A1C3A] mt-auto flex justify-between gap-3 font-orbitron">
+                          <div className="p-4 bg-[#0A0818]/75 border-t border-[#4A1C3A] mt-auto flex justify-between gap-3 font-orbitron">
                             <Button
                               variant="outline"
                               size="sm"
@@ -200,14 +225,14 @@ export default function EventsPage() {
                                 setSelectedEvent(event);
                                 setIsDialogOpen(true);
                               }}
-                              className="rounded-xl cursor-pointer hover:bg-[#D64D8D]/30 border-[#4A1C3A] text-xs flex-1 h-9 text-[#F2D2AE] font-bold tracking-wider"
+                              className="rounded-xl cursor-pointer hover:bg-[#D64D8D]/30 border-[#4A1C3A] text-sm flex-1 h-11 text-[#F2D2AE] font-bold tracking-wider"
                             >
-                              <Info className="w-3.5 h-3.5 mr-1" /> DETAILS
+                              <Info className="w-4 h-4 mr-1.5" /> DETAILS
                             </Button>
                             <Button
                               size="sm"
                               disabled
-                              className="rounded-xl text-xs flex-1 bg-[#AC355D]/10 text-[#AC355D]/60 border border-[#AC355D]/30 h-9 font-bold tracking-wider"
+                              className="rounded-xl text-sm flex-1 bg-[#AC355D]/10 text-[#AC355D]/70 border border-[#AC355D]/30 h-11 font-bold tracking-wider"
                             >
                               CLOSED
                             </Button>
@@ -236,10 +261,16 @@ export default function EventsPage() {
             <div className="absolute inset-0 z-[1] pointer-events-none crt-scanlines opacity-25" />
             <DialogHeader className="space-y-4 relative z-10">
               <div className="flex justify-between items-center pr-4">
-                <Badge className={`rounded-full px-2.5 py-0.5 text-[9px] uppercase tracking-wider font-bold ${getBadgeColors(selectedEvent.type)}`} variant="outline">
+                <Badge className={`rounded-full px-3 py-1 text-[11px] uppercase tracking-wider font-bold ${getBadgeColors(selectedEvent.type)}`} variant="outline">
                   {selectedEvent.type} Event
                 </Badge>
-                <span className="text-xs font-mono text-[#F2D2AE] uppercase font-bold">{selectedEvent.fee}</span>
+                <span
+                  className={`font-orbitron text-base font-black uppercase ${
+                    selectedEvent.fee.toLowerCase().startsWith("free") ? "text-[#7BE3A8]" : "text-[#F2D2AE]"
+                  }`}
+                >
+                  {selectedEvent.fee}
+                </span>
               </div>
               <DialogTitle className="text-3xl font-orbitron font-extrabold text-[#F2D2AE] tracking-wide">{selectedEvent.name}</DialogTitle>
               <DialogDescription className="text-xs text-[#D64D8D] font-mono tracking-widest uppercase mt-1.5 font-bold">
@@ -250,24 +281,24 @@ export default function EventsPage() {
             <div className="space-y-6 mt-6 max-h-[60vh] overflow-y-auto pr-2 relative z-10">
               {/* Description */}
               <div className="space-y-2">
-                <h4 className="text-xs font-bold uppercase tracking-widest text-[#D64D8D]">Description</h4>
-                <p className="text-xs md:text-sm text-[#F7EEE4]/80 leading-relaxed text-justify font-sharetech">
+                <h4 className="text-sm font-bold uppercase tracking-widest text-[#D64D8D]">Description</h4>
+                <p className="text-sm md:text-base text-[#F7EEE4]/85 leading-relaxed font-sharetech">
                   {selectedEvent.description}
                 </p>
               </div>
 
               {/* Cash Prizes */}
               <div className="space-y-3">
-                <h4 className="text-xs font-bold uppercase tracking-widest text-[#D64D8D]">HI-SCORE REWARDS</h4>
+                <h4 className="text-sm font-bold uppercase tracking-widest text-[#D64D8D]">HI-SCORE REWARDS</h4>
                 <div className="grid grid-cols-3 gap-3">
                   {[
                     { place: "1st", amount: getPrizes(selectedEvent.type).first },
                     { place: "2nd", amount: getPrizes(selectedEvent.type).second },
                     { place: "3rd", amount: getPrizes(selectedEvent.type).third }
                   ].map((p) => (
-                    <div key={p.place} className="p-3 border border-[#4A1C3A] rounded-xl bg-[#040616] text-center flex flex-col justify-center gap-0.5">
-                      <span className="text-[10px] text-[#F7EEE4]/50 uppercase font-bold">{p.place} PLACE</span>
-                      <span className="text-base font-bold text-[#F2D2AE] font-mono">{p.amount}</span>
+                    <div key={p.place} className="p-3 border border-[#4A1C3A] rounded-xl bg-[#0A0818] text-center flex flex-col justify-center gap-1">
+                      <span className="text-xs text-[#F7EEE4]/60 uppercase font-bold">{p.place} PLACE</span>
+                      <span className="text-lg md:text-xl font-black text-[#F2D2AE] font-orbitron">{p.amount}</span>
                     </div>
                   ))}
                 </div>
@@ -275,25 +306,29 @@ export default function EventsPage() {
 
               {/* Registration Fee */}
               <div className="p-4 border border-[#721F4C] bg-[#2B122C]/40 rounded-xl flex items-center justify-between">
-                <div className="flex items-center gap-2 text-sm">
-                  <IndianRupee className="w-4 h-4 text-[#F2D2AE]" />
-                  <span className="text-[#F7EEE4]/70 font-bold uppercase tracking-wider text-xs">ENTRY COST:</span>
+                <div className="flex items-center gap-2">
+                  <IndianRupee className="w-5 h-5 text-[#F2D2AE]" />
+                  <span className="text-[#F7EEE4]/80 font-bold uppercase tracking-wider text-sm">ENTRY COST:</span>
                 </div>
-                <span className="font-mono text-base font-bold text-[#F2D2AE]">
+                <span
+                  className={`font-orbitron text-2xl md:text-3xl font-black ${
+                    selectedEvent.fee.toLowerCase().startsWith("free") ? "text-[#7BE3A8]" : "text-[#F2D2AE]"
+                  }`}
+                >
                   {selectedEvent.fee === "Free" ? "FREE ENTRY" : selectedEvent.fee}
                 </span>
               </div>
 
               {/* Coordinators */}
               <div className="space-y-3">
-                <h4 className="text-xs font-bold uppercase tracking-widest text-[#D64D8D]">ARENA CONTACTS</h4>
+                <h4 className="text-sm font-bold uppercase tracking-widest text-[#D64D8D]">ARENA CONTACTS</h4>
                 <div className="space-y-3 font-mono text-xs md:text-sm">
                   {/* Faculty */}
                   {selectedEvent.coordinators.faculty.length > 0 && (
                     <div className="space-y-2">
-                      <span className="text-[10px] uppercase text-[#F7EEE4]/50 font-bold">Faculty Advisory Desk</span>
+                      <span className="text-xs uppercase text-[#F7EEE4]/70 font-bold">Faculty Advisory Desk</span>
                       {selectedEvent.coordinators.faculty.map((c) => (
-                        <div key={c.name} className="flex justify-between items-center border border-[#4A1C3A] bg-[#040616] px-4 py-2.5 rounded-xl">
+                        <div key={c.name} className="flex justify-between items-center border border-[#4A1C3A] bg-[#0A0818] px-4 py-2.5 rounded-xl">
                           <span className="flex items-center gap-2"><User className="w-3.5 h-3.5 text-[#F2D2AE]" /> {c.name}</span>
                           <a href={`tel:${c.phone}`} className="font-bold hover:text-[#D64D8D] hover:underline flex items-center gap-1.5 text-[#F2D2AE]"><Phone className="w-3 h-3 text-[#D64D8D]" /> {c.phone}</a>
                         </div>
@@ -304,9 +339,9 @@ export default function EventsPage() {
                   {/* Student */}
                   {selectedEvent.coordinators.student.length > 0 && (
                     <div className="space-y-2">
-                      <span className="text-[10px] uppercase text-[#F7EEE4]/50 font-bold">Student Arena Lead</span>
+                      <span className="text-xs uppercase text-[#F7EEE4]/70 font-bold">Student Arena Lead</span>
                       {selectedEvent.coordinators.student.map((c) => (
-                        <div key={c.name} className="flex justify-between items-center border border-[#4A1C3A] bg-[#040616] px-4 py-2.5 rounded-xl">
+                        <div key={c.name} className="flex justify-between items-center border border-[#4A1C3A] bg-[#0A0818] px-4 py-2.5 rounded-xl">
                           <span className="flex items-center gap-2"><User className="w-3.5 h-3.5 text-[#F2D2AE]" /> {c.name}</span>
                           <a href={`tel:${c.phone}`} className="font-bold hover:text-[#D64D8D] hover:underline flex items-center gap-1.5 text-[#F2D2AE]"><Phone className="w-3 h-3 text-[#D64D8D]" /> {c.phone}</a>
                         </div>

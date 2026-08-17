@@ -47,9 +47,10 @@ export default function FAQPage() {
       <div className="relative z-10 flex-1 w-full max-w-[1000px] mx-auto px-6 py-32 lg:py-40">
         {/* Header */}
         <div className={`mb-16 text-center transition-all duration-700 ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}>
-          <span className="inline-flex items-center gap-3 text-xs font-orbitron tracking-widest text-[#D64D8D] uppercase font-bold mb-6 mx-auto">
+          <span className="inline-flex items-center gap-3 text-sm font-orbitron tracking-widest text-[#D64D8D] uppercase font-bold mb-6 mx-auto">
             <span className="w-8 h-px bg-[#721F4C]" />
             FAQS ARCHIVE
+            <span className="w-8 h-px bg-[#721F4C]" />
           </span>
           <h1 className="text-4xl md:text-7xl font-orbitron tracking-wider text-[#F7EEE4] mb-6 font-black">
             FREQUENTLY ASKED <span className="text-stroke">QUESTIONS</span>
@@ -70,11 +71,11 @@ export default function FAQPage() {
               >
                 <AccordionTrigger className="text-left font-orbitron text-base md:text-lg text-[#F7EEE4] hover:text-[#F2D2AE] hover:no-underline font-extrabold py-4">
                   <div className="flex items-center gap-3 tracking-wide">
-                    <span className="text-xs font-mono text-[#D64D8D] font-bold">L{index + 1}.</span>
+                    <span className="text-sm font-mono text-[#D64D8D] font-bold">L{index + 1}.</span>
                     {faq.question}
                   </div>
                 </AccordionTrigger>
-                <AccordionContent className="text-xs md:text-sm text-[#F7EEE4]/70 leading-relaxed pb-4 pt-2 font-sharetech">
+                <AccordionContent className="text-base text-[#F7EEE4]/75 leading-relaxed pb-4 pt-2 font-sharetech">
                   {faq.answer}
                 </AccordionContent>
               </AccordionItem>
@@ -88,12 +89,12 @@ export default function FAQPage() {
             <Mail className="w-6 h-6" />
           </div>
           <h3 className="text-2xl font-extrabold text-[#F7EEE4] tracking-wide">Still Have Questions?</h3>
-          <p className="text-xs text-[#F7EEE4]/60 max-w-md mx-auto font-sharetech">
+          <p className="text-base text-[#F7EEE4]/70 max-w-md mx-auto font-sharetech">
             If you couldn't find an answer to your query, reach out directly to the core organizing committee.
           </p>
           <a
             href="mailto:pravrutti@msruas.ac.in"
-            className="inline-block text-sm font-bold text-[#F2D2AE] underline hover:text-white transition-colors"
+            className="inline-block text-base font-bold text-[#F2D2AE] underline hover:text-white transition-colors"
           >
             pravrutti@msruas.ac.in &rarr;
           </a>
