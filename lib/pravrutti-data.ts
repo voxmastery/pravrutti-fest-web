@@ -565,3 +565,24 @@ export const events: Event[] = [
     brochureUrl: "/Boardroom battles.pdf"
   }
 ];
+
+export interface GalleryImage {
+  src: string;
+  alt: string;
+  caption: string;
+}
+
+/**
+ * Photos from the previous edition (Pravrutti, 15–17 October 2025).
+ *
+ * TO ADD PHOTOS: drop the files into `public/gallery/` and append an entry here.
+ * The About-page gallery renders exactly what this list contains and hides itself
+ * entirely when the list is empty, so it can never ship as a broken/empty grid.
+ */
+export const previousEditionGallery: GalleryImage[] = [
+  {
+    src: "/about.jpeg",
+    alt: "Pravrutti 2025 campaign poster — 15 to 17 October 2025, 10 lakh prize pool",
+    caption: "Pravrutti 2025 — the edition that set the bar",
+  },
+];
