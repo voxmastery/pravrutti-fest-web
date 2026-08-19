@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Calendar, Timer, Download, Zap, Trophy } from "lucide-react";
+import { ArrowRight, Calendar, Timer, Download, Trophy } from "lucide-react";
 import { useParallax, useMousePosition } from "@/hooks/use-animations";
 
 /* ───────────────────── Matrix Rain Column ───────────────────── */
@@ -319,21 +319,29 @@ export function HeroSection() {
           of the header's own empty lower half read as a large dead gap under the nav. */}
       <div className="relative z-10 w-full max-w-5xl mx-auto px-5 sm:px-6 pt-[88px] pb-12 flex flex-col items-center text-center">
 
-        {/* "INSERT COIN" arcade prompt */}
+        {/* ── The university's own mark, at real size.
+               This was a text pill spelling out "Ramaiah University of Applied
+               Sciences" — the accredited logo says the same thing with far more
+               authority, and carries the NAAC A+ seal the fest wants shown. ── */}
         <div
-          className={`mb-4 transition-all duration-1000 ${isLoaded ? "opacity-100" : "opacity-0"}`}
+          className={`mb-6 sm:mb-7 transition-all duration-1000 ${isLoaded ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-2"}`}
         >
-          {/* Tracking tightens on small screens so the university name can carry a
-              readable size instead of being shrunk to fit the letter-spacing. */}
-          <div className="inline-flex items-center gap-2 sm:gap-2.5 px-3.5 sm:px-5 py-2 rounded-full border border-[#D64D8D]/40 bg-[#150B1E]/60 backdrop-blur-md">
-            <Zap className="hidden sm:block w-3.5 h-3.5 text-[#D64D8D] animate-pulse shrink-0" />
-            {/* Kept deliberately below the wordmark's width — this is an eyebrow,
-                and at md:text-lg/0.14em it measured wider than the logo itself. */}
-            <span className="font-mono text-[13px] sm:text-sm md:text-base tracking-[0.04em] sm:tracking-[0.1em] uppercase text-[#F2D2AE] leading-tight">
-              Ramaiah University of Applied Sciences
-            </span>
-            <Zap className="hidden sm:block w-3.5 h-3.5 text-[#D64D8D] animate-pulse shrink-0" />
-          </div>
+          <a
+            href="https://www.msruas.ac.in"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-block transition-transform hover:scale-[1.03]"
+          >
+            <img
+              src="/ruas-logo-naac.png"
+              alt="Ramaiah University of Applied Sciences — NAAC A+ accredited"
+              width={907}
+              height={259}
+              className="h-12 sm:h-16 md:h-20 lg:h-24 w-auto object-contain select-none"
+              draggable={false}
+              style={{ filter: "drop-shadow(0 0 18px rgba(0,0,0,0.85))" }}
+            />
+          </a>
         </div>
 
         {/* ── THE LOGO — this is the page's real h1; the wordmark lives in the
@@ -357,7 +365,7 @@ export function HeroSection() {
           <img
             src="/pravrutti-logo.png"
             alt="Pravrutti 2.0"
-            className="relative w-[280px] sm:w-[380px] md:w-[460px] lg:w-[560px] h-auto object-contain select-none"
+            className="relative w-[320px] sm:w-[440px] md:w-[560px] lg:w-[680px] h-auto object-contain select-none"
             width={1600}
             height={800}
             draggable={false}
