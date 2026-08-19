@@ -70,7 +70,7 @@ export function Navigation() {
       >
         <div
           className={`flex items-center justify-between px-4 sm:px-5 lg:px-7 transition-all ${
-            isScrolled ? "h-14" : "h-20"
+            isScrolled ? "h-16" : "h-24"
           }`}
         >
           {/* Logo Section */}
@@ -85,24 +85,24 @@ export function Navigation() {
               <img
                 src="/ruas-logo-naac.png"
                 alt="Ramaiah University of Applied Sciences — NAAC A+ accredited"
-                className="h-[26px] md:h-[34px] w-auto object-contain"
+                className="h-[32px] sm:h-[38px] lg:h-[34px] xl:h-[46px] w-auto object-contain"
                 width={907}
                 height={259}
               />
             </a>
-            <div className="h-5 w-px bg-white/20 shrink-0" />
+            <div className="h-7 lg:h-9 w-px bg-white/20 shrink-0" />
             <Link href="/" className="flex items-center gap-2 group shrink-0">
               <img
                 src="/pravrutti-logo.png"
                 alt="Pravrutti 2.0"
-                className="h-[30px] md:h-[38px] w-auto object-contain transition-transform group-hover:scale-105"
+                className="h-[38px] sm:h-[46px] lg:h-[42px] xl:h-[56px] w-auto object-contain transition-transform group-hover:scale-105"
                 style={{ filter: "drop-shadow(0 0 8px rgba(214, 77, 141, 0.25))" }}
               />
             </Link>
           </div>
 
           {/* Desktop nav */}
-          <div className="hidden lg:flex items-center gap-4 xl:gap-7">
+          <div className="hidden lg:flex items-center gap-3 xl:gap-6">
             {navLinks.map((l) => (
               <Link
                 key={l.name}
