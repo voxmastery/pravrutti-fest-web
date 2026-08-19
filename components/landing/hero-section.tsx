@@ -315,9 +315,10 @@ export function HeroSection() {
         }}
       />
 
-      {/* pt clears the 80px transparent header. It was pt-28 (112px), which on top
-          of the header's own empty lower half read as a large dead gap under the nav. */}
-      <div className="relative z-10 w-full max-w-5xl mx-auto px-5 sm:px-6 pt-[88px] pb-12 flex flex-col items-center text-center">
+      {/* pt clears the transparent header, which is 96px tall (h-24). Sized so the
+          wordmark sits ~36px below the nav marks: enough to breathe, without the
+          dead band the original pt-28 left. */}
+      <div className="relative z-10 w-full max-w-5xl mx-auto px-5 sm:px-6 pt-[108px] pb-12 flex flex-col items-center text-center">
 
         {/* ── THE LOGO — this is the page's real h1; the wordmark lives in the
                artwork, so the accessible/SEO heading rides along as sr-only text ── */}
@@ -528,15 +529,6 @@ export function HeroSection() {
             ))}
           </div>
         </div>
-      </div>
-
-      {/* ── HUD corner framing — reads the whole viewport as an instrument panel
-             and gives the composition a defined edge ── */}
-      <div className="absolute inset-4 md:inset-6 z-[8] pointer-events-none">
-        <div className="absolute top-0 left-0 w-8 h-8 md:w-12 md:h-12 border-t-2 border-l-2 border-[#D64D8D]/35 rounded-tl-lg" />
-        <div className="absolute top-0 right-0 w-8 h-8 md:w-12 md:h-12 border-t-2 border-r-2 border-[#D64D8D]/35 rounded-tr-lg" />
-        <div className="absolute bottom-0 left-0 w-8 h-8 md:w-12 md:h-12 border-b-2 border-l-2 border-[#D64D8D]/35 rounded-bl-lg" />
-        <div className="absolute bottom-0 right-0 w-8 h-8 md:w-12 md:h-12 border-b-2 border-r-2 border-[#D64D8D]/35 rounded-br-lg" />
       </div>
 
       {/* ── Arcade "INSERT COIN" blinking prompt ── */}
