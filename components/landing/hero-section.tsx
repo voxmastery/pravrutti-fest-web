@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Calendar, Timer, Download, Trophy } from "lucide-react";
+import { ArrowRight, Calendar, Timer, Download, Trophy, ChevronDown } from "lucide-react";
 import { useParallax, useMousePosition } from "@/hooks/use-animations";
 
 /* ───────────────────── Matrix Rain Column ───────────────────── */
@@ -441,11 +441,7 @@ export function HeroSection() {
               }}
             />
             <div className="absolute inset-0 crt-scanlines opacity-[0.07] pointer-events-none" />
-            {/* Corner brackets */}
-            <div className="absolute top-0 left-0 w-5 h-5 border-t-2 border-l-2 border-[#F2D2AE]/60 rounded-tl-2xl" />
-            <div className="absolute bottom-0 right-0 w-5 h-5 border-b-2 border-r-2 border-[#F2D2AE]/60 rounded-br-2xl" />
-
-            <div className="relative flex flex-col sm:flex-row items-center sm:items-stretch justify-between gap-5 sm:gap-6">
+            <div className="relative flex flex-col sm:flex-row items-center sm:items-stretch justify-center gap-6 sm:gap-9">
               {/* Prize pool — dominant */}
               <div className="text-center sm:text-left min-w-0">
                 <div className="flex items-center justify-center sm:justify-start gap-2 mb-1.5">
@@ -469,8 +465,8 @@ export function HeroSection() {
               </div>
 
               {/* Divider */}
-              <div className="hidden sm:block w-px self-stretch bg-gradient-to-b from-transparent via-[#BF8A1B]/55 to-transparent" />
-              <div className="sm:hidden h-px w-3/4 bg-gradient-to-r from-transparent via-[#BF8A1B]/55 to-transparent" />
+              <div className="hidden sm:block w-[2px] self-stretch rounded-full bg-gradient-to-b from-transparent via-[#BF8A1B]/70 to-transparent" />
+              <div className="sm:hidden h-[2px] w-4/5 rounded-full bg-gradient-to-r from-transparent via-[#BF8A1B]/70 to-transparent" />
 
               {/* Event count — secondary, but panelled so it reads as its own
                   stat instead of floating against the band's edge. */}
@@ -514,35 +510,45 @@ export function HeroSection() {
           className={`mt-8 pt-5 border-t border-[#D64D8D]/10 w-full max-w-lg transition-all duration-1000 ${isLoaded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}`}
           style={{ transitionDelay: "1.8s" }}
         >
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-3">
             {[
               { v: "5000+", l: "Participants", c: "text-[#F2D2AE]" },
               { v: "3", l: "Days", c: "text-[#D64D8D]" },
               { v: "20+", l: "Clubs", c: "text-[#BF8A1B]" },
-            ].map((s) => (
-              <div key={s.l} className="text-center group cursor-default">
+            ].map((s, i) => (
+              <div
+                key={s.l}
+                className={`text-center group cursor-default px-2 ${
+                  i > 0 ? "border-l border-[#D64D8D]/15" : ""
+                }`}
+              >
                 <div className={`text-2xl md:text-3xl font-orbitron font-black ${s.c} group-hover:scale-110 transition-transform`}>
                   {s.v}
                 </div>
-                <div className="text-[10px] md:text-xs font-mono tracking-[0.2em] text-[#F7EEE4]/60 uppercase mt-1">{s.l}</div>
+                <div className="text-[10px] md:text-xs font-mono tracking-[0.2em] text-[#F7EEE4]/60 uppercase mt-1.5">{s.l}</div>
               </div>
             ))}
           </div>
         </div>
+
+        {/* ── Scroll cue.
+               Kept in the flow rather than absolutely positioned at the bottom of
+               the section: at bottom-6 it sat inside the content's own padding and
+               collided with the stats row above it. ── */}
+        <div
+          className={`mt-10 flex flex-col items-center gap-2 transition-all duration-1000 ${isLoaded ? "opacity-100" : "opacity-0"}`}
+          style={{ transitionDelay: "2.2s" }}
+        >
+          <span
+            className="font-arcade text-[9px] md:text-[11px] tracking-[0.25em] uppercase text-[#D64D8D]/80"
+            style={{ animation: "arcade-blink 1.6s step-end infinite" }}
+          >
+            Scroll to explore
+          </span>
+          <ChevronDown className="w-4 h-4 text-[#D64D8D]/70 animate-bounce" />
+        </div>
       </div>
 
-      {/* ── Arcade "INSERT COIN" blinking prompt ── */}
-      <div
-        className={`absolute bottom-6 left-1/2 -translate-x-1/2 z-10 flex flex-col items-center gap-2 transition-all duration-1000 ${isLoaded ? "opacity-100" : "opacity-0"}`}
-        style={{ transitionDelay: "2.5s" }}
-      >
-        <span
-          className="font-arcade text-[9px] md:text-[11px] tracking-[0.25em] uppercase text-[#D64D8D]"
-          style={{ animation: "arcade-blink 1.2s step-end infinite" }}
-        >
-          ▼ SCROLL TO EXPLORE ▼
-        </span>
-      </div>
     </section>
   );
 }
