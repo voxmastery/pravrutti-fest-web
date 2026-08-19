@@ -319,31 +319,6 @@ export function HeroSection() {
           of the header's own empty lower half read as a large dead gap under the nav. */}
       <div className="relative z-10 w-full max-w-5xl mx-auto px-5 sm:px-6 pt-[88px] pb-12 flex flex-col items-center text-center">
 
-        {/* ── The university's own mark, at real size.
-               This was a text pill spelling out "Ramaiah University of Applied
-               Sciences" — the accredited logo says the same thing with far more
-               authority, and carries the NAAC A+ seal the fest wants shown. ── */}
-        <div
-          className={`mb-6 sm:mb-7 transition-all duration-1000 ${isLoaded ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-2"}`}
-        >
-          <a
-            href="https://www.msruas.ac.in"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-block transition-transform hover:scale-[1.03]"
-          >
-            <img
-              src="/ruas-logo-naac.png"
-              alt="Ramaiah University of Applied Sciences — NAAC A+ accredited"
-              width={907}
-              height={259}
-              className="h-12 sm:h-16 md:h-20 lg:h-24 w-auto object-contain select-none"
-              draggable={false}
-              style={{ filter: "drop-shadow(0 0 18px rgba(0,0,0,0.85))" }}
-            />
-          </a>
-        </div>
-
         {/* ── THE LOGO — this is the page's real h1; the wordmark lives in the
                artwork, so the accessible/SEO heading rides along as sr-only text ── */}
         <h1
