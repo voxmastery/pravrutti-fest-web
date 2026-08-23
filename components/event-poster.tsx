@@ -1,13 +1,19 @@
 "use client";
 
-import { Event } from "@/lib/pravrutti-data";
+import { useState } from "react";
+import { Event, eventId as slugify } from "@/lib/pravrutti-data";
 import { COVER_GRADIENTS } from "@/components/event-detail-panel";
 
 /**
- * Every event needs a poster, and none of them have artwork yet. Until real
- * images land in `event.poster`, this renders a generated cover from the
- * event's category gradient — same treatment as the detail panel, so a list
- * and a panel never disagree about what an event looks like.
+ * Poster resolution, in order:
+ *
+ *   1. `event.poster` — an explicit path, when one event needs an odd filename
+ *   2. `/posters/<slug>.png` — the convention; drop a file in and it appears
+ *   3. a generated gradient cover — what every event gets until artwork exists
+ *
+ * Step 2 is why this is a client component: a missing file has to fail
+ * gracefully to step 3 via onError rather than render a broken image, and
+ * that can only be detected in the browser.
  */
 export function EventPoster({
   event,
@@ -18,12 +24,16 @@ export function EventPoster({
   name: string;
   className?: string;
 }) {
-  if (event?.poster) {
+  const src = event?.poster ?? `/posters/${slugify(name)}.png`;
+  const [failed, setFailed] = useState(false);
+
+  if (!failed) {
     return (
       /* eslint-disable-next-line @next/next/no-img-element */
       <img
-        src={event.poster}
+        src={src}
         alt={`Poster for ${name}`}
+        onError={() => setFailed(true)}
         className={`object-cover ${className}`}
       />
     );

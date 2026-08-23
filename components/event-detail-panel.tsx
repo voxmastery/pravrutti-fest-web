@@ -49,6 +49,8 @@ export function EventDetailPanel({
   onClose: () => void;
 }) {
   const [copied, setCopied] = useState(false);
+  // Real artwork wins over the generated cover; a missing file falls back.
+  const [posterFailed, setPosterFailed] = useState(false);
   const [registering, setRegistering] = useState(false);
   const [count, setCount] = useState<number | null>(null);
   const [waiting, setWaiting] = useState(0);
@@ -72,6 +74,9 @@ export function EventDetailPanel({
   }, [id]);
 
   useEffect(load, [load]);
+
+  // A different event means a different poster to try again.
+  useEffect(() => setPosterFailed(false), [event?.name]);
 
   // Re-theme the page wash to the open event's category — the same idea as
   // Luma recolouring its background from the event's cover art.
@@ -141,8 +146,17 @@ export function EventDetailPanel({
             <div
               className={`relative aspect-square w-full rounded-2xl overflow-hidden border border-[#4A1C3A] bg-gradient-to-br ${COVER_GRADIENTS[event.category]}`}
             >
+              {!posterFailed && (
+                /* eslint-disable-next-line @next/next/no-img-element */
+                <img
+                  src={event.poster ?? `/posters/${id}.png`}
+                  alt={`Poster for ${event.name}`}
+                  onError={() => setPosterFailed(true)}
+                  className="absolute inset-0 w-full h-full object-cover"
+                />
+              )}
               <div className="absolute inset-0 opacity-20 crt-scanlines pointer-events-none" />
-              <div className="absolute inset-0 flex flex-col justify-between p-6">
+              <div className={`absolute inset-0 flex flex-col justify-between p-6 ${posterFailed ? "" : "hidden"}`}>
                 <span className="text-[11px] font-mono tracking-[0.3em] uppercase text-[#F7EEE4]/70">
                   {FEST.name} · {event.category}
                 </span>
