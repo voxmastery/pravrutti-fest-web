@@ -4,8 +4,9 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Menu, X, ChevronDown, Download, FileText, Calendar as CalendarIcon, Ticket, LogIn } from "lucide-react";
-import { AUTH_LINKS, externalLinkProps } from "@/lib/auth-links";
+import { Menu, X, ChevronDown, Download, FileText, Calendar as CalendarIcon, Ticket, LogIn, LogOut } from "lucide-react";
+import { useIdentity } from "@/lib/identity-context";
+import { SignInModal } from "@/components/sign-in-modal";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -25,7 +26,17 @@ const navLinks = [
 export function Navigation() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [signInOpen, setSignInOpen] = useState(false);
   const pathname = usePathname();
+  const me = useIdentity();
+  const signedIn = me.signedIn && !!me.email;
+  const initials = (me.name || me.email || "?")
+    .trim()
+    .split(/[\s@.]+/)
+    .map((p) => p[0])
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
 
   useEffect(() => {
     const h = () => setIsScrolled(window.scrollY > 30);
@@ -154,22 +165,49 @@ export function Navigation() {
             </DropdownMenu>
           </div>
 
-          {/* Desktop CTAs — Login sits as a quiet ghost button so REGISTER NOW
-              stays the single primary action. Destinations live in lib/auth-links. */}
+          {/* Desktop CTA — one button, Luma-style: SIGN IN when signed out, an
+              account chip once signed in. EVENTS already sits in the nav, so a
+              second "register" link here only duplicated it. */}
           <div className="hidden lg:flex items-center gap-2.5">
-            <Link href={AUTH_LINKS.login} {...externalLinkProps}>
+            {signedIn ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger className="flex items-center gap-2 rounded-lg border border-[#4A1C3A] hover:border-[#D64D8D] hover:bg-[#721F4C]/25 h-10 pl-1.5 pr-3 cursor-pointer focus:outline-none transition-colors">
+                  {me.image ? (
+                    /* eslint-disable-next-line @next/next/no-img-element */
+                    <img src={me.image} alt="" className="w-7 h-7 rounded-full shrink-0" />
+                  ) : (
+                    <span className="w-7 h-7 rounded-full bg-[#721F4C] text-[#F2D2AE] font-orbitron text-[10px] font-black flex items-center justify-center shrink-0">
+                      {initials}
+                    </span>
+                  )}
+                  <span className="font-orbitron text-xs tracking-[0.12em] font-bold text-[#F2D2AE] max-w-[110px] truncate">
+                    {me.name?.split(" ")[0]?.toUpperCase() ?? "ACCOUNT"}
+                  </span>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="bg-[#0A0818]/95 backdrop-blur-xl border border-[#4A1C3A] text-[#F7EEE4] w-52 p-1 rounded-xl shadow-2xl shadow-black/60">
+                  <DropdownMenuItem className="focus:bg-[#721F4C]/30 focus:text-[#F2D2AE] rounded-lg cursor-pointer">
+                    <Link href="/ticket" className="flex items-center gap-2 w-full font-mono text-xs tracking-wider py-1.5">
+                      <Ticket className="w-4 h-4 text-[#D64D8D]" /> My Tickets
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={me.signOut}
+                    className="focus:bg-[#721F4C]/30 focus:text-[#F2D2AE] rounded-lg cursor-pointer"
+                  >
+                    <span className="flex items-center gap-2 w-full font-mono text-xs tracking-wider py-1.5">
+                      <LogOut className="w-4 h-4 text-[#D64D8D]" /> Sign out
+                    </span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
               <Button
-                variant="ghost"
-                className="rounded-lg font-orbitron text-xs tracking-[0.12em] px-4 h-10 cursor-pointer font-bold text-[#F2D2AE] border border-[#4A1C3A] hover:border-[#D64D8D] hover:bg-[#721F4C]/25 hover:text-[#F7EEE4]"
+                onClick={() => setSignInOpen(true)}
+                className="arcade-btn-primary rounded-lg font-orbitron text-xs tracking-[0.12em] px-5 h-10 cursor-pointer font-bold"
               >
-                <LogIn className="w-4 h-4 mr-1.5" /> LOGIN
+                <LogIn className="w-4 h-4 mr-1.5" /> SIGN IN
               </Button>
-            </Link>
-            <Link href={AUTH_LINKS.register} {...externalLinkProps}>
-              <Button className="arcade-btn-primary rounded-lg font-orbitron text-xs tracking-[0.12em] px-5 h-10 cursor-pointer font-bold">
-                REGISTER NOW
-              </Button>
-            </Link>
+            )}
           </div>
 
           {/* Mobile toggle — bordered chip so it reads as a control against the hero photo */}
@@ -248,34 +286,52 @@ export function Navigation() {
               </div>
             </nav>
 
+            {/* Mobile CTA — mirrors the desktop single button. */}
             <div className="mt-8 space-y-3">
-              <Link
-                href={AUTH_LINKS.register}
-                {...externalLinkProps}
-                onClick={() => setIsMobileMenuOpen(false)}
-                className="block"
-              >
-                <Button className="w-full arcade-btn-primary rounded-xl font-orbitron text-base py-6 h-auto font-black tracking-wider">
-                  REGISTER NOW
-                </Button>
-              </Link>
-              <Link
-                href={AUTH_LINKS.login}
-                {...externalLinkProps}
-                onClick={() => setIsMobileMenuOpen(false)}
-                className="block"
-              >
+              {signedIn ? (
+                <>
+                  <div className="flex items-center gap-3 px-1 pb-1">
+                    {me.image ? (
+                      /* eslint-disable-next-line @next/next/no-img-element */
+                      <img src={me.image} alt="" className="w-10 h-10 rounded-full shrink-0" />
+                    ) : (
+                      <span className="w-10 h-10 rounded-full bg-[#721F4C] text-[#F2D2AE] font-orbitron text-sm font-black flex items-center justify-center shrink-0">
+                        {initials}
+                      </span>
+                    )}
+                    <div className="min-w-0">
+                      <p className="font-orbitron text-sm font-bold text-[#F2D2AE] truncate">{me.name}</p>
+                      <p className="font-mono text-xs text-[#F7EEE4]/50 truncate">{me.email}</p>
+                    </div>
+                  </div>
+                  <Button
+                    onClick={() => {
+                      setIsMobileMenuOpen(false);
+                      me.signOut();
+                    }}
+                    variant="ghost"
+                    className="w-full rounded-xl font-orbitron text-base py-6 h-auto font-black tracking-wider text-[#F2D2AE] border border-[#4A1C3A] hover:border-[#D64D8D] hover:bg-[#721F4C]/25 hover:text-[#F7EEE4]"
+                  >
+                    <LogOut className="w-4 h-4 mr-2" /> SIGN OUT
+                  </Button>
+                </>
+              ) : (
                 <Button
-                  variant="ghost"
-                  className="w-full rounded-xl font-orbitron text-base py-6 h-auto font-black tracking-wider text-[#F2D2AE] border border-[#4A1C3A] hover:border-[#D64D8D] hover:bg-[#721F4C]/25 hover:text-[#F7EEE4]"
+                  onClick={() => {
+                    setIsMobileMenuOpen(false);
+                    setSignInOpen(true);
+                  }}
+                  className="w-full arcade-btn-primary rounded-xl font-orbitron text-base py-6 h-auto font-black tracking-wider"
                 >
-                  <LogIn className="w-4 h-4 mr-2" /> LOGIN
+                  <LogIn className="w-4 h-4 mr-2" /> SIGN IN
                 </Button>
-              </Link>
+              )}
             </div>
           </div>
         </div>
       )}
+
+      <SignInModal open={signInOpen} onClose={() => setSignInOpen(false)} />
     </header>
   );
 }
