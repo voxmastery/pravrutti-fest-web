@@ -73,6 +73,15 @@ export function EventDetailPanel({
 
   useEffect(load, [load]);
 
+  // Re-theme the page wash to the open event's category — the same idea as
+  // Luma recolouring its background from the event's cover art.
+  useEffect(() => {
+    if (!event) return;
+    const root = document.documentElement;
+    root.setAttribute("data-ambient", event.category);
+    return () => root.removeAttribute("data-ambient");
+  }, [event]);
+
   const copyLink = async () => {
     await navigator.clipboard.writeText(`${window.location.origin}/events/${id}`);
     setCopied(true);

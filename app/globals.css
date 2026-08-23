@@ -595,14 +595,26 @@
    Brand glows bleed in from the edges over near-black;
    page wrappers are transparent so every route shares it.
    ============================ */
+/* Per-event tint. Luma derives its page wash from the event's cover art,
+   which is why every event page has its own colour. We have no per-event
+   photography, so the event's category gradient supplies the hue instead —
+   pages set these three vars and the wash below re-themes itself. */
+:root {
+  --ambient-1: 214, 77, 141;   /* magenta  */
+  --ambient-2: 114, 31, 76;    /* wine     */
+  --ambient-3: 74, 28, 58;     /* plum     */
+  --ambient-base: #140a18;
+}
+
 body {
-  background-color: #0a0510;
+  background-color: var(--ambient-base);
   background-image:
-    radial-gradient(ellipse 120% 70% at 18% -10%, rgba(214, 77, 141, 0.30), transparent 55%),
-    radial-gradient(ellipse 90% 55% at 100% 8%, rgba(114, 31, 76, 0.38), transparent 60%),
-    radial-gradient(ellipse 70% 45% at 78% 55%, rgba(172, 53, 93, 0.14), transparent 60%),
-    radial-gradient(ellipse 130% 90% at 50% 118%, rgba(74, 28, 58, 0.48), transparent 65%);
+    radial-gradient(ellipse 120% 70% at 18% -10%, rgba(var(--ambient-1), 0.42), transparent 58%),
+    radial-gradient(ellipse 95% 60% at 100% 6%, rgba(var(--ambient-2), 0.55), transparent 62%),
+    radial-gradient(ellipse 75% 50% at 80% 52%, rgba(var(--ambient-1), 0.18), transparent 62%),
+    radial-gradient(ellipse 135% 95% at 45% 120%, rgba(var(--ambient-3), 0.70), transparent 68%);
   background-attachment: fixed;
+  transition: background-color 600ms ease;
 }
 
 /* Film-grain over the wash — the texture Luma layers on its event gradients.
@@ -618,3 +630,18 @@ body::before {
 }
 
 
+
+/* Category tints — the event panel/page sets data-ambient to re-theme the
+   whole page wash, mirroring how Luma recolours per event. */
+[data-ambient="Engineering and Design"] {
+  --ambient-1: 214, 77, 141; --ambient-2: 114, 31, 76;  --ambient-3: 74, 28, 58;  --ambient-base: #140a18;
+}
+[data-ambient="Research and Presentation"] {
+  --ambient-1: 191, 138, 27; --ambient-2: 122, 60, 40;  --ambient-3: 60, 34, 30;  --ambient-base: #150d12;
+}
+[data-ambient="Code and Compute"] {
+  --ambient-1: 214, 77, 141; --ambient-2: 88, 40, 120;  --ambient-3: 52, 26, 76;  --ambient-base: #120b1c;
+}
+[data-ambient="Enterprise and Expression"] {
+  --ambient-1: 172, 53, 93;  --ambient-2: 74, 28, 58;   --ambient-3: 43, 18, 44;  --ambient-base: #120912;
+}
