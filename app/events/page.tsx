@@ -180,7 +180,7 @@ export default function EventsPage() {
                           <article
                             key={event.name}
                             onClick={() => setSelectedEvent(event)}
-                            className="group cursor-pointer rounded-2xl border border-white/[0.08] bg-white/[0.04] hover:bg-white/[0.07] hover:border-white/[0.14] transition-colors p-5 flex gap-5"
+                            className="group cursor-pointer min-w-0 rounded-2xl border border-white/[0.08] bg-white/[0.04] hover:bg-white/[0.07] hover:border-white/[0.14] transition-colors p-4 sm:p-5 flex gap-4 sm:gap-5"
                           >
                             <div className="min-w-0 flex-1 flex flex-col gap-2">
                               {/* Fee stands in for Luma's start time until
@@ -219,7 +219,7 @@ export default function EventsPage() {
                             <EventPoster
                               event={event}
                               name={event.name}
-                              className="w-[140px] shrink-0 self-stretch rounded-xl border border-white/[0.08]"
+                              className="w-[96px] sm:w-[140px] shrink-0 self-stretch rounded-xl border border-white/[0.08]"
                             />
                           </article>
                         );

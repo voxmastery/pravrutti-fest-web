@@ -231,7 +231,7 @@ export default function TicketPage() {
                     return (
                       <article
                         key={a.ticketId}
-                        className="rounded-2xl border border-white/[0.08] bg-white/[0.04] p-4 flex gap-4 hover:bg-white/[0.06] transition-colors"
+                        className="min-w-0 rounded-2xl border border-white/[0.08] bg-white/[0.04] p-4 flex gap-4 hover:bg-white/[0.06] transition-colors"
                       >
                         <div className="min-w-0 flex-1 space-y-2">
                           <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full border font-ui text-xs font-medium ${tone.chip}`}>
@@ -287,7 +287,7 @@ export default function TicketPage() {
                           <EventPoster
                             event={ev}
                             name={a.eventName}
-                            className="w-[86px] h-[86px] rounded-xl border border-white/[0.08]"
+                            className="w-[80px] h-[80px] sm:w-[96px] sm:h-[96px] rounded-xl border border-white/[0.08]"
                           />
                         </a>
                       </article>

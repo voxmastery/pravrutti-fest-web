@@ -28,8 +28,10 @@ export default function Home() {
         <HeroSection />
         <HowItWorksSection />
         <PricingSection />
-        <IntegrationsSection />
+        {/* Sponsors sit above clubs: partners who fund the fest get the
+            higher slot on the page. */}
         <SponsorsSection />
+        <IntegrationsSection />
         <FooterSection />
       </main>
     </>
