@@ -45,19 +45,32 @@ export function SignInModal({ open, onClose }: { open: boolean; onClose: () => v
         </div>
 
         <div className="pt-4">
-          <Button
-            onClick={() => {
-              me.signIn();
-              onClose();
-            }}
-            className="w-full h-[38px] rounded-2xl bg-white text-black hover:bg-white/90 font-ui font-medium text-base cursor-pointer inline-flex items-center gap-2.5"
-          >
-            <GoogleMark /> Sign in with Google
-          </Button>
+          {me.authEnabled ? (
+            <Button
+              onClick={() => {
+                me.signIn();
+                onClose();
+              }}
+              className="w-full h-[38px] rounded-2xl bg-white text-black hover:bg-white/90 font-ui font-medium text-base cursor-pointer inline-flex items-center gap-2.5"
+            >
+              <GoogleMark /> Sign in with Google
+            </Button>
+          ) : (
+            /* No auth backend configured — never render a button that would
+               bounce the user into a NextAuth error page. */
+            <Button
+              disabled
+              className="w-full h-[38px] rounded-2xl bg-white/10 text-white/40 font-ui font-medium text-base"
+            >
+              Sign-in setup pending
+            </Button>
+          )}
         </div>
 
         <p className="text-[12px] text-white/35 text-center leading-relaxed pt-1">
-          Your ticket stays tied to your Google inbox, so you can reopen it on any device.
+          {me.authEnabled
+            ? "Your ticket stays tied to your Google inbox, so you can reopen it on any device."
+            : "Sign-in isn't switched on yet. You can still browse events and register with your email."}
         </p>
       </DialogContent>
     </Dialog>
