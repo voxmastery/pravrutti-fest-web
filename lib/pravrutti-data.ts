@@ -15,6 +15,8 @@ export interface Event {
     student: Coordinator[];
   };
   brochureUrl: string;
+  /** Hall / lab inside the campus. Falls back to FEST.venue when unset. */
+  venue?: string;
 }
 
 export interface Sponsor {
@@ -586,3 +588,25 @@ export const previousEditionGallery: GalleryImage[] = [
     caption: "Pravrutti 2025 — the edition that set the bar",
   },
 ];
+
+// ── Registration system ──────────────────────────────────────
+export const eventId = (name: string) =>
+  name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+
+export const DEFAULT_CAPACITY = 100;
+export const EVENT_CAPACITY: Record<string, number> = {
+  // override per-event: "electroxcape": 60,
+};
+export const capacityFor = (id: string) => EVENT_CAPACITY[id] ?? DEFAULT_CAPACITY;
+
+export const FEST = {
+  name: "Pravrutti 2026",
+  venue: "RUAS Peenya Campus, Bengaluru",
+  dates: "15\u201317 October 2026",
+  // IST (UTC+5:30) converted to UTC for calendar invites
+  startUtc: "20261015T033000Z", // 09:00 IST, 15 Oct
+  endUtc: "20261017T123000Z",   // 18:00 IST, 17 Oct
+  registrationCloses: "2026-10-04T18:29:59.000Z" // 04 Oct 2026, 11:59 PM IST
+};
+
+export const registrationOpen = () => Date.now() < Date.parse(FEST.registrationCloses);

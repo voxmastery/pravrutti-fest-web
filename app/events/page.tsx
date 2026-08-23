@@ -8,20 +8,13 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { EventDetailPanel } from "@/components/event-detail-panel";
 import { Search, Info, Users, Phone, ShieldAlert, Download, User, IndianRupee, Mail } from "lucide-react";
 
 export default function EventsPage() {
   const [isVisible, setIsVisible] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   useEffect(() => {
     setIsVisible(true);
@@ -44,17 +37,6 @@ export default function EventsPage() {
     );
   };
 
-  const getPrizes = (type: Event["type"]) => {
-    switch (type) {
-      case "Visionary":
-        return { first: "₹20,000", second: "₹15,000", third: "₹10,000" };
-      case "Creator":
-        return { first: "₹10,000", second: "₹7,000", third: "₹5,000" };
-      case "Explorer":
-        return { first: "₹5,000", second: "₹3,000", third: "₹2,000" };
-    }
-  };
-
   const getBadgeColors = (type: Event["type"]) => {
     switch (type) {
       case "Visionary":
@@ -67,7 +49,7 @@ export default function EventsPage() {
   };
 
   return (
-    <main className="relative min-h-screen bg-[#000000] overflow-x-hidden text-[#F7EEE4] flex flex-col justify-between">
+    <main className="relative min-h-screen bg-transparent overflow-x-hidden text-[#F7EEE4] flex flex-col justify-between">
       <Navigation />
 
       {/* Grid overlay */}
@@ -183,7 +165,8 @@ export default function EventsPage() {
                       {filteredList.map((event) => (
                         <div
                           key={event.name}
-                          className="group relative border border-[#4A1C3A] rounded-2xl bg-[#150B1E]/70 backdrop-blur-sm hover:border-[#D64D8D] transition-all duration-500 overflow-hidden flex flex-col justify-between cyber-box arcade-card-hover"
+                          onClick={() => setSelectedEvent(event)}
+                          className="group relative cursor-pointer border border-[#4A1C3A] rounded-2xl bg-[#150B1E]/70 backdrop-blur-sm hover:border-[#D64D8D] transition-all duration-500 overflow-hidden flex flex-col justify-between cyber-box arcade-card-hover"
                         >
                           {/* Inner Content */}
                           <div className="p-6 space-y-4">
@@ -221,10 +204,7 @@ export default function EventsPage() {
                             <Button
                               variant="outline"
                               size="sm"
-                              onClick={() => {
-                                setSelectedEvent(event);
-                                setIsDialogOpen(true);
-                              }}
+                              onClick={() => setSelectedEvent(event)}
                               className="rounded-xl cursor-pointer hover:bg-[#D64D8D]/30 border-[#4A1C3A] text-sm flex-1 h-11 text-[#F2D2AE] font-bold tracking-wider"
                             >
                               <Info className="w-4 h-4 mr-1.5" /> DETAILS
@@ -254,115 +234,8 @@ export default function EventsPage() {
         </div>
       </div>
 
-      {/* Details Dialog */}
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        {selectedEvent && (
-          <DialogContent className="bg-[#150B1E] border-2 border-[#721F4C] text-[#F7EEE4] max-w-xl p-6 md:p-8 rounded-2xl shadow-2xl cyber-box font-orbitron">
-            <div className="absolute inset-0 z-[1] pointer-events-none crt-scanlines opacity-25" />
-            <DialogHeader className="space-y-4 relative z-10">
-              <div className="flex justify-between items-center pr-4">
-                <Badge className={`rounded-full px-3 py-1 text-[11px] uppercase tracking-wider font-bold ${getBadgeColors(selectedEvent.type)}`} variant="outline">
-                  {selectedEvent.type} Event
-                </Badge>
-                <span
-                  className={`font-orbitron text-base font-black uppercase ${
-                    selectedEvent.fee.toLowerCase().startsWith("free") ? "text-[#7BE3A8]" : "text-[#F2D2AE]"
-                  }`}
-                >
-                  {selectedEvent.fee}
-                </span>
-              </div>
-              <DialogTitle className="text-3xl font-orbitron font-extrabold text-[#F2D2AE] tracking-wide">{selectedEvent.name}</DialogTitle>
-              <DialogDescription className="text-xs text-[#D64D8D] font-mono tracking-widest uppercase mt-1.5 font-bold">
-                {selectedEvent.subCategory}
-              </DialogDescription>
-            </DialogHeader>
-
-            <div className="space-y-6 mt-6 max-h-[60vh] overflow-y-auto pr-2 relative z-10">
-              {/* Description */}
-              <div className="space-y-2">
-                <h4 className="text-sm font-bold uppercase tracking-widest text-[#D64D8D]">Description</h4>
-                <p className="text-sm md:text-base text-[#F7EEE4]/85 leading-relaxed font-sharetech">
-                  {selectedEvent.description}
-                </p>
-              </div>
-
-              {/* Cash Prizes */}
-              <div className="space-y-3">
-                <h4 className="text-sm font-bold uppercase tracking-widest text-[#D64D8D]">HI-SCORE REWARDS</h4>
-                <div className="grid grid-cols-3 gap-3">
-                  {[
-                    { place: "1st", amount: getPrizes(selectedEvent.type).first },
-                    { place: "2nd", amount: getPrizes(selectedEvent.type).second },
-                    { place: "3rd", amount: getPrizes(selectedEvent.type).third }
-                  ].map((p) => (
-                    <div key={p.place} className="p-3 border border-[#4A1C3A] rounded-xl bg-[#0A0818] text-center flex flex-col justify-center gap-1">
-                      <span className="text-xs text-[#F7EEE4]/60 uppercase font-bold">{p.place} PLACE</span>
-                      <span className="text-lg md:text-xl font-black text-[#F2D2AE] font-orbitron">{p.amount}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Registration Fee */}
-              <div className="p-4 border border-[#721F4C] bg-[#2B122C]/40 rounded-xl flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <IndianRupee className="w-5 h-5 text-[#F2D2AE]" />
-                  <span className="text-[#F7EEE4]/80 font-bold uppercase tracking-wider text-sm">ENTRY COST:</span>
-                </div>
-                <span
-                  className={`font-orbitron text-2xl md:text-3xl font-black ${
-                    selectedEvent.fee.toLowerCase().startsWith("free") ? "text-[#7BE3A8]" : "text-[#F2D2AE]"
-                  }`}
-                >
-                  {selectedEvent.fee === "Free" ? "FREE ENTRY" : selectedEvent.fee}
-                </span>
-              </div>
-
-              {/* Coordinators */}
-              <div className="space-y-3">
-                <h4 className="text-sm font-bold uppercase tracking-widest text-[#D64D8D]">ARENA CONTACTS</h4>
-                <div className="space-y-3 font-mono text-xs md:text-sm">
-                  {/* Faculty */}
-                  {selectedEvent.coordinators.faculty.length > 0 && (
-                    <div className="space-y-2">
-                      <span className="text-xs uppercase text-[#F7EEE4]/70 font-bold">Faculty Advisory Desk</span>
-                      {selectedEvent.coordinators.faculty.map((c) => (
-                        <div key={c.name} className="flex justify-between items-center border border-[#4A1C3A] bg-[#0A0818] px-4 py-2.5 rounded-xl">
-                          <span className="flex items-center gap-2"><User className="w-3.5 h-3.5 text-[#F2D2AE]" /> {c.name}</span>
-                          <a href={`tel:${c.phone}`} className="font-bold hover:text-[#D64D8D] hover:underline flex items-center gap-1.5 text-[#F2D2AE]"><Phone className="w-3 h-3 text-[#D64D8D]" /> {c.phone}</a>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-
-                  {/* Student */}
-                  {selectedEvent.coordinators.student.length > 0 && (
-                    <div className="space-y-2">
-                      <span className="text-xs uppercase text-[#F7EEE4]/70 font-bold">Student Arena Lead</span>
-                      {selectedEvent.coordinators.student.map((c) => (
-                        <div key={c.name} className="flex justify-between items-center border border-[#4A1C3A] bg-[#0A0818] px-4 py-2.5 rounded-xl">
-                          <span className="flex items-center gap-2"><User className="w-3.5 h-3.5 text-[#F2D2AE]" /> {c.name}</span>
-                          <a href={`tel:${c.phone}`} className="font-bold hover:text-[#D64D8D] hover:underline flex items-center gap-1.5 text-[#F2D2AE]"><Phone className="w-3 h-3 text-[#D64D8D]" /> {c.phone}</a>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Download Rulebook using arcade-btn */}
-              <div className="pt-4 border-t border-[#4A1C3A] flex gap-4">
-                <a href={selectedEvent.brochureUrl} download={`${selectedEvent.name}_Rules.pdf`} className="flex-1">
-                  <Button className="w-full rounded-xl text-white text-xs h-11 flex items-center justify-center gap-2 cursor-pointer font-bold uppercase tracking-widest arcade-btn-magenta border-[#D64D8D] hover:text-white">
-                    <Download className="w-4 h-4" /> DOWNLOAD ROM GUIDE
-                  </Button>
-                </a>
-              </div>
-            </div>
-          </DialogContent>
-        )}
-      </Dialog>
+      {/* Luma-style detail panel */}
+      <EventDetailPanel event={selectedEvent} onClose={() => setSelectedEvent(null)} />
 
       <FooterSection />
     </main>

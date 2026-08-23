@@ -587,3 +587,16 @@
   }
 }
   
+/* ============================
+   AMBIENT BACKGROUND — Luma-style gradient wash.
+   Brand glows bleed in from the edges over near-black;
+   page wrappers are transparent so every route shares it.
+   ============================ */
+body {
+  background-color: #08040c;
+  background-image:
+    radial-gradient(ellipse 90% 60% at 15% -5%, rgba(214, 77, 141, 0.16), transparent 60%),
+    radial-gradient(ellipse 70% 50% at 85% 0%, rgba(191, 138, 27, 0.10), transparent 55%),
+    radial-gradient(ellipse 100% 80% at 50% 110%, rgba(114, 31, 76, 0.20), transparent 60%);
+  background-attachment: fixed;
+}

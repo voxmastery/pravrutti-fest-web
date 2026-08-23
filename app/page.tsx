@@ -23,7 +23,7 @@ export default function Home() {
       {!gateOpen && <GateIntro onComplete={handleGateComplete} />}
 
       {/* Site is always visible — gate just covers it until it opens */}
-      <main className="relative min-h-screen overflow-x-hidden bg-black text-[#F7EEE4]">
+      <main className="relative min-h-screen overflow-x-hidden bg-transparent text-[#F7EEE4]">
         <Navigation />
         <HeroSection />
         <HowItWorksSection />

@@ -116,7 +116,7 @@ export default function TicketsPage() {
   }, []);
 
   return (
-    <main className="relative min-h-screen bg-[#000000] overflow-x-hidden text-[#F7EEE4] flex flex-col justify-between">
+    <main className="relative min-h-screen bg-transparent overflow-x-hidden text-[#F7EEE4] flex flex-col justify-between">
       <Navigation />
 
       {/* Grid overlay */}

@@ -11,6 +11,7 @@ import {
   Share_Tech_Mono
 } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
+import { AuthProvider } from "@/components/session-provider"
 import './globals.css'
 
 const instrumentSans = Instrument_Sans({ 
@@ -87,9 +88,9 @@ export default function RootLayout({
         ${rajdhaniFont.variable} 
         ${vt323Font.variable} 
         ${shareTechMonoFont.variable} 
-        font-sans antialiased bg-black text-[#F7EEE4]
+        font-sans antialiased text-[#F7EEE4]
       `}>
-        {children}
+        <AuthProvider>{children}</AuthProvider>
         <Analytics />
       </body>
     </html>
