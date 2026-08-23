@@ -151,3 +151,64 @@ under its own heading.
 
 Items 1–3 are global and cheap. Items 6–7 are the two surfaces with no design
 at all yet.
+
+---
+
+## 5. Visual pass — captured surfaces
+
+Captured live via the in-app browser (signed out, so public surfaces only;
+signed-in views come from provided screenshots). Programmatic scrolling returns
+blank frames on Luma's virtualised lists, so long pages are partial.
+
+### Discover
+
+- Page title ~28px/600, muted one-line description beneath. No hero.
+- Section header pairs a **title with a muted sub-label** (`Popular Events` /
+  `Bengaluru`), with a pill `View All →` right-aligned on the same baseline.
+- **Event row** is the core unit, and it is not a card: square thumbnail
+  (~64px, 8px radius) on the left, then a stack of muted date/time above a
+  white medium-weight title. No border, no fill, no shadow — separation comes
+  from spacing alone.
+- Rows sit in a **two-column grid**, not a list.
+- `LIVE` state is a coloured dot plus coloured label, no pill, no background.
+- Category tiles read `Name` over `4K Events` — the count is the whole subtitle.
+
+### Calendar / city page
+
+- **Full-bleed hero photograph** with a heavy gradient scrim resolving to the
+  page background at the bottom. Circular glyph badge sits top-left.
+- Title split across two weights: small muted `What's Happening in` above a
+  large `Bengaluru`.
+- Local time shown with a clock glyph — a live, ambient detail.
+- Inline `email + Subscribe` where Subscribe is a **white pill**.
+- Below the fold, an `Events` heading carries its own toolbar (`Submit Event`,
+  RSS, search) rather than a global one.
+- **Events group under date headers on a vertical timeline rail** with bullet
+  markers — `Today Sunday`, then that day's events indented beneath.
+
+---
+
+## 6. The timeline pattern → our `/schedule`
+
+The single most transferable thing found in the visual pass. Luma renders a
+multi-day programme as one continuous vertical rail: a bullet and date header
+per day, events indented under it, the rail running through the whole column.
+
+That is exactly the shape of a three-day fest schedule (15–17 October), and it
+solves the problem our `/schedule` page has — showing many events across days
+without turning into a wall of cards. It also degrades to mobile cleanly, since
+the rail simply narrows.
+
+Worth adopting there, with our own colours: rail in `#4A1C3A`, bullets in
+`#D64D8D`, date headers in Orbitron and event titles in `font-ui` at weight 500.
+
+## 7. What the visual pass changed
+
+Nothing in sections 1–4 is contradicted. Two additions:
+
+- **Rows beat cards for dense lists.** Our `/events` uses bordered cyber-boxes
+  for every event. Luma reserves borders for interactive containers and lets
+  spacing separate list items. Our events page would read calmer with rows.
+- **Status is colour, not chrome.** `LIVE` is a dot and coloured text. We render
+  status as bordered pills with backgrounds. The lighter treatment scales better
+  once an event has several states (open / full / closed / waitlist).
