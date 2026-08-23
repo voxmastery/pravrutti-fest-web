@@ -2,9 +2,9 @@
   "version": "0.0.1",
   "configurations": [
     {
-      "name": "fest-web-dev",
-      "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev", "--", "-p", "3200"],
+      "name": "fest-web",
+      "runtimeExecutable": "bash",
+      "runtimeArgs": ["-c", "cd /home/voxmastery/Desktop/fest-web && npm run dev -- -p 3200"],
       "port": 3200
     }
   ]

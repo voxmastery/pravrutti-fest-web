@@ -22,7 +22,7 @@ import {
 
 type Going = { first: string; initials: string };
 
-const COVER_GRADIENTS: Record<Event["category"], string> = {
+export const COVER_GRADIENTS: Record<Event["category"], string> = {
   "Engineering and Design": "from-[#721F4C] via-[#2B122C] to-[#0A0818]",
   "Research and Presentation": "from-[#BF8A1B] via-[#4A1C3A] to-[#0A0818]",
   "Code and Compute": "from-[#D64D8D] via-[#2B122C] to-[#0A0818]",

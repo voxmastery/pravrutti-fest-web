@@ -41,6 +41,9 @@
 
 @theme inline {
   --font-sans: var(--font-rajdhani), 'Rajdhani', system-ui, sans-serif;
+  /* Neutral product-UI stack (what luma.com itself renders in) for the
+     apply form and panels; the site face (Rajdhani) is display-only. */
+  --font-ui: -apple-system, BlinkMacSystemFont, Inter, Roboto, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
   --font-mono: var(--font-sharetech), 'Share Tech Mono', monospace;
   --font-display: var(--font-orbitron), 'Orbitron', sans-serif;
 
@@ -593,10 +596,25 @@
    page wrappers are transparent so every route shares it.
    ============================ */
 body {
-  background-color: #08040c;
+  background-color: #0a0510;
   background-image:
-    radial-gradient(ellipse 90% 60% at 15% -5%, rgba(214, 77, 141, 0.16), transparent 60%),
-    radial-gradient(ellipse 70% 50% at 85% 0%, rgba(191, 138, 27, 0.10), transparent 55%),
-    radial-gradient(ellipse 100% 80% at 50% 110%, rgba(114, 31, 76, 0.20), transparent 60%);
+    radial-gradient(ellipse 120% 70% at 18% -10%, rgba(214, 77, 141, 0.30), transparent 55%),
+    radial-gradient(ellipse 90% 55% at 100% 8%, rgba(114, 31, 76, 0.38), transparent 60%),
+    radial-gradient(ellipse 70% 45% at 78% 55%, rgba(172, 53, 93, 0.14), transparent 60%),
+    radial-gradient(ellipse 130% 90% at 50% 118%, rgba(74, 28, 58, 0.48), transparent 65%);
   background-attachment: fixed;
 }
+
+/* Film-grain over the wash — the texture Luma layers on its event gradients.
+   Sits above the body paint but behind all content (z-index: -1). */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0.5;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.16'/%3E%3C/svg%3E");
+}
+
+

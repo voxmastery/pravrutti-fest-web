@@ -8,7 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Event, eventId, FEST } from "@/lib/pravrutti-data";
 import { PAYMENTS_LIVE } from "@/lib/applications";
-import { Ticket, Loader2, IndianRupee, ArrowRight, ArrowLeft, Clock, Pencil, ShieldCheck, Hourglass, RotateCcw } from "lucide-react";
+import { COVER_GRADIENTS } from "@/components/event-detail-panel";
+import { Loader2, ArrowLeft, Pencil, Hourglass, ShieldCheck, RotateCcw, Check } from "lucide-react";
 
 const STORE_KEY = "pravrutti.guest";
 
@@ -55,6 +56,30 @@ async function fireConfetti() {
     confetti({ particleCount: 40, angle: 60, spread: 55, origin: { x: 0, y: 0.5 }, colors });
     confetti({ particleCount: 40, angle: 120, spread: 55, origin: { x: 1, y: 0.5 }, colors });
   }, 160);
+}
+
+/* Luma's apply form is not a boxed popup: it's a full-screen dimmed
+   overlay with the form floating frameless on it — labels above filled
+   borderless inputs, one accent-colored submit. */
+/* Values measured off luma.com's own apply form:
+   inputs 38px tall / 8px radius / white-8% fill / transparent border,
+   labels 14px 500 at 79% white with 6px gap, CTA 38px tall at 16px radius. */
+const card = "rounded-xl border border-white/[0.08] bg-white/[0.05]";
+const inputCls =
+  "h-[38px] rounded-lg border border-transparent bg-white/[0.08] font-ui text-base md:text-base text-white placeholder:text-white/25 focus-visible:ring-1 focus-visible:ring-[#D64D8D]/70 focus-visible:border-transparent";
+const labelCls = "block text-sm font-medium text-white/[0.79] mb-1.5";
+const primaryBtn =
+  "w-full h-[38px] rounded-2xl bg-[#D64D8D] text-white hover:bg-[#c23f7d] font-ui font-medium text-base cursor-pointer";
+const ghostBtn =
+  "h-[38px] rounded-2xl border border-transparent bg-white/[0.08] text-white/70 hover:bg-white/[0.14] hover:text-white cursor-pointer";
+
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <label className={labelCls}>{label}</label>
+      {children}
+    </div>
+  );
 }
 
 export function RegistrationDialog({
@@ -160,85 +185,85 @@ export function RegistrationDialog({
     }
   };
 
-  const inputCls =
-    "bg-[#040616] border-[#4A1C3A] rounded-xl h-11 text-[#F7EEE4] placeholder:text-[#F7EEE4]/30 font-sharetech focus-visible:ring-[#D64D8D] focus-visible:border-[#D64D8D]";
   const signedIn = me.signedIn && !!me.email;
   const mustSignIn = me.authEnabled && !signedIn;
   const oneClick = (signedIn || !!known) && !editing && step === 1;
   const isFree = event?.fee.toLowerCase() === "free";
 
+  const stepLabel = step === 1 ? "Your Info" : step === 2 ? "A Few Details" : "Review & Submit";
+
+  const errorBox = error && (
+    <p ref={errRef} className="font-ui text-[13px] text-[#ff7aa8] border border-[#D64D8D]/30 bg-[#D64D8D]/10 rounded-lg px-3 py-2.5">
+      {error}
+    </p>
+  );
+
   return (
     <Dialog open={!!event} onOpenChange={(o) => !o && close()}>
       {event && (
-        <DialogContent className="bg-[#0A0512] border-[#4A1C3A] text-[#F7EEE4] rounded-3xl max-w-md max-h-[92vh] overflow-y-auto cyber-box p-6">
+        <DialogContent
+          aria-describedby={undefined}
+          className="fixed inset-0 left-0 top-0 z-50 block h-full w-full max-w-none sm:max-w-none gap-0 translate-x-0 translate-y-0 rounded-none border-0 bg-[#0c0812]/[0.97] backdrop-blur-2xl text-white p-0 font-ui overflow-y-auto data-[state=open]:slide-in-from-bottom-4"
+        >
+          <div className="mx-auto w-full max-w-[400px] px-5 pt-[9vh] pb-16">
           {!result ? (
             <>
-              <DialogHeader className="text-left">
-                <DialogTitle className="font-orbitron tracking-wider text-[#F2D2AE] font-black uppercase text-lg leading-tight">
-                  {event.name}
-                </DialogTitle>
-                <DialogDescription className="font-sharetech text-[#F7EEE4]/60 flex flex-wrap items-center gap-x-4 gap-y-1 pt-1">
-                  <span className="flex items-center gap-1">
-                    <IndianRupee className="w-3.5 h-3.5 text-[#D64D8D]" />
-                    {event.fee === "Free" ? "Free entry" : event.fee}
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <Clock className="w-3.5 h-3.5 text-[#D64D8D]" /> {FEST.dates}
-                  </span>
-                  {typeof seatsLeft === "number" && seatsLeft <= 0 && (
-                    <span className="text-[#BF8A1B] font-bold">Queue is past capacity</span>
-                  )}
+              {/* Luma-style: frameless heading, event named in a muted kicker */}
+              <DialogHeader className="text-left space-y-0 mb-5">
+                <DialogDescription className="font-ui text-[13px] text-white/45 truncate">
+                  {event.name} · {event.fee === "Free" ? "Free entry" : event.fee}
+                  {typeof seatsLeft === "number" && seatsLeft <= 0 && " · waitlist"}
                 </DialogDescription>
+                <div className="flex items-center justify-between pt-1">
+                  <DialogTitle className="font-ui font-semibold text-[22px] text-white">
+                    {stepLabel}
+                  </DialogTitle>
+                  <div className="flex items-center gap-1.5">
+                    {[1, 2, 3].map((n) => (
+                      <span
+                        key={n}
+                        className={`h-1.5 rounded-full transition-all duration-300 ${
+                          step === n ? "w-4 bg-white" : step > n ? "w-1.5 bg-white/60" : "w-1.5 bg-white/20"
+                        }`}
+                      />
+                    ))}
+                  </div>
+                </div>
               </DialogHeader>
-
-              <div className="flex items-center gap-2 pt-1 pb-3">
-                {[1, 2, 3].map((n) => (
-                  <span
-                    key={n}
-                    className={`h-1 flex-1 rounded-full transition-colors duration-300 ${
-                      step >= n ? "bg-[#D64D8D]" : "bg-[#4A1C3A]"
-                    }`}
-                  />
-                ))}
-                <span className="text-[10px] font-orbitron tracking-widest text-[#F7EEE4]/40 pl-1">{step}/3</span>
-              </div>
 
               {step === 1 ? (
                 <div className="space-y-3 animate-step">
                   {mustSignIn ? (
-                    <div className="p-5 border border-[#4A1C3A] rounded-2xl bg-[#150B1E]/70 text-center space-y-4">
-                      <p className="font-sharetech text-xs text-[#F7EEE4]/70 leading-relaxed">
+                    <div className={`${card} p-5 text-center space-y-4`}>
+                      <p className="text-[13px] text-white/60 leading-relaxed">
                         Sign in so your ticket stays tied to your inbox — you can reopen it on any device.
                       </p>
-                      <Button
-                        onClick={me.signIn}
-                        className="w-full rounded-xl h-11 bg-[#F7EEE4] hover:bg-white text-[#0A0512] text-xs font-orbitron font-black uppercase tracking-widest cursor-pointer inline-flex items-center gap-2.5"
-                      >
+                      <Button onClick={me.signIn} className={`${primaryBtn} inline-flex items-center gap-2.5`}>
                         <GoogleMark /> Continue with Google
                       </Button>
                     </div>
                   ) : oneClick ? (
-                    <div className="p-4 border border-[#4A1C3A] rounded-2xl bg-[#150B1E]/70 flex items-center gap-3">
+                    <div className={`${card} p-3.5 flex items-center gap-3`}>
                       {signedIn && me.image ? (
                         /* eslint-disable-next-line @next/next/no-img-element */
-                        <img src={me.image} alt="" className="w-10 h-10 rounded-xl shrink-0" />
+                        <img src={me.image} alt="" className="w-10 h-10 rounded-full shrink-0" />
                       ) : (
-                        <span className="w-10 h-10 shrink-0 rounded-xl bg-[#721F4C] text-[#F2D2AE] font-orbitron font-black flex items-center justify-center text-sm">
+                        <span className="w-10 h-10 shrink-0 rounded-full bg-white/10 text-white/90 font-medium flex items-center justify-center text-sm">
                           {(form.name || "?").trim().split(/\s+/).map((p) => p[0]).slice(0, 2).join("").toUpperCase()}
                         </span>
                       )}
                       <div className="min-w-0 flex-1">
-                        <p className="font-bold text-sm truncate">{form.name}</p>
-                        <p className="text-xs text-[#F7EEE4]/50 font-sharetech truncate">{form.email}</p>
+                        <p className="font-medium text-sm truncate">{form.name}</p>
+                        <p className="text-[13px] text-white/45 truncate">{form.email}</p>
                       </div>
                       {signedIn ? (
-                        <span className="text-[9px] font-orbitron uppercase tracking-widest text-[#D64D8D] px-2 py-1 rounded-full border border-[#D64D8D]/40 shrink-0">
-                          Verified
+                        <span className="flex items-center gap-1 text-[11px] font-medium text-emerald-300/90 bg-emerald-400/10 border border-emerald-400/20 px-2 py-1 rounded-full shrink-0">
+                          <Check className="w-3 h-3" /> Verified
                         </span>
                       ) : (
                         <button
                           onClick={() => setEditing(true)}
-                          className="text-[#D64D8D] hover:text-[#F2D2AE] p-2 cursor-pointer"
+                          className="text-white/40 hover:text-white p-2 cursor-pointer"
                           aria-label="Use different details"
                         >
                           <Pencil className="w-4 h-4" />
@@ -247,63 +272,47 @@ export function RegistrationDialog({
                     </div>
                   ) : (
                     <>
-                      <Input className={inputCls} placeholder="Full name" value={form.name} onChange={set("name")} />
-                      <Input
-                        className={inputCls}
-                        type="email"
-                        placeholder="Email"
-                        value={form.email}
-                        onChange={set("email")}
-                        disabled={signedIn}
-                      />
+                      <Field label="Full name *">
+                        <Input className={inputCls} value={form.name} onChange={set("name")} />
+                      </Field>
+                      <Field label="Email *">
+                        <Input className={inputCls} type="email" value={form.email} onChange={set("email")} disabled={signedIn} />
+                      </Field>
                     </>
                   )}
 
-                  {error && (
-                    <p ref={errRef} className="text-xs font-sharetech text-[#D64D8D] border border-[#D64D8D]/40 bg-[#D64D8D]/10 rounded-xl p-3">
-                      {error}
-                    </p>
-                  )}
+                  {errorBox}
 
                   {!mustSignIn && (
                     <>
-                      <Button
-                        onClick={next}
-                        className="w-full rounded-xl h-11 text-xs font-orbitron font-bold uppercase tracking-widest text-white arcade-btn-magenta border-[#D64D8D] cursor-pointer"
-                      >
-                        Continue <ArrowRight className="w-4 h-4 ml-2" />
+                      <Button onClick={next} className={primaryBtn}>
+                        Continue
                       </Button>
-                      <p className="text-[10px] text-center text-[#F7EEE4]/35 font-sharetech">
+                      <p className="text-xs text-center text-white/35">
                         {signedIn ? "Two quick details and you're done." : "Name and email are all we need to hold your spot."}
                       </p>
                     </>
                   )}
                 </div>
               ) : step === 2 ? (
-                <div className="space-y-3 animate-step">
-                  <Input className={inputCls} placeholder="Phone number" type="tel" value={form.phone} onChange={set("phone")} />
-                  <Input className={inputCls} placeholder="College or university" value={form.college} onChange={set("college")} />
-                  <Input className={inputCls} placeholder="Team name (skip if solo)" value={form.teamName} onChange={set("teamName")} />
-                  <Textarea
-                    className={inputCls + " min-h-[68px] h-auto py-3"}
-                    placeholder="Teammates, comma separated (optional)"
-                    value={form.members}
-                    onChange={set("members")}
-                  />
+                <div className="space-y-4 animate-step">
+                  <Field label="Phone number *">
+                    <Input className={inputCls} type="tel" value={form.phone} onChange={set("phone")} />
+                  </Field>
+                  <Field label="College or university *">
+                    <Input className={inputCls} value={form.college} onChange={set("college")} />
+                  </Field>
+                  <Field label="Team name (skip if solo)">
+                    <Input className={inputCls} value={form.teamName} onChange={set("teamName")} />
+                  </Field>
+                  <Field label="Teammates, comma separated">
+                    <Textarea className={inputCls + " min-h-[80px] h-auto py-3"} value={form.members} onChange={set("members")} />
+                  </Field>
 
-                  {error && (
-                    <p ref={errRef} className="text-xs font-sharetech text-[#D64D8D] border border-[#D64D8D]/40 bg-[#D64D8D]/10 rounded-xl p-3">
-                      {error}
-                    </p>
-                  )}
+                  {errorBox}
 
                   <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      onClick={() => { setError(null); setStep(1); }}
-                      className="rounded-xl h-11 border-[#4A1C3A] text-[#F7EEE4]/70 hover:bg-[#150B1E] cursor-pointer px-4"
-                      aria-label="Back"
-                    >
+                    <Button variant="outline" onClick={() => { setError(null); setStep(1); }} className={`${ghostBtn} px-4`} aria-label="Back">
                       <ArrowLeft className="w-4 h-4" />
                     </Button>
                     <Button
@@ -314,25 +323,21 @@ export function RegistrationDialog({
                         setError(null);
                         setStep(3);
                       }}
-                      className="flex-1 rounded-xl h-11 text-xs font-orbitron font-bold uppercase tracking-widest text-white arcade-btn-magenta border-[#D64D8D] cursor-pointer"
+                      className={`${primaryBtn} flex-1`}
                     >
-                      Continue <ArrowRight className="w-4 h-4 ml-2" />
+                      Continue
                     </Button>
                   </div>
                 </div>
               ) : (
-                <div className="space-y-4 animate-step">
-                  {/* Step 3 — the deal, stated plainly before they commit */}
-                  <div className="p-4 rounded-2xl border border-[#4A1C3A] bg-[#150B1E]/70 space-y-3">
+                <div className="space-y-3 animate-step">
+                  {/* Review — the deal, stated plainly before they commit */}
+                  <div className={`${card} p-4 space-y-3`}>
                     <div className="flex items-baseline justify-between">
-                      <span className="font-sharetech text-xs uppercase tracking-widest text-[#F7EEE4]/45">
-                        {isFree ? "Entry" : "Entry fee"}
-                      </span>
-                      <span className="font-orbitron font-black text-xl text-[#F2D2AE]">
-                        {isFree ? "Free" : event.fee}
-                      </span>
+                      <span className="text-[13px] text-white/50">{isFree ? "Entry" : "Entry fee"}</span>
+                      <span className="font-semibold text-lg text-white">{isFree ? "Free" : event.fee}</span>
                     </div>
-                    <div className="border-t border-[#4A1C3A] pt-3 space-y-2.5">
+                    <div className="border-t border-white/[0.08] pt-3 space-y-2.5">
                       {[
                         { icon: Hourglass, text: "Your application joins the queue for this event." },
                         { icon: ShieldCheck, text: "If confirmed, your ticket and QR unlock straight away." },
@@ -344,46 +349,33 @@ export function RegistrationDialog({
                         },
                       ].map(({ icon: Icon, text }, i) => (
                         <div key={i} className="flex gap-2.5 items-start">
-                          <Icon className="w-3.5 h-3.5 text-[#D64D8D] mt-0.5 shrink-0" />
-                          <p className="font-sharetech text-xs text-[#F7EEE4]/70 leading-relaxed">{text}</p>
+                          <Icon className="w-3.5 h-3.5 text-white/40 mt-0.5 shrink-0" />
+                          <p className="text-[13px] text-white/65 leading-relaxed">{text}</p>
                         </div>
                       ))}
                     </div>
                   </div>
 
                   {!isFree && !PAYMENTS_LIVE && (
-                    <p className="text-[11px] font-sharetech text-[#F2D2AE]/80 border border-[#BF8A1B]/35 bg-[#BF8A1B]/10 rounded-xl p-3 leading-relaxed">
+                    <p className="text-xs text-amber-200/80 border border-amber-400/20 bg-amber-400/[0.07] rounded-lg px-3 py-2.5 leading-relaxed">
                       Online payment opens shortly. Apply now to hold your place in the queue — the team
                       will send you a payment link before your application is reviewed.
                     </p>
                   )}
 
-                  {error && (
-                    <p ref={errRef} className="text-xs font-sharetech text-[#D64D8D] border border-[#D64D8D]/40 bg-[#D64D8D]/10 rounded-xl p-3">
-                      {error}
-                    </p>
-                  )}
+                  {errorBox}
 
                   <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      onClick={() => { setError(null); setStep(2); }}
-                      className="rounded-xl h-11 border-[#4A1C3A] text-[#F7EEE4]/70 hover:bg-[#150B1E] cursor-pointer px-4"
-                      aria-label="Back"
-                    >
+                    <Button variant="outline" onClick={() => { setError(null); setStep(2); }} className={`${ghostBtn} px-4`} aria-label="Back">
                       <ArrowLeft className="w-4 h-4" />
                     </Button>
-                    <Button
-                      onClick={submit}
-                      disabled={submitting}
-                      className="flex-1 rounded-xl h-11 text-xs font-orbitron font-bold uppercase tracking-widest text-white arcade-btn-magenta border-[#D64D8D] cursor-pointer"
-                    >
+                    <Button onClick={submit} disabled={submitting} className={`${primaryBtn} flex-1`}>
                       {submitting ? (
-                        <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Submitting</>
+                        <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Submitting…</>
                       ) : isFree || !PAYMENTS_LIVE ? (
-                        <><Ticket className="w-4 h-4 mr-2" /> Submit application</>
+                        "Submit application"
                       ) : (
-                        <><IndianRupee className="w-4 h-4 mr-1" /> Pay {event.fee} and apply</>
+                        `Pay ${event.fee} and apply`
                       )}
                     </Button>
                   </div>
@@ -391,89 +383,63 @@ export function RegistrationDialog({
               )}
             </>
           ) : (
-            <div className="space-y-5 py-1">
-              <DialogHeader>
-                <DialogTitle className="font-orbitron tracking-wider text-[#F7EEE4] font-black uppercase text-center text-xl">
-                  Application in
-                </DialogTitle>
-                <DialogDescription className="font-sharetech text-[#F7EEE4]/55 text-center">
-                  {result.eventName}
-                </DialogDescription>
-              </DialogHeader>
-
-              <div className="prize-ticket animate-ticket rounded-2xl px-5 pt-5 pb-4 text-[#0A0512]">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <p className="font-orbitron text-[9px] font-black uppercase tracking-[0.2em] text-[#721F4C]">
-                      {FEST.name}
-                    </p>
-                    <p className="font-orbitron font-black text-base leading-tight truncate mt-0.5">
-                      {result.eventName}
-                    </p>
-                  </div>
-                  <span className="shrink-0 px-2.5 py-1 rounded-full bg-[#BF8A1B]/20 border border-[#BF8A1B]/50 font-orbitron text-[9px] font-black uppercase tracking-widest text-[#8a6212]">
-                    In review
-                  </span>
-                </div>
-
-                <div className="my-4 text-center">
-                  <p className="font-sharetech text-[10px] uppercase tracking-widest text-[#721F4C]">
-                    Queue position
-                  </p>
-                  <p className="font-orbitron font-black text-5xl text-[#AC355D] leading-none mt-1">
-                    #{result.queuePosition}
-                  </p>
-                  <p className="font-sharetech text-[11px] text-[#0A0512]/55 mt-1.5">
-                    {result.capacity} seats to be confirmed
-                  </p>
-                </div>
-
-                <div className="prize-ticket-perf pt-3 flex items-end justify-between gap-3">
-                  <div className="min-w-0">
-                    <p className="font-sharetech text-[9px] uppercase tracking-widest text-[#721F4C]">Applicant</p>
-                    <p className="font-orbitron font-black text-sm truncate">{result.name}</p>
-                  </div>
-                  <p className="font-orbitron font-black text-base tracking-wider text-[#AC355D] shrink-0">
-                    {result.ticketId}
-                  </p>
+            <div className="space-y-4 py-1 animate-step">
+              {/* Pending state — Luma's calm confirmation, our queue mechanics */}
+              <div className="flex flex-col items-center text-center pt-2 space-y-3">
+                <span className="w-12 h-12 rounded-full bg-emerald-400/10 border border-emerald-400/25 flex items-center justify-center">
+                  <Hourglass className="w-5 h-5 text-emerald-300" />
+                </span>
+                <div>
+                  <DialogTitle className="font-ui font-semibold text-lg text-white">
+                    Application submitted
+                  </DialogTitle>
+                  <DialogDescription className="font-ui text-[13px] text-white/50 mt-0.5">
+                    {result.eventName}
+                  </DialogDescription>
                 </div>
               </div>
 
-              <div className="space-y-2 font-sharetech text-xs text-[#F7EEE4]/60 leading-relaxed">
-                <p>
-                  {result.payment === "not_required"
-                    ? "Nothing to pay for this one."
-                    : result.payment === "awaiting"
-                    ? `The team will send a payment link for ${result.fee} before reviewing your application.`
-                    : `${result.fee} received. Refunded in full if you aren't confirmed.`}
-                </p>
-                <p>
-                  Track it any time at{" "}
-                  <a href="/ticket" className="text-[#F2D2AE] underline hover:text-[#D64D8D]">
-                    the ticket page
-                  </a>{" "}
-                  with this email.
-                </p>
+              <div className={`${card} divide-y divide-white/[0.08]`}>
+                <div className="flex items-center justify-between px-4 py-3">
+                  <span className="text-[13px] text-white/50">Status</span>
+                  <span className="text-[13px] font-medium text-amber-200/90">Pending approval</span>
+                </div>
+                <div className="flex items-center justify-between px-4 py-3">
+                  <span className="text-[13px] text-white/50">Queue position</span>
+                  <span className="text-[13px] font-semibold text-white">#{result.queuePosition} of {result.capacity}</span>
+                </div>
+                <div className="flex items-center justify-between px-4 py-3">
+                  <span className="text-[13px] text-white/50">Applicant</span>
+                  <span className="text-[13px] font-medium text-white truncate max-w-[55%]">{result.name}</span>
+                </div>
+                <div className="flex items-center justify-between px-4 py-3">
+                  <span className="text-[13px] text-white/50">Reference</span>
+                  <span className="text-[13px] font-mono text-white/80">{result.ticketId}</span>
+                </div>
               </div>
+
+              <p className="text-[13px] text-white/55 leading-relaxed text-center px-2">
+                {result.payment === "not_required"
+                  ? "Nothing to pay for this one. "
+                  : result.payment === "awaiting"
+                  ? `The team will send a payment link for ${result.fee} before reviewing your application. `
+                  : `${result.fee} received — refunded in full if you aren't confirmed. `}
+                You'll get your ticket and QR once the organisers approve.
+              </p>
 
               <div className="flex gap-2">
                 <a href="/ticket" className="flex-1">
-                  <Button
-                    variant="outline"
-                    className="w-full rounded-xl h-11 border-[#4A1C3A] text-[#F2D2AE] hover:bg-[#150B1E] text-xs font-bold uppercase tracking-wider cursor-pointer"
-                  >
+                  <Button variant="outline" className={`${ghostBtn} w-full`}>
                     Track status
                   </Button>
                 </a>
-                <Button
-                  onClick={close}
-                  className="flex-1 rounded-xl h-11 text-xs font-orbitron font-bold uppercase tracking-widest text-white arcade-btn-magenta border-[#D64D8D] cursor-pointer"
-                >
+                <Button onClick={close} className={`${primaryBtn} flex-1`}>
                   Done
                 </Button>
               </div>
             </div>
           )}
+          </div>
         </DialogContent>
       )}
     </Dialog>
