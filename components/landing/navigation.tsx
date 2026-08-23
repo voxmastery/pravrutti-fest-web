@@ -118,7 +118,10 @@ export function Navigation() {
               <Link
                 key={l.name}
                 href={l.href}
-                className={`relative font-mono text-xs tracking-[0.18em] transition-colors py-1 ${
+                /* py-3 lifts the hit area from 24px to ~40px. The label is
+                   only 12px tall, but Fitts's Law cares about the target, not
+                   the glyph. */
+                className={`relative font-mono text-xs tracking-[0.18em] transition-colors py-3 inline-flex items-center ${
                   active(l.href) ? "text-[#F2D2AE]" : "text-[#F7EEE4]/70 hover:text-[#F7EEE4]"
                 }`}
               >
@@ -133,7 +136,7 @@ export function Navigation() {
 
             {/* Resources dropdown */}
             <DropdownMenu>
-              <DropdownMenuTrigger className="font-mono text-xs tracking-[0.18em] text-[#F7EEE4]/70 hover:text-[#F7EEE4] transition-colors flex items-center gap-1 cursor-pointer focus:outline-none">
+              <DropdownMenuTrigger className="font-mono text-xs tracking-[0.18em] text-[#F7EEE4]/70 hover:text-[#F7EEE4] transition-colors flex items-center gap-1 py-3 cursor-pointer focus:outline-none">
                 RESOURCES <ChevronDown className="w-3.5 h-3.5 text-[#D64D8D]" />
               </DropdownMenuTrigger>
               <DropdownMenuContent className="bg-[#0A0818]/95 backdrop-blur-xl border border-[#4A1C3A] text-[#F7EEE4] w-52 p-1 rounded-xl shadow-2xl shadow-black/60">

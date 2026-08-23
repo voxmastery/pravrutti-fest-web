@@ -162,7 +162,7 @@ export default function EventsPage() {
               return (
                 <TabsContent key={cat} value={cat} className="focus-visible:ring-0 mt-0">
                   {filteredList.length > 0 ? (
-                    <div className="grid lg:grid-cols-2 gap-4 max-w-[1080px] mx-auto">
+                    <div className="grid lg:grid-cols-2 gap-6 max-w-[1080px] mx-auto">
                       {filteredList.map((event) => {
                         const leads = [
                           ...event.coordinators.student,
@@ -180,16 +180,16 @@ export default function EventsPage() {
                           <article
                             key={event.name}
                             onClick={() => setSelectedEvent(event)}
-                            className="group cursor-pointer rounded-2xl border border-white/[0.08] bg-white/[0.04] hover:bg-white/[0.07] hover:border-white/[0.14] transition-colors p-4 flex gap-4"
+                            className="group cursor-pointer rounded-2xl border border-white/[0.08] bg-white/[0.04] hover:bg-white/[0.07] hover:border-white/[0.14] transition-colors p-5 flex gap-5"
                           >
-                            <div className="min-w-0 flex-1 flex flex-col gap-1.5">
+                            <div className="min-w-0 flex-1 flex flex-col gap-2">
                               {/* Fee stands in for Luma's start time until
                                   per-event times exist (Event.startsAt). */}
                               <p className="font-ui text-sm text-white/50">
                                 <span className={isFree ? "text-[#7BE3A8]" : "text-[#F2D2AE]"}>
                                   {event.fee}
                                 </span>
-                                <span className="text-white/25"> · {event.type}</span>
+                                <span className="text-white/55"> · {event.type}</span>
                               </p>
 
                               <h3 className="font-ui font-semibold text-lg text-white leading-snug group-hover:text-[#F2D2AE] transition-colors">
@@ -219,7 +219,7 @@ export default function EventsPage() {
                             <EventPoster
                               event={event}
                               name={event.name}
-                              className="w-[132px] shrink-0 self-stretch rounded-xl border border-white/[0.08]"
+                              className="w-[140px] shrink-0 self-stretch rounded-xl border border-white/[0.08]"
                             />
                           </article>
                         );
