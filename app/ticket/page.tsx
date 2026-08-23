@@ -28,6 +28,20 @@ const TONE: Record<AppStatus, { chip: string; icon: typeof Check }> = {
   declined: { chip: "bg-[#4A1C3A]/40 border-[#4A1C3A] text-[#F7EEE4]/60", icon: RotateCcw },
 };
 
+/**
+ * Settings-row anatomy: label left at half opacity, value right in white,
+ * hairline divider between rows. Every field on a ticket is exactly this
+ * shape, so the card is built entirely from it.
+ */
+function Row({ label, value }: { label: string; value: React.ReactNode }) {
+  return (
+    <div className="flex items-center justify-between gap-4 px-4 py-3 border-b border-white/[0.06] last:border-b-0">
+      <span className="font-ui text-sm text-white/50 shrink-0">{label}</span>
+      <span className="font-ui text-sm text-white text-right min-w-0 truncate">{value}</span>
+    </div>
+  );
+}
+
 function GoogleMark() {
   return (
     <svg viewBox="0 0 24 24" className="w-4 h-4" aria-hidden="true">
@@ -203,9 +217,9 @@ export default function TicketPage() {
         )}
 
         {!loading && apps?.length === 0 && (
-          <div className="text-center py-16 border border-dashed border-[#4A1C3A] rounded-3xl bg-[#150B1E]/30">
-            <p className="font-orbitron font-black text-[#F7EEE4] mb-2">No applications yet</p>
-            <p className="font-sharetech text-xs text-[#F7EEE4]/50">
+          <div className="text-center py-16 border border-white/[0.08] rounded-3xl bg-white/[0.04]">
+            <p className="font-ui font-semibold text-white mb-1.5">No applications yet</p>
+            <p className="font-ui text-sm text-white/50">
               <a href="/events" className="text-[#F2D2AE] underline hover:text-[#D64D8D]">
                 Browse the events
               </a>{" "}
@@ -214,32 +228,49 @@ export default function TicketPage() {
           </div>
         )}
 
-        <div className="space-y-5">
+        <div className="space-y-10">
           {apps?.map((a) => {
             const tone = TONE[a.status];
             const Icon = tone.icon;
             return (
-              <div key={a.ticketId} className="border border-[#4A1C3A] rounded-3xl bg-[#150B1E]/60 p-6 cyber-box space-y-4">
+              <div key={a.ticketId} className="space-y-3">
+                {/* Event name stays Orbitron — marquee text is where the arcade
+                    identity belongs; the data below it is product chrome. */}
                 <div className="flex items-start justify-between gap-4">
-                  <div className="min-w-0">
-                    <a
-                      href={`/events/${a.eventId}`}
-                      className="font-orbitron font-black text-lg text-[#F7EEE4] hover:text-[#F2D2AE] transition-colors block truncate"
-                    >
-                      {a.eventName}
-                    </a>
-                    <p className="font-sharetech text-xs text-[#F7EEE4]/45 mt-1">{a.ticketId}</p>
-                  </div>
+                  <a
+                    href={`/events/${a.eventId}`}
+                    className="font-orbitron font-black text-lg text-[#F7EEE4] hover:text-[#F2D2AE] transition-colors min-w-0 truncate"
+                  >
+                    {a.eventName}
+                  </a>
                   <span
-                    className={`shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full border font-orbitron text-[10px] font-black uppercase tracking-widest ${tone.chip}`}
+                    className={`shrink-0 flex items-center gap-1.5 px-3 py-1 rounded-full border font-ui text-xs font-medium ${tone.chip}`}
                   >
                     <Icon className="w-3 h-3" /> {STATUS_COPY[a.status].label}
                   </span>
                 </div>
 
-                <p className="font-sharetech text-xs text-[#F7EEE4]/65 leading-relaxed">
+                <p className="font-ui text-sm text-white/55 leading-relaxed">
                   {STATUS_COPY[a.status].blurb}
                 </p>
+
+                <div className="rounded-3xl border border-white/[0.08] bg-white/[0.04] overflow-hidden">
+                  <Row label="Reference" value={<span className="font-mono">{a.ticketId}</span>} />
+                  <Row label="Applicant" value={a.name} />
+                  <Row
+                    label="Entry"
+                    value={
+                      a.payment === "not_required"
+                        ? "Free"
+                        : a.payment === "awaiting"
+                        ? `${a.fee} — payment link coming`
+                        : a.payment === "paid"
+                        ? `${a.fee} paid`
+                        : `${a.fee} refunded`
+                    }
+                  />
+                  <Row label="Applied" value={new Date(a.appliedAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })} />
+                </div>
 
                 {a.status === "confirmed" && a.qr && (
                   <div className="prize-ticket animate-ticket rounded-2xl px-5 pt-5 pb-4 text-[#0A0512]">
@@ -260,26 +291,15 @@ export default function TicketPage() {
                   </div>
                 )}
 
-                <div className="flex items-center justify-between gap-3 pt-1 border-t border-[#4A1C3A]/60">
-                  <p className="font-sharetech text-[11px] text-[#F7EEE4]/45 pt-3">
-                    {a.payment === "not_required"
-                      ? "Free entry"
-                      : a.payment === "awaiting"
-                      ? `${a.fee} — payment link coming`
-                      : a.payment === "paid"
-                      ? `${a.fee} paid`
-                      : `${a.fee} refunded`}
-                  </p>
-                  {a.status === "confirmed" && (
-                    <Button
-                      variant="outline"
-                      onClick={() => addToCalendar(a.eventName, a.ticketId)}
-                      className="mt-3 rounded-xl h-9 border-[#4A1C3A] text-[#F2D2AE] hover:bg-[#150B1E] text-[10px] font-bold uppercase tracking-wider cursor-pointer"
-                    >
-                      <CalendarPlus className="w-3.5 h-3.5 mr-1.5" /> Add to calendar
-                    </Button>
-                  )}
-                </div>
+                {a.status === "confirmed" && (
+                  <Button
+                    variant="outline"
+                    onClick={() => addToCalendar(a.eventName, a.ticketId)}
+                    className="w-full h-[38px] rounded-2xl border border-white/[0.08] bg-white/[0.04] text-white/70 hover:bg-white/[0.08] hover:text-white font-ui font-medium text-sm cursor-pointer"
+                  >
+                    <CalendarPlus className="w-4 h-4 mr-2" /> Add to calendar
+                  </Button>
+                )}
               </div>
             );
           })}
