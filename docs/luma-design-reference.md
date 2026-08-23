@@ -212,3 +212,61 @@ Nothing in sections 1–4 is contradicted. Two additions:
 - **Status is colour, not chrome.** `LIVE` is a dot and coloured text. We render
   status as bordered pills with backgrounds. The lighter treatment scales better
   once an event has several states (open / full / closed / waitlist).
+
+---
+
+## 8. Settings & Preferences — explored directly
+
+Earlier notes on these came from screenshots. These are read from the live DOM
+in a signed-in session (Chrome allows scripting there; only pixel capture fails).
+
+### Section anatomy — measured
+
+```
+h2            20px / weight 600 / pure white
+group label   14px / weight 500 / white 50% / NOT uppercased
+container     24px radius / 1px white-8% border / white-4% fill
+row padding   12px 16px
+section gap   20px below each block, 8px between title and body
+```
+
+Note the **group label**: 14px, medium weight, half-opacity, sentence case
+("Events You Attend", "Calendars You Manage"). It separates blocks *without* a
+heading, a rule, or uppercase tracking. We currently reach for uppercase
+letter-spaced mono labels in that role, which is far louder for a element whose
+only job is to whisper "these belong together".
+
+### Account page — full section order
+
+`Your Profile` → `Emails` → `Mobile Number` → `Password & Security` →
+`Third Party Accounts` → `Account Syncing` → `Active Devices` → `Delete Account`
+
+Fields under Your Profile: Profile Picture, First Name, Last Name, Username,
+Bio, Social Links.
+
+The ordering is worth copying wholesale: **identity → contact → security →
+connections → sessions → destruction**. Risk rises monotonically down the page,
+and the irreversible action is last, alone, in red.
+
+### Preferences page
+
+Only two H2s — `Display` and `Notifications` — but five group labels beneath
+them. So the hierarchy is deliberately shallow: two real sections, subdivided by
+those quiet 50%-opacity labels rather than more headings.
+
+Notification rows follow `label left · current value right`, where the value is
+a plain comma list ("Email, WhatsApp, Push"). **The current state is always
+legible without opening the control** — no toggles to decode, no icons standing
+in for channels.
+
+### What this is worth to us
+
+We have no profile or settings page, and the team system doesn't need one. But
+three patterns transfer immediately:
+
+1. **Quiet group labels** (14px / 500 / 50% / sentence case) instead of loud
+   uppercase mono dividers — applies across the whole site.
+2. **`label left, value right` rows** — the right shape for `/ticket`, where
+   each field is exactly that: Status, Queue position, Applicant, Reference.
+3. **Risk-ordered pages** with the destructive action isolated last — applies to
+   `/admin`, where decline and refund will eventually live.
