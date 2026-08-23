@@ -5,10 +5,11 @@ import { useIdentity } from "@/lib/identity-context";
 import { Navigation } from "@/components/landing/navigation";
 import { FooterSection } from "@/components/landing/footer-section";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { FEST } from "@/lib/pravrutti-data";
+import { FEST, events, eventId as slugify } from "@/lib/pravrutti-data";
 import { STATUS_COPY, AppStatus, PayStatus } from "@/lib/applications";
-import { Loader2, Search, CalendarPlus, Hourglass, Check, RotateCcw, LogOut } from "lucide-react";
+import { EventPoster } from "@/components/event-poster";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { Loader2, CalendarPlus, Hourglass, Check, RotateCcw, LogOut, MapPin, QrCode } from "lucide-react";
 
 type App = {
   ticketId: string;
@@ -22,25 +23,23 @@ type App = {
   qr: string | null;
 };
 
-const TONE: Record<AppStatus, { chip: string; icon: typeof Check }> = {
-  pending: { chip: "bg-[#BF8A1B]/20 border-[#BF8A1B]/50 text-[#F2D2AE]", icon: Hourglass },
-  confirmed: { chip: "bg-[#D64D8D]/20 border-[#D64D8D]/50 text-[#D64D8D]", icon: Check },
-  declined: { chip: "bg-[#4A1C3A]/40 border-[#4A1C3A] text-[#F7EEE4]/60", icon: RotateCcw },
+const TONE: Record<AppStatus, { chip: string; dot: string; icon: typeof Check }> = {
+  pending: {
+    chip: "bg-[#BF8A1B]/20 border-[#BF8A1B]/50 text-[#F2D2AE]",
+    dot: "bg-[#BF8A1B] border-[#BF8A1B]/40",
+    icon: Hourglass,
+  },
+  confirmed: {
+    chip: "bg-[#12B76A]/15 border-[#12B76A]/45 text-[#7BE3A8]",
+    dot: "bg-[#12B76A] border-[#12B76A]/40",
+    icon: Check,
+  },
+  declined: {
+    chip: "bg-white/[0.06] border-white/[0.12] text-white/50",
+    dot: "bg-white/25 border-white/10",
+    icon: RotateCcw,
+  },
 };
-
-/**
- * Settings-row anatomy: label left at half opacity, value right in white,
- * hairline divider between rows. Every field on a ticket is exactly this
- * shape, so the card is built entirely from it.
- */
-function Row({ label, value }: { label: string; value: React.ReactNode }) {
-  return (
-    <div className="flex items-center justify-between gap-4 px-4 py-3 border-b border-white/[0.06] last:border-b-0">
-      <span className="font-ui text-sm text-white/50 shrink-0">{label}</span>
-      <span className="font-ui text-sm text-white text-right min-w-0 truncate">{value}</span>
-    </div>
-  );
-}
 
 function GoogleMark() {
   return (
@@ -77,29 +76,20 @@ function addToCalendar(eventName: string, ticketId: string) {
 
 export default function TicketPage() {
   const me = useIdentity();
-  const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [apps, setApps] = useState<App[] | null>(null);
+  const [qrFor, setQrFor] = useState<App | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    try {
-      const g = JSON.parse(localStorage.getItem("pravrutti.guest") ?? "null");
-      if (g?.email) setEmail(g.email);
-    } catch {
-      /* no saved guest */
-    }
-  }, []);
-
   const lookup = useCallback(
-    async (withEmail?: string) => {
+    async () => {
       setLoading(true);
       setError(null);
       try {
         const res = await fetch("/api/status", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(withEmail ? { email: withEmail } : {}),
+          body: JSON.stringify({}),
         });
         const data = await res.json();
         if (!res.ok) setError(data.error ?? "Lookup failed.");
@@ -118,8 +108,10 @@ export default function TicketPage() {
     if (me.signedIn) lookup();
   }, [me.signedIn, lookup]);
 
-  const signedIn = me.signedIn;
-  const needsSignIn = me.authEnabled && !signedIn;
+  const signedIn = me.signedIn && !!me.email;
+  // This page shows a person their own applications, so it is sign-in only —
+  // there is no typed-email fallback to impersonate someone through.
+  const needsSignIn = !signedIn;
 
   return (
     <main className="relative min-h-screen bg-transparent overflow-x-hidden text-[#F7EEE4] flex flex-col justify-between">
@@ -184,25 +176,7 @@ export default function TicketPage() {
               <LogOut className="w-3.5 h-3.5 mr-1.5" /> Sign out
             </Button>
           </div>
-        ) : (
-          <div className="flex gap-2 mb-8">
-            <Input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && lookup(email)}
-              placeholder="you@college.edu"
-              className="bg-[#040616] border-[#4A1C3A] rounded-xl h-12 text-[#F7EEE4] font-sharetech placeholder:text-[#F7EEE4]/30 focus-visible:ring-[#D64D8D]"
-            />
-            <Button
-              onClick={() => lookup(email)}
-              disabled={loading || !email}
-              className="rounded-xl h-12 px-6 text-xs font-orbitron font-black uppercase tracking-widest text-white arcade-btn-magenta border-[#D64D8D] cursor-pointer"
-            >
-              {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
-            </Button>
-          </div>
-        )}
+        ) : null}
 
         {error && (
           <p className="text-xs font-sharetech text-[#D64D8D] border border-[#D64D8D]/40 bg-[#D64D8D]/10 rounded-xl p-3 mb-6">
@@ -228,83 +202,131 @@ export default function TicketPage() {
           </div>
         )}
 
-        <div className="space-y-10">
-          {apps?.map((a) => {
-            const tone = TONE[a.status];
-            const Icon = tone.icon;
+        {/* My Events — Luma groups by date on a timeline rail. We have no
+            per-event dates yet (Event.day / Event.startsAt are unset), so the
+            rail groups by application status instead. The moment days are
+            filled in, GROUPS below becomes date-driven with no layout change. */}
+        <div className="relative">
+          {apps && apps.length > 0 && (
+            <div className="absolute left-[5px] top-3 bottom-3 w-px bg-white/[0.08] pointer-events-none" />
+          )}
+
+          {(["confirmed", "pending", "declined"] as AppStatus[]).map((status) => {
+            const group = apps?.filter((a) => a.status === status) ?? [];
+            if (group.length === 0) return null;
+            const tone = TONE[status];
+
             return (
-              <div key={a.ticketId} className="space-y-3">
-                {/* Event name stays Orbitron — marquee text is where the arcade
-                    identity belongs; the data below it is product chrome. */}
-                <div className="flex items-start justify-between gap-4">
-                  <a
-                    href={`/events/${a.eventId}`}
-                    className="font-orbitron font-black text-lg text-[#F7EEE4] hover:text-[#F2D2AE] transition-colors min-w-0 truncate"
-                  >
-                    {a.eventName}
-                  </a>
-                  <span
-                    className={`shrink-0 flex items-center gap-1.5 px-3 py-1 rounded-full border font-ui text-xs font-medium ${tone.chip}`}
-                  >
-                    <Icon className="w-3 h-3" /> {STATUS_COPY[a.status].label}
-                  </span>
+              <section key={status} className="relative pl-7 pb-8 last:pb-0">
+                <span className={`absolute left-0 top-1.5 w-[11px] h-[11px] rounded-full border-2 ${tone.dot}`} />
+                <h2 className="font-ui text-sm font-medium text-white/50 mb-4">
+                  {STATUS_COPY[status].label}
+                  <span className="text-white/25"> · {group.length}</span>
+                </h2>
+
+                <div className="space-y-3">
+                  {group.map((a) => {
+                    const ev = events.find((e) => slugify(e.name) === a.eventId);
+                    const Icon = tone.icon;
+                    return (
+                      <article
+                        key={a.ticketId}
+                        className="rounded-2xl border border-white/[0.08] bg-white/[0.04] p-4 flex gap-4 hover:bg-white/[0.06] transition-colors"
+                      >
+                        <div className="min-w-0 flex-1 space-y-2">
+                          <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full border font-ui text-xs font-medium ${tone.chip}`}>
+                            <Icon className="w-3 h-3" /> {STATUS_COPY[a.status].label}
+                          </span>
+
+                          <a
+                            href={`/events/${a.eventId}`}
+                            className="block font-ui font-semibold text-base text-white hover:text-[#F2D2AE] transition-colors leading-snug"
+                          >
+                            {a.eventName}
+                          </a>
+
+                          <p className="flex items-center gap-1.5 font-ui text-sm text-white/50">
+                            <MapPin className="w-3.5 h-3.5 shrink-0" />
+                            <span className="truncate">{ev?.venue ?? FEST.venue}</span>
+                          </p>
+
+                          <p className="font-ui text-sm text-white/40">
+                            {a.payment === "not_required"
+                              ? "Free entry"
+                              : a.payment === "awaiting"
+                              ? `${a.fee} · payment link coming`
+                              : a.payment === "paid"
+                              ? `${a.fee} paid`
+                              : `${a.fee} refunded`}
+                            <span className="text-white/25"> · {a.ticketId}</span>
+                          </p>
+
+                          {a.status === "confirmed" && (
+                            <div className="flex flex-wrap gap-2 pt-1">
+                              {a.qr && (
+                                <Button
+                                  onClick={() => setQrFor(a)}
+                                  className="h-[34px] rounded-2xl bg-white text-black hover:bg-white/90 font-ui font-medium text-sm px-4 cursor-pointer"
+                                >
+                                  <QrCode className="w-4 h-4 mr-1.5" /> My Ticket
+                                </Button>
+                              )}
+                              <Button
+                                variant="outline"
+                                onClick={() => addToCalendar(a.eventName, a.ticketId)}
+                                className="h-[34px] rounded-2xl border border-white/[0.08] bg-white/[0.04] text-white/70 hover:bg-white/[0.08] hover:text-white font-ui font-medium text-sm px-4 cursor-pointer"
+                              >
+                                <CalendarPlus className="w-4 h-4 mr-1.5" /> Calendar
+                              </Button>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Poster sits right, as it does on Luma's list rows */}
+                        <a href={`/events/${a.eventId}`} className="shrink-0">
+                          <EventPoster
+                            event={ev}
+                            name={a.eventName}
+                            className="w-[86px] h-[86px] rounded-xl border border-white/[0.08]"
+                          />
+                        </a>
+                      </article>
+                    );
+                  })}
                 </div>
-
-                <p className="font-ui text-sm text-white/55 leading-relaxed">
-                  {STATUS_COPY[a.status].blurb}
-                </p>
-
-                <div className="rounded-3xl border border-white/[0.08] bg-white/[0.04] overflow-hidden">
-                  <Row label="Reference" value={<span className="font-mono">{a.ticketId}</span>} />
-                  <Row label="Applicant" value={a.name} />
-                  <Row
-                    label="Entry"
-                    value={
-                      a.payment === "not_required"
-                        ? "Free"
-                        : a.payment === "awaiting"
-                        ? `${a.fee} — payment link coming`
-                        : a.payment === "paid"
-                        ? `${a.fee} paid`
-                        : `${a.fee} refunded`
-                    }
-                  />
-                  <Row label="Applied" value={new Date(a.appliedAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })} />
-                </div>
-
-                {a.status === "confirmed" && a.qr && (
-                  <div className="prize-ticket animate-ticket rounded-2xl px-5 pt-5 pb-4 text-[#0A0512]">
-                    <p className="font-orbitron text-[9px] font-black uppercase tracking-[0.2em] text-[#721F4C]">
-                      {FEST.name} · {FEST.dates}
-                    </p>
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={a.qr} alt={`Entry QR for ${a.eventName}`} className="w-40 h-40 mx-auto my-3" />
-                    <div className="prize-ticket-perf pt-3 flex items-end justify-between gap-3">
-                      <div className="min-w-0">
-                        <p className="font-sharetech text-[9px] uppercase tracking-widest text-[#721F4C]">Admit</p>
-                        <p className="font-orbitron font-black text-sm truncate">{a.name}</p>
-                      </div>
-                      <p className="font-orbitron font-black text-base tracking-wider text-[#AC355D] shrink-0">
-                        {a.ticketId}
-                      </p>
-                    </div>
-                  </div>
-                )}
-
-                {a.status === "confirmed" && (
-                  <Button
-                    variant="outline"
-                    onClick={() => addToCalendar(a.eventName, a.ticketId)}
-                    className="w-full h-[38px] rounded-2xl border border-white/[0.08] bg-white/[0.04] text-white/70 hover:bg-white/[0.08] hover:text-white font-ui font-medium text-sm cursor-pointer"
-                  >
-                    <CalendarPlus className="w-4 h-4 mr-2" /> Add to calendar
-                  </Button>
-                )}
-              </div>
+              </section>
             );
           })}
         </div>
       </div>
+
+      {/* QR on demand, the way Luma's "My Ticket" opens a scannable card
+          rather than leaving the code sitting in the list. */}
+      <Dialog open={!!qrFor} onOpenChange={(o) => !o && setQrFor(null)}>
+        <DialogContent
+          aria-describedby={undefined}
+          className="max-w-[340px] rounded-2xl border border-white/[0.08] bg-[#141216]/95 backdrop-blur-xl text-white p-6 font-ui"
+        >
+          <DialogTitle className="font-ui font-semibold text-base text-center text-white leading-snug">
+            {qrFor?.eventName}
+          </DialogTitle>
+          {qrFor?.qr && (
+            /* eslint-disable-next-line @next/next/no-img-element */
+            <img
+              src={qrFor.qr}
+              alt={`Entry QR for ${qrFor.eventName}`}
+              className="w-52 h-52 mx-auto rounded-xl bg-white p-3"
+            />
+          )}
+          <div className="text-center space-y-0.5">
+            <p className="font-ui font-medium text-white">{qrFor?.name}</p>
+            <p className="font-mono text-sm text-white/50">{qrFor?.ticketId}</p>
+          </div>
+          <p className="font-ui text-xs text-white/40 text-center leading-relaxed">
+            Show this at the registration desk. {FEST.venue}.
+          </p>
+        </DialogContent>
+      </Dialog>
 
       <FooterSection />
     </main>

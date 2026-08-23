@@ -17,6 +17,13 @@ export interface Event {
   brochureUrl: string;
   /** Hall / lab inside the campus. Falls back to FEST.venue when unset. */
   venue?: string;
+  /** Poster artwork (e.g. "/posters/electroxcape.png"). Falls back to a
+      generated gradient cover when unset. */
+  poster?: string;
+  /** Fest day this runs on, 1-3. Enables date grouping once known. */
+  day?: 1 | 2 | 3;
+  /** Start time, e.g. "10:00 AM". */
+  startsAt?: string;
 }
 
 export interface Sponsor {
