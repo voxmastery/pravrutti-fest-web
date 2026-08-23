@@ -162,7 +162,7 @@ export default function EventsPage() {
               return (
                 <TabsContent key={cat} value={cat} className="focus-visible:ring-0 mt-0">
                   {filteredList.length > 0 ? (
-                    <div className="grid lg:grid-cols-2 gap-4">
+                    <div className="grid lg:grid-cols-2 gap-4 max-w-[1080px] mx-auto">
                       {filteredList.map((event) => {
                         const leads = [
                           ...event.coordinators.student,
@@ -182,7 +182,7 @@ export default function EventsPage() {
                             onClick={() => setSelectedEvent(event)}
                             className="group cursor-pointer rounded-2xl border border-white/[0.08] bg-white/[0.04] hover:bg-white/[0.07] hover:border-white/[0.14] transition-colors p-4 flex gap-4"
                           >
-                            <div className="min-w-0 flex-1 space-y-2">
+                            <div className="min-w-0 flex-1 flex flex-col gap-1.5">
                               {/* Fee stands in for Luma's start time until
                                   per-event times exist (Event.startsAt). */}
                               <p className="font-ui text-sm text-white/50">
@@ -206,17 +206,20 @@ export default function EventsPage() {
                                 <span className="truncate">{event.venue ?? FEST.venue}</span>
                               </p>
 
-                              <div className="pt-1">
+                              <div className="mt-auto pt-1">
                                 <span className="inline-flex items-center rounded-full bg-white/[0.06] border border-white/[0.1] px-2.5 py-0.5 font-ui text-xs font-medium text-white/60">
                                   {event.subCategory}
                                 </span>
                               </div>
                             </div>
 
+                            {/* Full-height panel rather than a small square:
+                                the poster now scales with the card instead of
+                                leaving a gap beside it. */}
                             <EventPoster
                               event={event}
                               name={event.name}
-                              className="w-[110px] h-[110px] shrink-0 rounded-xl border border-white/[0.08]"
+                              className="w-[132px] shrink-0 self-stretch rounded-xl border border-white/[0.08]"
                             />
                           </article>
                         );
