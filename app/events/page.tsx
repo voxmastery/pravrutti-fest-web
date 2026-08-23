@@ -142,17 +142,24 @@ export default function EventsPage() {
                 on a phone, so below md the rail scrolls horizontally (bleeding to the
                 screen edges to advertise that it scrolls) instead of wrapping into a
                 clipped, stuck-looking block. From md up it wraps and centres as before. */}
-            <div className="mb-8 -mx-6 px-6 md:mx-0 md:px-0 overflow-x-auto md:overflow-visible no-scrollbar md:flex md:justify-center">
+            <div className="rail-fade mb-8 -mx-6 px-6 md:mx-0 md:px-0 overflow-x-auto md:overflow-visible no-scrollbar md:flex md:justify-center">
               <TabsList className="bg-[#150B1E]/80 backdrop-blur-md border border-[#4A1C3A] p-1.5 rounded-xl flex w-max md:w-fit md:flex-wrap md:justify-center h-auto gap-1.5 font-orbitron snap-x snap-mandatory">
-                {categories.map((cat) => (
-                  <TabsTrigger
-                    key={cat}
-                    value={cat}
-                    className="flex-none snap-start rounded-lg px-4 sm:px-5 py-3 text-sm md:text-base font-bold tracking-wider cursor-pointer focus-visible:ring-0 data-[state=active]:bg-[#D64D8D] data-[state=active]:text-white"
-                  >
-                    {cat}
-                  </TabsTrigger>
-                ))}
+                {categories.map((cat) => {
+                  const n = getFilteredEvents(cat).length;
+                  return (
+                    <TabsTrigger
+                      key={cat}
+                      value={cat}
+                      className="group/tab flex-none snap-start rounded-lg px-4 sm:px-5 py-3 text-sm md:text-base font-bold tracking-wider cursor-pointer focus-visible:ring-0 data-[state=active]:bg-[#D64D8D] data-[state=active]:text-white data-[state=active]:shadow-[0_0_18px_-2px_#D64D8D]"
+                    >
+                      {cat}
+                      {/* Count sets expectation before the tab is opened. */}
+                      <span className="ml-2 text-[11px] font-mono opacity-45 group-data-[state=active]/tab:opacity-80">
+                        {n}
+                      </span>
+                    </TabsTrigger>
+                  );
+                })}
               </TabsList>
             </div>
 
@@ -175,12 +182,17 @@ export default function EventsPage() {
                             ? leads[0].name
                             : `${leads[0].name} & ${leads.length - 1} more`;
                         const isFree = event.fee.toLowerCase().startsWith("free");
+                        const tier =
+                          event.type === "Visionary" ? "#F2D2AE"
+                          : event.type === "Creator" ? "#D64D8D"
+                          : "#9B6BB3";
 
                         return (
                           <article
                             key={event.name}
                             onClick={() => setSelectedEvent(event)}
-                            className="group cursor-pointer min-w-0 rounded-2xl border border-white/[0.08] bg-white/[0.04] hover:bg-white/[0.07] hover:border-white/[0.14] transition-colors p-4 sm:p-5 flex gap-4 sm:gap-5"
+                            style={{ ["--tier" as string]: tier }}
+                            className="evt-card group cursor-pointer min-w-0 rounded-2xl border border-white/[0.08] bg-white/[0.04] hover:bg-white/[0.07] hover:border-white/[0.14] transition-colors p-4 sm:p-5 pl-5 sm:pl-6 flex gap-4 sm:gap-5"
                           >
                             <div className="min-w-0 flex-1 flex flex-col gap-2">
                               {/* Fee stands in for Luma's start time until
@@ -189,10 +201,13 @@ export default function EventsPage() {
                                 <span className={isFree ? "text-[#7BE3A8]" : "text-[#F2D2AE]"}>
                                   {event.fee}
                                 </span>
-                                <span className="text-white/55"> · {event.type}</span>
+                                <span className="text-white/30"> · </span>
+                                <span className="font-orbitron text-[11px] font-bold tracking-[0.14em] uppercase" style={{ color: tier }}>
+                                  {event.type}
+                                </span>
                               </p>
 
-                              <h3 className="font-ui font-semibold text-lg text-white leading-snug group-hover:text-[#F2D2AE] transition-colors">
+                              <h3 className="font-orbitron font-extrabold text-lg text-white leading-snug tracking-wide group-hover:text-[#F2D2AE] transition-colors">
                                 {event.name}
                               </h3>
 
@@ -219,7 +234,7 @@ export default function EventsPage() {
                             <EventPoster
                               event={event}
                               name={event.name}
-                              className="w-[96px] sm:w-[140px] shrink-0 self-stretch rounded-xl border border-white/[0.08]"
+                              className="evt-poster w-[92px] h-[92px] sm:w-[124px] sm:h-[124px] shrink-0 self-start rounded-xl border border-white/[0.08]"
                             />
                           </article>
                         );
