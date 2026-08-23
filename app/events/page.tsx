@@ -3,13 +3,14 @@
 import { useState, useEffect } from "react";
 import { Navigation } from "@/components/landing/navigation";
 import { FooterSection } from "@/components/landing/footer-section";
-import { events, Event } from "@/lib/pravrutti-data";
+import { events, Event, FEST } from "@/lib/pravrutti-data";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { EventDetailPanel } from "@/components/event-detail-panel";
-import { Search, Info, Users, Phone, ShieldAlert, Download, User, IndianRupee, Mail } from "lucide-react";
+import { EventPoster } from "@/components/event-poster";
+import { Search, Info, Users, ShieldAlert, User, MapPin, Mail } from "lucide-react";
 
 export default function EventsPage() {
   const [isVisible, setIsVisible] = useState(false);
@@ -161,64 +162,65 @@ export default function EventsPage() {
               return (
                 <TabsContent key={cat} value={cat} className="focus-visible:ring-0 mt-0">
                   {filteredList.length > 0 ? (
-                    <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                      {filteredList.map((event) => (
-                        <div
-                          key={event.name}
-                          onClick={() => setSelectedEvent(event)}
-                          className="group relative cursor-pointer border border-[#4A1C3A] rounded-2xl bg-[#150B1E]/70 backdrop-blur-sm hover:border-[#D64D8D] transition-all duration-500 overflow-hidden flex flex-col justify-between cyber-box arcade-card-hover"
-                        >
-                          {/* Inner Content */}
-                          <div className="p-6 space-y-4">
-                            <div className="flex justify-between items-center gap-2">
-                              <Badge className={`rounded-full px-3 py-1 text-[11px] uppercase tracking-wider font-orbitron ${getBadgeColors(event.type)}`} variant="outline">
-                                {event.type}
-                              </Badge>
-                              <span
-                                className={`shrink-0 font-orbitron uppercase font-black rounded-full px-3 py-1.5 text-base ${
-                                  event.fee.toLowerCase().startsWith("free")
-                                    ? "text-[#7BE3A8] bg-[#12B76A]/15 border border-[#12B76A]/45"
-                                    : "text-[#F2D2AE] bg-[#BF8A1B]/15 border border-[#BF8A1B]/45"
-                                }`}
-                              >
-                                {event.fee}
-                              </span>
-                            </div>
+                    <div className="grid lg:grid-cols-2 gap-4">
+                      {filteredList.map((event) => {
+                        const leads = [
+                          ...event.coordinators.student,
+                          ...event.coordinators.faculty,
+                        ];
+                        const host =
+                          leads.length === 0
+                            ? "Pravrutti 2026"
+                            : leads.length === 1
+                            ? leads[0].name
+                            : `${leads[0].name} & ${leads.length - 1} more`;
+                        const isFree = event.fee.toLowerCase().startsWith("free");
 
-                            <div>
-                              <h3 className="text-xl md:text-2xl font-orbitron font-extrabold text-[#F7EEE4] group-hover:text-[#F2D2AE] transition-colors duration-300 tracking-wide">
+                        return (
+                          <article
+                            key={event.name}
+                            onClick={() => setSelectedEvent(event)}
+                            className="group cursor-pointer rounded-2xl border border-white/[0.08] bg-white/[0.04] hover:bg-white/[0.07] hover:border-white/[0.14] transition-colors p-4 flex gap-4"
+                          >
+                            <div className="min-w-0 flex-1 space-y-2">
+                              {/* Fee stands in for Luma's start time until
+                                  per-event times exist (Event.startsAt). */}
+                              <p className="font-ui text-sm text-white/50">
+                                <span className={isFree ? "text-[#7BE3A8]" : "text-[#F2D2AE]"}>
+                                  {event.fee}
+                                </span>
+                                <span className="text-white/25"> · {event.type}</span>
+                              </p>
+
+                              <h3 className="font-ui font-semibold text-lg text-white leading-snug group-hover:text-[#F2D2AE] transition-colors">
                                 {event.name}
                               </h3>
-                              <span className="text-xs text-[#D64D8D] font-mono tracking-widest uppercase block mt-2 font-bold">
-                                {event.subCategory}
-                              </span>
+
+                              <p className="flex items-center gap-1.5 font-ui text-sm text-white/50 min-w-0">
+                                <User className="w-3.5 h-3.5 shrink-0" />
+                                <span className="truncate">By {host}</span>
+                              </p>
+
+                              <p className="flex items-center gap-1.5 font-ui text-sm text-white/50 min-w-0">
+                                <MapPin className="w-3.5 h-3.5 shrink-0" />
+                                <span className="truncate">{event.venue ?? FEST.venue}</span>
+                              </p>
+
+                              <div className="pt-1">
+                                <span className="inline-flex items-center rounded-full bg-white/[0.06] border border-white/[0.1] px-2.5 py-0.5 font-ui text-xs font-medium text-white/60">
+                                  {event.subCategory}
+                                </span>
+                              </div>
                             </div>
 
-                            <p className="text-sm md:text-base text-[#F7EEE4]/70 line-clamp-3 leading-relaxed font-sharetech">
-                              {event.description}
-                            </p>
-                          </div>
-
-                          {/* Footer Action Buttons using arcade-btn and tactile outlines */}
-                          <div className="p-4 bg-[#0A0818]/75 border-t border-[#4A1C3A] mt-auto flex justify-between gap-3 font-orbitron">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => setSelectedEvent(event)}
-                              className="rounded-xl cursor-pointer hover:bg-[#D64D8D]/30 border-[#4A1C3A] text-sm flex-1 h-11 text-[#F2D2AE] font-bold tracking-wider"
-                            >
-                              <Info className="w-4 h-4 mr-1.5" /> DETAILS
-                            </Button>
-                            <Button
-                              size="sm"
-                              disabled
-                              className="rounded-xl text-sm flex-1 bg-[#AC355D]/10 text-[#AC355D]/70 border border-[#AC355D]/30 h-11 font-bold tracking-wider"
-                            >
-                              CLOSED
-                            </Button>
-                          </div>
-                        </div>
-                      ))}
+                            <EventPoster
+                              event={event}
+                              name={event.name}
+                              className="w-[110px] h-[110px] shrink-0 rounded-xl border border-white/[0.08]"
+                            />
+                          </article>
+                        );
+                      })}
                     </div>
                   ) : (
                     <div className="text-center py-20 border border-dashed border-[#4A1C3A] rounded-2xl bg-[#150B1E]/30 cyber-box">
