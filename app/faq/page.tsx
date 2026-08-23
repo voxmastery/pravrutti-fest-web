@@ -65,8 +65,11 @@ export default function FAQPage() {
           <Accordion type="single" collapsible className="w-full space-y-4">
             {faqs.map((faq, index) => (
               <AccordionItem
-                key={faq.id}
-                value={faq.id}
+                /* faqs entries carry only question/answer — there is no id.
+                   value={undefined} left Radix with nothing to track open
+                   state against, so no panel ever expanded. */
+                key={`faq-${index}`}
+                value={`faq-${index}`}
                 className="border border-[#4A1C3A] rounded-2xl bg-[#150B1E]/60 backdrop-blur-md px-6 py-2 overflow-hidden transition-all duration-300 data-[state=open]:border-[#D64D8D] cyber-box"
               >
                 <AccordionTrigger className="text-left font-orbitron text-base md:text-lg text-[#F7EEE4] hover:text-[#F2D2AE] hover:no-underline font-extrabold py-4">
