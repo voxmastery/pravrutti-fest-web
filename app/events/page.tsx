@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { EventDetailPanel } from "@/components/event-detail-panel";
 import { EventPoster } from "@/components/event-poster";
-import { Search, Info, Users, ShieldAlert, User, MapPin, Mail } from "lucide-react";
+import { Search, Info, Users, ShieldAlert, User, MapPin, Mail, Trophy } from "lucide-react";
 
 export default function EventsPage() {
   const [isVisible, setIsVisible] = useState(false);
@@ -142,13 +142,17 @@ export default function EventsPage() {
                 on a phone, so below md the rail scrolls horizontally (bleeding to the
                 screen edges to advertise that it scrolls) instead of wrapping into a
                 clipped, stuck-looking block. From md up it wraps and centres as before. */}
-            <div className="mb-8 -mx-6 px-6 md:mx-0 md:px-0 overflow-x-auto md:overflow-visible no-scrollbar md:flex md:justify-center">
-              <TabsList className="bg-[#150B1E]/80 backdrop-blur-md border border-[#4A1C3A] p-1.5 rounded-xl flex w-max md:w-fit md:flex-wrap md:justify-center h-auto gap-1.5 font-orbitron snap-x snap-mandatory">
+            {/* Wraps instead of scrolling. The horizontal rail clipped labels
+                mid-word at the viewport edge, which reads as broken rather
+                than scrollable — and these four labels are too long to fit a
+                phone in one row no matter what. */}
+            <div className="mb-8 flex justify-center">
+              <TabsList className="bg-[#150B1E]/80 backdrop-blur-md border border-[#4A1C3A] p-1.5 rounded-xl flex flex-wrap w-full md:w-fit justify-center h-auto gap-1.5 font-orbitron">
                 {categories.map((cat) => (
                   <TabsTrigger
                     key={cat}
                     value={cat}
-                    className="flex-none snap-start rounded-lg px-4 sm:px-5 py-3 text-sm md:text-base font-bold tracking-wider cursor-pointer focus-visible:ring-0 data-[state=active]:bg-[#D64D8D] data-[state=active]:text-white"
+                    className="flex-1 sm:flex-none min-w-[calc(50%-0.375rem)] sm:min-w-0 whitespace-normal sm:whitespace-nowrap text-center rounded-lg px-3 sm:px-5 py-2.5 text-xs sm:text-sm md:text-base font-bold tracking-wider cursor-pointer focus-visible:ring-0 data-[state=active]:bg-[#D64D8D] data-[state=active]:text-white"
                   >
                     {cat}
                   </TabsTrigger>
@@ -162,65 +166,70 @@ export default function EventsPage() {
               return (
                 <TabsContent key={cat} value={cat} className="focus-visible:ring-0 mt-0">
                   {filteredList.length > 0 ? (
-                    <div className="grid lg:grid-cols-2 gap-6 max-w-[1080px] mx-auto">
+                    <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-5">
                       {filteredList.map((event) => {
-                        const leads = [
-                          ...event.coordinators.student,
-                          ...event.coordinators.faculty,
-                        ];
-                        const host =
-                          leads.length === 0
-                            ? "Pravrutti 2026"
-                            : leads.length === 1
-                            ? leads[0].name
-                            : `${leads[0].name} & ${leads.length - 1} more`;
                         const isFree = event.fee.toLowerCase().startsWith("free");
+                        const pool =
+                          event.type === "Visionary" ? "\u20B945,000"
+                          : event.type === "Creator" ? "\u20B922,000"
+                          : "\u20B910,000";
 
                         return (
                           <article
                             key={event.name}
                             onClick={() => setSelectedEvent(event)}
-                            className="group cursor-pointer min-w-0 rounded-2xl border border-white/[0.08] bg-white/[0.04] hover:bg-white/[0.07] hover:border-white/[0.14] transition-colors p-4 sm:p-5 flex gap-4 sm:gap-5"
+                            className="group cursor-pointer min-w-0 rounded-2xl border border-white/[0.08] bg-white/[0.04] hover:bg-white/[0.07] hover:border-white/[0.16] transition-colors overflow-hidden flex flex-col"
                           >
-                            <div className="min-w-0 flex-1 flex flex-col gap-2">
-                              {/* Fee stands in for Luma's start time until
-                                  per-event times exist (Event.startsAt). */}
-                              <p className="font-ui text-sm text-white/50">
-                                <span className={isFree ? "text-[#7BE3A8]" : "text-[#F2D2AE]"}>
+                            {/* Cover leads the card. Tier and fee overlay it so
+                                the two facts people filter on are legible
+                                without spending a row below. */}
+                            <div className="relative aspect-[4/3] w-full">
+                              <EventPoster
+                                event={event}
+                                name={event.name}
+                                className="absolute inset-0 w-full h-full"
+                              />
+                              <div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-2 p-3 bg-gradient-to-t from-black/85 via-black/40 to-transparent">
+                                <Badge
+                                  className={`rounded-full px-2.5 py-0.5 text-[10px] uppercase tracking-wider font-orbitron ${getBadgeColors(event.type)}`}
+                                  variant="outline"
+                                >
+                                  {event.type}
+                                </Badge>
+                                <span
+                                  className={`shrink-0 rounded-full px-2.5 py-0.5 font-ui text-xs font-semibold ${
+                                    isFree
+                                      ? "text-[#7BE3A8] bg-[#12B76A]/15 border border-[#12B76A]/45"
+                                      : "text-[#F2D2AE] bg-[#BF8A1B]/15 border border-[#BF8A1B]/45"
+                                  }`}
+                                >
                                   {event.fee}
-                                </span>
-                                <span className="text-white/55"> · {event.type}</span>
-                              </p>
-
-                              <h3 className="font-ui font-semibold text-lg text-white leading-snug group-hover:text-[#F2D2AE] transition-colors">
-                                {event.name}
-                              </h3>
-
-                              <p className="flex items-center gap-1.5 font-ui text-sm text-white/50 min-w-0">
-                                <User className="w-3.5 h-3.5 shrink-0" />
-                                <span className="truncate">By {host}</span>
-                              </p>
-
-                              <p className="flex items-center gap-1.5 font-ui text-sm text-white/50 min-w-0">
-                                <MapPin className="w-3.5 h-3.5 shrink-0" />
-                                <span className="truncate">{event.venue ?? FEST.venue}</span>
-                              </p>
-
-                              <div className="mt-auto pt-1">
-                                <span className="inline-flex items-center rounded-full bg-white/[0.06] border border-white/[0.1] px-2.5 py-0.5 font-ui text-xs font-medium text-white/60">
-                                  {event.subCategory}
                                 </span>
                               </div>
                             </div>
 
-                            {/* Full-height panel rather than a small square:
-                                the poster now scales with the card instead of
-                                leaving a gap beside it. */}
-                            <EventPoster
-                              event={event}
-                              name={event.name}
-                              className="w-[92px] h-[92px] sm:w-[124px] sm:h-[124px] shrink-0 self-start rounded-xl border border-white/[0.08]"
-                            />
+                            <div className="flex flex-col flex-1 p-4 gap-1">
+                              <h3 className="font-ui font-semibold text-base text-white leading-snug group-hover:text-[#F2D2AE] transition-colors line-clamp-2">
+                                {event.name}
+                              </h3>
+                              <p className="font-ui text-sm text-white/45 truncate">
+                                {event.subCategory}
+                              </p>
+
+                              {/* Facts that actually differ between events —
+                                  coordinator and campus are identical on all
+                                  26 and were only taking up room. */}
+                              <div className="mt-auto pt-3 flex items-center gap-4 border-t border-white/[0.07]">
+                                <span className="flex items-center gap-1.5 font-ui text-sm text-white/60">
+                                  <Trophy className="w-3.5 h-3.5 text-[#F2D2AE] shrink-0" />
+                                  {pool}
+                                </span>
+                                <span className="flex items-center gap-1.5 font-ui text-sm text-white/60">
+                                  <Users className="w-3.5 h-3.5 text-[#D64D8D] shrink-0" />
+                                  Up to 4
+                                </span>
+                              </div>
+                            </div>
                           </article>
                         );
                       })}

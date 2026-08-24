@@ -64,7 +64,8 @@ from PIL import Image, ImageDraw, ImageFont
 
 events = json.loads(sys.stdin.read())
 OUT = ${JSON.stringify(outDir)}
-S = 800
+S = 1000
+H = 750   # 4:3 — card covers are landscape; square art would crop
 FB = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
 FR = "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"
 
@@ -86,7 +87,7 @@ def wrap(draw, text, font, maxw):
 
 for e in events:
     c0, c1, c2 = [hexr(c) for c in e["colors"]]
-    img = Image.new("RGB", (S, S), c2)
+    img = Image.new("RGB", (S, H), c2)
     d = ImageDraw.Draw(img)
 
     # Diagonal three-stop gradient. Built small and upscaled — a per-pixel
@@ -104,7 +105,7 @@ for e in events:
                 k = (t - 0.5) / 0.5
                 col = tuple(int(c1[i] + (c2[i] - c1[i]) * k) for i in range(3))
             sp[xx, yy] = col
-    img = small.resize((S, S), Image.BICUBIC)
+    img = small.resize((S, H), Image.BICUBIC)
     d = ImageDraw.Draw(img)
 
     accent0 = hexr(e["accent"])
@@ -114,16 +115,16 @@ for e in events:
     mono = "".join(w[0] for w in e["name"].split()[:2]).upper()
     mf = ImageFont.truetype(FB, 460)
     mw = d.textlength(mono, font=mf)
-    layer = Image.new("RGBA", (S, S), (0, 0, 0, 0))
-    ImageDraw.Draw(layer).text(((S - mw) / 2, S / 2 - 300), mono, font=mf, fill=accent0 + (26,))
+    layer = Image.new("RGBA", (S, H), (0, 0, 0, 0))
+    ImageDraw.Draw(layer).text(((S - mw) / 2, H / 2 - 300), mono, font=mf, fill=accent0 + (26,))
     img = Image.alpha_composite(img.convert("RGBA"), layer).convert("RGB")
 
     d = ImageDraw.Draw(img)
 
     # scanlines — the arcade texture used across the site
-    sl = Image.new("RGBA", (S, S), (0, 0, 0, 0))
+    sl = Image.new("RGBA", (S, H), (0, 0, 0, 0))
     dsl = ImageDraw.Draw(sl)
-    for y in range(0, S, 4):
+    for y in range(0, H, 4):
         dsl.line([(0, y), (S, y)], fill=(0, 0, 0, 46), width=1)
     img = Image.alpha_composite(img.convert("RGBA"), sl).convert("RGB")
 
@@ -142,8 +143,8 @@ for e in events:
 
     # Bottom-anchored block: scrim, title, sub-label, badge. Sized so a
     # three-line title cannot collide with what sits under it.
-    BADGE_Y = S - 92
-    SUB_Y = S - 128
+    BADGE_Y = H - 92
+    SUB_Y = H - 128
     size = 72
     while size > 28:
         f = ImageFont.truetype(FB, size)
@@ -154,12 +155,12 @@ for e in events:
     block_top = SUB_Y - 22 - len(lines) * (size + 8)
 
     # scrim keeps text readable over the lighter end of any gradient
-    scrim = Image.new("RGBA", (S, S), (0, 0, 0, 0))
+    scrim = Image.new("RGBA", (S, H), (0, 0, 0, 0))
     ds = ImageDraw.Draw(scrim)
     for i in range(60):
         a = int(150 * (i / 60))
         ds.line([(0, block_top - 60 + i), (S, block_top - 60 + i)], fill=(10, 8, 24, a))
-    ds.rectangle([0, block_top, S, S], fill=(10, 8, 24, 150))
+    ds.rectangle([0, block_top, S, H], fill=(10, 8, 24, 150))
     img = Image.alpha_composite(img.convert("RGBA"), scrim).convert("RGB")
     d = ImageDraw.Draw(img)
 
