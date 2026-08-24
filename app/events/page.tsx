@@ -7,7 +7,6 @@ import { events, Event, FEST } from "@/lib/pravrutti-data";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { EventDetailPanel } from "@/components/event-detail-panel";
 import { EventPoster } from "@/components/event-poster";
 import { Search, Info, Users, ShieldAlert, User, MapPin, Mail, Trophy } from "lucide-react";
@@ -16,6 +15,7 @@ export default function EventsPage() {
   const [isVisible, setIsVisible] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
+  const [activeCategory, setActiveCategory] = useState<Event["category"] | null>(null);
 
   useEffect(() => {
     setIsVisible(true);
@@ -28,15 +28,29 @@ export default function EventsPage() {
     "Enterprise and Expression"
   ];
 
-  const getFilteredEvents = (category: Event["category"]) => {
-    return events.filter(
-      (e) =>
-        e.category === category &&
-        (e.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          e.subCategory.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          e.description.toLowerCase().includes(searchQuery.toLowerCase()))
+  /** Short chip labels. "Engineering and Design" never fits a phone row. */
+  const SHORT: Record<Event["category"], string> = {
+    "Engineering and Design": "Engineering",
+    "Research and Presentation": "Research",
+    "Code and Compute": "Code",
+    "Enterprise and Expression": "Enterprise",
+  };
+
+  const matchesSearch = (e: Event) => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return true;
+    return (
+      e.name.toLowerCase().includes(q) ||
+      e.subCategory.toLowerCase().includes(q) ||
+      e.description.toLowerCase().includes(q)
     );
   };
+
+  // Everything is visible by default; a chip narrows rather than switches.
+  const searched = events.filter(matchesSearch);
+  const visible = activeCategory
+    ? searched.filter((e) => e.category === activeCategory)
+    : searched;
 
   const getBadgeColors = (type: Event["type"]) => {
     switch (type) {
@@ -136,38 +150,48 @@ export default function EventsPage() {
           </div>
 
           {/* Tabs Navigation */}
-          <Tabs defaultValue={categories[0]} className="w-full">
-            {/* Category rail.
-                The triggers are `whitespace-nowrap` and far too wide to wrap sensibly
-                on a phone, so below md the rail scrolls horizontally (bleeding to the
-                screen edges to advertise that it scrolls) instead of wrapping into a
-                clipped, stuck-looking block. From md up it wraps and centres as before. */}
-            {/* Wraps instead of scrolling. The horizontal rail clipped labels
-                mid-word at the viewport edge, which reads as broken rather
-                than scrollable — and these four labels are too long to fit a
-                phone in one row no matter what. */}
-            <div className="mb-8 flex justify-center">
-              <TabsList className="bg-[#150B1E]/80 backdrop-blur-md border border-[#4A1C3A] p-1.5 rounded-xl flex flex-wrap w-full md:w-fit justify-center h-auto gap-1.5 font-orbitron">
-                {categories.map((cat) => (
-                  <TabsTrigger
+          <div className="w-full">
+            {/* Chips narrow the grid instead of switching it, so nothing is
+                hidden by default. Counts set expectation before a click. */}
+            <div className="flex flex-wrap justify-center gap-2 mb-4">
+              <button
+                onClick={() => setActiveCategory(null)}
+                className={`rounded-full px-4 py-2 font-ui text-sm font-medium transition-colors cursor-pointer border ${
+                  activeCategory === null
+                    ? "bg-[#D64D8D] text-white border-[#D64D8D]"
+                    : "bg-white/[0.04] text-white/70 border-white/[0.1] hover:bg-white/[0.08] hover:text-white"
+                }`}
+              >
+                All <span className="opacity-60">{searched.length}</span>
+              </button>
+              {categories.map((cat) => {
+                const n = searched.filter((e) => e.category === cat).length;
+                const on = activeCategory === cat;
+                return (
+                  <button
                     key={cat}
-                    value={cat}
-                    className="flex-1 sm:flex-none min-w-[calc(50%-0.375rem)] sm:min-w-0 whitespace-normal sm:whitespace-nowrap text-center rounded-lg px-3 sm:px-5 py-2.5 text-xs sm:text-sm md:text-base font-bold tracking-wider cursor-pointer focus-visible:ring-0 data-[state=active]:bg-[#D64D8D] data-[state=active]:text-white"
+                    onClick={() => setActiveCategory(on ? null : cat)}
+                    className={`rounded-full px-4 py-2 font-ui text-sm font-medium transition-colors cursor-pointer border ${
+                      on
+                        ? "bg-[#D64D8D] text-white border-[#D64D8D]"
+                        : "bg-white/[0.04] text-white/70 border-white/[0.1] hover:bg-white/[0.08] hover:text-white"
+                    }`}
                   >
-                    {cat}
-                  </TabsTrigger>
-                ))}
-              </TabsList>
+                    {SHORT[cat]} <span className="opacity-60">{n}</span>
+                  </button>
+                );
+              })}
             </div>
 
-            {/* Tabs Content */}
-            {categories.map((cat) => {
-              const filteredList = getFilteredEvents(cat);
-              return (
-                <TabsContent key={cat} value={cat} className="focus-visible:ring-0 mt-0">
-                  {filteredList.length > 0 ? (
+            <p className="text-center font-ui text-sm text-white/40 mb-8">
+              {visible.length === events.length
+                ? `Showing all ${events.length} events`
+                : `${visible.length} of ${events.length} events`}
+            </p>
+
+            {visible.length > 0 ? (
                     <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-5">
-                      {filteredList.map((event) => {
+                      {visible.map((event) => {
                         const isFree = event.fee.toLowerCase().startsWith("free");
                         const pool =
                           event.type === "Visionary" ? "\u20B945,000"
@@ -234,17 +258,23 @@ export default function EventsPage() {
                         );
                       })}
                     </div>
-                  ) : (
-                    <div className="text-center py-20 border border-dashed border-[#4A1C3A] rounded-2xl bg-[#150B1E]/30 cyber-box">
-                      <ShieldAlert className="w-10 h-10 text-[#D64D8D] mx-auto mb-4" />
-                      <h3 className="text-lg font-orbitron text-[#F7EEE4] mb-2 font-black">ARENA EMPTY</h3>
-                      <p className="text-xs text-[#F7EEE4]/60 font-sharetech">We couldn't find any events matching "{searchQuery}" in this category.</p>
-                    </div>
-                  )}
-                </TabsContent>
-              );
-            })}
-          </Tabs>
+            ) : (
+              <div className="text-center py-20 border border-white/[0.08] rounded-2xl bg-white/[0.04]">
+                <ShieldAlert className="w-10 h-10 text-[#D64D8D] mx-auto mb-4" />
+                <p className="font-ui font-semibold text-white mb-1.5">No events match</p>
+                <p className="font-ui text-sm text-white/50">
+                  Try a different search, or{" "}
+                  <button
+                    onClick={() => { setSearchQuery(""); setActiveCategory(null); }}
+                    className="text-[#F2D2AE] underline hover:text-[#D64D8D] cursor-pointer"
+                  >
+                    clear the filters
+                  </button>
+                  .
+                </p>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
