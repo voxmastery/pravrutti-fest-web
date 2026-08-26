@@ -5,7 +5,6 @@ import { GateIntro } from "@/components/landing/gate-intro";
 import { Navigation } from "@/components/landing/navigation";
 import { HeroSection } from "@/components/landing/hero-section";
 import { HowItWorksSection } from "@/components/landing/how-it-works-section";
-import { PricingSection } from "@/components/landing/pricing-section";
 import { IntegrationsSection } from "@/components/landing/integrations-section";
 import { SponsorsSection } from "@/components/landing/sponsors-section";
 import { FooterSection } from "@/components/landing/footer-section";
@@ -27,7 +26,6 @@ export default function Home() {
         <Navigation />
         <HeroSection />
         <HowItWorksSection />
-        <PricingSection />
         {/* Sponsors sit above clubs: partners who fund the fest get the
             higher slot on the page. */}
         <SponsorsSection />
