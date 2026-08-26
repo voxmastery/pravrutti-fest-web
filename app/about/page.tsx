@@ -91,10 +91,9 @@ export default function AboutPage() {
               {[
                 { k: "Edition", v: "Pravrutti 2.0" },
                 { k: "Dates", v: "15–17 October 2026" },
-                { k: "Venue", v: "RUAS Peenya Campus, Bengaluru" },
-                { k: "Events", v: "25+ technical arenas" },
-                { k: "Prize Pool", v: "₹2,00,000+", accent: true },
-                { k: "Expected", v: "5,000+ participants" },
+                { k: "Venue", v: "Ramaiah Technology Campus, Bengaluru" },
+                { k: "Events", v: "22 technical arenas" },
+                { k: "Prize Pool", v: "₹8,00,000+", accent: true },
               ].map((row) => (
                 <div key={row.k} className="flex items-baseline justify-between gap-4 px-5 py-3.5">
                   <dt className="font-mono text-xs sm:text-sm uppercase tracking-[0.18em] text-[#D64D8D] shrink-0">
@@ -110,21 +109,6 @@ export default function AboutPage() {
                 </div>
               ))}
             </dl>
-
-            {/* Host attribution — the university mark, but as a footer credit
-                rather than a floating emblem. */}
-            <div className="relative flex items-center gap-3 px-5 py-4 border-t border-[#4A1C3A] bg-[#0A0818]/60">
-              <img
-                src="/ruas-logo-naac.png"
-                alt="Ramaiah University of Applied Sciences — NAAC A+ accredited"
-                className="h-8 w-auto object-contain shrink-0"
-                width={907}
-                height={259}
-              />
-              <span className="font-sharetech text-xs sm:text-sm text-[#F7EEE4]/60 leading-snug">
-                Hosted by Ramaiah University of Applied Sciences
-              </span>
-            </div>
           </div>
         </div>
 
@@ -139,7 +123,7 @@ export default function AboutPage() {
             {
               icon: Zap,
               title: "INNOVATION",
-              description: "Featuring 25+ events that curates innovation in every braincell."
+              description: "Featuring 22 events that curates innovation in every braincell."
             },
             {
               icon: Target,

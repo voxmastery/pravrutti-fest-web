@@ -254,7 +254,7 @@ export default function TicketPage() {
                             {a.payment === "not_required"
                               ? "Free entry"
                               : a.payment === "awaiting"
-                              ? `${a.fee} · payment link coming`
+                              ? `${a.fee} · pay at registration desk`
                               : a.payment === "paid"
                               ? `${a.fee} paid`
                               : `${a.fee} refunded`}

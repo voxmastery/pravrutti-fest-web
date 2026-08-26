@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { RegistrationDialog } from "@/components/registration-dialog";
 import { Event, eventId, capacityFor, registrationOpen, FEST } from "@/lib/pravrutti-data";
+import { POSTER_TINTS } from "@/lib/poster-tints";
 import {
   MapPin,
   Copy,
@@ -78,13 +79,32 @@ export function EventDetailPanel({
   // A different event means a different poster to try again.
   useEffect(() => setPosterFailed(false), [event?.name]);
 
-  // Re-theme the page wash to the open event's category — the same idea as
-  // Luma recolouring its background from the event's cover art.
+  // Re-theme the page wash from THIS event's poster, the way Luma derives its
+  // background from an event's cover. Category tinting gave eight events one
+  // hue; the poster's own dominant colour makes each event distinct. Falls
+  // back to the category tint when a poster has no extracted colour.
   useEffect(() => {
     if (!event) return;
     const root = document.documentElement;
-    root.setAttribute("data-ambient", event.category);
-    return () => root.removeAttribute("data-ambient");
+    const tint = POSTER_TINTS[eventId(event.name)];
+
+    if (tint) {
+      const [r, g, b] = tint;
+      const mix = (f: number) => [r, g, b].map((c) => Math.round(c * f)).join(", ");
+      root.style.setProperty("--ambient-1", `${r}, ${g}, ${b}`);
+      root.style.setProperty("--ambient-2", mix(0.7));
+      root.style.setProperty("--ambient-3", mix(0.45));
+      root.style.setProperty("--ambient-base", `rgb(${mix(0.16)})`);
+    } else {
+      root.setAttribute("data-ambient", event.category);
+    }
+
+    return () => {
+      root.removeAttribute("data-ambient");
+      for (const p of ["--ambient-1", "--ambient-2", "--ambient-3", "--ambient-base"]) {
+        root.style.removeProperty(p);
+      }
+    };
   }, [event]);
 
   const copyLink = async () => {
@@ -216,7 +236,7 @@ export function EventDetailPanel({
                     {event.venue ?? FEST.venue}
                     <ArrowUpRight className="w-3 h-3 opacity-0 group-hover/loc:opacity-60 transition-opacity" />
                   </p>
-                  <p className="text-xs text-[#F7EEE4]/55 font-mono">Bengaluru, Karnataka</p>
+                  <p className="text-xs text-[#F7EEE4]/55 font-mono">Offline · At registration desk</p>
                 </div>
               </a>
             </div>
@@ -305,7 +325,7 @@ export function EventDetailPanel({
                   <IndianRupee className="w-4 h-4 text-[#F2D2AE]" /> Entry
                 </span>
                 <span className={`text-lg font-black ${event.fee.toLowerCase().startsWith("free") ? "text-[#7BE3A8]" : "text-[#F2D2AE]"}`}>
-                  {event.fee}
+                  {event.fee.toLowerCase().startsWith("free") ? event.fee : `${event.fee} at desk`}
                 </span>
               </div>
             </div>
@@ -314,6 +334,7 @@ export function EventDetailPanel({
             <div className="space-y-2">
               <h4 className="text-xs font-bold uppercase tracking-[0.25em] text-[#D64D8D]">Location</h4>
               <p className="text-sm font-bold text-[#F7EEE4]">{event.venue ?? FEST.venue}</p>
+              <p className="text-xs text-[#F7EEE4]/55 font-mono">Offline · At registration desk</p>
               <div className="rounded-2xl overflow-hidden border border-[#4A1C3A] grayscale-[35%] contrast-[1.05]">
                 <iframe
                   title={`Map — ${event.venue ?? FEST.venue}`}

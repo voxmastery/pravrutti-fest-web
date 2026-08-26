@@ -160,7 +160,7 @@ export function HeroSection() {
   const parallaxOffset = useParallax(0.15);
   const mouse = useMousePosition(logoRef);
 
-  const fullTagline = "3 DAYS · 25+ ARENAS · ONE NATIONAL STAGE";
+  const fullTagline = "3 DAYS · 22 ARENAS · ONE NATIONAL STAGE";
 
   useEffect(() => {
     const t = setTimeout(() => setIsLoaded(true), 300);
@@ -268,7 +268,7 @@ export function HeroSection() {
         <div className="space-y-1.5">
           <div className="flex gap-2"><span className="text-[#D64D8D]">&gt;</span> <span>CORE_LOAD: <span className="text-[#F2D2AE]/80">SUCCESS</span></span></div>
           <div className="flex gap-2"><span className="text-[#D64D8D]">&gt;</span> <span>PORTAL_GATE: <span className="text-green-400">OPEN</span></span></div>
-          <div className="flex gap-2"><span className="text-[#D64D8D]">&gt;</span> <span>ARENAS_ACTIVE: <span className="text-[#F2D2AE]/80">25+</span></span></div>
+          <div className="flex gap-2"><span className="text-[#D64D8D]">&gt;</span> <span>ARENAS_ACTIVE: <span className="text-[#F2D2AE]/80">22</span></span></div>
           <div className="flex gap-2"><span className="text-[#D64D8D]">&gt;</span> <span>MODE: <span className="text-[#D64D8D]">RETRO_ARCADE</span></span></div>
           <div className="flex gap-2"><span className="text-[#D64D8D]">&gt;</span> <span className="animate-pulse text-[#F2D2AE]/60">AWAITING_REGISTRATION...</span></div>
         </div>
@@ -285,9 +285,9 @@ export function HeroSection() {
         <div className="h-px bg-gradient-to-l from-[#D64D8D]/40 to-transparent w-20 ml-auto" />
         <div className="space-y-1.5">
           <div>STATUS: <span className="text-green-400">LIVE</span></div>
-          <div>PRIZE_POOL: <span className="text-[#F2D2AE]/90">₹2,00,000+</span></div>
-          <div>EVENTS_ARENA: <span className="text-[#D64D8D]">ONLINE</span></div>
-          <div>HOST_NEXUS: <span className="text-[#F2D2AE]/70">PEENYA_CAMPUS</span></div>
+          <div>PRIZE_POOL: <span className="text-[#F2D2AE]/90">₹8,00,000+</span></div>
+          <div>EVENTS_ARENA: <span className="text-[#D64D8D]">OFFLINE</span></div>
+          <div>HOST_NEXUS: <span className="text-[#F2D2AE]/70">RAMAIAH_TECHNOLOGY_CAMPUS</span></div>
         </div>
         {/* Mini bar graph */}
         <div className="flex items-end gap-1 justify-end mt-2 h-6">
@@ -378,7 +378,7 @@ export function HeroSection() {
           className={`max-w-xl text-sm md:text-base text-[#F7EEE4]/75 leading-relaxed font-mono mb-6 transition-all duration-1000 ${isLoaded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"}`}
           style={{ transitionDelay: "1s" }}
         >
-          Step through the gate into the RUAS Peenya campus, Bengaluru — open to
+          Step through the gate into the Ramaiah Technology Campus, Bengaluru — open to
           students from across the country.
         </p>
 
@@ -460,7 +460,7 @@ export function HeroSection() {
                     filter: "drop-shadow(0 0 22px rgba(242,210,174,0.35))",
                   }}
                 >
-                  ₹2,00,000+
+                  ₹8,00,000+
                 </div>
               </div>
 
@@ -472,7 +472,7 @@ export function HeroSection() {
                   stat instead of floating against the band's edge. */}
               <div className="shrink-0 flex flex-col items-center justify-center text-center rounded-xl border border-[#D64D8D]/30 bg-[#D64D8D]/[0.07] px-5 py-3">
                 <div className="font-orbitron font-black leading-none text-4xl sm:text-5xl text-[#D64D8D] drop-shadow-[0_0_18px_rgba(214,77,141,0.45)]">
-                  25+
+                  22
                 </div>
                 <span className="font-mono text-[11px] md:text-xs tracking-[0.22em] uppercase text-[#F7EEE4]/85 mt-2 whitespace-nowrap">
                   Tech Events

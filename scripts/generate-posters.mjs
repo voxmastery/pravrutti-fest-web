@@ -59,7 +59,7 @@ if (payload.length === 0) {
 }
 
 const py = `
-import json, sys
+import json, sys, colorsys
 from PIL import Image, ImageDraw, ImageFont
 
 events = json.loads(sys.stdin.read())
@@ -85,8 +85,18 @@ def wrap(draw, text, font, maxw):
     if cur: lines.append(cur)
     return lines
 
+def shift_hue(rgb, deg):
+    h, l, s = colorsys.rgb_to_hls(*[c / 255 for c in rgb])
+    h = (h + deg / 360.0) % 1.0
+    return tuple(int(round(c * 255)) for c in colorsys.hls_to_rgb(h, l, s))
+
 for e in events:
     c0, c1, c2 = [hexr(c) for c in e["colors"]]
+    # Rotate each event's palette by a stable offset derived from its slug.
+    # Without this every event in a category renders identically, so the
+    # per-event page tint has nothing to distinguish it.
+    off = (sum(ord(ch) for ch in e["slug"]) % 45) - 22
+    c0, c1, c2 = shift_hue(c0, off), shift_hue(c1, off * 0.6), shift_hue(c2, off * 0.4)
     img = Image.new("RGB", (S, H), c2)
     d = ImageDraw.Draw(img)
 

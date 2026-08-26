@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowUpRight, Mail, MapPin, Phone, Calendar, Instagram, Globe } from "lucide-react";
+import { ArrowUpRight, Mail, MapPin, Calendar, Instagram, Globe } from "lucide-react";
 import Link from "next/link";
 import { contacts } from "@/lib/pravrutti-data";
 import { useScrollReveal } from "@/hooks/use-animations";
@@ -118,46 +118,6 @@ export function FooterSection() {
                 </ul>
               </div>
             ))}
-          </div>
-        </div>
-
-        {/* ── Helpdesk: real people, tappable numbers ── */}
-        <div className="py-10 border-b border-[#4A1C3A]/40">
-          <h3 className="font-mono text-xs tracking-[0.3em] uppercase text-[#D64D8D] mb-6">
-            Organising Helpdesk
-          </h3>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {contacts.helpdesk.map((c) => (
-              <a
-                key={c.name}
-                href={`tel:${c.phone.replace(/\s/g, "")}`}
-                className="group flex items-center gap-3 p-4 rounded-xl border border-[#4A1C3A] bg-[#150B1E]/40 hover:border-[#D64D8D] transition-colors"
-              >
-                <span className="w-10 h-10 shrink-0 rounded-lg bg-[#721F4C]/30 border border-[#D64D8D]/25 flex items-center justify-center">
-                  <Phone className="w-4 h-4 text-[#F2D2AE]" />
-                </span>
-                <span className="min-w-0">
-                  <span className="block text-sm font-bold text-[#F7EEE4] truncate">{c.name}</span>
-                  <span className="block text-sm font-mono text-[#F2D2AE]/80 group-hover:text-[#F2D2AE]">
-                    {c.phone}
-                  </span>
-                </span>
-              </a>
-            ))}
-            <a
-              href={`mailto:${contacts.email}`}
-              className="group flex items-center gap-3 p-4 rounded-xl border border-[#4A1C3A] bg-[#150B1E]/40 hover:border-[#D64D8D] transition-colors"
-            >
-              <span className="w-10 h-10 shrink-0 rounded-lg bg-[#721F4C]/30 border border-[#D64D8D]/25 flex items-center justify-center">
-                <Mail className="w-4 h-4 text-[#F2D2AE]" />
-              </span>
-              <span className="min-w-0">
-                <span className="block text-sm font-bold text-[#F7EEE4]">Email us</span>
-                <span className="block text-sm font-mono text-[#F2D2AE]/80 truncate group-hover:text-[#F2D2AE]">
-                  {contacts.email}
-                </span>
-              </span>
-            </a>
           </div>
         </div>
 

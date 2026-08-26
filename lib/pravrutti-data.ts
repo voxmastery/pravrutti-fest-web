@@ -138,9 +138,9 @@ export const faqs = [
 export const contacts = {
   email: "pravrutti@msruas.ac.in",
   helpdesk: [
-    { name: "Mr. Akshay PM", phone: "+91 7019816961" },
-    { name: "Mr. Sankalp S", phone: "+91 7090475089" },
-    { name: "Mr. Rathan Raj", phone: "+91 6363548034" }
+    { name: "Renuka", phone: "+91 8147192405" },
+    { name: "Aryan", phone: "+91 8077134700" },
+    { name: "Rathan Raj", phone: "+91 6363548034" }
   ],
   location: {
     campus: "Ramaiah Technology Campus",
@@ -608,7 +608,7 @@ export const capacityFor = (id: string) => EVENT_CAPACITY[id] ?? DEFAULT_CAPACIT
 
 export const FEST = {
   name: "Pravrutti 2026",
-  venue: "RUAS Peenya Campus, Bengaluru",
+  venue: "Ramaiah Technology Campus, Bengaluru",
   dates: "15\u201317 October 2026",
   // IST (UTC+5:30) converted to UTC for calendar invites
   startUtc: "20261015T033000Z", // 09:00 IST, 15 Oct

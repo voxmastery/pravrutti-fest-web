@@ -358,8 +358,8 @@ export function RegistrationDialog({
 
                   {!isFree && !PAYMENTS_LIVE && (
                     <p className="text-xs text-amber-200/80 border border-amber-400/20 bg-amber-400/[0.07] rounded-lg px-3 py-2.5 leading-relaxed">
-                      Online payment opens shortly. Apply now to hold your place in the queue — the team
-                      will send you a payment link before your application is reviewed.
+                      Payment is offline at the registration desk. Apply now to hold your place in the
+                      queue — settle the fee at the desk when you check in.
                     </p>
                   )}
 
@@ -422,7 +422,7 @@ export function RegistrationDialog({
                 {result.payment === "not_required"
                   ? "Nothing to pay for this one. "
                   : result.payment === "awaiting"
-                  ? `The team will send a payment link for ${result.fee} before reviewing your application. `
+                  ? `Pay ${result.fee} offline at the registration desk when you check in. `
                   : `${result.fee} received — refunded in full if you aren't confirmed. `}
                 You'll get your ticket and QR once the organisers approve.
               </p>

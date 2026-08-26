@@ -135,7 +135,7 @@ export default function ContactPage() {
               allowFullScreen
               loading="lazy"
               referrerPolicy="no-referrer-when-downgrade"
-              title="Map of the RUAS Peenya Campus, Bengaluru"
+              title="Map of the Ramaiah Technology Campus, Bengaluru"
             />
           </div>
         </div>
