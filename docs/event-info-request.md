@@ -96,10 +96,9 @@ Prizes are currently derived from the event's tier:
 8. **Eligibility limits** — year, branch or department restrictions, if any.
 9. **What to bring** — laptop, specific software, components, safety gear.
 10. **Number of rounds** and roughly how each is judged.
-11. **Cross-college teams** — allowed, or same-institution only?
-
-> On-the-spot registration is not being offered, so it is no longer asked.
-> Everything goes through the site before the deadline.
+> Cross-college teams and on-the-spot registration are not being asked about.
+> On-spot is not offered — everything goes through the site before the
+> deadline — and team composition is not restricted by institution.
 
 ---
 
