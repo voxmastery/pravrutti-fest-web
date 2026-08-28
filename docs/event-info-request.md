@@ -162,14 +162,10 @@ It must be the Google account they will actually sign in with. A college address
 only works if it is Google Workspace; a personal Gmail is safer if they are
 unsure.
 
-### 14. Desk staff who need check-in access
-
-Anyone scanning tickets at the desk needs their own login. Please give names and
-**Google emails**, plus how many separate check-in desks the event will run.
-
-Scanning is the one action that happens under time pressure with a queue
-waiting, so it is worth over-provisioning access rather than having volunteers
-share one phone.
+These two accounts are the only logins per event. Volunteers do not each need
+one — two people scanning is enough for an event of this size, and every extra
+login widens the number of people who can see participant data. If an event
+genuinely needs a third, it takes half a minute to add later.
 
 ---
 
