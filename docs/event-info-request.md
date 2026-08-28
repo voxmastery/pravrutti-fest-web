@@ -1,4 +1,4 @@
-# Information needed from event heads — Pravrutti 2026 website
+# Information needed from event coordinators — Pravrutti 2026 website
 
 **For the organising team.** The website already carries a description, fee,
 tier, rulebook and coordinator contacts for all 26 events. The items below are
@@ -69,7 +69,7 @@ posters replace them with no code change.
 
 ### 6. Confirm what we already hold
 
-Please have each event head confirm, not re-supply:
+Please have each event coordinator confirm, not re-supply:
 
 - **Entry fee** — is the amount on the site correct and current?
 - **Coordinator names and phone numbers** — are these people still the contacts,
@@ -97,7 +97,9 @@ Prizes are currently derived from the event's tier:
 9. **What to bring** — laptop, specific software, components, safety gear.
 10. **Number of rounds** and roughly how each is judged.
 11. **Cross-college teams** — allowed, or same-institution only?
-12. **On-the-spot registration** — permitted for this event, or pre-registration only?
+
+> On-the-spot registration is not being offered, so it is no longer asked.
+> Everything goes through the site before the deadline.
 
 ---
 
@@ -136,13 +138,13 @@ needs a different deadline.
 
 # Additional: dashboard access and feedback
 
-Added after the decision to build a per-event dashboard for event heads plus a
-master dashboard for organisers. These items are **not optional** — without them
-no event head can sign in at all.
+Added after the decision to build a per-event dashboard for event coordinators
+plus a master dashboard for organisers. These items are **not optional** — without them
+no event coordinator can sign in at all.
 
 ## D. Blocking for the dashboard
 
-### 13. Event head's Google email address
+### 13. Event coordinators' Google email addresses
 
 **This is the single hardest blocker on the whole list.**
 
@@ -150,12 +152,13 @@ The site signs people in with Google. A dashboard account *is* an email address.
 We currently hold coordinator **names and phone numbers only** — there is not one
 email address in the event data. A phone number cannot be used to sign in.
 
-Please collect, per event:
+Please collect **two coordinators per event**:
 
-- **Event head** — full name, **Google email**, phone
-- **Co-head** — full name, **Google email**, phone (recommended: if only one
-  person has access and they lose their phone on the day, that event's desk is
-  locked out)
+- **Event Coordinator 1** — full name, **Google email**, phone
+- **Event Coordinator 2** — full name, **Google email**, phone
+
+Two is a floor, not a nicety. If one person holds access and loses their phone
+on the day, that event's check-in desk is locked out with a queue waiting.
 
 It must be the Google account they will actually sign in with. A college address
 only works if it is Google Workspace; a personal Gmail is safer if they are
@@ -182,17 +185,17 @@ wording. Leave blank to use the standard form only.
 
 ---
 
-## Decisions for the organisers, not event heads
+## Decisions for the organisers, not event coordinators
 
 These are policy, and should be answered once centrally rather than 26 times:
 
-1. **Can event heads see participant contact details** (email, phone), or only
+1. **Can event coordinators see participant contact details** (email, phone), or only
    names and check-in status? This is personal data belonging to students, and
    the safe default is names and status only.
-2. **Can event heads approve or decline registrations**, or only view and check
+2. **Can event coordinators approve or decline registrations**, or only view and check
    in? Approval affects who gets a paid place, so it may belong with organisers.
-3. **Can event heads export their participant list** to a spreadsheet?
-4. **Can an event head see other events' data?** Default should be no.
+3. **Can event coordinators export their participant list** to a spreadsheet?
+4. **Can an event coordinator see other events' data?** Default should be no.
 5. **Who holds the master organiser account**, and how many people need it?
 
 Nothing here is a website question — it is who is trusted with what. Worth
