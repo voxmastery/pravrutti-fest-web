@@ -72,8 +72,14 @@ posters replace them with no code change.
 Please have each event coordinator confirm, not re-supply:
 
 - **Entry fee** — is the amount on the site correct and current?
-- **Coordinator names and phone numbers** — are these people still the contacts,
-  and are the numbers reachable? These are published publicly on the site.
+- **Public contacts** — each event page shows names and phone numbers under
+  "Hosted By" for participants to call with questions. Are those still the right
+  people, and are the numbers reachable? If not, give the corrections.
+
+  Note this is a **separate thing** from the two dashboard logins above. Public
+  contacts are printed on the site for students to ring; dashboard logins are
+  private accounts for watching registrations. They may be the same people, but
+  answer both.
 - **Description** — still accurate?
 - **Rulebook PDF** — is the uploaded version the latest?
 
@@ -142,7 +148,12 @@ no event coordinator can sign in at all.
 
 ## D. Blocking for the dashboard
 
-### 13. Event coordinators' Google email addresses
+### 13. Two dashboard logins per event (Google email addresses)
+
+**What the dashboard is for.** Check-in on the day is run by the organising
+team, not by event coordinators. So these two logins are for *watching* an
+event, not staffing a desk: seeing who has registered, and seeing who has been
+checked in as the day runs. Nobody here needs to scan anything.
 
 **This is the single hardest blocker on the whole list.**
 
@@ -150,22 +161,21 @@ The site signs people in with Google. A dashboard account *is* an email address.
 We currently hold coordinator **names and phone numbers only** — there is not one
 email address in the event data. A phone number cannot be used to sign in.
 
-Please collect **two coordinators per event**:
+Please collect **two people per event**:
 
-- **Event Coordinator 1** — full name, **Google email**, phone
-- **Event Coordinator 2** — full name, **Google email**, phone
+- **Dashboard Login 1** — full name, **Google email**, phone
+- **Dashboard Login 2** — full name, **Google email**, phone
 
-Two is a floor, not a nicety. If one person holds access and loses their phone
-on the day, that event's check-in desk is locked out with a queue waiting.
+Two, so a single person being unreachable does not leave an event blind to its
+own numbers.
 
 It must be the Google account they will actually sign in with. A college address
 only works if it is Google Workspace; a personal Gmail is safer if they are
 unsure.
 
-These two accounts are the only logins per event. Volunteers do not each need
-one — two people scanning is enough for an event of this size, and every extra
-login widens the number of people who can see participant data. If an event
-genuinely needs a third, it takes half a minute to add later.
+These two accounts are the only logins per event. Since the organising team
+runs check-in centrally, volunteers do not need accounts at all. Adding a third
+person later takes half a minute.
 
 ---
 
