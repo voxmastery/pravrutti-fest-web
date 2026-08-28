@@ -131,3 +131,70 @@ Please confirm the correct number so all three can be made to agree.
 **Registration deadline.** The site closes registration for every event on
 **4 October 2026, 11:59 PM IST**. Confirm this is right, and flag any event that
 needs a different deadline.
+
+---
+
+# Additional: dashboard access and feedback
+
+Added after the decision to build a per-event dashboard for event heads plus a
+master dashboard for organisers. These items are **not optional** — without them
+no event head can sign in at all.
+
+## D. Blocking for the dashboard
+
+### 13. Event head's Google email address
+
+**This is the single hardest blocker on the whole list.**
+
+The site signs people in with Google. A dashboard account *is* an email address.
+We currently hold coordinator **names and phone numbers only** — there is not one
+email address in the event data. A phone number cannot be used to sign in.
+
+Please collect, per event:
+
+- **Event head** — full name, **Google email**, phone
+- **Co-head** — full name, **Google email**, phone (recommended: if only one
+  person has access and they lose their phone on the day, that event's desk is
+  locked out)
+
+It must be the Google account they will actually sign in with. A college address
+only works if it is Google Workspace; a personal Gmail is safer if they are
+unsure.
+
+### 14. Desk staff who need check-in access
+
+Anyone scanning tickets at the desk needs their own login. Please give names and
+**Google emails**, plus how many separate check-in desks the event will run.
+
+Scanning is the one action that happens under time pressure with a queue
+waiting, so it is worth over-provisioning access rather than having volunteers
+share one phone.
+
+## E. For feedback analytics
+
+### 15. Custom feedback questions (optional, max 2)
+
+Every event will get the same standard post-event feedback form (overall rating,
+would-recommend, free-text comments) so results are comparable across the fest.
+
+If an event wants **one or two extra questions of its own**, give the exact
+wording. Leave blank to use the standard form only.
+
+---
+
+## Decisions for the organisers, not event heads
+
+These are policy, and should be answered once centrally rather than 26 times:
+
+1. **Can event heads see participant contact details** (email, phone), or only
+   names and check-in status? This is personal data belonging to students, and
+   the safe default is names and status only.
+2. **Can event heads approve or decline registrations**, or only view and check
+   in? Approval affects who gets a paid place, so it may belong with organisers.
+3. **Can event heads export their participant list** to a spreadsheet?
+4. **Can an event head see other events' data?** Default should be no.
+5. **Who holds the master organiser account**, and how many people need it?
+
+Nothing here is a website question — it is who is trusted with what. Worth
+settling before the dashboard is built, because it determines the permission
+model rather than being a setting bolted on afterwards.

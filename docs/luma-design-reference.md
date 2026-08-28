@@ -194,7 +194,7 @@ The single most transferable thing found in the visual pass. Luma renders a
 multi-day programme as one continuous vertical rail: a bullet and date header
 per day, events indented under it, the rail running through the whole column.
 
-That is exactly the shape of a three-day fest schedule (15–17 October), and it
+That is exactly the shape of a three-day fest schedule (14–16 October), and it
 solves the problem our `/schedule` page has — showing many events across days
 without turning into a wall of cards. It also degrades to mobile cleanly, since
 the rail simply narrows.
