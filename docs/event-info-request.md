@@ -95,10 +95,9 @@ Prizes are currently derived from the event's tier:
 
 8. **Eligibility limits** — year, branch or department restrictions, if any.
 9. **What to bring** — laptop, specific software, components, safety gear.
-10. **Number of rounds** and roughly how each is judged.
-> Cross-college teams and on-the-spot registration are not being asked about.
-> On-spot is not offered — everything goes through the site before the
-> deadline — and team composition is not restricted by institution.
+> Not being asked: number of rounds, cross-college team rules, on-the-spot
+> registration, and feedback questions. On-spot is not offered — everything
+> goes through the site before the deadline.
 
 ---
 
@@ -171,16 +170,6 @@ Anyone scanning tickets at the desk needs their own login. Please give names and
 Scanning is the one action that happens under time pressure with a queue
 waiting, so it is worth over-provisioning access rather than having volunteers
 share one phone.
-
-## E. For feedback analytics
-
-### 15. Custom feedback questions (optional, max 2)
-
-Every event will get the same standard post-event feedback form (overall rating,
-would-recommend, free-text comments) so results are comparable across the fest.
-
-If an event wants **one or two extra questions of its own**, give the exact
-wording. Leave blank to use the standard form only.
 
 ---
 
