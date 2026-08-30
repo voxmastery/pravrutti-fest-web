@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Menu, X, ChevronDown, Download, FileText, Calendar as CalendarIcon, Ticket, LogIn, LogOut } from "lucide-react";
+import { Menu, X, Ticket, LogIn, LogOut } from "lucide-react";
 import { useIdentity } from "@/lib/identity-context";
 import { SignInModal } from "@/components/sign-in-modal";
 import {
@@ -133,39 +133,6 @@ export function Navigation() {
                 />
               </Link>
             ))}
-
-            {/* Resources dropdown */}
-            <DropdownMenu>
-              <DropdownMenuTrigger className="font-mono text-xs tracking-[0.18em] text-[#F7EEE4]/70 hover:text-[#F7EEE4] transition-colors flex items-center gap-1 py-3 cursor-pointer focus:outline-none">
-                RESOURCES <ChevronDown className="w-3.5 h-3.5 text-[#D64D8D]" />
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="bg-[#0A0818]/95 backdrop-blur-xl border border-[#4A1C3A] text-[#F7EEE4] w-52 p-1 rounded-xl shadow-2xl shadow-black/60">
-                <DropdownMenuItem className="focus:bg-[#721F4C]/30 focus:text-[#F2D2AE] rounded-lg cursor-pointer">
-                  <a
-                    href="/Pravrutti_Main_Brochure.pdf"
-                    download
-                    className="flex items-center gap-2 w-full font-mono text-xs tracking-wider py-1.5"
-                  >
-                    <FileText className="w-4 h-4 text-[#D64D8D]" /> Brochure PDF
-                  </a>
-                </DropdownMenuItem>
-                <DropdownMenuItem className="focus:bg-[#721F4C]/30 focus:text-[#F2D2AE] rounded-lg cursor-pointer">
-                  <Link href="/downloads" className="flex items-center gap-2 w-full font-mono text-xs tracking-wider py-1.5">
-                    <Download className="w-4 h-4 text-[#D64D8D]" /> Rulebooks
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem className="focus:bg-[#721F4C]/30 focus:text-[#F2D2AE] rounded-lg cursor-pointer">
-                  <Link href="/schedule" className="flex items-center gap-2 w-full font-mono text-xs tracking-wider py-1.5">
-                    <CalendarIcon className="w-4 h-4 text-[#D64D8D]" /> Schedule
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem className="focus:bg-[#721F4C]/30 focus:text-[#F2D2AE] rounded-lg cursor-pointer">
-                  <Link href="/tickets" className="flex items-center gap-2 w-full font-mono text-xs tracking-wider py-1.5">
-                    <Ticket className="w-4 h-4 text-[#D64D8D]" /> My Tickets
-                  </Link>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
           </div>
 
           {/* Desktop CTA — one button, Luma-style: SIGN IN when signed out, an
@@ -260,33 +227,6 @@ export function Navigation() {
                   {l.name}
                 </Link>
               ))}
-
-              <div className="mt-6 pt-5 border-t border-[#4A1C3A]/50 space-y-3">
-                <span className="font-mono text-[11px] tracking-[0.3em] text-[#D64D8D] uppercase block">
-                  Resources
-                </span>
-                <a
-                  href="/Pravrutti_Main_Brochure.pdf"
-                  download
-                  className="flex items-center gap-2.5 text-base text-[#F7EEE4]/75 font-mono py-2 active:text-[#F2D2AE]"
-                >
-                  <FileText className="w-4 h-4 text-[#D64D8D]" /> Brochure PDF
-                </a>
-                <Link
-                  href="/downloads"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className="flex items-center gap-2.5 text-base text-[#F7EEE4]/75 font-mono py-2 active:text-[#F2D2AE]"
-                >
-                  <Download className="w-4 h-4 text-[#D64D8D]" /> Rulebooks
-                </Link>
-                <Link
-                  href="/tickets"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className="flex items-center gap-2.5 text-base text-[#F7EEE4]/75 font-mono py-2 active:text-[#F2D2AE]"
-                >
-                  <Ticket className="w-4 h-4 text-[#D64D8D]" /> My Tickets
-                </Link>
-              </div>
             </nav>
 
             {/* Mobile CTA — mirrors the desktop single button. */}
@@ -307,6 +247,15 @@ export function Navigation() {
                       <p className="font-mono text-xs text-[#F7EEE4]/50 truncate">{me.email}</p>
                     </div>
                   </div>
+                  {/* Desktop reaches tickets from the account chip menu; this
+                      is that same link for mobile, which has no chip. */}
+                  <Link
+                    href="/ticket"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="flex items-center justify-center gap-2 w-full rounded-xl font-orbitron text-base py-4 font-black tracking-wider text-[#F2D2AE] border border-[#4A1C3A] active:bg-[#721F4C]/25"
+                  >
+                    <Ticket className="w-4 h-4" /> MY TICKETS
+                  </Link>
                   <Button
                     onClick={() => {
                       setIsMobileMenuOpen(false);
