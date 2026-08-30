@@ -345,7 +345,13 @@ export function EventDetailPanel({
                     <span className="flex items-center gap-2">
                       <User className="w-3.5 h-3.5 text-[#F2D2AE]" /> {c.name}
                     </span>
-                    <a href={`tel:${c.phone}`} className="font-bold hover:text-[#D64D8D] flex items-center gap-1.5 text-[#F2D2AE]">
+                    {/* -my-1.5 py-1.5 lifts the tap area to 24px without
+                        changing the row's height — this is a phone number a
+                        student taps on a moving bus. */}
+                    <a
+                      href={`tel:${c.phone}`}
+                      className="font-bold hover:text-[#D64D8D] inline-flex items-center gap-1.5 text-[#F2D2AE] -my-1.5 py-1.5"
+                    >
                       <Phone className="w-3 h-3 text-[#D64D8D]" /> {c.phone}
                     </a>
                   </div>
