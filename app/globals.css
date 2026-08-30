@@ -249,8 +249,21 @@
     100% { opacity: 1; transform: scale(1); }
   }
 
+  /* This used to cover [data-intro-motion] only — the gate intro — while the
+     two dozen infinitely-animating elements behind it kept running. Someone
+     with vestibular sensitivity got a respectful intro and then the full
+     storm. Honour the preference across the whole site instead: kill looping
+     animation, keep a token duration so transitionend/animationend handlers
+     still fire and nothing hangs waiting for an event that never comes. */
   @media (prefers-reduced-motion: reduce) {
-    [data-intro-motion] { animation: none !important; }
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
   }
 
   /* ============================

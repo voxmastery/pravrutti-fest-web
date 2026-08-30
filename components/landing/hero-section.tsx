@@ -5,102 +5,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Calendar, Timer, Download, Trophy, ChevronDown } from "lucide-react";
 import { useParallax, useMousePosition } from "@/hooks/use-animations";
-
-/* ───────────────────── Matrix Rain Column ───────────────────── */
-function MatrixRain() {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-
-    let w = (canvas.width = window.innerWidth);
-    let h = (canvas.height = window.innerHeight);
-    const cols = Math.floor(w / 18);
-    const drops: number[] = Array.from({ length: cols }, () => Math.random() * -100);
-    const chars = "01アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン";
-
-    const draw = () => {
-      ctx.fillStyle = "rgba(0,0,0,0.06)";
-      ctx.fillRect(0, 0, w, h);
-      ctx.font = "14px monospace";
-
-      for (let i = 0; i < drops.length; i++) {
-        const char = chars[Math.floor(Math.random() * chars.length)];
-        const x = i * 18;
-        const y = drops[i] * 18;
-
-        // Gradient: head is bright pink, tail fades to dark purple
-        const brightness = Math.random();
-        if (brightness > 0.95) {
-          ctx.fillStyle = "#F2D2AE"; // gold flash
-        } else if (brightness > 0.8) {
-          ctx.fillStyle = "#D64D8D"; // cyber pink
-        } else {
-          ctx.fillStyle = "rgba(114,31,76,0.4)"; // dark purple
-        }
-
-        ctx.fillText(char, x, y);
-
-        if (y > h && Math.random() > 0.975) {
-          drops[i] = 0;
-        }
-        drops[i]++;
-      }
-    };
-
-    const id = setInterval(draw, 50);
-    const onResize = () => {
-      w = canvas.width = window.innerWidth;
-      h = canvas.height = window.innerHeight;
-    };
-    window.addEventListener("resize", onResize);
-    return () => {
-      clearInterval(id);
-      window.removeEventListener("resize", onResize);
-    };
-  }, []);
-
-  return (
-    <canvas
-      ref={canvasRef}
-      className="absolute inset-0 z-[1] pointer-events-none"
-      style={{
-        // Dialled well back and masked away from the centre: at full strength the
-        // katakana ran straight through the headline and fought the copy.
-        opacity: 0.16,
-        mixBlendMode: "screen",
-        maskImage:
-          "radial-gradient(ellipse 62% 58% at 50% 48%, transparent 20%, rgba(0,0,0,0.55) 55%, #000 85%)",
-        WebkitMaskImage:
-          "radial-gradient(ellipse 62% 58% at 50% 48%, transparent 20%, rgba(0,0,0,0.55) 55%, #000 85%)",
-      }}
-    />
-  );
-}
-
-/* ───────────────────── Energy Pulse Rings ───────────────────── */
-function EnergyPulseRings() {
-  return (
-    <div className="absolute inset-0 z-[3] pointer-events-none flex items-center justify-center">
-      {[0, 1, 2, 3, 4].map((i) => (
-        <div
-          key={i}
-          className="absolute rounded-full border"
-          style={{
-            width: `${300 + i * 120}px`,
-            height: `${300 + i * 120}px`,
-            borderColor: i % 2 === 0 ? "rgba(214,77,141,0.12)" : "rgba(242,210,174,0.06)",
-            animation: `energy-pulse ${4 + i * 0.8}s ease-in-out infinite`,
-            animationDelay: `${i * 0.6}s`,
-          }}
-        />
-      ))}
-    </div>
-  );
-}
+import { events } from "@/lib/pravrutti-data";
 
 /* ───────────────────── Neon Flicker Text ───────────────────── */
 function NeonFlickerText({ text, className = "" }: { text: string; className?: string }) {
@@ -128,24 +33,6 @@ function NeonFlickerText({ text, className = "" }: { text: string; className?: s
     >
       {text}
     </span>
-  );
-}
-
-/* ───────────────────── Scanline Horizontal Sweep ───────────────────── */
-function ScanlineSweep() {
-  return (
-    <div
-      className="absolute inset-0 z-[6] pointer-events-none overflow-hidden"
-      style={{ mixBlendMode: "screen" }}
-    >
-      <div
-        className="absolute left-0 right-0 h-[2px]"
-        style={{
-          background: "linear-gradient(90deg, transparent, rgba(214,77,141,0.4), rgba(242,210,174,0.3), rgba(214,77,141,0.4), transparent)",
-          animation: "scanline-sweep 6s linear infinite",
-        }}
-      />
-    </div>
   );
 }
 
@@ -240,10 +127,14 @@ export function HeroSection() {
         />
       </div>
 
-      {/* ===== BG 1: Matrix rain ===== */}
-      <MatrixRain />
+      {/* Background layers, cut from six to two.
+          Gone: the matrix-rain canvas (a 1M-pixel repaint every 50ms, forever),
+          the five pulsing rings and the sweeping scanline. Together they ran 16
+          simultaneous animations behind the one screen that has to say what this
+          is and where to register — so nothing read as emphasis because nothing
+          was ever still. The grid and CRT texture stay: both are static. */}
 
-      {/* ===== BG 2: Retro perspective grid ===== */}
+      {/* ===== BG 1: Retro perspective grid ===== */}
       <div className="absolute inset-0 z-[2] pointer-events-none">
         <div
           className="retro-grid"
@@ -251,14 +142,8 @@ export function HeroSection() {
         />
       </div>
 
-      {/* ===== BG 3: Energy pulse rings ===== */}
-      <EnergyPulseRings />
-
-      {/* ===== BG 4: CRT scanlines ===== */}
+      {/* ===== BG 2: CRT scanlines ===== */}
       <div className="absolute inset-0 z-[4] pointer-events-none crt-scanlines" style={{ opacity: 0.08 }} />
-
-      {/* ===== BG 5: Horizontal scanline sweep ===== */}
-      <ScanlineSweep />
 
       {/* ===== BG 6: Ambient center glow ===== */}
       <div
@@ -273,48 +158,10 @@ export function HeroSection() {
         }}
       />
 
-      {/* ===== Left HUD ===== */}
-      <div className="hidden xl:flex flex-col gap-4 absolute left-8 top-[22%] z-10 w-60 font-mono text-[11px] text-[#D64D8D]/70 text-left border-l border-[#D64D8D]/20 pl-4 py-3">
-        <div className="text-[#F2D2AE]/80 font-bold tracking-[0.25em] text-[10px]">// SYSTEM_INITIALIZE</div>
-        <div className="h-px bg-gradient-to-r from-[#D64D8D]/40 to-transparent w-20" />
-        <div className="space-y-1.5">
-          <div className="flex gap-2"><span className="text-[#D64D8D]">&gt;</span> <span>CORE_LOAD: <span className="text-[#F2D2AE]/80">SUCCESS</span></span></div>
-          <div className="flex gap-2"><span className="text-[#D64D8D]">&gt;</span> <span>PORTAL_GATE: <span className="text-green-400">OPEN</span></span></div>
-          <div className="flex gap-2"><span className="text-[#D64D8D]">&gt;</span> <span>ARENAS_ACTIVE: <span className="text-[#F2D2AE]/80">24</span></span></div>
-          <div className="flex gap-2"><span className="text-[#D64D8D]">&gt;</span> <span>MODE: <span className="text-[#D64D8D]">RETRO_ARCADE</span></span></div>
-          <div className="flex gap-2"><span className="text-[#D64D8D]">&gt;</span> <span className="animate-pulse text-[#F2D2AE]/60">AWAITING_REGISTRATION...</span></div>
-        </div>
-        <div className="text-[10px] text-white/35 mt-3 space-y-1 font-mono">
-          <div>LOC: 13.0294° N, 77.5401° E</div>
-          <div>NET: PRAVRUTTI_SECURE_NODE</div>
-          <div>EST_ATTENDANCE: 5000+</div>
-        </div>
-      </div>
-
-      {/* ===== Right HUD ===== */}
-      <div className="hidden xl:flex flex-col gap-4 absolute right-8 top-[22%] z-10 w-60 font-mono text-[11px] text-[#D64D8D]/70 text-right border-r border-[#D64D8D]/20 pr-4 py-3">
-        <div className="text-[#F2D2AE]/80 font-bold tracking-[0.25em] text-[10px]">// REGISTRATION_DESK</div>
-        <div className="h-px bg-gradient-to-l from-[#D64D8D]/40 to-transparent w-20 ml-auto" />
-        <div className="space-y-1.5">
-          <div>STATUS: <span className="text-green-400">LIVE</span></div>
-          <div>PRIZE_POOL: <span className="text-[#F2D2AE]/90">₹8,00,000+</span></div>
-          <div>EVENTS_ARENA: <span className="text-[#D64D8D]">OFFLINE</span></div>
-          <div>HOST_NEXUS: <span className="text-[#F2D2AE]/70">RAMAIAH_TECHNOLOGY_CAMPUS</span></div>
-        </div>
-        {/* Mini bar graph */}
-        <div className="flex items-end gap-1 justify-end mt-2 h-6">
-          {[40, 65, 30, 80, 55, 90, 45, 70, 60, 85].map((h, i) => (
-            <div
-              key={i}
-              className="w-1 bg-[#D64D8D]/30 rounded-t-sm"
-              style={{
-                height: `${h}%`,
-                animation: `bar-pulse ${1.5 + i * 0.2}s ease-in-out infinite alternate`,
-              }}
-            />
-          ))}
-        </div>
-      </div>
+      {/* The two HUD panels that used to flank the wordmark are gone. They
+          carried CORE_LOAD, MODE: RETRO_ARCADE, lat/long and a fake bar
+          graph — flavour text with no information in it — and repeated the
+          event count, prize pool, attendance and venue shown below. */}
 
       {/* ═══════════════════ MAIN CONTENT ═══════════════════ */}
       {/* Legibility scrim — guarantees the copy has clean ground to sit on no
@@ -483,8 +330,9 @@ export function HeroSection() {
               {/* Event count — secondary, but panelled so it reads as its own
                   stat instead of floating against the band's edge. */}
               <div className="shrink-0 flex flex-col items-center justify-center text-center rounded-xl border border-[#D64D8D]/30 bg-[#D64D8D]/[0.07] px-5 py-3">
+                {/* Derived, so it can never drift from the data again. */}
                 <div className="font-orbitron font-black leading-none text-4xl sm:text-5xl text-[#D64D8D] drop-shadow-[0_0_18px_rgba(214,77,141,0.45)]">
-                  22
+                  {events.length}
                 </div>
                 <span className="font-mono text-[11px] md:text-xs tracking-[0.22em] uppercase text-[#F7EEE4]/85 mt-2 whitespace-nowrap">
                   Tech Events
@@ -517,31 +365,9 @@ export function HeroSection() {
           </a>
         </div>
 
-        {/* ── Stats bar ── */}
-        <div
-          className={`mt-8 pt-5 border-t border-[#D64D8D]/10 w-full max-w-lg transition-all duration-1000 ${isLoaded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}`}
-          style={{ transitionDelay: "1.8s" }}
-        >
-          <div className="grid grid-cols-3">
-            {[
-              { v: "5000+", l: "Participants", c: "text-[#F2D2AE]" },
-              { v: "3", l: "Days", c: "text-[#D64D8D]" },
-              { v: "20+", l: "Clubs", c: "text-[#BF8A1B]" },
-            ].map((s, i) => (
-              <div
-                key={s.l}
-                className={`text-center group cursor-default px-2 ${
-                  i > 0 ? "border-l border-[#D64D8D]/15" : ""
-                }`}
-              >
-                <div className={`text-2xl md:text-3xl font-orbitron font-black ${s.c} group-hover:scale-110 transition-transform`}>
-                  {s.v}
-                </div>
-                <div className="text-[10px] md:text-xs font-mono tracking-[0.2em] text-[#F7EEE4]/60 uppercase mt-1.5">{s.l}</div>
-              </div>
-            ))}
-          </div>
-        </div>
+        {/* The stats bar (5000+ Participants / 3 Days / 20+ Clubs) is gone:
+            '3 Days' already leads the tagline, and the other two are figures
+            nobody deciding whether to register needs in the first screen. */}
 
         {/* ── Scroll cue.
                Kept in the flow rather than absolutely positioned at the bottom of
