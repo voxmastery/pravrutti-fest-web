@@ -6,7 +6,7 @@ import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { RegistrationDialog } from "@/components/registration-dialog";
-import { Event, eventId, capacityFor, registrationOpen, FEST } from "@/lib/pravrutti-data";
+import { Event, eventId, capacityFor, registrationOpen, FEST, formatINR, teamLabel } from "@/lib/pravrutti-data";
 import { FEE_PER_HEAD } from "@/lib/applications";
 import { POSTER_TINTS } from "@/lib/poster-tints";
 import {
@@ -29,17 +29,8 @@ export const COVER_GRADIENTS: Record<Event["category"], string> = {
   "Enterprise and Expression": "from-[#4A1C3A] via-[#150B1E] to-[#0A0818]",
 };
 
-const TYPE_BADGE: Record<Event["type"], string> = {
-  Visionary: "bg-[#BF8A1B]/20 text-[#F2D2AE] border-[#BF8A1B]/40",
-  Creator: "bg-[#D64D8D]/20 text-[#D64D8D] border-[#D64D8D]/40",
-  Explorer: "bg-[#721F4C]/30 text-[#F7EEE4] border-[#721F4C]/50",
-};
-
-const PRIZES: Record<Event["type"], { first: string; second: string; third: string }> = {
-  Visionary: { first: "₹20,000", second: "₹15,000", third: "₹10,000" },
-  Creator: { first: "₹10,000", second: "₹7,000", third: "₹5,000" },
-  Explorer: { first: "₹5,000", second: "₹3,000", third: "₹2,000" },
-};
+/** 1st / 2nd / 3rd … as far as the event actually awards. */
+const PLACES = ["1st", "2nd", "3rd", "4th", "5th"];
 
 export function EventDetailPanel({
   event,
@@ -115,7 +106,7 @@ export function EventDetailPanel({
   const taken = count ?? 0;
   const left = Math.max(cap - taken, 0);
   const full = count !== null && left === 0;
-  const prizes = PRIZES[event.type];
+  const prizes = event.prizes;
 
   return (
     <>
@@ -197,8 +188,8 @@ export function EventDetailPanel({
               <p className="text-xs text-[#F7EEE4]/60 font-mono tracking-wider">
                 {FEST.name} · Ramaiah University of Applied Sciences
               </p>
-              <Badge className={`rounded-full px-3 py-1 text-[10px] uppercase tracking-wider font-bold border ${TYPE_BADGE[event.type]}`} variant="outline">
-                {event.type} · {event.fee}
+              <Badge className="rounded-full px-3 py-1 text-[10px] uppercase tracking-wider font-bold border bg-[#BF8A1B]/20 text-[#F2D2AE] border-[#BF8A1B]/40" variant="outline">
+                {teamLabel(event)} · {event.fee}
               </Badge>
             </div>
 
@@ -287,15 +278,13 @@ export function EventDetailPanel({
             {/* Prizes */}
             <div className="space-y-3">
               <h4 className="text-xs font-bold uppercase tracking-[0.25em] text-[#D64D8D]">Prizes</h4>
-              <div className="grid grid-cols-3 gap-3">
-                {[
-                  { place: "1st", amount: prizes.first },
-                  { place: "2nd", amount: prizes.second },
-                  { place: "3rd", amount: prizes.third },
-                ].map((p) => (
-                  <div key={p.place} className="p-3 border border-[#4A1C3A] rounded-xl bg-[#150B1E] text-center">
-                    <span className="block text-[10px] text-[#F7EEE4]/60 uppercase font-bold">{p.place}</span>
-                    <span className="block text-base font-black text-[#F2D2AE] mt-1">{p.amount}</span>
+              {/* Some events award two places, some three — render exactly
+                  as many as the event actually has. */}
+              <div className={`grid gap-3 ${prizes.length === 2 ? "grid-cols-2" : "grid-cols-3"}`}>
+                {prizes.map((amount, i) => (
+                  <div key={i} className="p-3 border border-[#4A1C3A] rounded-xl bg-[#150B1E] text-center">
+                    <span className="block text-[10px] text-[#F7EEE4]/60 uppercase font-bold">{PLACES[i]}</span>
+                    <span className="block text-base font-black text-[#F2D2AE] mt-1">{formatINR(amount)}</span>
                   </div>
                 ))}
               </div>

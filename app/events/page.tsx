@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { Navigation } from "@/components/landing/navigation";
 import { FooterSection } from "@/components/landing/footer-section";
-import { events, Event, FEST } from "@/lib/pravrutti-data";
+import { events, Event, FEST, formatINR, prizePool, teamLabel } from "@/lib/pravrutti-data";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { EventDetailPanel } from "@/components/event-detail-panel";
@@ -180,10 +180,7 @@ export default function EventsPage() {
             {visible.length > 0 ? (
                     <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-5">
                       {visible.map((event) => {
-                        const pool =
-                          event.type === "Visionary" ? "\u20B945,000"
-                          : event.type === "Creator" ? "\u20B922,000"
-                          : "\u20B910,000";
+                        const pool = formatINR(prizePool(event));
 
                         return (
                           <article
@@ -209,9 +206,9 @@ export default function EventsPage() {
                                 {event.subCategory}
                               </p>
 
-                              {/* Facts that actually differ between events —
-                                  coordinator and campus are identical on all
-                                  26 and were only taking up room. */}
+                              {/* Facts that actually differ between events.
+                                  Both now come from the coordinators' sheet
+                                  rather than being derived from a tier. */}
                               <div className="mt-auto pt-3 flex items-center gap-4 border-t border-white/[0.07]">
                                 <span className="flex items-center gap-1.5 font-ui text-sm text-white/60">
                                   <Trophy className="w-3.5 h-3.5 text-[#F2D2AE] shrink-0" />
@@ -219,7 +216,7 @@ export default function EventsPage() {
                                 </span>
                                 <span className="flex items-center gap-1.5 font-ui text-sm text-white/60">
                                   <Users className="w-3.5 h-3.5 text-[#D64D8D] shrink-0" />
-                                  Up to 4
+                                  {teamLabel(event)}
                                 </span>
                               </div>
                             </div>

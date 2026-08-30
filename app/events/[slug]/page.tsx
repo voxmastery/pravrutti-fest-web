@@ -5,7 +5,7 @@ import { Navigation } from "@/components/landing/navigation";
 import { FooterSection } from "@/components/landing/footer-section";
 import { EventRegisterPanel } from "@/components/event-register-panel";
 import { Button } from "@/components/ui/button";
-import { events, eventId, FEST } from "@/lib/pravrutti-data";
+import { events, eventId, FEST, formatINR, teamLabel } from "@/lib/pravrutti-data";
 import { ArrowLeft, Download, Phone, Trophy } from "lucide-react";
 
 export function generateStaticParams() {
@@ -30,18 +30,15 @@ export async function generateMetadata({
   };
 }
 
-const PRIZES = {
-  Visionary: { first: "₹20,000", second: "₹15,000", third: "₹10,000" },
-  Creator: { first: "₹10,000", second: "₹7,000", third: "₹5,000" },
-  Explorer: { first: "₹5,000", second: "₹3,000", third: "₹2,000" },
-} as const;
+/** 1st / 2nd / 3rd … as far as the event actually awards. */
+const PLACES = ["1st", "2nd", "3rd", "4th", "5th"];
 
 export default async function EventPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const event = events.find((e) => eventId(e.name) === slug);
   if (!event) notFound();
 
-  const prizes = PRIZES[event.type];
+  const prizes = event.prizes;
 
   return (
     <main className="relative min-h-screen bg-transparent overflow-x-hidden text-[#F7EEE4] flex flex-col justify-between">
@@ -72,7 +69,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
                     {event.category}
                   </span>
                   <span className="px-3 py-1 rounded-full text-[10px] font-orbitron font-black uppercase tracking-widest bg-[#D64D8D]/20 text-[#D64D8D] border border-[#D64D8D]/40">
-                    {event.type}
+                    {teamLabel(event)}
                   </span>
                 </div>
                 <h1 className="text-4xl md:text-6xl font-orbitron font-black tracking-wider text-[#F7EEE4] leading-[1.05]">
@@ -91,15 +88,17 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
               <h2 className="font-orbitron text-xs uppercase tracking-widest text-[#F7EEE4]/45 font-black flex items-center gap-2">
                 <Trophy className="w-3.5 h-3.5 text-[#BF8A1B]" /> Prize pool
               </h2>
-              <div className="grid grid-cols-3 gap-3">
-                {[
-                  { place: "1st", amount: prizes.first, tone: "text-[#F2D2AE] border-[#BF8A1B]/40" },
-                  { place: "2nd", amount: prizes.second, tone: "text-[#F7EEE4] border-[#4A1C3A]" },
-                  { place: "3rd", amount: prizes.third, tone: "text-[#F7EEE4]/80 border-[#4A1C3A]" },
-                ].map((p) => (
-                  <div key={p.place} className={`p-4 rounded-2xl bg-[#150B1E]/60 border ${p.tone} text-center`}>
-                    <p className="font-sharetech text-[10px] uppercase tracking-widest text-[#F7EEE4]/40">{p.place}</p>
-                    <p className="font-orbitron font-black text-lg mt-1">{p.amount}</p>
+              {/* Prize count varies per event — render only what's awarded. */}
+              <div className={`grid gap-3 ${prizes.length === 2 ? "grid-cols-2" : "grid-cols-3"}`}>
+                {prizes.map((amount, i) => (
+                  <div
+                    key={i}
+                    className={`p-4 rounded-2xl bg-[#150B1E]/60 border text-center ${
+                      i === 0 ? "text-[#F2D2AE] border-[#BF8A1B]/40" : "text-[#F7EEE4] border-[#4A1C3A]"
+                    }`}
+                  >
+                    <p className="font-sharetech text-[10px] uppercase tracking-widest text-[#F7EEE4]/40">{PLACES[i]}</p>
+                    <p className="font-orbitron font-black text-lg mt-1">{formatINR(amount)}</p>
                   </div>
                 ))}
               </div>

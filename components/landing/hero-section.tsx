@@ -160,7 +160,7 @@ export function HeroSection() {
   const parallaxOffset = useParallax(0.15);
   const mouse = useMousePosition(logoRef);
 
-  const fullTagline = "3 DAYS · 22 ARENAS · ONE NATIONAL STAGE";
+  const fullTagline = "3 DAYS · 24 ARENAS · ONE NATIONAL STAGE";
 
   useEffect(() => {
     const t = setTimeout(() => setIsLoaded(true), 300);
@@ -216,6 +216,18 @@ export function HeroSection() {
             filter: "saturate(1.1) brightness(0.65)",
           }}
         />
+        {/* Lifts the halo disc behind the temple. Ring-shaped, not a plain
+            radial: the disc centre is where the temple sits, so a filled
+            gradient would wash out the stonework instead of the glow.
+            Centre and radius measured off the artwork (50.5% / 46.5%). */}
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            background:
+              "radial-gradient(circle at 50.5% 46.5%, transparent 14%, rgba(190,64,92,0.30) 27%, rgba(170,58,88,0.14) 38%, transparent 52%)",
+            mixBlendMode: "screen",
+          }}
+        />
         {/* Gradient overlays for depth */}
         <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-black/90" />
         <div className="absolute inset-0 bg-gradient-to-r from-black/30 via-transparent to-black/30" />
@@ -268,7 +280,7 @@ export function HeroSection() {
         <div className="space-y-1.5">
           <div className="flex gap-2"><span className="text-[#D64D8D]">&gt;</span> <span>CORE_LOAD: <span className="text-[#F2D2AE]/80">SUCCESS</span></span></div>
           <div className="flex gap-2"><span className="text-[#D64D8D]">&gt;</span> <span>PORTAL_GATE: <span className="text-green-400">OPEN</span></span></div>
-          <div className="flex gap-2"><span className="text-[#D64D8D]">&gt;</span> <span>ARENAS_ACTIVE: <span className="text-[#F2D2AE]/80">22</span></span></div>
+          <div className="flex gap-2"><span className="text-[#D64D8D]">&gt;</span> <span>ARENAS_ACTIVE: <span className="text-[#F2D2AE]/80">24</span></span></div>
           <div className="flex gap-2"><span className="text-[#D64D8D]">&gt;</span> <span>MODE: <span className="text-[#D64D8D]">RETRO_ARCADE</span></span></div>
           <div className="flex gap-2"><span className="text-[#D64D8D]">&gt;</span> <span className="animate-pulse text-[#F2D2AE]/60">AWAITING_REGISTRATION...</span></div>
         </div>

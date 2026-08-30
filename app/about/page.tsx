@@ -92,7 +92,7 @@ export default function AboutPage() {
                 { k: "Edition", v: "Pravrutti 2.0" },
                 { k: "Dates", v: "14–16 October 2026" },
                 { k: "Venue", v: "Ramaiah Technology Campus, Bengaluru" },
-                { k: "Events", v: "22 technical arenas" },
+                { k: "Events", v: "24 technical arenas" },
                 { k: "Prize Pool", v: "₹8,00,000+", accent: true },
               ].map((row) => (
                 <div key={row.k} className="flex items-baseline justify-between gap-4 px-5 py-3.5">
@@ -123,7 +123,7 @@ export default function AboutPage() {
             {
               icon: Zap,
               title: "INNOVATION",
-              description: "Featuring 22 events that curates innovation in every braincell."
+              description: "Featuring 24 events that curates innovation in every braincell."
             },
             {
               icon: Target,

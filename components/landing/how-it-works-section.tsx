@@ -11,7 +11,7 @@ const steps = [
     number: "01",
     title: "CHOOSE YOUR ARENA",
     icon: Compass,
-    description: "Browse 22 technical challenges across Engineering & Design, Code & Compute, Research & Presentation, and Enterprise & Expression.",
+    description: "Browse 24 technical challenges across Engineering & Design, Code & Compute, Research & Presentation, and Enterprise & Expression.",
     color: "#D64D8D",
   },
   {

@@ -9,11 +9,20 @@ export interface Event {
   subCategory: string;
   description: string;
   fee: string;
-  type: "Visionary" | "Creator" | "Explorer";
+  /** Prize money in rupees, highest first — e.g. [10000, 7000, 5000].
+      Per event, straight from the coordinators' sheet. These used to be
+      derived from a three-tier system (Visionary/Creator/Explorer), but
+      half the events don't fit three tiers, so the real figures live here. */
+  prizes: number[];
+  /** Min/max team members, and whether one person may enter alone. */
+  teamSize: { min: number; max: number; soloAllowed: boolean };
+  /** Maximum participants, where the coordinators gave one. */
+  capacity?: number;
   coordinators: {
     faculty: Coordinator[];
     student: Coordinator[];
   };
+  /** Rulebook PDF, usually a Google Drive link from the sheet. */
   brochureUrl: string;
   /** Hall / lab inside the campus. Falls back to FEST.venue when unset. */
   venue?: string;
@@ -27,6 +36,21 @@ export interface Event {
   day?: 1 | 2 | 3;
   /** Start time, e.g. "10:00 AM". */
   startsAt?: string;
+}
+
+/** Indian digit grouping — 4,14,000 rather than 414,000. */
+export const formatINR = (n: number) => `₹${n.toLocaleString("en-IN")}`;
+
+/** An event's total purse across all its prizes. */
+export const prizePool = (e: Event) => e.prizes.reduce((a, b) => a + b, 0);
+
+/** How the team rule reads on screen, e.g. "Teams of 2–4" or "Solo or up to 3". */
+export function teamLabel(e: Event): string {
+  const { min, max, soloAllowed } = e.teamSize;
+  if (max === 1) return "Solo only";
+  if (soloAllowed) return `Solo or up to ${max}`;
+  if (min === max) return `Teams of ${min}`;
+  return `Teams of ${min}–${max}`;
 }
 
 export interface Sponsor {
@@ -119,7 +143,7 @@ export const faqs = [
   },
   {
     question: "What are the prizes for the winners?",
-    answer: "Prizes vary depending on the event category—Visionary, Creator, or Explorer. Check out the 'Prizes' section on the main page for more information."
+    answer: "Prize money is set per event, not by a shared tier. Open any event to see its exact 1st, 2nd and 3rd place amounts."
   },
   {
     question: "Will participants receive certificates?",
@@ -150,429 +174,404 @@ export const contacts = {
 };
 
 export const events: Event[] = [
-  // --- Engineering and Design ---
   {
-    name: "ElectroXcape",
+    name: "ROBO RACE",
     category: "Engineering and Design",
-    subCategory: "escape room electronics",
-    description: "ElectroXcape is a dynamic and immersive electronics competition designed to bridge logic, hardware, and innovation. This event tests participants’ understanding of core electronics concepts, logical reasoning, and circuit design through hands-on challenges in Arduino programming, sensor interfacing, and PCB layout development.",
+    subCategory: "Precision. Power. Victory.",
+    description: "Robo Race is a competitive robotics event that challenges participants to navigate a specially designed obstacle track with their custom-RC bots. The event evaluates speed, precision, control, stability, and obstacle-handling capabilities. Key hints regarding the track will be provided to participants prior to the commencement of the event.",
     fee: "Rs. 200/-",
-    type: "Visionary",
-    coordinators: {
-      faculty: [{ name: "Mr. Divya Kiran", phone: "8971638139" }],
-      student: [
-        { name: "Kushal M K", phone: "8618844218" },
-        { name: "Akash Arumugam", phone: "9606694466" }
-      ]
-    },
-    brochureUrl: "/Electroxcape.pdf"
-  },
-  {
-    name: "SkyCraft",
-    category: "Engineering and Design",
-    subCategory: "glider aircraft",
-    description: "Take flight with SkyCraft, a celebration of aviation’s past, present, and future. This event challenges students to blend creativity with engineering by building physical models of legendary aircraft, futuristic concepts, or original designs. From historic icons to visionary prototypes, SkyCraft is where imagination meets aerospace innovation.",
-    fee: "Rs. 200/-",
-    type: "Creator",
-    coordinators: {
-      faculty: [{ name: "Dr. M. Sivapragasam", phone: "8049065555" }],
-      student: [
-        { name: "Ankith A Josh", phone: "8217684051" },
-        { name: "Debopriya Dutta", phone: "8972871552" }
-      ]
-    },
-    brochureUrl: "/SkyCraft.pdf"
-  },
-  {
-    name: "Robo Climb",
-    category: "Engineering and Design",
-    subCategory: "climbing robot",
-    description: "Gear up for RoboClimb, the ultimate test of innovation and engineering skill. This thrilling event challenges students to design and build all-terrain robots capable of navigating obstacles and tackling extreme conditions. It’s not just about mobility—it’s about creativity, precision, and teamwork. Whether you’re competing for the prize or the glory, RoboClimb is your chance to showcase technical brilliance and prove your robot’s dominance.",
-    fee: "Rs. 200/-",
-    type: "Visionary",
-    coordinators: {
-      faculty: [{ name: "Mr. Pavan Kumar", phone: "96116 40888" }],
-      student: [
-        { name: "Trupti", phone: "9380013688" },
-        { name: "Meghana", phone: "8217397606" }
-      ]
-    },
-    brochureUrl: "/Roboclimb rules.pdf"
-  },
-  {
-    name: "Wind Rush",
-    category: "Engineering and Design",
-    subCategory: "wind turbine",
-    description: "Wind Rush Challenge is a glider competition where: Participants must design, build, and fly a hand-launched foam glider that stays in the air as long as possible. The glider must be made only from foam and must be built before the event.",
-    fee: "Rs. 200/-",
-    type: "Creator",
-    coordinators: {
-      faculty: [{ name: "Mr. Adarsh Krishnamurthy", phone: "9900258871" }],
-      student: [
-        { name: "Swamini Arvind B", phone: "9110853761" },
-        { name: "Haneesh", phone: "9986179062" }
-      ]
-    },
-    brochureUrl: "/Windrush.pdf"
-  },
-  {
-    name: "Scrapyard Wars",
-    category: "Engineering and Design",
-    subCategory: "scrap metal robot",
-    description: "Unleash your creativity in this unique challenge where participants design and build a catapult using only scrapyard materials. The competition highlights innovation, practical mechanical design, and the art of making the best out of waste. Each catapult will be tested for performance, rewarding not just functionality but also originality and aesthetics. This event is the perfect blend of hands-on learning and engineering creativity.",
-    fee: "Rs. 200/-",
-    type: "Visionary",
-    coordinators: {
-      faculty: [{ name: "Dr. Ananth S. Iyengar", phone: "9480343844" }],
-      student: [
-        { name: "Ranganatha. K.", phone: "7483353883" },
-        { name: "Akash. C. Y.", phone: "7996186641" }
-      ]
-    },
-    brochureUrl: "/Scrapyard Wars.pdf"
-  },
-  {
-    name: "Micro RC Plane",
-    category: "Engineering and Design",
-    subCategory: "rc plane",
-    description: "Participants will design and build a lightweight but strong RC model with the given constraints and fly it through an obstacle course to score points and prove their design and piloting skills.",
-    fee: "Rs. 200/-",
-    type: "Creator",
-    coordinators: {
-      faculty: [{ name: "Dr. Jayahar Sivasubramanian", phone: "+91 7795701987" }],
-      student: [
-        { name: "Mihir Wankhade", phone: "9900570783" },
-        { name: "Saraswathi", phone: "9886691575" }
-      ]
-    },
-    brochureUrl: "/Micro RC Plane Build.pdf"
-  },
-  {
-    name: "GreenPlan CAD",
-    category: "Engineering and Design",
-    subCategory: "eco friendly city",
-    description: "GreenPlan CAD is a unique design challenge where budding civil engineers craft sustainable site layouts using AutoCAD. Participants must integrate eco-conscious solutions like rainwater harvesting, solar orientation, and green zones into their designs. This hands-on event sharpens creativity, space management, and drafting skills while encouraging innovative approaches to sustainable development.",
-    fee: "Rs. 200/-",
-    type: "Explorer",
-    coordinators: {
-      faculty: [{ name: "Mr. Eshwar Reddy H N", phone: "9845224428" }],
-      student: [
-        { name: "Abhilash", phone: "8618488065" },
-        { name: "Kruthika B", phone: "8904994491" }
-      ]
-    },
-    brochureUrl: "/GreenPlan CAD.pdf"
-  },
-  {
-    name: "Air Crash Investigation",
-    category: "Engineering and Design",
-    subCategory: "plane crash",
-    description: "Step into the role of an aviation investigator in this unique challenge! Teams will analyze a simulated aircraft accident case using real-world methods and data. Participants must review evidence, identify root causes, and propose preventive measures. After case analysis, shortlisted teams will present their investigation report to a jury of experts. The event sharpens analytical thinking, communication, and teamwork while offering a real-world taste of aviation safety practices.",
-    fee: "Rs. 200/-",
-    type: "Creator",
-    coordinators: {
-      faculty: [{ name: "Dr. Jayahar Sivasubramanian", phone: "7795701987" }],
-      student: [
-        { name: "Supriya", phone: "9901479264" },
-        { name: "Manya", phone: "9235050505" }
-      ]
-    },
-    brochureUrl: "/Air crash investigation.pdf"
-  },
-
-  // --- Research and Presentation ---
-  {
-    name: "ISTE Research Paper Presentation",
-    category: "Research and Presentation",
-    subCategory: "research presentation",
-    description: "Unveil your innovation at the ISTE Research Paper Presentation—a premier platform for students and researchers to showcase original work before a panel of distinguished experts. Submissions are welcome across diverse domains including AI/ML, Cybersecurity, Robotics, Energy, Electrical, IoT, Biomedical Engineering, and especially interdisciplinary projects that break boundaries.",
-    fee: "Rs. 200/-",
-    type: "Creator",
-    coordinators: {
-      faculty: [{ name: "Dr. Mallaradhya H M", phone: "9742727670" }],
-      student: [
-        { name: "Mr. B Jagadish", phone: "9019497370" },
-        { name: "Mr. Rishab R K", phone: "6360962848" }
-      ]
-    },
-    brochureUrl: "/Research paper.pdf"
-  },
-  {
-    name: "IEEE Project/Poster Presentation",
-    category: "Research and Presentation",
-    subCategory: "science fair",
-    description: "A platform for individuals or teams to showcase innovative project-based solutions that address real-world societal or industrial problems.",
-    fee: "Rs. 200/-",
-    type: "Creator",
-    coordinators: {
-      faculty: [{ name: "Dr. Prajwal K T", phone: "9844660808" }],
-      student: [
-        { name: "Akshay PM", phone: "9686226622" },
-        { name: "Sai Kiran", phone: "8088306200" }
-      ]
-    },
-    brochureUrl: "/Project_Poster presentation.pdf"
-  },
-  {
-    name: "Medical Tech Innovate",
-    category: "Research and Presentation",
-    subCategory: "medical technology",
-    description: "Innovation in healthcare begins with fresh ideas. This event invites students to explore the intersection of medical sciences and technology by tackling realworld problem statements. Participants will brainstorm, design, and present their solutions through models, posters, or short videos, showcasing creativity, feasibility, and innovation. It’s a platform to collaborate, think critically, and bring impactful medical ideas closer to reality.",
-    fee: "Rs. 200/-",
-    type: "Creator",
-    coordinators: {
-      faculty: [{ name: "Dr. Soumya Ramani", phone: "8971790080" }],
-      student: [
-        { name: "Eesha brijesh", phone: "9148483111" },
-        { name: "B V Aditya", phone: "8867064061" }
-      ]
-    },
-    brochureUrl: "/Medical_Tech_innovate.pdf"
-  },
-  {
-    name: "Dent-Tech",
-    category: "Research and Presentation",
-    subCategory: "dental technology",
-    description: "The Ramaiah Dent-Tech Poster Event is a platform for budding dental innovators to showcase creative, practical, and impactful ideas that address real-world challenges in dentistry. Through poster and model presentations, students will pitch solutions that combine scientific knowledge, innovation, and entrepreneurial spirit. This event not only highlights academic creativity but also encourages participants to translate their ideas into potential advancements in dental science and technology.",
-    fee: "Rs. 200/-",
-    type: "Creator",
-    coordinators: {
-      faculty: [{ name: "Dr. Dominic Augustine", phone: "9901694515" }],
-      student: [
-        { name: "Ankush Chadichal", phone: "7975965514" },
-        { name: "Gowuri Kishore", phone: "8073411261" }
-      ]
-    },
-    brochureUrl: "/Dent Tech.pdf"
-  },
-  {
-    name: "Pitch Pulse",
-    category: "Research and Presentation",
-    subCategory: "startup pitch",
-    description: "Got a game-changing idea? Pitch Pulse is your stage to showcase it! Participants present innovative solutions to real-world problems in a high-energy 5-minute pitch before a panel of industry experts. The event offers more than just prizes— it’s a gateway to valuable feedback, mentorship, and networking opportunities. From technology and sustainability, to social impact, any impactful idea is welcome. Step up, pitch it, and kickstart your entrepreneurial journey!",
-    fee: "Rs. 200/-",
-    type: "Creator",
-    coordinators: {
-      faculty: [{ name: "Dr. Kiran Kumar B M", phone: "9164644099" }],
-      student: [
-        { name: "Renuka", phone: "8147192405" },
-        { name: "Samarth", phone: "9019353197" }
-      ]
-    },
-    brochureUrl: "/Pitch_Pulse.pdf"
-  },
-
-  // --- Code and Compute ---
-  {
-    name: "Triathlon",
-    category: "Code and Compute",
-    subCategory: "coding challenge",
-    description: "Triathlon is a three-round flagship event designed to test participants’ technical knowledge, problem-solving skills, and practical application of computer science concepts. The objective is to provide a holistic challenge that combines theory, practical hardware skills, and cybersecurity awareness making it a true triathlon of tech.",
-    fee: "Rs. 200/-",
-    type: "Visionary",
-    coordinators: {
-      faculty: [{ name: "Ms. M Shona", phone: "9986430996" }],
-      student: [
-        { name: "Sanjeev Janardhan", phone: "9632711818" },
-        { name: "Sachin", phone: "7022730191" }
-      ]
-    },
-    brochureUrl: "/Triathlon by Cynergy.pdf"
-  },
-  {
-    name: "Feature Sleuths",
-    category: "Code and Compute",
-    subCategory: "code debugging",
-    description: "Welcome to Feature Sleuth, a high-pressure data engineering showdown where the dataset takes center stage and the model is fixed. In a controlled lab setup, participants must craft powerful feature pipelines under strict time limits—going beyond basic cleaning to master scaling, encoding, dimensionality reduction, and advanced feature creation. With no AutoML or model tuning allowed, this event is the ultimate test of intuition, creativity, and technical execution in feature engineering.",
-    fee: "Rs. 200/-",
-    type: "Creator",
-    coordinators: {
-      faculty: [{ name: "Ms. Shaista Tarrunum", phone: "7760957304" }],
-      student: [
-        { name: "Isa Aminah", phone: "9482164889" },
-        { name: "Sathvik S", phone: "6364485806" }
-      ]
-    },
-    brochureUrl: "/Feature sleuths.pdf"
-  },
-  {
-    name: "Relay Hackathon",
-    category: "Code and Compute",
-    subCategory: "team coding",
-    description: "The Relay Hackathon is a fast-paced coding challenge that tests teamwork, speed, and creativity. In this unique relay format, each team member tackles a different task—debugging, treasure hunts, and web feature development— before passing the baton to the next. Submissions are made on GitHub after each round, ensuring real-time progress tracking.",
-    fee: "Rs. 200/-",
-    type: "Creator",
-    coordinators: {
-      faculty: [{ name: "Ms. Naganandini G Rao", phone: "8317307043" }],
-      student: [
-        { name: "Somya Jha", phone: "8448503999" },
-        { name: "Shuchi", phone: "8951673031" }
-      ]
-    },
-    brochureUrl: "/Relay hackathon Cynergy.pdf"
-  },
-  {
-    name: "TechnoMaze",
-    category: "Code and Compute",
-    subCategory: "maze algorithm",
-    description: "Step into the world of logic, speed, and strategy with TechnoMaze—a one-of-a-kind digital maze challenge! Only the sharpest problem-solvers will advance through each level, and the event culminates when the first three teams reach the final destination in the correct order. Are you ready to outthink, outpace, and outlast the maze?",
-    fee: "Rs. 200/-",
-    type: "Creator",
-    coordinators: {
-      faculty: [{ name: "Dr. Sumanth Bharadwaj H S", phone: "9902727891" }],
-      student: [
-        { name: "Rishi", phone: "9449509081" },
-        { name: "Jaisurya", phone: "8095457239" }
-      ]
-    },
-    brochureUrl: "/Technomaze.pdf"
-  },
-  {
-    name: "Skyhack",
-    category: "Code and Compute",
-    subCategory: "cyber security hacking",
-    description: "SkyHack is a one-day hackathon where creativity meets technology. Participants must propose drone-based solutions to real-world challenges across domains like agriculture, logistics, and disaster response. The competition unfolds in three rounds: problem reveal & ideation, AI-powered drone design with pitch deck creation, and a final pitch to the jury. No coding is required— only innovation, design thinking, and clear communication.",
-    fee: "Rs. 200/-",
-    type: "Creator",
-    coordinators: {
-      faculty: [{ name: "Dr. Kiran Kumar B M", phone: "9164644099" }],
-      student: [
-        { name: "Rathan Raj", phone: "6363548034" },
-        { name: "Shriharsha", phone: "9902895047" }
-      ]
-    },
-    brochureUrl: "/Skyhack.pdf"
-  },
-  {
-    name: "Codelogik",
-    category: "Code and Compute",
-    subCategory: "logic puzzle",
-    description: "This event challenges participants to solve coding problems rooted in core and advanced mathematics, bridging theoretical knowledge with real-world programming. By tackling diverse challenges, participants sharpen analytical thinking, enhance algorithmic creativity, and develop efficient problem-solving strategies, making it a perfect blend of logic, math, and code.",
-    fee: "Rs. 200/-",
-    type: "Creator",
-    coordinators: {
-      faculty: [{ name: "Ms. Shilpa", phone: "9071290398" }],
-      student: [
-        { name: "Dharanesh", phone: "8951454362" },
-        { name: "Umashankar", phone: "8940813666" }
-      ]
-    },
-    brochureUrl: "/Codelogik.pdf"
-  },
-  {
-    name: "Synth Vision Arena",
-    category: "Code and Compute",
-    subCategory: "computer vision",
-    description: "Welcome to SynthVision Arena, a real-time generative engineering gauntlet. This live competition challenges teams to architect and execute complex generative workflows in response to dynamic, on-the-fly prompts.",
-    fee: "Rs. 200/-",
-    type: "Creator",
-    coordinators: {
-      faculty: [{ name: "Ms. Padma R", phone: "7259569405" }],
-      student: [
-        { name: "Daksha Subramanya", phone: "9353316112" },
-        { name: "Sudeep S Suvarna", phone: "8217807088" }
-      ]
-    },
-    brochureUrl: "/Synth Vision Arena.pdf"
-  },
-  {
-    name: "Modelkraft",
-    category: "Code and Compute",
-    subCategory: "machine learning model",
-    description: "This event challenges participants to apply machine learning to real-world data by building predictive models for a given target variable. Through hands-on work in preprocessing, feature engineering, model selection, and optimization, participants sharpen their technical and problem-solving skills. Models are evaluated on a hidden test set to ensure fairness and true generalization, fostering critical thinking, creativity, and practical expertise in data-driven decision-making.",
-    fee: "Rs. 200/-",
-    type: "Creator",
-    coordinators: {
-      faculty: [{ name: "Ms. Praneetha", phone: "7411935429" }],
-      student: [
-        { name: "Pranava", phone: "6362072678" },
-        { name: "Jemi", phone: "9426593156" }
-      ]
-    },
-    brochureUrl: "/Modelkraft.pdf"
-  },
-
-  // --- Enterprise and Expression ---
-  {
-    name: "The Quantum Quest",
-    category: "Enterprise and Expression",
-    subCategory: "quantum physics",
-    description: "What lies at the intersection of paths built by words and the knowledge of humans? Whether you seek the treasure or find the thrill in solving riddles, The Quantum Quest is a treasure hunt that entangles you in one game, with many riddles. Seek a path from the intersection of the first riddle but fret not for the roads diverge and converge… all roads lead to Rome. And once the winner arises, the game doesn’t end for there are champions three. And everyone shall have chance to be one of the two: the treasure seeker, and the thrill seeker. Both shall stand besides the winner. But there is no promise that there being only three treasures is the truth or a lie, when sure sees trinkets as treasure a seeker’s eye.",
-    fee: "Rs. 200/-",
-    type: "Creator",
-    coordinators: {
-      faculty: [{ name: "Ms. V Preethi", phone: "8884952429" }],
-      student: [
-        { name: "Jeyani Shekar", phone: "9686690359" },
-        { name: "Sathwik K", phone: "9566450949" }
-      ]
-    },
-    brochureUrl: "/The Quantum Quest.pdf"
-  },
-  {
-    name: "Beyond the Blueprint",
-    category: "Enterprise and Expression",
-    subCategory: "architecture design",
-    description: "Think you’ve got what it takes to solve real problems? Beyond The Blueprint is your chance to pitch them in a 5-minute presentation before a panel of industry experts. Win prizes, gain feedback, and connect with mentors who can help turn your vision into reality. From tech and sustainability to social impact and beyond—this is your launchpad to make an impact.",
-    fee: "Rs. 200/-",
-    type: "Creator",
-    coordinators: {
-      faculty: [{ name: "Dr. Mueen Ahmed", phone: "8050753395" }],
-      student: [
-        { name: "Sankalp", phone: "7090475089" },
-        { name: "Amruth", phone: "7406323722" }
-      ]
-    },
-    brochureUrl: "/Beyond the blueprint.pdf"
-  },
-  {
-    name: "Cause & Consequence",
-    category: "Enterprise and Expression",
-    subCategory: "case study",
-    description: "The Causes and Consequences is a thought-provoking debate that pushes participants to tackle bold “what if” scenarios in science, technology, and society. Through IF…THEN statements, speakers must combine technical insight, ethical reasoning, and persuasive delivery to defend or dismantle complex ideas with clarity, creativity, and conviction.",
-    fee: "Rs. 200/-",
-    type: "Creator",
-    coordinators: {
-      faculty: [{ name: "Ms. Farhat Begum", phone: "9986001297" }],
-      student: [
-        { name: "Shruti", phone: "8296524204" },
-        { name: "Srujana", phone: "6303320655" }
-      ]
-    },
-    brochureUrl: "/Cause&Consequence.pdf"
-  },
-  {
-    name: "Campus Innovators",
-    category: "Enterprise and Expression",
-    subCategory: "student innovation",
-    description: "Campus Innovators is your platform to pitch bold solutions for campus challenges, aligned with the UN Sustainable Development Goals (SDGs). In this fast-paced competition, participants will pitch their ideas in 5 minutes to a panel of industry experts, showcasing innovation, feasibility, and real-world impact. From tech breakthroughs to sustainability initiatives to social innovations, the event empowers students to reimagine campus life and spark meaningful change.",
-    fee: "Rs. 200/-",
-    type: "Explorer",
+    prizes: [10000, 7000, 5000],
+    teamSize: { min: 2, max: 4, soloAllowed: false },
+    capacity: 80,
+    venue: "GROUND",
     coordinators: {
       faculty: [],
-      student: [
-        { name: "Akul", phone: "8547067060" },
-        { name: "Revanth", phone: "8247391129" }
-      ]
+      student: [{ name: "A R BHARAATH", phone: "7259513381" }, { name: "JOSHIKA S", phone: "9611367397" }],
     },
-    brochureUrl: "/Campus innovators.pdf"
+    dashboardEmails: ["arbharaath@gmail.com", "joshika2505@gmail.com"],
+    brochureUrl: "https://drive.google.com/open?id=1XFa3H41-N8zeFVjLJ3atgOAIAiE4I9Kh",
   },
   {
-    name: "Boardroom Battles",
-    category: "Enterprise and Expression",
-    subCategory: "business meeting",
-    description: "Boardroom Battles – Strategic Leadership Cohort is a high-intensity leadership simulation where participants step into C-suite roles and tackle real-world inspired business or sustainability crises. The event unfolds in stages—briefing & role assignment, strategy formulation, boardroom presentations, and a dynamic crossfire debate. With unexpected twists, live scrutiny from experts, and pressure to make tough calls, participants will experience what it takes to lead at the highest level.",
+    name: "LINE FOLLOWER",
+    category: "Engineering and Design",
+    subCategory: "Autonomous Bot Time Trial",
+    description: "Line Follower is a robotics competition that challenges participants to design and build an autonomous robot capable of following a predefined track with speed, precision, and accuracy. The robot must navigate turns and track variations while staying on the designated path.",
     fee: "Rs. 200/-",
-    type: "Creator",
+    prizes: [5000, 3000, 2000],
+    teamSize: { min: 2, max: 4, soloAllowed: false },
+    capacity: 96,
+    venue: "C BLOCK",
     coordinators: {
-      faculty: [{ name: "Dr. Subhadeep Mukherjee", phone: "8910133283" }],
-      student: [
-        { name: "Abhijit Arya", phone: "8018375553" },
-        { name: "Ismail", phone: "6366153335" }
-      ]
+      faculty: [],
+      student: [{ name: "SHASHANK", phone: "9449913019" }, { name: "JOSHIKA S", phone: "9611367397" }],
     },
-    brochureUrl: "/Boardroom battles.pdf"
-  }
+    dashboardEmails: ["shashankrpatil077@gmail.com", "joshika2505@gmail.com"],
+    brochureUrl: "https://drive.google.com/open?id=13buhy5x71UbpF4pzXDKqMsMUFXBDg9VS",
+  },
+  {
+    name: "KURUKSHETRA - THE ROBO WAR",
+    category: "Engineering and Design",
+    subCategory: "Engineering Meets Combat",
+    description: "Kurushetra - The Robo War brings student-built 8 kg combat robots into the arena for an intense single-elimination showdown. Armed with spinners, flippers, crushers and more, teams battle through three-minute matches where damage, aggression and control decide victory.",
+    fee: "Rs. 200/-",
+    prizes: [15000, 10000, 7000],
+    teamSize: { min: 2, max: 4, soloAllowed: false },
+    capacity: 64,
+    venue: "Quadrangle",
+    coordinators: {
+      faculty: [],
+      student: [{ name: "A R BHARAATH", phone: "7259513381" }, { name: "RATHAN", phone: "6363548034" }],
+    },
+    dashboardEmails: ["arbharaath@gmail.com", "rathannraj1@gmail.com"],
+    brochureUrl: "https://drive.google.com/open?id=1vLwTFYfBYOhMs8thP1fuYEZoph7zpDzK",
+  },
+  {
+    name: "Terraform: The System Awakens",
+    category: "Code and Compute",
+    subCategory: "Build an AI Survival System",
+    description: "You wake up on unknown land with no memory, no knowledge of agriculture, and one tool between you and starvation: TERRAFORM — an interface built to guide you from bare soil to a full harvest. But right now, that System doesn't exist. It's up to you to build it. In this event, teams construct TERRAFORM from scratch across two laptops simultaneously: * One team building the Knowledge Base — deep, structured research that lets an AI genuinely reason about soil, treatment, and crops * The other building the Interface, the face users actually interact with. Both halves must be wired together by the end, forming a System that can walk a user through diagnosing soil, choosing crops, and guiding them all the way to harvest. Each team is assigned one of five distinct land scenarios, and at judging time, they're handed a brand-new, unseen variation of it — a live test of whether their System actually reasons, or just memorized one example. No agricultural background needed. No coding expertise required. Just two laptops, your creativity, and an AI assistant of your choice. The land is waiting. Will your System be ready?",
+    fee: "Rs. 200/-",
+    prizes: [5000, 3000, 2000],
+    teamSize: { min: 2, max: 4, soloAllowed: false },
+    capacity: 60,
+    venue: "Classroom",
+    coordinators: {
+      faculty: [],
+      student: [{ name: "Sambal Agarwal", phone: "7307430193" }, { name: "Radhe S,", phone: "9686138774" }],
+    },
+    dashboardEmails: ["sambalagarwal@gmail.com", "radheofficial11@gmail.com"],
+    brochureUrl: "https://drive.google.com/open?id=1gsVbyHl7gd1QLAmE2iVsHKvngdUQQZSw",
+  },
+  {
+    name: "ELECTROXCAPE",
+    category: "Engineering and Design",
+    subCategory: "ECE Engineering Challenge",
+    description: "Teams of four progress through three common engineering missions followed by a semi-final and final. Round 1 is a timed system-intelligence challenge involving waveforms, protocols, RTL and circuit evidence. Round 2.1 is hands-on fault forensics using deliberately faulty hardware. Round 2.2 requires teams to implement a constrained system and adapt when a requirement changes. The top eight teams advance to a semi-final Blind Handoff, where one pair designs a solution and another implements it using only the provided documentation. The top four then compete in a final challenge.",
+    fee: "Rs. 200/-",
+    prizes: [7000, 5000, 3000],
+    teamSize: { min: 4, max: 4, soloAllowed: false },
+    capacity: 100,
+    venue: "Labs",
+    coordinators: {
+      faculty: [],
+      student: [{ name: "SACHIN R SHENOY", phone: "9353539822" }, { name: "Megha H", phone: "8867365326" }],
+    },
+    dashboardEmails: ["23etec004041@msruas.ac.in", "23etec004029@msruas.ac.in"],
+    brochureUrl: "https://drive.google.com/open?id=18KxuqhLxOT4JSr8f3mEzE5Kcxtv3AFvN",
+  },
+  {
+    name: "Discoverize (Research Paper Presentation)",
+    category: "Research and Presentation",
+    subCategory: "Research, Present, Inspire & Innovate",
+    description: "Present your original research work and innovative ideas before a panel of experts and a larger audience! The event encourages academic excellence, knowledge sharing, and critical discussion on cutting-edge technologies and interdisciplinary innovations. Participants will undergo an abstract submission process, followed by live paper presentations during the Tech Fest. Students, professionals and researchers are welcome!",
+    fee: "Rs. 200/-",
+    prizes: [7000, 5000, 3000],
+    teamSize: { min: 1, max: 4, soloAllowed: true },
+    capacity: 60,
+    venue: "Seminar Hall ( A-206)",
+    coordinators: {
+      faculty: [],
+      student: [{ name: "Aaliyah Aijaz Ali Khan", phone: "8197092607" }, { name: "Gnaneshwari N", phone: "7829004057" }],
+    },
+    dashboardEmails: ["24etis411003@msruas.ac.in", "24etis411024@msruas.ac.in"],
+    brochureUrl: "https://drive.google.com/open?id=18erNy24IizpT-tTM8fRlfAfMVoNut9M_",
+  },
+  {
+    name: "FAULT x LOAD",
+    category: "Engineering and Design",
+    subCategory: "Engineering Escape Challenge",
+    description: "Step into a factory where everything has gone wrong. Teams must build, measure, troubleshoot and solve a series of hands-on engineering challenges before time runs out. From constructing a load-bearing spaghetti bridge to diagnosing machine failures and restarting the final system, participants will test their creativity, teamwork and problem-solving skills in an immersive engineering experience.",
+    fee: "Rs. 200/-",
+    prizes: [5000, 3000, 2000],
+    teamSize: { min: 3, max: 4, soloAllowed: false },
+    capacity: 60,
+    venue: "Basketball Court",
+    coordinators: {
+      faculty: [],
+      student: [{ name: "Bhauthik V", phone: "9742385315" }, { name: "Vimal Kanth", phone: "6361245327" }],
+    },
+    dashboardEmails: ["bhauthikfirefly@gmail.com", "vimalkanth411@gmail.com"],
+    brochureUrl: "https://drive.google.com/open?id=1Nww0T18stoR2-cxuD5qIa2sd1S38WcBo",
+  },
+  {
+    name: "Campus Innovators 2.0",
+    category: "Enterprise and Expression",
+    subCategory: "SDG Pitching Challenge",
+    description: "● Round 1 [SDG Problem Scouting & Solution Blueprint (Online)]: Teams draw an SDG track at random (e.g., Affordable Clean Energy, Sustainable Cities, Industry & Innovation, Responsible Consumption, Good Health). Teams conduct rapid campus / regional field exploration, define a specific operational bottleneck, propose a feasible technological or business solution, and submit a structured 2-page executive summary by the deadline ● Round 2 (Live Venture Pitch): Top 10 shortlisted teams deliver a live investor-style pitch before an esteemed industry and academic jury. Each team gets 5 minutes for presentation (max 7 slides) followed by 3 minutes of rigorous Q&A with the jury",
+    fee: "Rs. 200/-",
+    prizes: [5000, 3000, 2000],
+    teamSize: { min: 2, max: 4, soloAllowed: false },
+    capacity: 240,
+    venue: "Seminar Hall (capacity of about 70-90 students)",
+    coordinators: {
+      faculty: [],
+      student: [{ name: "Akshay", phone: "9686226622" }, { name: "Nikhita", phone: "9380268311" }],
+    },
+    dashboardEmails: ["akshayworkofficial01@gmail.com", "nikhita.n0601@gmail.com"],
+    brochureUrl: "https://drive.google.com/open?id=1nn121x9xhfh1-sBKjEvltB1T4UdWJQIi",
+  },
+  {
+    name: "Beyond the Blueprint 2.0",
+    category: "Enterprise and Expression",
+    subCategory: "Case Study",
+    description: "● Round 1 (Case Study Analysis & Strategic Deck Submission): Registered teams receive a comprehensive case dossier on a contemporary tech venture navigating growth stagnation, product-market pivot, or ethical AI governance. Teams analyze quantitative/qualitative data and submit a structured 5-page case abstract covering root cause diagnosis, strategic options, feasibility, and 3-year financial impact ● Round 2 (Grand Boardroom Pitch): Top 10 qualifying teams present their strategic blueprint live in a boardroom simulation format. Each team receives 5 minutes of presentation time (maximum 7 slides) and faces 3 minutes of rigorous stress-testing questions from executive judges",
+    fee: "Rs. 200/-",
+    prizes: [7000, 5000, 3000],
+    teamSize: { min: 2, max: 4, soloAllowed: false },
+    capacity: 160,
+    venue: "Executive Seminar Hall (capacity of about 70-90 students)",
+    coordinators: {
+      faculty: [],
+      student: [{ name: "Akshy P M", phone: "9686226622" }, { name: "Nikhita", phone: "9380268311" }],
+    },
+    dashboardEmails: ["akshayworkofficial01@gmail.com", "nikhita.n0601@gmail.com"],
+    brochureUrl: "https://drive.google.com/open?id=1nn121x9xhfh1-sBKjEvltB1T4UdWJQIi",
+  },
+  {
+    name: "Respawn",
+    category: "Code and Compute",
+    subCategory: "Game Building Challenge",
+    description: "Respawn is a 2D Gameathon, Teams of 3 to 4 participants can participate in the event. The theme will be announced after registrations close in the official whatsApp group or discord group. Just a day before the event we willl provide a 12 hour time frame within which they have to develop the game based on the announced theme. They are free to use free AI tools and other permitted resources during the development process. Teams must submit three progress videos, one for every four hours of the 12 hour time frame, along with the date and time clearly visible in each video. These videos along with the final code must be submitted through the official google drive link which will be provided. If in case the registrations are high, shortlisted teams will be presenting their work during the finale.",
+    fee: "Rs. 200/-",
+    prizes: [7000, 5000, 3000],
+    teamSize: { min: 3, max: 4, soloAllowed: false },
+    capacity: 160,
+    venue: "Classrooms",
+    coordinators: {
+      faculty: [],
+      student: [{ name: "Jeslene Iniya D", phone: "8148817683" }, { name: "Sooraj Chackravarthy", phone: "63602 69253" }],
+    },
+    dashboardEmails: ["jesleneiniya@gmail.com", "25etai@msruas.ac.in"],
+    brochureUrl: "https://drive.google.com/open?id=1ElTKXfek8BiWYo1kUeftetELkYiwshJU",
+  },
+  {
+    name: "Glide-X",
+    category: "Engineering and Design",
+    subCategory: "Non-Technical Event",
+    description: "Glide-X is an aerodynamics-focused glider competition where participants design and build a non-RC, passively stable glider to compete under standardized launch conditions. The event challenges teams to apply aerodynamics, flight mechanics, and aircraft stability principles to optimize their designs for maximum flight time and distance while maintaining a straight and stable flight path. With an optional common mechanical launcher ensuring to help with launches, the competition places emphasis on design efficiency, aerodynamic performance, stability, and innovation.",
+    fee: "Rs. 200/-",
+    prizes: [10000, 7000, 5000],
+    teamSize: { min: 2, max: 2, soloAllowed: false },
+    coordinators: {
+      faculty: [],
+      student: [{ name: "B S Mokshada", phone: "93538 24957" }, { name: "Siddharth P", phone: "70223 95629" }],
+    },
+    dashboardEmails: ["24etas012008@msruas.ac.in", "24etas012048@msruas.ac.in"],
+    brochureUrl: "https://drive.google.com/open?id=1HHwcSPITqCzUs5vOgqvZsIOUVqQQe-Ij",
+  },
+  {
+    name: "The Logic Circuit",
+    category: "Code and Compute",
+    subCategory: "Mathematical logic driven digital competition",
+    description: "Experience THE LOGIC CIRCUIT, Techfest’s high-stakes digital puzzle race. Teams of up to three share one laptop to crack logic problems and puzzles, and unlock progression keys on a competitive local network. Facing off against all teams simultaneously, only the sharpest problem-solvers will survive each round. The first three teams to complete the final challenge in the correct sequence claim victory. Do you want to explore and experience the hidden world of problem solving? Fasten your focus—it’s time to outsmart the circuit.",
+    fee: "Rs. 200/-",
+    prizes: [7000, 5000, 3000],
+    teamSize: { min: 1, max: 3, soloAllowed: true },
+    capacity: 120,
+    coordinators: {
+      faculty: [],
+      student: [{ name: "Spandana J S", phone: "6364220817" }, { name: "Dhvani Viroja", phone: "8460357383" }],
+    },
+    dashboardEmails: ["25etmc412021@msruas.ac.in,", "24etmc412010@msruas.ac.in"],
+    brochureUrl: "https://drive.google.com/open?id=12PxcuNAKMp-XQCC1ACFht2C6jXHV0Z4o",
+  },
+  {
+    name: "RC-X",
+    category: "Engineering and Design",
+    subCategory: "Technical Event",
+    description: "RC–X puts your aircraft design, building and piloting skills to the test. Form a team of 3–4, build your aircraft, take to the skies and prove that you can stay in control when precision matters most. Before the challenge begins, every aircraft must clear a mandatory technical inspection to ensure it meets the event’s technical and safety requirements. Teams that pass move on to the qualification round where they must demonstrate stable flight, maneuverability and control over their plane by demonstrating a safe landing. The real challenge begins in the final round. Teams must complete two full loops around the designated field, navigate two obstacles, and accurately drop a 20 g payload into the target zone. So test your build, sharpen your flying and take on the course.",
+    fee: "Rs. 200/-",
+    prizes: [10000, 7000, 5000],
+    teamSize: { min: 3, max: 4, soloAllowed: false },
+    capacity: 100,
+    coordinators: {
+      faculty: [],
+      student: [{ name: "Shravya T", phone: "99948 35916" }, { name: "Pranav P J", phone: "95677 34887" }],
+    },
+    dashboardEmails: ["24etas012046@msruas.ac.in", "24etas012033@msruas.ac.in"],
+    brochureUrl: "https://drive.google.com/open?id=1YqfGErhuVVse0_nbROkZ3KTdZugd3pcz",
+  },
+  {
+    name: "LEADS Innovation Challenge",
+    category: "Enterprise and Expression",
+    subCategory: "Startup Simulation",
+    description: "LEADS Innovation Challenge is a 2-hour startup leadership simulation where teams build a venture from a problem card, defend it through a live mid-event crisis twist, and pitch the complete journey to an investor-style panel testing innovation, adaptability, branding instinct, and leadership, all under real time pressure.",
+    fee: "Rs. 200/-",
+    prizes: [5000, 3000, 2000],
+    teamSize: { min: 1, max: 4, soloAllowed: true },
+    capacity: 100,
+    coordinators: {
+      faculty: [],
+      student: [{ name: "Nuthan.H", phone: "9019133340" }, { name: "Kunal Bhadauria", phone: "9019857885" }],
+    },
+    dashboardEmails: ["nuthann268@gmail.com", "kunalbhadauria232005@gmail.com"],
+    brochureUrl: "https://drive.google.com/open?id=1u5DF4HDP9whgfiCe5OwqOgzV-CXd3IPd",
+  },
+  {
+    name: "DENT - INNOVATE",
+    category: "Research and Presentation",
+    subCategory: "Technical",
+    description: "DENT-INNOVATE 2026 is an exciting postgraduate e-poster competition showcasing innovative ideas that enhance patient care through the integration of technology, clinical expertise, and improved outcomes. Participants will present creative concepts, research innovations, and technology-driven solutions addressing contemporary challenges in dentistry. Join this platform to share ideas, inspire collaboration, demonstrate innovation, and contribute towards shaping the future of patient-centred dental care.",
+    fee: "Rs. 200/-",
+    prizes: [10000, 7000, 5000],
+    teamSize: { min: 1, max: 2, soloAllowed: true },
+    capacity: 50,
+    coordinators: {
+      faculty: [],
+      student: [{ name: "Ankush Chadichal", phone: "8073411261" }, { name: "Abhilashree B Hosmani", phone: "7975965514" }],
+    },
+    dashboardEmails: ["ankush.chadichal@gmail.com", "gowuri.kotabagi@gmail.com"],
+    brochureUrl: "https://drive.google.com/open?id=1CEDr_uGifU8BXsAPK3ZwU968vxwZtHA-",
+  },
+  {
+    name: "PITCH AT MACH",
+    category: "Enterprise and Expression",
+    subCategory: "Think. Design. Defend.",
+    description: "PITCH AT MACH is an aerospace pitch competition, in which the teams are provided with a problem statement a week before the event. Each team will understand the problem, and come up with a feasible and innovative solution and pitch it infront of a jury on the day of the event. The team should also defend their solution against a set of rigorous Q&A, in which the jury will assess the team's technical understanding of both the given problem statement and their proposed solutions.",
+    fee: "Rs. 200/-",
+    prizes: [7000, 5000, 3000],
+    teamSize: { min: 2, max: 4, soloAllowed: false },
+    capacity: 100,
+    coordinators: {
+      faculty: [],
+      student: [{ name: "Ankith A Joshi", phone: "8217684051" }, { name: "Afifa Fatima Karigar", phone: "9741698766" }],
+    },
+    dashboardEmails: ["23etas012004@msruas.ac.in", "23etas012002@msruas.ac.in"],
+    brochureUrl: "https://drive.google.com/open?id=1_-znmVyUw5XJYEnpXfQ0SzuQXG0_Lq68",
+  },
+  {
+    name: "BRIDGE IT",
+    category: "Engineering and Design",
+    subCategory: "Bridging Knowledge, Innovation & Real-World Civil Engineering",
+    description: "BRIDGE IT is a hands-on structural engineering challenge where participants design and construct a model bridge using limited materials. Teams must apply basic structural engineering concepts while focusing on load-carrying capacity, innovation, efficient material utilization, and technical presentation. The completed bridge will be tested under load to determine its structural performance.",
+    fee: "Rs. 200/-",
+    prizes: [5000, 3000, 2000],
+    teamSize: { min: 2, max: 4, soloAllowed: false },
+    capacity: 80,
+    venue: "Normal Class room",
+    coordinators: {
+      faculty: [],
+      student: [{ name: "Abhilash N M", phone: "8618488065" }, { name: "Rajeshwari", phone: "9019328888" }],
+    },
+    dashboardEmails: ["ramaiahcivilclub@gmail.com", "kadaganchirajeshwaariv@gmail.com"],
+    brochureUrl: "https://drive.google.com/open?id=154puKWw4eax-7EaWMGhwhuRj1yztw_N_",
+  },
+  {
+    name: "CHAOS",
+    category: "Code and Compute",
+    subCategory: "8-Hour Software Hackathon",
+    description: "CHAOS is an 8-hour on-site hackathon hosted by the IEEE Student Branch. Teams of 2 to 4 students build a working software solution from scratch against a real-world problem, judged live at the end of the day — no recorded demos, no slide-only submissions. Problem statements are revealed only on the day itself, so no team walks in pre-prepared. Every team starts from zero and builds the entire product within the same eight hours. What sets CHAOS apart is its Buffs & Debuffs wheel. Four times throughout the day, a spin on the main screen hands the entire hall either a helpful perk or a fun, bothersome restriction (voice-only coding, no Enter key, whisper-mode communication) for the next thirty minutes. Every team faces the same twist at the same time, keeping the day unpredictable without affecting anyone's score. Backed by industry sponsors including Cursor, CHAOS gives students a full problem-to-demo cycle in a single day, under the same pressure and unpredictability.",
+    fee: "Rs. 200/-",
+    prizes: [15000, 10000, 7000],
+    teamSize: { min: 2, max: 4, soloAllowed: false },
+    venue: "Seminar Hall or Lab",
+    coordinators: {
+      faculty: [],
+      student: [{ name: "Ganesh", phone: "7975324769" }, { name: "Shravanth", phone: "6363860239" }],
+    },
+    dashboardEmails: ["voxmastery@gmail.com", "shravanth.polisetty@gmail.com"],
+    brochureUrl: "https://drive.google.com/open?id=1OMN_3v5Wxu6UhkZXUKWaAXtyNw6aROmo",
+  },
+  {
+    name: "Hacktivate",
+    category: "Code and Compute",
+    subCategory: "24-Hour Predictive Systems Hackathon",
+    description: "Hacktivate is a 24-hour overnight hackathon on the theme of Predictive Systems, hosted by the IEEE Student Branch. Teams of 2 to 4 design and build a working hardware and software system that senses real-world data and predicts an outcome — machine failure, demand shifts, anomalies, or early warnings. Teams move through the full development cycle: ideation, circuit and system design with simulation, component procurement from an on-site stall, hardware assembly and sensor integration, and finally layering in the predictive logic. Mentors are available throughout, including overnight. The event closes with a live demonstration — every system must power on and perform in front of the judges. Components are sourced on-site through PCB Cupid, the component partner. Meals, overnight refreshments, and a supervised rest area are provided. It is a full product build compressed into a single night, and the kind of end-to-end experience few students get before industry.",
+    fee: "Rs. 200/-",
+    prizes: [20000, 15000, 10000],
+    teamSize: { min: 2, max: 4, soloAllowed: false },
+    venue: "Lab or Workshop",
+    coordinators: {
+      faculty: [],
+      student: [{ name: "Ganesh", phone: "7975324769" }, { name: "Shravanth", phone: "6363860239" }],
+    },
+    dashboardEmails: ["voxmastery@gmail.com", "shravanth.polisetty@gmail.com"],
+    brochureUrl: "https://drive.google.com/open?id=1agRe2bIb_QXyatw1OcwjvKi0EtU5W0VL",
+  },
+  {
+    name: "AI ESCAPE ROOM",
+    category: "Code and Compute",
+    subCategory: "Prompt Engineering Challenge",
+    description: "Our event is an immersive, team-based escape room experience designed to challenge participants through a series of mysterious rooms filled with hidden clues, puzzles, and unexpected challenges. Each room presents a different type of problem that requires observation, logical thinking, creativity, teamwork, and careful attention to detail. Participants must work together, communicate effectively, and think beyond the obvious to uncover the path forward. The puzzles are designed to be challenging and deceptive, encouraging teams to question what they see and discover connections between seemingly unrelated elements. As teams progress through the rooms, the difficulty and mystery build, creating an exciting and competitive atmosphere. The event is not just about solving puzzles—it is about strategy, collaboration, time management, and thinking differently under pressure. Every team must rely on its collective skills and instincts to navigate the experience and ultimately complete the escape room challenge within the given time.",
+    fee: "Rs. 200/-",
+    prizes: [5000, 3000, 2000],
+    teamSize: { min: 2, max: 4, soloAllowed: false },
+    capacity: 60,
+    venue: "A BLOCK CLASSROOM",
+    coordinators: {
+      faculty: [],
+      student: [{ name: "Madhumitha A", phone: "9025678951" }, { name: "N Anushka", phone: "9606853110" }],
+    },
+    dashboardEmails: ["mynaamadhu30@gmail.com", "anushkanagabhyru05@gmail.com"],
+    brochureUrl: "https://drive.google.com/open?id=1o8gS1yTY5fSg8XD3qbfgg-rGfo07WueJ",
+  },
+  {
+    name: "Bracket blitz",
+    category: "Engineering and Design",
+    subCategory: "Design",
+    description: "Bracket Blitz is an exciting team-based technical event where team of 3 to 4 members design, test, and 3D print their models. Participating teams will be provided with design requirements, loading conditions, dimensional constraints, and material specifications. Based on the given specifications and constraints, teams should come up with their own alternative designs to withstand the given load. Teams will then use engineering calculations and FEA to validate their models to check for stress concentration and possible failures in their design to optimize it for better strength with minimal material usage.",
+    fee: "Rs. 200/-",
+    prizes: [7000, 5000],
+    teamSize: { min: 3, max: 4, soloAllowed: false },
+    capacity: 60,
+    venue: "cad lab - 3d printing",
+    coordinators: {
+      faculty: [],
+      student: [{ name: "Pradeep Raj M", phone: "9025329551" }, { name: "Suman A", phone: "6364519267" }],
+    },
+    dashboardEmails: ["pradeepmadasamy55@gmail.com"],
+    brochureUrl: "https://drive.google.com/file/d/1gXYhjUKu1XHG3I-icVGC9wN_kt0yI8AZ/view",
+  },
+  {
+    name: "ZERO HOUR",
+    category: "Code and Compute",
+    subCategory: "Code. Survive. Conquer.",
+    description: "ZERO HOUR Think a hackathon is just pick a problem, open your laptop, and start coding? Think again. 3 hours. 4 people. 3 Gauntlets. 1 final goal. Welcome to Zero Hour — a hackathon where coding is only part of the game. At kickoff, the clock starts and so does the uncertainty. Your team will choose a mystery theme and race to build a working technical solution before time runs out. But just when you think you have found your rhythm, the Gauntlets begin. Three surprise challenges. Three different team members. Three chances to change your score. Every Gauntlet is timed, every point matters, and your team’s final score depends on how well each member performs when it is their turn. There is no hiding behind the strongest coder. No endless time to rethink. No guarantee that your perfect plan will survive the next challenge. You will have to code, adapt, communicate, make quick decisions, and keep your team moving when things stop going according to plan. Then comes the final push: submit your solution, face the judges, and defend what you built. The question is simple: When the clock hits zero, will your team have what it takes to survive Zero Hour?",
+    fee: "Rs. 200/-",
+    prizes: [7000, 5000, 3000],
+    teamSize: { min: 4, max: 4, soloAllowed: false },
+    capacity: 200,
+    venue: "A BLOCK 5 classrooms",
+    coordinators: {
+      faculty: [],
+      student: [{ name: "Sudeepa Priyadarshini", phone: "9900964418" }, { name: "Tanya Shedde", phone: "7483573793" }],
+    },
+    dashboardEmails: ["sudeepapriyadarshini1826@gmail.com", "tanyashedde@gmail.com"],
+    brochureUrl: "https://drive.google.com/file/d/1oh_df3Ze1iqCe1sLigOMs1Ywi63ysGNS/view",
+  },
+  {
+    name: "HAMMER",
+    category: "Code and Compute",
+    subCategory: "Hack Analyze Master Market Execute Rule",
+    description: "*The Cyber-Escape & Live IPL Auction Arena* We bring a unique two-stage competitive arena fusing high-pressure web debugging with the adrenaline of a live IPL Mega Auction. *The Battle Breakdown* * ROUND 1: IPL Technical Escape Room Teams enter a multi-stage cyber-investigation platform where they must inspect, analyse, and decode web components (HTML, CSS, JavaScript) to crack ciphers, analyze cricket datasets, and unlock master qualification keys. * ROUND 2: Live IPL Mega Auction The top 8 qualifying teams from round 1 step into the live auction war room. Armed with a virtual purse of 80 Crores and real-time digital bidding terminals, franchises will battle across marquee and accelerated sets to construct the ultimate championship roster under strict squad constraints.",
+    fee: "Rs. 200/-",
+    prizes: [7000, 5000, 3000],
+    teamSize: { min: 3, max: 4, soloAllowed: false },
+    capacity: 160,
+    coordinators: {
+      faculty: [],
+      student: [{ name: "Hrithik A", phone: "9686505558" }, { name: "L Mahadeva Balan", phone: "8147197853" }],
+    },
+    dashboardEmails: ["hrithik18a@gmail.com |", "mahadevlakshmanan@gmail.com"],
+    brochureUrl: "https://drive.google.com/file/d/1ReNsPaD1nCLpK5bnTO9dHwFjVXEH-_tt/view?usp=drive_open",
+  },
+  {
+    name: "TRIATHLON",
+    category: "Code and Compute",
+    subCategory: "Quiz. Build. Breach.",
+    description: "Triathlon is a three-round technical event run as one connected game. Teams of 2–3 compete across a coding and computer-science quiz, a PC-building challenge, and a capture-the-flag puzzle hunt. Unlike a normal multi-round event, the rounds are linked: what a team earns in one round becomes a resource it spends in the next, so consistency across all three rounds decides the winner. There is no elimination — every team plays all three rounds and the scores are added up. The three rounds are: ● Round 1 – Coding & CS Quiz (25 min): a timed quiz on programming and computer-science fundamentals, including 'predict the output' and 'find the bug' questions and one question where AI-written code has a hidden mistake. The top 4 teams then play a live buzzer round. The Round 1 score sets each team's budget for Round 2. ● Round 2 – PC Build Fix & Adapt (60 min): teams are given a faulty PC parts list on PCPartPicker and must find and fix the mistakes. Midway through, the requirements change (budget or use-case) and teams must rework the build, then briefly justify their choices. The Round 2 score converts into hint points for Round 3. ● Round 3 – CTF Puzzle Hunt (50 min): a jeopardy-style set of cybersecurity puzzles — hidden messages, simple ciphers, web and forensics challenges, and one clue hidden on a poster in the CSE block. Each team gets team-specific flags so answers cannot be shared, a live scoreboard is projected, and teams can spend the hint points earned in Round 2. The team with the highest combined score across all three rounds wins. The tie-breaker is the time taken in Round 3.",
+    fee: "Rs. 200/-",
+    prizes: [7000, 5000, 3000],
+    teamSize: { min: 3, max: 4, soloAllowed: false },
+    capacity: 210,
+    venue: "Seminar Hall / Classroom (Round 1) and Computer Lab (Rounds 2 and 3)",
+    coordinators: {
+      faculty: [],
+      student: [{ name: "Aman Tebriwal", phone: "62046 75554" }, { name: "Sneha", phone: "73558 82325" }],
+    },
+    dashboardEmails: ["amantebriwal104@gmail.com", "snehajangid027@gmail.com"],
+    brochureUrl: "https://drive.google.com/open?id=1sSsvN1DOCowLaWqpeNWncriNXRJkmS8O",
+  },
 ];
 
 export interface GalleryImage {
