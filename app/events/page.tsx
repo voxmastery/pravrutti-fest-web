@@ -188,9 +188,10 @@ export default function EventsPage() {
                             onClick={() => setSelectedEvent(event)}
                             className="group cursor-pointer min-w-0 rounded-2xl border border-white/[0.08] bg-white/[0.04] hover:bg-white/[0.07] hover:border-white/[0.16] transition-colors overflow-hidden flex flex-col"
                           >
-                            {/* Cover leads the card. Tier and fee live in the
-                                detail panel; the poster carries the card. */}
-                            <div className="relative aspect-[4/3] w-full">
+                            {/* Cover leads the card. Square to match the poster
+                                artwork and the detail panel — a 4:3 box was
+                                cropping 25% off every poster's sides. */}
+                            <div className="relative aspect-square w-full">
                               <EventPoster
                                 event={event}
                                 name={event.name}

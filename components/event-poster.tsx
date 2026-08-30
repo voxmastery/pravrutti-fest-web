@@ -8,7 +8,7 @@ import { COVER_GRADIENTS } from "@/components/event-detail-panel";
  * Poster resolution, in order:
  *
  *   1. `event.poster` — an explicit path, when one event needs an odd filename
- *   2. `/posters/<slug>.png` — the convention; drop a file in and it appears
+ *   2. `/posters/<slug>.webp` — the convention; drop a file in and it appears
  *   3. a generated gradient cover — what every event gets until artwork exists
  *
  * Step 2 is why this is a client component: a missing file has to fail
@@ -24,7 +24,7 @@ export function EventPoster({
   name: string;
   className?: string;
 }) {
-  const src = event?.poster ?? `/posters/${slugify(name)}.png`;
+  const src = event?.poster ?? `/posters/${slugify(name)}.webp`;
   const [failed, setFailed] = useState(false);
 
   if (!failed) {
