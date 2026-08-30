@@ -16,8 +16,14 @@ export interface Event {
   prizes: number[];
   /** Min/max team members, and whether one person may enter alone. */
   teamSize: { min: number; max: number; soloAllowed: boolean };
-  /** Maximum participants, where the coordinators gave one. */
+  /** Maximum intake, where the coordinators gave one. Read with capacityUnit —
+      most events cap teams, not heads. */
   capacity?: number;
+  capacityUnit: "teams" | "participants";
+  /** How long the event runs, e.g. "3 hours", "24 hours". */
+  duration?: string;
+  /** Entry restriction, where one exists (year, branch, team make-up). */
+  eligibility?: string;
   coordinators: {
     faculty: Coordinator[];
     student: Coordinator[];
@@ -183,6 +189,8 @@ export const events: Event[] = [
     prizes: [10000, 7000, 5000],
     teamSize: { min: 2, max: 4, soloAllowed: false },
     capacity: 80,
+    capacityUnit: "teams",
+    duration: "3 hours",
     venue: "GROUND",
     coordinators: {
       faculty: [],
@@ -200,6 +208,8 @@ export const events: Event[] = [
     prizes: [5000, 3000, 2000],
     teamSize: { min: 2, max: 4, soloAllowed: false },
     capacity: 96,
+    capacityUnit: "teams",
+    duration: "3 hours",
     venue: "C BLOCK",
     coordinators: {
       faculty: [],
@@ -217,6 +227,8 @@ export const events: Event[] = [
     prizes: [15000, 10000, 7000],
     teamSize: { min: 2, max: 4, soloAllowed: false },
     capacity: 64,
+    capacityUnit: "teams",
+    duration: "3 hours",
     venue: "Quadrangle",
     coordinators: {
       faculty: [],
@@ -234,6 +246,8 @@ export const events: Event[] = [
     prizes: [5000, 3000, 2000],
     teamSize: { min: 2, max: 4, soloAllowed: false },
     capacity: 60,
+    capacityUnit: "teams",
+    duration: "3 hours",
     venue: "Classroom",
     coordinators: {
       faculty: [],
@@ -251,6 +265,9 @@ export const events: Event[] = [
     prizes: [7000, 5000, 3000],
     teamSize: { min: 4, max: 4, soloAllowed: false },
     capacity: 100,
+    capacityUnit: "teams",
+    duration: "3 hours",
+    eligibility: "ECE and related engineering students.",
     venue: "Labs",
     coordinators: {
       faculty: [],
@@ -268,6 +285,8 @@ export const events: Event[] = [
     prizes: [7000, 5000, 3000],
     teamSize: { min: 1, max: 4, soloAllowed: true },
     capacity: 60,
+    capacityUnit: "participants",
+    duration: "3 hours",
     venue: "Seminar Hall ( A-206)",
     coordinators: {
       faculty: [],
@@ -285,6 +304,8 @@ export const events: Event[] = [
     prizes: [5000, 3000, 2000],
     teamSize: { min: 3, max: 4, soloAllowed: false },
     capacity: 60,
+    capacityUnit: "teams",
+    duration: "3 hours",
     venue: "Basketball Court",
     coordinators: {
       faculty: [],
@@ -302,6 +323,8 @@ export const events: Event[] = [
     prizes: [5000, 3000, 2000],
     teamSize: { min: 2, max: 4, soloAllowed: false },
     capacity: 240,
+    capacityUnit: "teams",
+    duration: "3 hours",
     venue: "Seminar Hall (capacity of about 70-90 students)",
     coordinators: {
       faculty: [],
@@ -319,6 +342,8 @@ export const events: Event[] = [
     prizes: [7000, 5000, 3000],
     teamSize: { min: 2, max: 4, soloAllowed: false },
     capacity: 160,
+    capacityUnit: "teams",
+    duration: "3 hours",
     venue: "Executive Seminar Hall (capacity of about 70-90 students)",
     coordinators: {
       faculty: [],
@@ -336,6 +361,8 @@ export const events: Event[] = [
     prizes: [7000, 5000, 3000],
     teamSize: { min: 3, max: 4, soloAllowed: false },
     capacity: 160,
+    capacityUnit: "teams",
+    duration: "3 hours",
     venue: "Classrooms",
     coordinators: {
       faculty: [],
@@ -352,6 +379,8 @@ export const events: Event[] = [
     fee: "Rs. 200/-",
     prizes: [10000, 7000, 5000],
     teamSize: { min: 2, max: 2, soloAllowed: false },
+    capacityUnit: "teams",
+    duration: "3 hours",
     coordinators: {
       faculty: [],
       student: [{ name: "B S Mokshada", phone: "93538 24957" }, { name: "Siddharth P", phone: "70223 95629" }],
@@ -368,6 +397,8 @@ export const events: Event[] = [
     prizes: [7000, 5000, 3000],
     teamSize: { min: 1, max: 3, soloAllowed: true },
     capacity: 120,
+    capacityUnit: "teams",
+    duration: "3 hours",
     coordinators: {
       faculty: [],
       student: [{ name: "Spandana J S", phone: "6364220817" }, { name: "Dhvani Viroja", phone: "8460357383" }],
@@ -384,6 +415,8 @@ export const events: Event[] = [
     prizes: [10000, 7000, 5000],
     teamSize: { min: 3, max: 4, soloAllowed: false },
     capacity: 100,
+    capacityUnit: "teams",
+    duration: "3 hours",
     coordinators: {
       faculty: [],
       student: [{ name: "Shravya T", phone: "99948 35916" }, { name: "Pranav P J", phone: "95677 34887" }],
@@ -400,6 +433,8 @@ export const events: Event[] = [
     prizes: [5000, 3000, 2000],
     teamSize: { min: 1, max: 4, soloAllowed: true },
     capacity: 100,
+    capacityUnit: "teams",
+    duration: "2h 15m",
     coordinators: {
       faculty: [],
       student: [{ name: "Nuthan.H", phone: "9019133340" }, { name: "Kunal Bhadauria", phone: "9019857885" }],
@@ -416,6 +451,9 @@ export const events: Event[] = [
     prizes: [10000, 7000, 5000],
     teamSize: { min: 1, max: 2, soloAllowed: true },
     capacity: 50,
+    capacityUnit: "participants",
+    duration: "3 hours",
+    eligibility: "Phd students only",
     coordinators: {
       faculty: [],
       student: [{ name: "Ankush Chadichal", phone: "8073411261" }, { name: "Abhilashree B Hosmani", phone: "7975965514" }],
@@ -432,6 +470,8 @@ export const events: Event[] = [
     prizes: [7000, 5000, 3000],
     teamSize: { min: 2, max: 4, soloAllowed: false },
     capacity: 100,
+    capacityUnit: "teams",
+    duration: "3 hours",
     coordinators: {
       faculty: [],
       student: [{ name: "Ankith A Joshi", phone: "8217684051" }, { name: "Afifa Fatima Karigar", phone: "9741698766" }],
@@ -448,6 +488,8 @@ export const events: Event[] = [
     prizes: [5000, 3000, 2000],
     teamSize: { min: 2, max: 4, soloAllowed: false },
     capacity: 80,
+    capacityUnit: "teams",
+    duration: "3 hours",
     venue: "Normal Class room",
     coordinators: {
       faculty: [],
@@ -464,6 +506,8 @@ export const events: Event[] = [
     fee: "Rs. 200/-",
     prizes: [15000, 10000, 7000],
     teamSize: { min: 2, max: 4, soloAllowed: false },
+    capacityUnit: "teams",
+    duration: "8 hours",
     venue: "Seminar Hall or Lab",
     coordinators: {
       faculty: [],
@@ -480,6 +524,8 @@ export const events: Event[] = [
     fee: "Rs. 200/-",
     prizes: [20000, 15000, 10000],
     teamSize: { min: 2, max: 4, soloAllowed: false },
+    capacityUnit: "teams",
+    duration: "24 hours",
     venue: "Lab or Workshop",
     coordinators: {
       faculty: [],
@@ -497,6 +543,8 @@ export const events: Event[] = [
     prizes: [5000, 3000, 2000],
     teamSize: { min: 2, max: 4, soloAllowed: false },
     capacity: 60,
+    capacityUnit: "teams",
+    duration: "1h 30m",
     venue: "A BLOCK CLASSROOM",
     coordinators: {
       faculty: [],
@@ -514,6 +562,8 @@ export const events: Event[] = [
     prizes: [7000, 5000],
     teamSize: { min: 3, max: 4, soloAllowed: false },
     capacity: 60,
+    capacityUnit: "teams",
+    duration: "3 hours",
     venue: "cad lab - 3d printing",
     coordinators: {
       faculty: [],
@@ -531,6 +581,8 @@ export const events: Event[] = [
     prizes: [7000, 5000, 3000],
     teamSize: { min: 4, max: 4, soloAllowed: false },
     capacity: 200,
+    capacityUnit: "teams",
+    duration: "3 hours",
     venue: "A BLOCK 5 classrooms",
     coordinators: {
       faculty: [],
@@ -548,6 +600,9 @@ export const events: Event[] = [
     prizes: [7000, 5000, 3000],
     teamSize: { min: 3, max: 4, soloAllowed: false },
     capacity: 160,
+    capacityUnit: "teams",
+    duration: "3 hours",
+    eligibility: "Teams must consist of 3 to 4 members.",
     coordinators: {
       faculty: [],
       student: [{ name: "Hrithik A", phone: "9686505558" }, { name: "L Mahadeva Balan", phone: "8147197853" }],
@@ -564,6 +619,9 @@ export const events: Event[] = [
     prizes: [7000, 5000, 3000],
     teamSize: { min: 3, max: 4, soloAllowed: false },
     capacity: 210,
+    capacityUnit: "teams",
+    duration: "3 hours",
+    eligibility: "Teams must have 2–3 members. All members must be present for the full event. Team members cannot be changed once the event begins.",
     venue: "Seminar Hall / Classroom (Round 1) and Computer Lab (Rounds 2 and 3)",
     coordinators: {
       faculty: [],

@@ -275,6 +275,28 @@ export function EventDetailPanel({
               <p className="text-sm text-[#F7EEE4]/85 leading-relaxed font-sharetech">{event.description}</p>
             </div>
 
+            {/* Format — everything the coordinators specified per event.
+                Each row is omitted when that event has no answer, so this
+                block shrinks rather than showing blanks. */}
+            <div className="space-y-2">
+              <h4 className="text-xs font-bold uppercase tracking-[0.25em] text-[#D64D8D]">Format</h4>
+              <dl className="rounded-xl border border-[#4A1C3A] bg-[#150B1E]/60 divide-y divide-[#4A1C3A]/60">
+                {[
+                  { k: "Team size", v: teamLabel(event) },
+                  event.duration ? { k: "Duration", v: event.duration } : null,
+                  event.capacity ? { k: "Capacity", v: `${event.capacity} ${event.capacityUnit}` } : null,
+                  event.eligibility ? { k: "Eligibility", v: event.eligibility } : null,
+                ]
+                  .filter((r): r is { k: string; v: string } => r !== null)
+                  .map((r) => (
+                    <div key={r.k} className="flex items-start justify-between gap-4 px-4 py-2.5">
+                      <dt className="text-sm text-[#F7EEE4]/50 font-sharetech shrink-0">{r.k}</dt>
+                      <dd className="text-sm text-[#F7EEE4] text-right">{r.v}</dd>
+                    </div>
+                  ))}
+              </dl>
+            </div>
+
             {/* Prizes */}
             <div className="space-y-3">
               <h4 className="text-xs font-bold uppercase tracking-[0.25em] text-[#D64D8D]">Prizes</h4>
