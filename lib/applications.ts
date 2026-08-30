@@ -49,6 +49,11 @@ export type Application = {
   appliedAt: string;
   decidedAt?: string;
   refundedAt?: string;
+  /** Set once when an organiser scans this ticket. Never overwritten —
+      a second scan reports the original time rather than replacing it. */
+  checkedInAt?: string;
+  /** Organiser email that performed the scan. */
+  checkedInBy?: string;
 };
 
 /**
