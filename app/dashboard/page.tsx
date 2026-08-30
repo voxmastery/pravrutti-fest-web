@@ -30,11 +30,24 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (!active) return;
+    // Guard against a fetch race: if the user switches tabs before this
+    // request resolves, React runs this cleanup (setting `cancelled`) before
+    // starting the next effect for the new `active`. A late response for an
+    // event we've since navigated away from is then dropped instead of
+    // overwriting the newer selection's counts/roster with stale data.
+    let cancelled = false;
     setData(null);
     fetch(`/api/dashboard/event/${active}`)
       .then((r) => (r.ok ? r.json() : null))
-      .then(setData)
-      .catch(() => setData(null));
+      .then((d) => {
+        if (!cancelled) setData(d);
+      })
+      .catch(() => {
+        if (!cancelled) setData(null);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [active]);
 
   return (
