@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Calendar, Timer, Download, Trophy, ChevronDown } from "lucide-react";
+import { ArrowRight, Calendar, Download, Trophy, ChevronDown } from "lucide-react";
 import { useParallax, useMousePosition } from "@/hooks/use-animations";
 import { events } from "@/lib/pravrutti-data";
 
@@ -41,7 +41,6 @@ function NeonFlickerText({ text, className = "" }: { text: string; className?: s
    ═══════════════════════════════════════════════════════════════ */
 export function HeroSection() {
   const [isLoaded, setIsLoaded] = useState(false);
-  const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
   const [typedText, setTypedText] = useState("");
   const logoRef = useRef<HTMLHeadingElement>(null);
   const parallaxOffset = useParallax(0.15);
@@ -65,23 +64,6 @@ export function HeroSection() {
     }, 60);
     return () => clearInterval(id);
   }, [isLoaded]);
-
-  // Countdown
-  useEffect(() => {
-    const target = new Date("2026-10-15T09:00:00").getTime();
-    const tick = () => {
-      const diff = Math.max(0, target - Date.now());
-      setTimeLeft({
-        days: Math.floor(diff / 86400000),
-        hours: Math.floor((diff % 86400000) / 3600000),
-        minutes: Math.floor((diff % 3600000) / 60000),
-        seconds: Math.floor((diff % 60000) / 1000),
-      });
-    };
-    tick();
-    const id = setInterval(tick, 1000);
-    return () => clearInterval(id);
-  }, []);
 
   const tiltX = (mouse.y - 0.5) * -8;
   const tiltY = (mouse.x - 0.5) * 8;
@@ -158,10 +140,48 @@ export function HeroSection() {
         }}
       />
 
-      {/* The two HUD panels that used to flank the wordmark are gone. They
-          carried CORE_LOAD, MODE: RETRO_ARCADE, lat/long and a fake bar
-          graph — flavour text with no information in it — and repeated the
-          event count, prize pool, attendance and venue shown below. */}
+      {/* ===== Left HUD ===== */}
+      <div className="hidden xl:flex flex-col gap-4 absolute left-8 top-[22%] z-10 w-60 font-mono text-[11px] text-[#D64D8D]/70 text-left border-l border-[#D64D8D]/20 pl-4 py-3">
+        <div className="text-[#F2D2AE]/80 font-bold tracking-[0.25em] text-[10px]">// SYSTEM_INITIALIZE</div>
+        <div className="h-px bg-gradient-to-r from-[#D64D8D]/40 to-transparent w-20" />
+        <div className="space-y-1.5">
+          <div className="flex gap-2"><span className="text-[#D64D8D]">&gt;</span> <span>CORE_LOAD: <span className="text-[#F2D2AE]/80">SUCCESS</span></span></div>
+          <div className="flex gap-2"><span className="text-[#D64D8D]">&gt;</span> <span>PORTAL_GATE: <span className="text-green-400">OPEN</span></span></div>
+          <div className="flex gap-2"><span className="text-[#D64D8D]">&gt;</span> <span>ARENAS_ACTIVE: <span className="text-[#F2D2AE]/80">24</span></span></div>
+          <div className="flex gap-2"><span className="text-[#D64D8D]">&gt;</span> <span>MODE: <span className="text-[#D64D8D]">RETRO_ARCADE</span></span></div>
+          <div className="flex gap-2"><span className="text-[#D64D8D]">&gt;</span> <span className="animate-pulse text-[#F2D2AE]/60">AWAITING_REGISTRATION...</span></div>
+        </div>
+        <div className="text-[10px] text-white/35 mt-3 space-y-1 font-mono">
+          <div>LOC: 13.0294° N, 77.5401° E</div>
+          <div>NET: PRAVRUTTI_SECURE_NODE</div>
+          <div>EST_ATTENDANCE: 5000+</div>
+        </div>
+      </div>
+
+      {/* ===== Right HUD ===== */}
+      <div className="hidden xl:flex flex-col gap-4 absolute right-8 top-[22%] z-10 w-60 font-mono text-[11px] text-[#D64D8D]/70 text-right border-r border-[#D64D8D]/20 pr-4 py-3">
+        <div className="text-[#F2D2AE]/80 font-bold tracking-[0.25em] text-[10px]">// REGISTRATION_DESK</div>
+        <div className="h-px bg-gradient-to-l from-[#D64D8D]/40 to-transparent w-20 ml-auto" />
+        <div className="space-y-1.5">
+          <div>STATUS: <span className="text-green-400">LIVE</span></div>
+          <div>PRIZE_POOL: <span className="text-[#F2D2AE]/90">₹8,00,000+</span></div>
+          <div>EVENTS_ARENA: <span className="text-[#D64D8D]">OFFLINE</span></div>
+          <div>HOST_NEXUS: <span className="text-[#F2D2AE]/70">RAMAIAH_TECHNOLOGY_CAMPUS</span></div>
+        </div>
+        {/* Mini bar graph */}
+        <div className="flex items-end gap-1 justify-end mt-2 h-6">
+          {[40, 65, 30, 80, 55, 90, 45, 70, 60, 85].map((h, i) => (
+            <div
+              key={i}
+              className="w-1 bg-[#D64D8D]/30 rounded-t-sm"
+              style={{
+                height: `${h}%`,
+                animation: `bar-pulse ${1.5 + i * 0.2}s ease-in-out infinite alternate`,
+              }}
+            />
+          ))}
+        </div>
+      </div>
 
       {/* ═══════════════════ MAIN CONTENT ═══════════════════ */}
       {/* Legibility scrim — guarantees the copy has clean ground to sit on no
@@ -241,39 +261,7 @@ export function HeroSection() {
           students from across the country.
         </p>
 
-        {/* ── Countdown ── */}
-        <div
-          className={`mb-5 transition-all duration-1000 ${isLoaded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"}`}
-          style={{ transitionDelay: "1.1s" }}
-        >
-          <div className="flex items-center justify-center gap-2 mb-3">
-            <Timer className="w-4 h-4 text-[#D64D8D] animate-pulse" />
-            <span className="font-mono text-[11px] md:text-xs tracking-[0.3em] uppercase text-[#D64D8D]">Portal Opens In</span>
-          </div>
-          <div className="flex gap-2.5 md:gap-3">
-            {[
-              { v: timeLeft.days, l: "DAYS" },
-              { v: timeLeft.hours, l: "HRS" },
-              { v: timeLeft.minutes, l: "MIN" },
-              { v: timeLeft.seconds, l: "SEC" },
-            ].map((t) => (
-              <div key={t.l} className="flex flex-col items-center">
-                <div className="relative w-16 md:w-20 h-16 md:h-20 flex items-center justify-center rounded-lg border border-[#D64D8D]/30 bg-black/60 backdrop-blur-sm overflow-hidden group hover:border-[#D64D8D]/60 transition-all hover:shadow-[0_0_20px_rgba(214,77,141,0.2)]">
-                  <div className="absolute inset-0 crt-scanlines opacity-10 pointer-events-none" />
-                  {/* Corner brackets */}
-                  <div className="absolute top-0 left-0 w-2.5 h-2.5 border-t border-l border-[#D64D8D]/50" />
-                  <div className="absolute top-0 right-0 w-2.5 h-2.5 border-t border-r border-[#D64D8D]/50" />
-                  <div className="absolute bottom-0 left-0 w-2.5 h-2.5 border-b border-l border-[#D64D8D]/50" />
-                  <div className="absolute bottom-0 right-0 w-2.5 h-2.5 border-b border-r border-[#D64D8D]/50" />
-                  <span className="relative font-orbitron font-black text-2xl md:text-3xl text-[#F2D2AE] tabular-nums group-hover:text-[#D64D8D] transition-colors">
-                    {String(t.v).padStart(2, "0")}
-                  </span>
-                </div>
-                <span className="font-mono text-[10px] md:text-xs tracking-[0.2em] text-[#F7EEE4]/60 mt-1.5 uppercase">{t.l}</span>
-              </div>
-            ))}
-          </div>
-        </div>
+        {/* Countdown removed — the date pill below already says when. */}
 
         {/* ── Date ── */}
         <div
