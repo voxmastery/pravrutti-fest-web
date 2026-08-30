@@ -20,6 +20,9 @@ export interface Event {
   /** Poster artwork (e.g. "/posters/electroxcape.png"). Falls back to a
       generated gradient cover when unset. */
   poster?: string;
+  /** Google emails allowed to view this event's dashboard. Lowercase.
+      Populated from the collection spreadsheet; empty until it returns. */
+  dashboardEmails?: string[];
   /** Fest day this runs on, 1-3. Enables date grouping once known. */
   day?: 1 | 2 | 3;
   /** Start time, e.g. "10:00 AM". */
