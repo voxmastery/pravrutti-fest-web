@@ -101,15 +101,6 @@ export function Navigation() {
                 height={259}
               />
             </a>
-            <div className="h-7 lg:h-9 w-px bg-white/20 shrink-0" />
-            <Link href="/" className="flex items-center gap-2 group shrink-0">
-              <img
-                src="/pravrutti-logo.png"
-                alt="Pravrutti 2.0"
-                className="h-[38px] sm:h-[46px] lg:h-[42px] xl:h-[56px] w-auto object-contain transition-transform group-hover:scale-105"
-                style={{ filter: "drop-shadow(0 0 8px rgba(214, 77, 141, 0.25))" }}
-              />
-            </Link>
           </div>
 
           {/* Desktop nav */}
