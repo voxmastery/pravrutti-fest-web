@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { RegistrationDialog } from "@/components/registration-dialog";
 import { Event, eventId, capacityFor, registrationOpen, FEST } from "@/lib/pravrutti-data";
+import { FEE_PER_HEAD } from "@/lib/applications";
 import { POSTER_TINTS } from "@/lib/poster-tints";
 import {
   MapPin,
@@ -20,8 +21,6 @@ import {
   IndianRupee,
   ChevronsRight,
 } from "lucide-react";
-
-type Going = { first: string; initials: string };
 
 export const COVER_GRADIENTS: Record<Event["category"], string> = {
   "Engineering and Design": "from-[#721F4C] via-[#2B122C] to-[#0A0818]",
@@ -55,7 +54,6 @@ export function EventDetailPanel({
   const [registering, setRegistering] = useState(false);
   const [count, setCount] = useState<number | null>(null);
   const [waiting, setWaiting] = useState(0);
-  const [going, setGoing] = useState<Going[]>([]);
 
   const id = event ? eventId(event.name) : "";
   const cap = event ? capacityFor(id) : 0;
@@ -69,7 +67,6 @@ export function EventDetailPanel({
         if (!d) return;
         setCount(d.confirmed?.[id] ?? 0);
         setWaiting(d.pending?.[id] ?? 0);
-        setGoing(d.going ?? []);
       })
       .catch(() => setCount(null));
   }, [id]);
@@ -278,24 +275,6 @@ export function EventDetailPanel({
                     REGISTRATION CLOSED
                   </Button>
                 )}
-
-                {going.length > 0 && (
-                  <div className="flex items-center gap-2 pt-1">
-                    <div className="flex -space-x-2">
-                      {going.slice(0, 5).map((g, i) => (
-                        <div
-                          key={i}
-                          className="w-7 h-7 rounded-full border border-[#721F4C] bg-[#2B122C] flex items-center justify-center text-[9px] font-bold text-[#F2D2AE]"
-                        >
-                          {g.initials}
-                        </div>
-                      ))}
-                    </div>
-                    <span className="text-xs text-[#F7EEE4]/60 font-mono">
-                      {taken} going{going[0] ? ` — ${going[0].first}${going.length > 1 ? ` and ${taken - 1} others` : ""}` : ""}
-                    </span>
-                  </div>
-                )}
               </div>
             </div>
 
@@ -324,8 +303,8 @@ export function EventDetailPanel({
                 <span className="flex items-center gap-2 text-xs text-[#F7EEE4]/75 font-bold uppercase tracking-wider">
                   <IndianRupee className="w-4 h-4 text-[#F2D2AE]" /> Entry
                 </span>
-                <span className={`text-lg font-black ${event.fee.toLowerCase().startsWith("free") ? "text-[#7BE3A8]" : "text-[#F2D2AE]"}`}>
-                  {event.fee.toLowerCase().startsWith("free") ? event.fee : `${event.fee} at desk`}
+                <span className="text-lg font-black text-[#F2D2AE]">
+                  ₹{FEE_PER_HEAD} per head · online
                 </span>
               </div>
             </div>

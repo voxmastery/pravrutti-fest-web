@@ -66,26 +66,23 @@ export const sponsors: Sponsor[] = [
 ];
 
 export const clubs: Club[] = [
-  { name: "Cynergy", tagline: "Electronics Club" },
-  { name: "IEEE", tagline: "IEEE Student Chapter" },
-  { name: "IIC", tagline: "Institution's Innovation Council" },
-  { name: "ASME", tagline: "Mechanical Club" },
-  { name: "ISTE", tagline: "Technical Education Chapter" },
-  { name: "Robotics Club", tagline: "Robotics Club" },
   { name: "AI Club", tagline: "Artificial Intelligence Club" },
-  { name: "AIAA", tagline: "Aerospace Engineering Club" },
-  { name: "Startup Society", tagline: "Entrepreneurship Club" },
+  { name: "Cynergy", tagline: "Coding Club" },
+  { name: "Robotic Dept.", tagline: "Robotics & Automation" },
   { name: "Math Club", tagline: "Mathematics Club" },
+  { name: "ComputeX", tagline: "Computer Science Club" },
+  { name: "Aeronyx", tagline: "Aerospace Innovation" },
+  { name: "TSS", tagline: "Technical Student Society" },
   { name: "LEADS", tagline: "Leadership Club" },
-  { name: "Debate Club", tagline: "Debate and Elocution" },
+  { name: "AeSI", tagline: "Aeronautical Society of India" },
+  { name: "ISTE", tagline: "Technical Education Chapter" },
+  { name: "IMECHE", tagline: "Institution of Mechanical Engineers" },
+  { name: "IEEE", tagline: "IEEE Student Chapter" },
   { name: "Civil Club", tagline: "Civil Engineering Club" },
-  { name: "Dental Club", tagline: "Dental Sciences Club" },
-  { name: "Aeronautical Club", tagline: "Aeronautical Club" },
-  { name: "Aeronyx Club", tagline: "Aerospace Innovation" },
-  { name: "Circuitopia Club", tagline: "Circuit Design Club" },
-  { name: "ComputeX Club", tagline: "Computer Science Club" },
-  { name: "Literary Club", tagline: "Literary and Creative Writing" },
-  { name: "Ramaiah Skill Academy", tagline: "Skill Development Academy" }
+  { name: "ASME", tagline: "Mechanical Club" },
+  { name: "Dental", tagline: "Dental Sciences Club" },
+  { name: "IIC", tagline: "Institution Innovation Council — Main Organizer" },
+  { name: "Circuitopia", tagline: "Circuit Design Club" },
 ];
 
 export const faqs = [
@@ -95,7 +92,7 @@ export const faqs = [
   },
   {
     question: "Is there a registration fee?",
-    answer: "Yes, there is a nominal registration fee that depends on whether you're signing up for a group event or a solo event."
+    answer: "Yes — ₹200 per head. Solo entries pay ₹200; teams pay ₹200 times the number of participants (up to 4 including the lead). Payment is collected online."
   },
   {
     question: "What is the last date for registration?",
@@ -172,7 +169,7 @@ export const events: Event[] = [
     category: "Engineering and Design",
     subCategory: "glider aircraft",
     description: "Take flight with SkyCraft, a celebration of aviation’s past, present, and future. This event challenges students to blend creativity with engineering by building physical models of legendary aircraft, futuristic concepts, or original designs. From historic icons to visionary prototypes, SkyCraft is where imagination meets aerospace innovation.",
-    fee: "Free",
+    fee: "Rs. 200/-",
     type: "Creator",
     coordinators: {
       faculty: [{ name: "Dr. M. Sivapragasam", phone: "8049065555" }],
@@ -188,7 +185,7 @@ export const events: Event[] = [
     category: "Engineering and Design",
     subCategory: "climbing robot",
     description: "Gear up for RoboClimb, the ultimate test of innovation and engineering skill. This thrilling event challenges students to design and build all-terrain robots capable of navigating obstacles and tackling extreme conditions. It’s not just about mobility—it’s about creativity, precision, and teamwork. Whether you’re competing for the prize or the glory, RoboClimb is your chance to showcase technical brilliance and prove your robot’s dominance.",
-    fee: "Free",
+    fee: "Rs. 200/-",
     type: "Visionary",
     coordinators: {
       faculty: [{ name: "Mr. Pavan Kumar", phone: "96116 40888" }],
@@ -204,7 +201,7 @@ export const events: Event[] = [
     category: "Engineering and Design",
     subCategory: "wind turbine",
     description: "Wind Rush Challenge is a glider competition where: Participants must design, build, and fly a hand-launched foam glider that stays in the air as long as possible. The glider must be made only from foam and must be built before the event.",
-    fee: "Free",
+    fee: "Rs. 200/-",
     type: "Creator",
     coordinators: {
       faculty: [{ name: "Mr. Adarsh Krishnamurthy", phone: "9900258871" }],
@@ -220,7 +217,7 @@ export const events: Event[] = [
     category: "Engineering and Design",
     subCategory: "scrap metal robot",
     description: "Unleash your creativity in this unique challenge where participants design and build a catapult using only scrapyard materials. The competition highlights innovation, practical mechanical design, and the art of making the best out of waste. Each catapult will be tested for performance, rewarding not just functionality but also originality and aesthetics. This event is the perfect blend of hands-on learning and engineering creativity.",
-    fee: "Rs. 150/- (Solo)",
+    fee: "Rs. 200/-",
     type: "Visionary",
     coordinators: {
       faculty: [{ name: "Dr. Ananth S. Iyengar", phone: "9480343844" }],
@@ -236,7 +233,7 @@ export const events: Event[] = [
     category: "Engineering and Design",
     subCategory: "rc plane",
     description: "Participants will design and build a lightweight but strong RC model with the given constraints and fly it through an obstacle course to score points and prove their design and piloting skills.",
-    fee: "Free",
+    fee: "Rs. 200/-",
     type: "Creator",
     coordinators: {
       faculty: [{ name: "Dr. Jayahar Sivasubramanian", phone: "+91 7795701987" }],
@@ -252,7 +249,7 @@ export const events: Event[] = [
     category: "Engineering and Design",
     subCategory: "eco friendly city",
     description: "GreenPlan CAD is a unique design challenge where budding civil engineers craft sustainable site layouts using AutoCAD. Participants must integrate eco-conscious solutions like rainwater harvesting, solar orientation, and green zones into their designs. This hands-on event sharpens creativity, space management, and drafting skills while encouraging innovative approaches to sustainable development.",
-    fee: "Free",
+    fee: "Rs. 200/-",
     type: "Explorer",
     coordinators: {
       faculty: [{ name: "Mr. Eshwar Reddy H N", phone: "9845224428" }],
@@ -268,7 +265,7 @@ export const events: Event[] = [
     category: "Engineering and Design",
     subCategory: "plane crash",
     description: "Step into the role of an aviation investigator in this unique challenge! Teams will analyze a simulated aircraft accident case using real-world methods and data. Participants must review evidence, identify root causes, and propose preventive measures. After case analysis, shortlisted teams will present their investigation report to a jury of experts. The event sharpens analytical thinking, communication, and teamwork while offering a real-world taste of aviation safety practices.",
-    fee: "Free",
+    fee: "Rs. 200/-",
     type: "Creator",
     coordinators: {
       faculty: [{ name: "Dr. Jayahar Sivasubramanian", phone: "7795701987" }],
@@ -286,7 +283,7 @@ export const events: Event[] = [
     category: "Research and Presentation",
     subCategory: "research presentation",
     description: "Unveil your innovation at the ISTE Research Paper Presentation—a premier platform for students and researchers to showcase original work before a panel of distinguished experts. Submissions are welcome across diverse domains including AI/ML, Cybersecurity, Robotics, Energy, Electrical, IoT, Biomedical Engineering, and especially interdisciplinary projects that break boundaries.",
-    fee: "Free for Round 1",
+    fee: "Rs. 200/-",
     type: "Creator",
     coordinators: {
       faculty: [{ name: "Dr. Mallaradhya H M", phone: "9742727670" }],
@@ -302,7 +299,7 @@ export const events: Event[] = [
     category: "Research and Presentation",
     subCategory: "science fair",
     description: "A platform for individuals or teams to showcase innovative project-based solutions that address real-world societal or industrial problems.",
-    fee: "Free",
+    fee: "Rs. 200/-",
     type: "Creator",
     coordinators: {
       faculty: [{ name: "Dr. Prajwal K T", phone: "9844660808" }],
@@ -318,7 +315,7 @@ export const events: Event[] = [
     category: "Research and Presentation",
     subCategory: "medical technology",
     description: "Innovation in healthcare begins with fresh ideas. This event invites students to explore the intersection of medical sciences and technology by tackling realworld problem statements. Participants will brainstorm, design, and present their solutions through models, posters, or short videos, showcasing creativity, feasibility, and innovation. It’s a platform to collaborate, think critically, and bring impactful medical ideas closer to reality.",
-    fee: "Free",
+    fee: "Rs. 200/-",
     type: "Creator",
     coordinators: {
       faculty: [{ name: "Dr. Soumya Ramani", phone: "8971790080" }],
@@ -334,7 +331,7 @@ export const events: Event[] = [
     category: "Research and Presentation",
     subCategory: "dental technology",
     description: "The Ramaiah Dent-Tech Poster Event is a platform for budding dental innovators to showcase creative, practical, and impactful ideas that address real-world challenges in dentistry. Through poster and model presentations, students will pitch solutions that combine scientific knowledge, innovation, and entrepreneurial spirit. This event not only highlights academic creativity but also encourages participants to translate their ideas into potential advancements in dental science and technology.",
-    fee: "Free",
+    fee: "Rs. 200/-",
     type: "Creator",
     coordinators: {
       faculty: [{ name: "Dr. Dominic Augustine", phone: "9901694515" }],
@@ -350,7 +347,7 @@ export const events: Event[] = [
     category: "Research and Presentation",
     subCategory: "startup pitch",
     description: "Got a game-changing idea? Pitch Pulse is your stage to showcase it! Participants present innovative solutions to real-world problems in a high-energy 5-minute pitch before a panel of industry experts. The event offers more than just prizes— it’s a gateway to valuable feedback, mentorship, and networking opportunities. From technology and sustainability, to social impact, any impactful idea is welcome. Step up, pitch it, and kickstart your entrepreneurial journey!",
-    fee: "Free",
+    fee: "Rs. 200/-",
     type: "Creator",
     coordinators: {
       faculty: [{ name: "Dr. Kiran Kumar B M", phone: "9164644099" }],
@@ -368,7 +365,7 @@ export const events: Event[] = [
     category: "Code and Compute",
     subCategory: "coding challenge",
     description: "Triathlon is a three-round flagship event designed to test participants’ technical knowledge, problem-solving skills, and practical application of computer science concepts. The objective is to provide a holistic challenge that combines theory, practical hardware skills, and cybersecurity awareness making it a true triathlon of tech.",
-    fee: "Free",
+    fee: "Rs. 200/-",
     type: "Visionary",
     coordinators: {
       faculty: [{ name: "Ms. M Shona", phone: "9986430996" }],
@@ -384,7 +381,7 @@ export const events: Event[] = [
     category: "Code and Compute",
     subCategory: "code debugging",
     description: "Welcome to Feature Sleuth, a high-pressure data engineering showdown where the dataset takes center stage and the model is fixed. In a controlled lab setup, participants must craft powerful feature pipelines under strict time limits—going beyond basic cleaning to master scaling, encoding, dimensionality reduction, and advanced feature creation. With no AutoML or model tuning allowed, this event is the ultimate test of intuition, creativity, and technical execution in feature engineering.",
-    fee: "Free",
+    fee: "Rs. 200/-",
     type: "Creator",
     coordinators: {
       faculty: [{ name: "Ms. Shaista Tarrunum", phone: "7760957304" }],
@@ -400,7 +397,7 @@ export const events: Event[] = [
     category: "Code and Compute",
     subCategory: "team coding",
     description: "The Relay Hackathon is a fast-paced coding challenge that tests teamwork, speed, and creativity. In this unique relay format, each team member tackles a different task—debugging, treasure hunts, and web feature development— before passing the baton to the next. Submissions are made on GitHub after each round, ensuring real-time progress tracking.",
-    fee: "Free",
+    fee: "Rs. 200/-",
     type: "Creator",
     coordinators: {
       faculty: [{ name: "Ms. Naganandini G Rao", phone: "8317307043" }],
@@ -416,7 +413,7 @@ export const events: Event[] = [
     category: "Code and Compute",
     subCategory: "maze algorithm",
     description: "Step into the world of logic, speed, and strategy with TechnoMaze—a one-of-a-kind digital maze challenge! Only the sharpest problem-solvers will advance through each level, and the event culminates when the first three teams reach the final destination in the correct order. Are you ready to outthink, outpace, and outlast the maze?",
-    fee: "Free",
+    fee: "Rs. 200/-",
     type: "Creator",
     coordinators: {
       faculty: [{ name: "Dr. Sumanth Bharadwaj H S", phone: "9902727891" }],
@@ -432,7 +429,7 @@ export const events: Event[] = [
     category: "Code and Compute",
     subCategory: "cyber security hacking",
     description: "SkyHack is a one-day hackathon where creativity meets technology. Participants must propose drone-based solutions to real-world challenges across domains like agriculture, logistics, and disaster response. The competition unfolds in three rounds: problem reveal & ideation, AI-powered drone design with pitch deck creation, and a final pitch to the jury. No coding is required— only innovation, design thinking, and clear communication.",
-    fee: "Free",
+    fee: "Rs. 200/-",
     type: "Creator",
     coordinators: {
       faculty: [{ name: "Dr. Kiran Kumar B M", phone: "9164644099" }],
@@ -448,7 +445,7 @@ export const events: Event[] = [
     category: "Code and Compute",
     subCategory: "logic puzzle",
     description: "This event challenges participants to solve coding problems rooted in core and advanced mathematics, bridging theoretical knowledge with real-world programming. By tackling diverse challenges, participants sharpen analytical thinking, enhance algorithmic creativity, and develop efficient problem-solving strategies, making it a perfect blend of logic, math, and code.",
-    fee: "Free",
+    fee: "Rs. 200/-",
     type: "Creator",
     coordinators: {
       faculty: [{ name: "Ms. Shilpa", phone: "9071290398" }],
@@ -464,7 +461,7 @@ export const events: Event[] = [
     category: "Code and Compute",
     subCategory: "computer vision",
     description: "Welcome to SynthVision Arena, a real-time generative engineering gauntlet. This live competition challenges teams to architect and execute complex generative workflows in response to dynamic, on-the-fly prompts.",
-    fee: "Free",
+    fee: "Rs. 200/-",
     type: "Creator",
     coordinators: {
       faculty: [{ name: "Ms. Padma R", phone: "7259569405" }],
@@ -480,7 +477,7 @@ export const events: Event[] = [
     category: "Code and Compute",
     subCategory: "machine learning model",
     description: "This event challenges participants to apply machine learning to real-world data by building predictive models for a given target variable. Through hands-on work in preprocessing, feature engineering, model selection, and optimization, participants sharpen their technical and problem-solving skills. Models are evaluated on a hidden test set to ensure fairness and true generalization, fostering critical thinking, creativity, and practical expertise in data-driven decision-making.",
-    fee: "Free",
+    fee: "Rs. 200/-",
     type: "Creator",
     coordinators: {
       faculty: [{ name: "Ms. Praneetha", phone: "7411935429" }],
@@ -498,7 +495,7 @@ export const events: Event[] = [
     category: "Enterprise and Expression",
     subCategory: "quantum physics",
     description: "What lies at the intersection of paths built by words and the knowledge of humans? Whether you seek the treasure or find the thrill in solving riddles, The Quantum Quest is a treasure hunt that entangles you in one game, with many riddles. Seek a path from the intersection of the first riddle but fret not for the roads diverge and converge… all roads lead to Rome. And once the winner arises, the game doesn’t end for there are champions three. And everyone shall have chance to be one of the two: the treasure seeker, and the thrill seeker. Both shall stand besides the winner. But there is no promise that there being only three treasures is the truth or a lie, when sure sees trinkets as treasure a seeker’s eye.",
-    fee: "Free",
+    fee: "Rs. 200/-",
     type: "Creator",
     coordinators: {
       faculty: [{ name: "Ms. V Preethi", phone: "8884952429" }],
@@ -514,7 +511,7 @@ export const events: Event[] = [
     category: "Enterprise and Expression",
     subCategory: "architecture design",
     description: "Think you’ve got what it takes to solve real problems? Beyond The Blueprint is your chance to pitch them in a 5-minute presentation before a panel of industry experts. Win prizes, gain feedback, and connect with mentors who can help turn your vision into reality. From tech and sustainability to social impact and beyond—this is your launchpad to make an impact.",
-    fee: "Free",
+    fee: "Rs. 200/-",
     type: "Creator",
     coordinators: {
       faculty: [{ name: "Dr. Mueen Ahmed", phone: "8050753395" }],
@@ -530,7 +527,7 @@ export const events: Event[] = [
     category: "Enterprise and Expression",
     subCategory: "case study",
     description: "The Causes and Consequences is a thought-provoking debate that pushes participants to tackle bold “what if” scenarios in science, technology, and society. Through IF…THEN statements, speakers must combine technical insight, ethical reasoning, and persuasive delivery to defend or dismantle complex ideas with clarity, creativity, and conviction.",
-    fee: "Free",
+    fee: "Rs. 200/-",
     type: "Creator",
     coordinators: {
       faculty: [{ name: "Ms. Farhat Begum", phone: "9986001297" }],
@@ -546,7 +543,7 @@ export const events: Event[] = [
     category: "Enterprise and Expression",
     subCategory: "student innovation",
     description: "Campus Innovators is your platform to pitch bold solutions for campus challenges, aligned with the UN Sustainable Development Goals (SDGs). In this fast-paced competition, participants will pitch their ideas in 5 minutes to a panel of industry experts, showcasing innovation, feasibility, and real-world impact. From tech breakthroughs to sustainability initiatives to social innovations, the event empowers students to reimagine campus life and spark meaningful change.",
-    fee: "Free",
+    fee: "Rs. 200/-",
     type: "Explorer",
     coordinators: {
       faculty: [],
@@ -562,7 +559,7 @@ export const events: Event[] = [
     category: "Enterprise and Expression",
     subCategory: "business meeting",
     description: "Boardroom Battles – Strategic Leadership Cohort is a high-intensity leadership simulation where participants step into C-suite roles and tackle real-world inspired business or sustainability crises. The event unfolds in stages—briefing & role assignment, strategy formulation, boardroom presentations, and a dynamic crossfire debate. With unexpected twists, live scrutiny from experts, and pressure to make tough calls, participants will experience what it takes to lead at the highest level.",
-    fee: "Free",
+    fee: "Rs. 200/-",
     type: "Creator",
     coordinators: {
       faculty: [{ name: "Dr. Subhadeep Mukherjee", phone: "8910133283" }],
@@ -609,10 +606,10 @@ export const capacityFor = (id: string) => EVENT_CAPACITY[id] ?? DEFAULT_CAPACIT
 export const FEST = {
   name: "Pravrutti 2026",
   venue: "Ramaiah Technology Campus, Bengaluru",
-  dates: "15\u201317 October 2026",
+  dates: "14\u201316 October 2026",
   // IST (UTC+5:30) converted to UTC for calendar invites
-  startUtc: "20261015T033000Z", // 09:00 IST, 15 Oct
-  endUtc: "20261017T123000Z",   // 18:00 IST, 17 Oct
+  startUtc: "20261014T033000Z", // 09:00 IST, 14 Oct
+  endUtc: "20261016T123000Z",   // 18:00 IST, 16 Oct
   registrationCloses: "2026-10-04T18:29:59.000Z" // 04 Oct 2026, 11:59 PM IST
 };
 

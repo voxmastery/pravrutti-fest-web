@@ -94,9 +94,9 @@ export default function AdminPage() {
     .sort((a, b) => b.total - a.total);
 
   const exportCsv = () => {
-    const head = ["ticketId", "event", "status", "payment", "fee", "name", "email", "phone", "college", "teamName", "members", "appliedAt"];
+    const head = ["ticketId", "event", "status", "payment", "fee", "name", "email", "phone", "college", "teamName", "teamCode", "members", "appliedAt"];
     const rows = shown.map((r) =>
-      [r.ticketId, r.eventName, r.status, r.payment, r.fee, r.name, r.email, r.phone, r.college, r.teamName ?? "", r.members ?? "", r.appliedAt]
+      [r.ticketId, r.eventName, r.status, r.payment, r.fee, r.name, r.email, r.phone, r.college, r.teamName ?? "", r.teamCode ?? "", r.members ?? "", r.appliedAt]
         .map((v) => `"${String(v).replace(/"/g, '""')}"`)
         .join(",")
     );
@@ -209,7 +209,7 @@ export default function AdminPage() {
                   <div className="min-w-[180px] flex-1">
                     <p className="font-bold text-sm text-[#F7EEE4]">{a.name}</p>
                     <p className="text-xs text-[#F7EEE4]/50">{a.email} · {a.phone}</p>
-                    <p className="text-xs text-[#F7EEE4]/40">{a.college}{a.teamName ? ` · team ${a.teamName}` : ""}</p>
+                    <p className="text-xs text-[#F7EEE4]/40">{a.college}{a.teamName ? ` · team ${a.teamName}` : ""}{a.teamCode ? ` · ${a.teamCode}` : ""}</p>
                   </div>
                   <div className="min-w-[150px]">
                     <p className="text-xs font-bold text-[#F2D2AE]">{a.eventName}</p>

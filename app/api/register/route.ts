@@ -1,35 +1,31 @@
 import { NextResponse } from "next/server";
-import { list, put } from "@vercel/blob";
-import { createHash, randomBytes } from "crypto";
+import { randomBytes } from "crypto";
 import { events, eventId, capacityFor, registrationOpen } from "@/lib/pravrutti-data";
-import { Application, PAYMENTS_LIVE } from "@/lib/applications";
+import {
+  Application,
+  PAYMENTS_LIVE,
+  MAX_TEAM_SIZE,
+  Teammate,
+  formatFee,
+  isValidPhone,
+  normalizePhone,
+} from "@/lib/applications";
+import { Team, normalizeTeamCode, isValidTeamCode } from "@/lib/teams";
 import { resolveEmail } from "@/lib/identity";
+import {
+  listAll,
+  readPrivate,
+  applicationPath,
+  teamPath,
+  teamMemberPath,
+  readJsonByPath,
+  putJson,
+} from "@/lib/blob-store";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-export async function listAll(prefix: string) {
-  const out: { pathname: string; url: string }[] = [];
-  let cursor: string | undefined = undefined;
-  do {
-    const res: Awaited<ReturnType<typeof list>> = await list({ prefix, cursor, limit: 1000 });
-    for (const b of res.blobs) out.push({ pathname: b.pathname, url: b.url });
-    cursor = res.hasMore ? res.cursor : undefined;
-  } while (cursor);
-  return out;
-}
-
-export async function readPrivate(url: string) {
-  // Overwritten blobs can be served stale from the edge nearest the function,
-  // so every read is cache-busted — a decision must never act on old state.
-  const fresh = `${url}${url.includes("?") ? "&" : "?"}ts=${Date.now()}`;
-  const res = await fetch(fresh, {
-    headers: { authorization: `Bearer ${process.env.BLOB_READ_WRITE_TOKEN}` },
-    cache: "no-store",
-  });
-  if (!res.ok) return null;
-  return res.json().catch(() => null);
-}
+export { listAll, readPrivate };
 
 /**
  * GET /api/register            -> { confirmed, pending, open }
@@ -80,11 +76,48 @@ export async function POST(req: Request) {
   // someone else, and the ticket always lands on an inbox they control.
   const verified = await resolveEmail();
   const email = (verified ?? String(body?.email ?? "")).trim().toLowerCase();
-  const phone = String(body?.phone ?? "").replace(/[^\d+]/g, "");
+  const phone = normalizePhone(body?.phone);
   const college = String(body?.college ?? "").trim();
-  const teamName = String(body?.teamName ?? "").trim();
-  const members = String(body?.members ?? "").trim();
   const evId = String(body?.eventId ?? "").trim();
+
+  const membership = (await readJsonByPath(teamMemberPath(evId, email))) as { code?: string } | null;
+  const teamCode = normalizeTeamCode(String(body?.teamCode ?? membership?.code ?? ""));
+
+  let team: Team | null = null;
+  if (teamCode) {
+    if (!isValidTeamCode(teamCode))
+      return NextResponse.json({ error: "Enter a valid team code." }, { status: 400 });
+    team = (await readJsonByPath(teamPath(evId, teamCode))) as Team | null;
+    if (!team || team.eventId !== evId || team.code !== teamCode)
+      return NextResponse.json({ error: "No team found for that code." }, { status: 404 });
+    const onTeam =
+      team.createdByEmail === email ||
+      (Array.isArray(team.members) && team.members.some((m) => m.email === email)) ||
+      membership?.code === teamCode;
+    if (!onTeam)
+      return NextResponse.json({ error: "Join this team with the code before applying." }, { status: 403 });
+  }
+
+  const teamName = team ? team.name : String(body?.teamName ?? "").trim();
+
+  // Accept structured [{ name, phone }] or legacy comma-separated names.
+  // Team-code applications are one person each — roster lives on the team.
+  let membersList: Teammate[] = [];
+  if (!team) {
+    const rawMembers = body?.members;
+    if (Array.isArray(rawMembers)) {
+      membersList = rawMembers.map((m: any) => ({
+        name: String(m?.name ?? "").trim(),
+        phone: normalizePhone(m?.phone),
+      }));
+    } else if (typeof rawMembers === "string" && rawMembers.trim()) {
+      membersList = rawMembers
+        .split(",")
+        .map((s: string) => s.trim())
+        .filter(Boolean)
+        .map((n: string) => ({ name: n, phone: "" }));
+    }
+  }
 
   const event = events.find((e) => eventId(e.name) === evId);
   if (!event) return NextResponse.json({ error: "That event doesn't exist." }, { status: 400 });
@@ -94,15 +127,33 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Enter your full name." }, { status: 400 });
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email) || email.length > 120)
     return NextResponse.json({ error: "Enter a valid email address." }, { status: 400 });
-  if (!/^\+?\d{10,13}$/.test(phone))
+  if (!isValidPhone(phone))
     return NextResponse.json({ error: "Enter a 10-digit phone number." }, { status: 400 });
   if (college.length < 2 || college.length > 120)
     return NextResponse.json({ error: "Enter your college name." }, { status: 400 });
-  if (teamName.length > 80 || members.length > 400)
-    return NextResponse.json({ error: "Team details are too long." }, { status: 400 });
+  if (teamName.length > 80)
+    return NextResponse.json({ error: "Team name is too long." }, { status: 400 });
+  if (membersList.length > MAX_TEAM_SIZE - 1)
+    return NextResponse.json(
+      { error: `Teams are capped at ${MAX_TEAM_SIZE} including the lead.` },
+      { status: 400 }
+    );
+  for (let i = 0; i < membersList.length; i++) {
+    const m = membersList[i];
+    if (m.name.length < 2 || m.name.length > 80)
+      return NextResponse.json({ error: `Enter teammate ${i + 1}'s name.` }, { status: 400 });
+    if (Array.isArray(body?.members) && !isValidPhone(m.phone))
+      return NextResponse.json({ error: `Enter a valid phone for teammate ${i + 1}.` }, { status: 400 });
+  }
 
-  const isFree = event.fee.toLowerCase() === "free";
-  const key = createHash("sha256").update(`${evId}:${email}`).digest("hex").slice(0, 24);
+  const isFree = event.fee.toLowerCase().startsWith("free");
+  const headCount = team ? 1 : 1 + membersList.length;
+  const fee = isFree ? event.fee : formatFee(headCount);
+  const membersPayload =
+    membersList.length === 0
+      ? null
+      : JSON.stringify(membersList.map((m) => ({ name: m.name, phone: m.phone || null })));
+
   const ticketId = `PRV-${randomBytes(4).toString("hex").toUpperCase()}`;
 
   const record: Application = {
@@ -111,29 +162,45 @@ export async function POST(req: Request) {
     eventName: event.name,
     status: "pending",
     payment: isFree ? "not_required" : PAYMENTS_LIVE ? "paid" : "awaiting",
-    fee: event.fee,
+    fee,
     name,
     email,
     phone,
     college,
     teamName: teamName || null,
-    members: members || null,
+    teamCode: team ? team.code : null,
+    members: membersPayload,
     appliedAt: new Date().toISOString(),
   };
 
   try {
-    await put(`app/${evId}/${key}.json`, JSON.stringify(record), {
-      access: "private",
-      addRandomSuffix: false,
-      allowOverwrite: false,
-      contentType: "application/json",
-      cacheControlMaxAge: 0,
-    });
+    await putJson(applicationPath(evId, email), record, false);
   } catch (e: any) {
     if (/exists|overwrite/i.test(String(e?.message)))
       return NextResponse.json({ error: "You've already applied for this event." }, { status: 409 });
     console.error("application put failed", e);
     return NextResponse.json({ error: "Your application didn't save. Try again in a moment." }, { status: 500 });
+  }
+
+  if (team) {
+    // Write only this person's own member record. Previously this read the
+    // team, pushed into members[] and rewrote the whole team blob — with no
+    // compare-and-swap in Blob, two people registering at once both read the
+    // same array and the second write erased the first.
+    const existing = await readJsonByPath(teamMemberPath(evId, email));
+    const priorJoinedAt = (existing as any)?.member?.joinedAt;
+    const entry = {
+      name,
+      email,
+      phone,
+      college,
+      joinedAt: priorJoinedAt ?? new Date().toISOString(),
+    };
+    try {
+      await putJson(teamMemberPath(evId, email), { code: team.code, eventId: evId, member: entry }, true);
+    } catch (e: any) {
+      console.error("team roster update failed", e);
+    }
   }
 
   const queue = (await listAll(`app/${evId}/`)).length;
@@ -142,10 +209,12 @@ export async function POST(req: Request) {
     ticketId,
     status: "pending",
     payment: record.payment,
-    fee: event.fee,
+    fee,
     eventName: event.name,
     name,
     queuePosition: queue,
     capacity: capacityFor(evId),
+    teamName: record.teamName,
+    teamCode: record.teamCode ?? null,
   });
 }

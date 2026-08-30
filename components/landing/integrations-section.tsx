@@ -1,22 +1,45 @@
 "use client";
 
-import { useRef, useState } from "react";
-import { Cpu, Globe, Lightbulb, Settings, BookOpen, ToyBrick, Sparkles, Plane, Briefcase, Calculator, Layers, Code } from "lucide-react";
+import { useRef } from "react";
+import {
+  Cpu,
+  Globe,
+  Lightbulb,
+  Settings,
+  BookOpen,
+  ToyBrick,
+  Sparkles,
+  Plane,
+  Calculator,
+  Layers,
+  Code,
+  Rocket,
+  Users,
+  Crown,
+  Cog,
+  Stethoscope,
+  CircuitBoard,
+} from "lucide-react";
 import { useScrollReveal, useMousePosition } from "@/hooks/use-animations";
 
 const clubs = [
-  { name: "Cynergy", cat: "Electronics", icon: Cpu },
-  { name: "IEEE", cat: "Global Chapter", icon: Globe },
-  { name: "IIC", cat: "Innovation", icon: Lightbulb },
-  { name: "ASME", cat: "Mechanical", icon: Settings },
-  { name: "ISTE", cat: "Technical Ed", icon: BookOpen },
-  { name: "Robotics Club", cat: "Robotics", icon: ToyBrick },
   { name: "AI Club", cat: "AI & ML", icon: Sparkles },
-  { name: "AIAA", cat: "Aerospace", icon: Plane },
-  { name: "Startup Society", cat: "Incubator", icon: Briefcase },
+  { name: "Cynergy", cat: "Coding Club", icon: Cpu },
+  { name: "Robotic Dept.", cat: "Robotics", icon: ToyBrick },
   { name: "Math Club", cat: "Mathematics", icon: Calculator },
+  { name: "ComputeX", cat: "Computer Sci", icon: Code },
+  { name: "Aeronyx", cat: "Aerospace", icon: Rocket },
+  { name: "TSS", cat: "Tech Society", icon: Users },
+  { name: "LEADS", cat: "Leadership", icon: Crown },
+  { name: "AeSI", cat: "Aeronautical", icon: Plane },
+  { name: "ISTE", cat: "Technical Ed", icon: BookOpen },
+  { name: "IMECHE", cat: "Mechanical", icon: Cog },
+  { name: "IEEE", cat: "Global Chapter", icon: Globe },
   { name: "Civil Club", cat: "Civil Eng", icon: Layers },
-  { name: "ComputeX Club", cat: "Computer Sci", icon: Code },
+  { name: "ASME", cat: "Mechanical", icon: Settings },
+  { name: "Dental", cat: "Dental Sci", icon: Stethoscope },
+  { name: "IIC", cat: "Institution Innovation Council", icon: Lightbulb },
+  { name: "Circuitopia", cat: "Circuits", icon: CircuitBoard },
 ];
 
 function ClubCard({ club, index }: { club: typeof clubs[0]; index: number }) {
@@ -101,7 +124,7 @@ export function IntegrationsSection() {
 
         <div ref={statsRef} className="reveal-up flex flex-wrap items-center justify-center gap-12 pt-8 border-t border-[#4A1C3A]/40">
           {[
-            { v: "20+", l: "Clubs", c: "text-[#F2D2AE]" },
+            { v: "17", l: "Clubs", c: "text-[#F2D2AE]" },
             { v: "50+", l: "Faculty Advisors", c: "text-[#D64D8D]" },
             { v: "100+", l: "Coordinators", c: "text-[#BF8A1B]" },
           ].map((s) => (

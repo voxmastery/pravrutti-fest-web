@@ -71,7 +71,7 @@ export default function SchedulePage() {
               </div>
               <div>
                 <h3 className="text-xl font-extrabold text-[#F7EEE4] tracking-wide">Official Level Map</h3>
-                <p className="text-sm text-[#D64D8D] font-mono uppercase tracking-widest font-bold mt-1">15th, 16th &amp; 17th October 2026</p>
+                <p className="text-sm text-[#D64D8D] font-mono uppercase tracking-widest font-bold mt-1">14th, 15th &amp; 16th October 2026</p>
               </div>
             </div>
 

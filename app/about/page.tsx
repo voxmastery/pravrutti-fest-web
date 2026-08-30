@@ -90,7 +90,7 @@ export default function AboutPage() {
             <dl className="relative divide-y divide-[#4A1C3A]/60">
               {[
                 { k: "Edition", v: "Pravrutti 2.0" },
-                { k: "Dates", v: "15–17 October 2026" },
+                { k: "Dates", v: "14–16 October 2026" },
                 { k: "Venue", v: "Ramaiah Technology Campus, Bengaluru" },
                 { k: "Events", v: "22 technical arenas" },
                 { k: "Prize Pool", v: "₹8,00,000+", accent: true },

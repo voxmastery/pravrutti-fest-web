@@ -17,6 +17,19 @@
 export type AppStatus = "pending" | "confirmed" | "declined";
 export type PayStatus = "not_required" | "awaiting" | "paid" | "refunded";
 
+/** Every event is ₹200 per participant (lead + teammates). */
+export const FEE_PER_HEAD = 200;
+/** Max people on one application, including the team lead. */
+export const MAX_TEAM_SIZE = 4;
+
+export type Teammate = { name: string; phone: string };
+
+export const formatFee = (heads: number) => `Rs. ${FEE_PER_HEAD * Math.max(heads, 1)}/-`;
+
+export const normalizePhone = (raw: string) => String(raw ?? "").replace(/[^\d+]/g, "");
+
+export const isValidPhone = (raw: string) => /^\+?\d{10,13}$/.test(normalizePhone(raw));
+
 export type Application = {
   ticketId: string;
   eventId: string;
@@ -29,6 +42,9 @@ export type Application = {
   phone: string;
   college: string;
   teamName: string | null;
+  /** Short join code for this event; null for solo entries. */
+  teamCode?: string | null;
+  /** JSON array of { name, phone }, or legacy comma-separated names. */
   members: string | null;
   appliedAt: string;
   decidedAt?: string;
@@ -36,10 +52,10 @@ export type Application = {
 };
 
 /**
- * Payment gateway is not connected yet. While PAYMENTS_LIVE is false the
- * form collects the application and marks the fee "awaiting" — organisers
- * settle it at the desk and mark it paid in the admin console.
- * Flip this to true once Razorpay keys are in the environment.
+ * Payment gateway wiring. While PAYMENTS_LIVE is false the form collects the
+ * application and marks the fee "awaiting" — organisers send an online payment
+ * link and mark it paid in the admin console once settled.
+ * Flip this to true once Razorpay (or similar) keys are in the environment.
  */
 export const PAYMENTS_LIVE = false;
 

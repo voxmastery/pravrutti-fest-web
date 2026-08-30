@@ -69,7 +69,7 @@ export function FooterSection() {
             <div className="flex flex-col sm:flex-row sm:flex-wrap gap-4 sm:gap-6">
               <span className="inline-flex items-center gap-2.5 text-sm text-[#F2D2AE] font-mono">
                 <Calendar className="w-4 h-4 text-[#D64D8D] shrink-0" />
-                15–17 October 2026
+                14–16 October 2026
               </span>
               <span className="inline-flex items-start gap-2.5 text-sm text-[#F7EEE4]/70 font-mono">
                 <MapPin className="w-4 h-4 text-[#D64D8D] shrink-0 mt-0.5" />

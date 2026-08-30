@@ -4,9 +4,8 @@ import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { RegistrationDialog } from "@/components/registration-dialog";
 import { Event, eventId, capacityFor, FEST } from "@/lib/pravrutti-data";
+import { FEE_PER_HEAD } from "@/lib/applications";
 import { Ticket, MapPin, CalendarDays, IndianRupee, Share2, Check } from "lucide-react";
-
-type Going = { first: string; initials: string };
 
 export function EventRegisterPanel({ event }: { event: Event }) {
   const id = eventId(event.name);
@@ -14,7 +13,6 @@ export function EventRegisterPanel({ event }: { event: Event }) {
 
   const [count, setCount] = useState<number | null>(null);
   const [waiting, setWaiting] = useState(0);
-  const [going, setGoing] = useState<Going[]>([]);
   const [open, setOpen] = useState(false);
   const [copied, setCopied] = useState(false);
 
@@ -24,7 +22,6 @@ export function EventRegisterPanel({ event }: { event: Event }) {
       .then((d) => {
         setCount(d.confirmed?.[id] ?? 0);
         setWaiting(d.pending?.[id] ?? 0);
-        setGoing(d.going ?? []);
       })
       .catch(() => setCount(0));
   }, [id]);
@@ -69,7 +66,7 @@ export function EventRegisterPanel({ event }: { event: Event }) {
           </div>
           <div className="flex items-start gap-3">
             <IndianRupee className="w-4 h-4 text-[#D64D8D] mt-0.5 shrink-0" />
-            <p className="text-[#F7EEE4]/80">{event.fee === "Free" ? "Free entry" : `${event.fee} at the desk`}</p>
+            <p className="text-[#F7EEE4]/80">₹{FEE_PER_HEAD} per head · online</p>
           </div>
         </div>
 
@@ -116,37 +113,6 @@ export function EventRegisterPanel({ event }: { event: Event }) {
           {copied ? <Check className="w-3.5 h-3.5" /> : <Share2 className="w-3.5 h-3.5" />}
           {copied ? "Link copied" : "Share this event"}
         </button>
-
-        {/* Social proof */}
-        {taken > 0 && (
-          <div className="pt-4 border-t border-[#4A1C3A] space-y-3">
-            <p className="font-orbitron text-[10px] uppercase tracking-widest text-[#F7EEE4]/45">
-              {taken} confirmed so far
-            </p>
-            <div className="flex flex-wrap items-center gap-1.5">
-              {going.slice(0, 9).map((g, i) => (
-                <span
-                  key={i}
-                  title={g.first}
-                  style={{ animationDelay: `${i * 45}ms` }}
-                  className="animate-chip w-8 h-8 rounded-lg bg-[#721F4C]/70 border border-[#4A1C3A] text-[#F2D2AE] font-orbitron font-black text-[10px] flex items-center justify-center"
-                >
-                  {g.initials}
-                </span>
-              ))}
-              {taken > 9 && (
-                <span className="text-[11px] font-sharetech text-[#F7EEE4]/45 pl-1">+{taken - 9} more</span>
-              )}
-            </div>
-            {going[0] && (
-              <p className="text-[11px] font-sharetech text-[#F7EEE4]/45">
-                {going[0].first}
-                {going[1] ? `, ${going[1].first}` : ""}
-                {taken > 2 ? ` and ${taken - (going[1] ? 2 : 1)} others` : ""} are going
-              </p>
-            )}
-          </div>
-        )}
       </div>
 
       <RegistrationDialog

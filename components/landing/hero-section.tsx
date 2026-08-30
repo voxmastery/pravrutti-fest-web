@@ -423,7 +423,7 @@ export function HeroSection() {
         >
           <span className="inline-flex items-center gap-2 font-mono text-xs md:text-sm tracking-[0.12em] text-[#F7EEE4]/85 border border-[#4A1C3A]/60 bg-black/40 backdrop-blur-sm px-4 py-1.5 rounded-full">
             <Calendar className="w-4 h-4 text-[#D64D8D]" />
-            15th, 16th &amp; 17th October 2026
+            14th, 15th &amp; 16th October 2026
           </span>
         </div>
 
