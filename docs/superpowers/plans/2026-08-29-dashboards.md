@@ -119,7 +119,7 @@ No test runner existed. Every dashboard task is TDD, so this lands first."
 
 **Interfaces:**
 - Consumes: nothing
-- Produces: `Event.coordinators?: string[]` — lowercase Google emails allowed to view that event
+- Produces: `Event.dashboardEmails?: string[]` — lowercase Google emails allowed to view that event
 
 - [ ] **Step 1: Write the failing test**
 
@@ -129,11 +129,11 @@ Create `test/roles.test.ts`:
 import { describe, it, expect } from "vitest";
 import { events, eventId } from "@/lib/pravrutti-data";
 
-describe("Event.coordinators", () => {
+describe("Event.dashboardEmails", () => {
   it("is optional and absent until the spreadsheet lands", () => {
     const e = events.find((x) => eventId(x.name) === "electroxcape")!;
     expect(e).toBeDefined();
-    expect(e.coordinators ?? []).toEqual([]);
+    expect(e.dashboardEmails ?? []).toEqual([]);
   });
 });
 ```
@@ -141,7 +141,7 @@ describe("Event.coordinators", () => {
 - [ ] **Step 2: Run it**
 
 Run: `npx vitest run test/roles.test.ts`
-Expected: FAIL — `Property 'coordinators' does not exist on type 'Event'`.
+Expected: FAIL — `Property 'dashboardEmails' does not exist on type 'Event'`.
 
 - [ ] **Step 3: Add the field**
 
@@ -150,7 +150,7 @@ In `lib/pravrutti-data.ts`, inside `export interface Event`, after `poster?: str
 ```ts
   /** Google emails allowed to view this event's dashboard. Lowercase.
       Populated from the collection spreadsheet; empty until it returns. */
-  coordinators?: string[];
+  dashboardEmails?: string[];
 ```
 
 - [ ] **Step 4: Run it**
@@ -162,7 +162,7 @@ Expected: PASS.
 
 ```bash
 git add lib/pravrutti-data.ts test/roles.test.ts
-git commit -m "feat(data): add Event.coordinators for dashboard access"
+git commit -m "feat(data): add Event.dashboardEmails for dashboard access"
 ```
 
 ---
@@ -174,7 +174,7 @@ git commit -m "feat(data): add Event.coordinators for dashboard access"
 - Test: `test/roles.test.ts` (extend)
 
 **Interfaces:**
-- Consumes: `Event.coordinators` (Task 2); `resolveEmail()` from `lib/identity`
+- Consumes: `Event.dashboardEmails` (Task 2); `resolveEmail()` from `lib/identity`
 - Produces:
   - `type Role = { kind: "organiser" } | { kind: "coordinator"; eventIds: string[] } | { kind: "none" }`
   - `roleForEmail(email: string | null): Role`
@@ -261,7 +261,7 @@ export function roleForEmail(email: string | null): Role {
   if (organiserEmails().includes(who)) return { kind: "organiser" };
 
   const eventIds = events
-    .filter((e) => (e.coordinators ?? []).some((c) => norm(c) === who))
+    .filter((e) => (e.dashboardEmails ?? []).some((c) => norm(c) === who))
     .map((e) => eventId(e.name));
 
   return eventIds.length > 0 ? { kind: "coordinator", eventIds } : { kind: "none" };
@@ -1434,5 +1434,5 @@ git add -A && git commit -m "chore: dashboards live"
 ## Deferred, deliberately
 
 - **No manual check-in fallback.** Scan-only was chosen. A flat battery or denied camera permission leaves a participant unscannable. Revisit before the day.
-- **Coordinator emails are `0/26`.** Test with your own addresses in `ORGANISER_EMAILS` and hand-added `coordinators` entries until the spreadsheet returns.
+- **Coordinator emails are `0/26`.** Test with your own addresses in `ORGANISER_EMAILS` and hand-added `dashboardEmails` entries until the spreadsheet returns.
 - **No feedback analytics.** Not being collected at this stage.

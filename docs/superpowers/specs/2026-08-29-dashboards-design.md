@@ -61,7 +61,7 @@ type Role = { kind: "organiser" }
 async function resolveRole(): Promise<Role>
 ```
 
-Coordinator emails are stored per event as `coordinators: string[]` on `Event`,
+Coordinator emails are stored per event as `dashboardEmails: string[]` on `Event`,
 populated from the collection spreadsheet. Organiser emails come from an env
 var (`ORGANISER_EMAILS`, comma-separated) so adding one does not require
 redeploying the data file.
@@ -130,7 +130,7 @@ adding a fallback that was not asked for — worth revisiting before the day.
 ## 3. Coordinator dashboard
 
 Route `/dashboard`. Lists only events where the signed-in email appears in that
-event's `coordinators`. Zero events → an explanatory empty state, not a 403.
+event's `dashboardEmails`. Zero events → an explanatory empty state, not a 403.
 
 Per event:
 
@@ -208,7 +208,7 @@ confirmed ticket and the coordinator's view reflects it.
 `app/admin/scan/page.tsx`, tests.
 
 **Modified:** `lib/applications.ts` (two fields), `lib/pravrutti-data.ts`
-(`coordinators: string[]` per event), `app/admin/page.tsx` and
+(`dashboardEmails: string[]` per event), `app/admin/page.tsx` and
 `app/api/admin/route.ts` (key → Google auth), `.env.example`
 (`ORGANISER_EMAILS`).
 
