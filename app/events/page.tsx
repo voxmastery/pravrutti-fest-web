@@ -6,7 +6,6 @@ import { FooterSection } from "@/components/landing/footer-section";
 import { events, Event, FEST } from "@/lib/pravrutti-data";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { EventDetailPanel } from "@/components/event-detail-panel";
 import { EventPoster } from "@/components/event-poster";
 import { Search, Info, Users, ShieldAlert, User, MapPin, Mail, Trophy } from "lucide-react";
@@ -51,17 +50,6 @@ export default function EventsPage() {
   const visible = activeCategory
     ? searched.filter((e) => e.category === activeCategory)
     : searched;
-
-  const getBadgeColors = (type: Event["type"]) => {
-    switch (type) {
-      case "Visionary":
-        return "bg-[#BF8A1B]/20 text-[#F2D2AE] border-[#BF8A1B]/40 font-bold";
-      case "Creator":
-        return "bg-[#D64D8D]/20 text-[#D64D8D] border-[#D64D8D]/40 font-bold";
-      case "Explorer":
-        return "bg-[#721F4C]/30 text-[#F7EEE4] border-[#721F4C]/50 font-semibold";
-    }
-  };
 
   return (
     <main className="relative min-h-screen bg-transparent overflow-x-hidden text-[#F7EEE4] flex flex-col justify-between">
@@ -192,7 +180,6 @@ export default function EventsPage() {
             {visible.length > 0 ? (
                     <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-5">
                       {visible.map((event) => {
-                        const isFree = event.fee.toLowerCase().startsWith("free");
                         const pool =
                           event.type === "Visionary" ? "\u20B945,000"
                           : event.type === "Creator" ? "\u20B922,000"
@@ -204,32 +191,14 @@ export default function EventsPage() {
                             onClick={() => setSelectedEvent(event)}
                             className="group cursor-pointer min-w-0 rounded-2xl border border-white/[0.08] bg-white/[0.04] hover:bg-white/[0.07] hover:border-white/[0.16] transition-colors overflow-hidden flex flex-col"
                           >
-                            {/* Cover leads the card. Tier and fee overlay it so
-                                the two facts people filter on are legible
-                                without spending a row below. */}
+                            {/* Cover leads the card. Tier and fee live in the
+                                detail panel; the poster carries the card. */}
                             <div className="relative aspect-[4/3] w-full">
                               <EventPoster
                                 event={event}
                                 name={event.name}
                                 className="absolute inset-0 w-full h-full"
                               />
-                              <div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-2 p-3 bg-gradient-to-t from-black/85 via-black/40 to-transparent">
-                                <Badge
-                                  className={`rounded-full px-2.5 py-0.5 text-[10px] uppercase tracking-wider font-orbitron ${getBadgeColors(event.type)}`}
-                                  variant="outline"
-                                >
-                                  {event.type}
-                                </Badge>
-                                <span
-                                  className={`shrink-0 rounded-full px-2.5 py-0.5 font-ui text-xs font-semibold ${
-                                    isFree
-                                      ? "text-[#7BE3A8] bg-[#12B76A]/15 border border-[#12B76A]/45"
-                                      : "text-[#F2D2AE] bg-[#BF8A1B]/15 border border-[#BF8A1B]/45"
-                                  }`}
-                                >
-                                  {event.fee}
-                                </span>
-                              </div>
                             </div>
 
                             <div className="flex flex-col flex-1 p-4 gap-1">
