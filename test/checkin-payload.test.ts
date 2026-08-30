@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import type { Application } from "@/lib/applications";
+import { parseTicketPayload } from "@/lib/checkin";
 
 describe("Application check-in fields", () => {
   it("accepts a record with no check-in fields (existing production data)", () => {
@@ -27,5 +28,35 @@ describe("Application check-in fields", () => {
       checkedInBy: "boss@pravrutti.test",
     };
     expect(a.checkedInBy).toBe("boss@pravrutti.test");
+  });
+});
+
+describe("parseTicketPayload", () => {
+  it("parses a well-formed payload", () => {
+    expect(parseTicketPayload("PRV-AB12CD34|robo-climb|Asha@Example.com")).toEqual({
+      ticketId: "PRV-AB12CD34",
+      eventId: "robo-climb",
+      email: "asha@example.com",
+    });
+  });
+
+  it("trims surrounding whitespace from a scan", () => {
+    expect(parseTicketPayload("  PRV-AB12CD34|robo-climb|a@b.com  ")?.ticketId)
+      .toBe("PRV-AB12CD34");
+  });
+
+  it("rejects the wrong number of parts", () => {
+    expect(parseTicketPayload("PRV-AB12CD34|robo-climb")).toBeNull();
+    expect(parseTicketPayload("a|b|c|d")).toBeNull();
+  });
+
+  it("rejects empty parts", () => {
+    expect(parseTicketPayload("|robo-climb|a@b.com")).toBeNull();
+    expect(parseTicketPayload("PRV-1|robo-climb|")).toBeNull();
+  });
+
+  it("rejects a non-Pravrutti QR", () => {
+    expect(parseTicketPayload("https://example.com")).toBeNull();
+    expect(parseTicketPayload("")).toBeNull();
   });
 });
