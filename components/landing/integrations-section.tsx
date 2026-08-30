@@ -20,7 +20,7 @@ import {
   Stethoscope,
   CircuitBoard,
 } from "lucide-react";
-import { useScrollReveal, useMousePosition } from "@/hooks/use-animations";
+import { useScrollReveal, useMousePosition, useCountUp } from "@/hooks/use-animations";
 
 const clubs = [
   { name: "AI Club", cat: "AI & ML", icon: Sparkles },
@@ -41,6 +41,50 @@ const clubs = [
   { name: "IIC", cat: "Institution Innovation Council", icon: Lightbulb },
   { name: "Circuitopia", cat: "Circuits", icon: CircuitBoard },
 ];
+
+/**
+ * One stat, counting up the first time it scrolls into view.
+ *
+ * `tabular-nums` and a reserved min-width stop the row from twitching sideways
+ * as the digits change — without it, 7 → 17 → 100 shoves the label about while
+ * you're reading it, which is the thing that makes counters feel cheap.
+ */
+function StatTile({
+  value,
+  suffix,
+  label,
+  tone,
+  glow,
+}: {
+  value: number;
+  suffix: string;
+  label: string;
+  tone: string;
+  glow: string;
+}) {
+  const [ref, n] = useCountUp<HTMLDivElement>(value);
+
+  return (
+    <div ref={ref} className="group relative bg-[#0A0818] px-6 py-8 text-center transition-colors hover:bg-[#150B1E]">
+      <div
+        className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-500 group-hover:opacity-100"
+        style={{ background: `radial-gradient(ellipse at 50% 0%, ${glow} 0%, transparent 70%)` }}
+      />
+      <div className="relative">
+        <span
+          className={`block font-orbitron text-4xl font-black tabular-nums leading-none ${tone}`}
+          style={{ textShadow: `0 0 24px ${glow}` }}
+        >
+          {n}
+          {suffix}
+        </span>
+        <span className="mt-2.5 block font-mono text-[11px] uppercase tracking-[0.22em] text-[#F7EEE4]/55">
+          {label}
+        </span>
+      </div>
+    </div>
+  );
+}
 
 function ClubCard({ club, index }: { club: typeof clubs[0]; index: number }) {
   const ref = useRef<HTMLDivElement>(null);
@@ -122,17 +166,15 @@ export function IntegrationsSection() {
           ))}
         </div>
 
-        <div ref={statsRef} className="reveal-up flex flex-wrap items-center justify-center gap-12 pt-8 border-t border-[#4A1C3A]/40">
-          {[
-            { v: "17", l: "Clubs", c: "text-[#F2D2AE]" },
-            { v: "50+", l: "Faculty Advisors", c: "text-[#D64D8D]" },
-            { v: "100+", l: "Coordinators", c: "text-[#BF8A1B]" },
-          ].map((s) => (
-            <div key={s.l} className="text-center">
-              <div className={`text-3xl font-orbitron font-black ${s.c}`}>{s.v}</div>
-              <div className="text-xs font-mono tracking-[0.2em] text-[#F7EEE4]/60 uppercase mt-1">{s.l}</div>
-            </div>
-          ))}
+        {/* Clubs is derived from the array right above it — the literal 17 had
+            to be remembered every time a club was added or removed. */}
+        <div
+          ref={statsRef}
+          className="reveal-up grid grid-cols-1 sm:grid-cols-3 gap-px overflow-hidden rounded-2xl border border-[#4A1C3A]/60 bg-[#4A1C3A]/40 mt-4"
+        >
+          <StatTile value={clubs.length} suffix="" label="Clubs" tone="text-[#F2D2AE]" glow="rgba(242,210,174,0.20)" />
+          <StatTile value={50} suffix="+" label="Faculty Advisors" tone="text-[#D64D8D]" glow="rgba(214,77,141,0.22)" />
+          <StatTile value={100} suffix="+" label="Coordinators" tone="text-[#BF8A1B]" glow="rgba(191,138,27,0.22)" />
         </div>
       </div>
     </section>

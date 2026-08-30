@@ -2,6 +2,61 @@
 
 import { useEffect, useRef, useState, RefObject } from "react";
 
+/**
+ * Counts from 0 to `end` once, the first time the element scrolls into view.
+ *
+ * Fires once and never resets — a number that re-counts every time it scrolls
+ * past reads as broken rather than delightful.
+ *
+ * Honours prefers-reduced-motion by jumping straight to the final value: the
+ * point of the stat is the number, so someone who has asked for less motion
+ * should still get the information immediately, not a blank or a zero.
+ */
+export function useCountUp<T extends HTMLElement = HTMLDivElement>(
+  end: number,
+  duration = 1600
+): [RefObject<T | null>, number] {
+  const ref = useRef<T>(null);
+  const [value, setValue] = useState(0);
+  const done = useRef(false);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || done.current) return;
+
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      done.current = true;
+      setValue(end);
+      return;
+    }
+
+    let raf = 0;
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry.isIntersecting || done.current) return;
+        done.current = true;
+        const t0 = performance.now();
+        const step = (now: number) => {
+          const p = Math.min((now - t0) / duration, 1);
+          // easeOutCubic: fast to start, settles rather than stopping dead
+          setValue(Math.round((1 - Math.pow(1 - p, 3)) * end));
+          if (p < 1) raf = requestAnimationFrame(step);
+        };
+        raf = requestAnimationFrame(step);
+      },
+      { threshold: 0.4 }
+    );
+
+    io.observe(el);
+    return () => {
+      io.disconnect();
+      cancelAnimationFrame(raf);
+    };
+  }, [end, duration]);
+
+  return [ref, value];
+}
+
 /** Intersection-based scroll reveal: adds `revealed` class when visible */
 export function useScrollReveal<T extends HTMLElement = HTMLDivElement>(
   threshold = 0.15,
