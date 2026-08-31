@@ -3,10 +3,28 @@ import { events, eventId } from "@/lib/pravrutti-data";
 import { roleForEmail, canViewEvent } from "@/lib/roles";
 
 describe("Event.dashboardEmails", () => {
-  it("is optional and absent until the spreadsheet lands", () => {
-    const e = events.find((x) => eventId(x.name) === "electroxcape")!;
-    expect(e).toBeDefined();
-    expect(e.dashboardEmails ?? []).toEqual([]);
+  /* This used to assert the field was absent "until the spreadsheet lands".
+     It has landed, so the invariant inverts: an event with no dashboard
+     emails is an event whose coordinators cannot see their own roster. */
+  it("is populated for every event", () => {
+    const missing = events
+      .filter((e) => (e.dashboardEmails ?? []).length === 0)
+      .map((e) => e.name);
+    expect(missing).toEqual([]);
+  });
+
+  it("stores addresses lowercased, so role lookup matches", () => {
+    const notLower = events
+      .flatMap((e) => e.dashboardEmails ?? [])
+      .filter((a) => a !== a.toLowerCase());
+    expect(notLower).toEqual([]);
+  });
+
+  it("gives each event at least one reachable address", () => {
+    const bad = events
+      .flatMap((e) => (e.dashboardEmails ?? []).map((a) => [e.name, a] as const))
+      .filter(([, a]) => !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(a));
+    expect(bad).toEqual([]);
   });
 });
 

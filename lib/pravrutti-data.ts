@@ -607,7 +607,7 @@ export const events: Event[] = [
       faculty: [],
       student: [{ name: "Hrithik A", phone: "9686505558" }, { name: "L Mahadeva Balan", phone: "8147197853" }],
     },
-    dashboardEmails: ["hrithik18a@gmail.com |", "mahadevlakshmanan@gmail.com"],
+    dashboardEmails: ["hrithik18a@gmail.com", "mahadevlakshmanan@gmail.com"],
     brochureUrl: "https://drive.google.com/file/d/1ReNsPaD1nCLpK5bnTO9dHwFjVXEH-_tt/view?usp=drive_open",
   },
   {
