@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { resolveRole } from "@/lib/roles";
+import { resolveRole, canViewEvent } from "@/lib/roles";
 import { resolveEmail } from "@/lib/identity";
 import { parseTicketPayload } from "@/lib/checkin";
 import { applicationPath, readJsonByPath, putJson } from "@/lib/blob-store";
@@ -20,9 +20,8 @@ const fail = (error: string, status: number) =>
 const MAX_PAYLOAD_LENGTH = 300;
 
 export async function POST(req: Request) {
-  // Scanning admits someone to a paid event, so it is organiser-only.
   const role = await resolveRole();
-  if (role.kind !== "organiser") return fail("Only organisers can check people in.", 403);
+  if (role.kind === "none") return fail("You can't check people in.", 403);
 
   let body: any;
   try {
@@ -39,12 +38,30 @@ export async function POST(req: Request) {
   const parsed = parseTicketPayload(raw);
   if (!parsed) return fail("That QR isn't a Pravrutti ticket.", 400);
 
-  const path = applicationPath(parsed.eventId, parsed.email);
+  /* Which event is being admitted to.
+     The scanner names it, rather than trusting the eventId inside the QR: a
+     participant at the Robo Race desk may well hold up their Hackathon
+     ticket, and the desk should say "you're not on this list" instead of
+     silently admitting them to the wrong event. */
+  const targetEventId =
+    typeof body?.eventId === "string" && body.eventId ? body.eventId : parsed.eventId;
+
+  // Scope is re-derived here, never taken from the client. A coordinator may
+  // only admit to their own events; an organiser may admit to any.
+  if (!canViewEvent(role, targetEventId))
+    return fail("You don't run this event.", 403);
+
+  const path = applicationPath(targetEventId, parsed.email);
   const record = (await readJsonByPath(path)) as Application | null;
 
+  // No record for THIS event is the ordinary "wrong desk" case, so it has to
+  // read as a clear no rather than an error.
+  if (!record) return fail("Not registered for this event.", 404);
+
   // Checking the ticketId too means a QR rebuilt for another person's email
-  // cannot admit them on someone else's record.
-  if (!record || record.ticketId !== parsed.ticketId)
+  // cannot admit them on someone else's record. Only meaningful when the
+  // scanned ticket is for this same event.
+  if (targetEventId === parsed.eventId && record.ticketId !== parsed.ticketId)
     return fail("No ticket found for this event.", 404);
 
   if (record.status !== "confirmed")

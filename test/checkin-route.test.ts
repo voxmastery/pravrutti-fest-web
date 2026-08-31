@@ -9,7 +9,12 @@ vi.mock("@/lib/blob-store", () => ({
 }));
 
 const role = vi.hoisted(() => ({ current: { kind: "organiser" } as any }));
-vi.mock("@/lib/roles", () => ({ resolveRole: async () => role.current }));
+// canViewEvent stays real on purpose: it is the scope check the route leans
+// on, so mocking it would hollow out what these tests prove.
+vi.mock("@/lib/roles", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/roles")>()),
+  resolveRole: async () => role.current,
+}));
 vi.mock("@/lib/identity", () => ({ resolveEmail: async () => "boss@pravrutti.test" }));
 
 // Imported in beforeAll (not a top-level await) so the mocks above are
@@ -57,10 +62,56 @@ describe("POST /api/checkin", () => {
     expect(body.by).toBe("boss@pravrutti.test");
   });
 
-  it("rejects a coordinator", async () => {
+  /* Coordinators may now admit people to their OWN events — a deliberate
+     reversal of the original "observe only" non-goal. What still has to hold
+     is that the scope comes from the session, not the request. */
+  it("lets a coordinator admit to their own event", async () => {
     role.current = { kind: "coordinator", eventIds: ["robo-climb"] };
     const res = await post("PRV-AAAA1111|robo-climb|asha@example.com");
+    expect(res.status).toBe(200);
+    expect((await res.json()).name).toBe("Asha");
+  });
+
+  it("rejects a coordinator admitting to an event they don't run", async () => {
+    role.current = { kind: "coordinator", eventIds: ["chaos"] };
+    const res = await post("PRV-AAAA1111|robo-climb|asha@example.com");
     expect(res.status).toBe(403);
+  });
+
+  it("rejects someone with no role", async () => {
+    role.current = { kind: "none" };
+    const res = await post("PRV-AAAA1111|robo-climb|asha@example.com");
+    expect(res.status).toBe(403);
+  });
+
+  it("ignores a client-supplied eventId outside the caller's scope", async () => {
+    // The desk names the event, but naming one you don't run must not work.
+    role.current = { kind: "coordinator", eventIds: ["chaos"] };
+    const res = await POST(
+      new Request("http://t/api/checkin", {
+        method: "POST",
+        body: JSON.stringify({
+          payload: "PRV-AAAA1111|robo-climb|asha@example.com",
+          eventId: "robo-climb",
+        }),
+      })
+    );
+    expect(res.status).toBe(403);
+  });
+
+  it("says 'not registered' when scanned at a desk they didn't sign up for", async () => {
+    role.current = { kind: "coordinator", eventIds: ["chaos"] };
+    const res = await POST(
+      new Request("http://t/api/checkin", {
+        method: "POST",
+        body: JSON.stringify({
+          payload: "PRV-AAAA1111|robo-climb|asha@example.com",
+          eventId: "chaos",
+        }),
+      })
+    );
+    expect(res.status).toBe(404);
+    expect((await res.json()).error).toMatch(/not registered/i);
   });
 
   it("rejects a pending application and names the status", async () => {

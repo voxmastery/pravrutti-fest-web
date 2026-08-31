@@ -46,6 +46,18 @@ export function applicationPath(eventId: string, email: string) {
   return `app/${eventId}/${emailScopedKey(eventId, email)}.json`;
 }
 
+/**
+ * Fest entry, recorded once per person rather than per registration.
+ *
+ * Keyed on email alone — the gate asks "has this human come through the
+ * door", which is a different question from "did they turn up to Robo Race".
+ * Keeping them apart means an organiser admitting someone at the entrance
+ * never overwrites, or stands in for, a coordinator's event check-in.
+ */
+export function gatePath(email: string) {
+  return `gate/${createHash("sha256").update(email.toLowerCase()).digest("hex").slice(0, 24)}.json`;
+}
+
 export function teamPath(eventId: string, code: string) {
   return `team/${eventId}/${code}.json`;
 }

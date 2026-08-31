@@ -56,6 +56,7 @@ for (const eventId of eventIds) {
     await write(`app/${eventId}/${key(eventId, email)}.json`, {
       ticketId: key(eventId, email),
       eventId,
+      eventName: eventId.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
       name,
       email,
       phone: `9${Math.floor(100000000 + rand() * 899999999)}`,
