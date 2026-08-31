@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useSession, signIn, signOut } from "next-auth/react";
 import { IdentityContext } from "@/lib/identity-context";
+import { devImpersonatedEmailClient } from "@/lib/dev-identity";
 
 /** Mounted when Clerk isn't configured. Google creds may or may not be set. */
 export function NextAuthIdentity({ children }: { children: React.ReactNode }) {
@@ -16,15 +17,20 @@ export function NextAuthIdentity({ children }: { children: React.ReactNode }) {
       .catch(() => setAuthEnabled(false));
   }, []);
 
+  /* The server override alone isn't enough: /dashboard gates on this context,
+     not on the API's answer, so both sides have to agree. Named "DEV …" so a
+     glance at the account chip tells you this isn't a real session. */
+  const devAs = devImpersonatedEmailClient();
+
   return (
     <IdentityContext.Provider
       value={{
-        ready: status !== "loading" && authEnabled !== null,
+        ready: devAs ? true : status !== "loading" && authEnabled !== null,
         authEnabled: !!authEnabled,
-        signedIn: status === "authenticated",
-        name: session?.user?.name ?? null,
-        email: session?.user?.email?.toLowerCase() ?? null,
-        image: session?.user?.image ?? null,
+        signedIn: devAs ? true : status === "authenticated",
+        name: devAs ? `DEV ${devAs}` : session?.user?.name ?? null,
+        email: devAs ?? session?.user?.email?.toLowerCase() ?? null,
+        image: devAs ? null : session?.user?.image ?? null,
         signIn: () => signIn("google", { callbackUrl: window.location.pathname }),
         signOut: () => signOut({ callbackUrl: "/" }),
       }}

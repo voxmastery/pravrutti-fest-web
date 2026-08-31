@@ -1,5 +1,6 @@
 import { clerkEnabled } from "@/lib/clerk-config";
 import { authOptions, googleAuthEnabled } from "@/lib/auth";
+import { devImpersonatedEmail } from "@/lib/dev-identity";
 
 /**
  * Returns the verified email of whoever is signed in, or null.
@@ -7,6 +8,10 @@ import { authOptions, googleAuthEnabled } from "@/lib/auth";
  * swapping backends never changes application logic.
  */
 export async function resolveEmail(): Promise<string | null> {
+  /* Local dev override. Compiled out of production builds — see dev-identity.ts. */
+  const dev = devImpersonatedEmail();
+  if (dev) return dev;
+
   if (clerkEnabled) {
     const { currentUser } = await import("@clerk/nextjs/server");
     const user = await currentUser().catch(() => null);
