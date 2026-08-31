@@ -62,6 +62,25 @@ export const prizePool = (e: Event) => e.prizes.reduce((a, b) => a + b, 0);
 export const totalPrizePool = () => events.reduce((sum, e) => sum + prizePool(e), 0);
 
 /** How the team rule reads on screen, e.g. "Teams of 2–4" or "Solo or up to 3". */
+/**
+ * How many *people* an event can take.
+ *
+ * `capacity` comes from the sheet's "Max Participants" column, which is
+ * already a head count: ROBO RACE reads 80 alongside the note "20 teams × 4",
+ * and 20 × 4 is 80. `capacityUnit` records how the coordinators arrived at
+ * the figure — it is descriptive, NOT a multiplier.
+ *
+ * An earlier version multiplied by team size and quadrupled every team-based
+ * event, turning a 2,235-place fest into 8,830. Registrations are one record
+ * per person, so the raw number already lines up with them.
+ *
+ * Null when an event gave no cap, so the UI omits the denominator rather than
+ * inventing one.
+ */
+export function capacityInPeople(e: Event): number | null {
+  return e.capacity ?? null;
+}
+
 export function teamLabel(e: Event): string {
   const { min, max, soloAllowed } = e.teamSize;
   if (max === 1) return "Solo only";
