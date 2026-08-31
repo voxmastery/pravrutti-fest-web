@@ -15,6 +15,11 @@ export default function DashboardPage() {
   const [role, setRole] = useState<string>("none");
   const [active, setActive] = useState<string | null>(null);
   const [data, setData] = useState<{ counts: Counts; roster: Entry[] } | null>(null);
+  /* `data === null` used to mean both "still loading" and "request failed",
+     and the render treated both as "show nothing". A coordinator whose
+     request 500s got a blank page under the event tabs with no indication
+     anything was wrong. These are three different states, so track them. */
+  const [loadState, setLoadState] = useState<"loading" | "ok" | "error">("loading");
 
   useEffect(() => {
     if (!me.signedIn) return;
@@ -37,13 +42,21 @@ export default function DashboardPage() {
     // overwriting the newer selection's counts/roster with stale data.
     let cancelled = false;
     setData(null);
+    setLoadState("loading");
     fetch(`/api/dashboard/event/${active}`)
-      .then((r) => (r.ok ? r.json() : null))
+      .then(async (r) => {
+        if (!r.ok) throw new Error(String(r.status));
+        return r.json();
+      })
       .then((d) => {
-        if (!cancelled) setData(d);
+        if (cancelled) return;
+        setData(d);
+        setLoadState("ok");
       })
       .catch(() => {
-        if (!cancelled) setData(null);
+        if (cancelled) return;
+        setData(null);
+        setLoadState("error");
       });
     return () => {
       cancelled = true;
@@ -88,7 +101,28 @@ export default function DashboardPage() {
               </div>
             )}
 
-            {data && (
+            {loadState === "loading" && (
+              <p className="text-white/50 text-sm py-6">Loading roster…</p>
+            )}
+
+            {loadState === "error" && (
+              <div className="rounded-2xl border border-[#F87171]/30 bg-[#F87171]/[0.06] p-6">
+                <p className="font-semibold mb-1.5">Couldn&apos;t load this roster</p>
+                <p className="text-sm text-white/60">
+                  The registration store didn&apos;t respond. Your access is fine — this
+                  is a problem at our end. Try again in a moment, and tell the
+                  organising team if it keeps happening.
+                </p>
+                <button
+                  onClick={() => setActive((a) => a)}
+                  className="mt-4 rounded-lg border border-white/[0.16] px-4 py-2 text-sm hover:bg-white/[0.06]"
+                >
+                  Retry
+                </button>
+              </div>
+            )}
+
+            {loadState === "ok" && data && (
               <>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
                   {([
