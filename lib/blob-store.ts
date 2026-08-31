@@ -1,7 +1,16 @@
 import { list, put } from "@vercel/blob";
 import { createHash } from "crypto";
+import {
+  useDevBlob,
+  devListAll,
+  devReadJson,
+  devPutJson,
+  DEV_URL_PREFIX,
+} from "@/lib/dev-blob";
 
 export async function listAll(prefix: string) {
+  if (useDevBlob()) return devListAll(prefix);
+
   const out: { pathname: string; url: string }[] = [];
   let cursor: string | undefined = undefined;
   do {
@@ -13,6 +22,11 @@ export async function listAll(prefix: string) {
 }
 
 export async function readPrivate(url: string) {
+  // Dev URLs are pathnames on disk, not something to fetch over the network.
+  if (url.startsWith(DEV_URL_PREFIX)) {
+    return devReadJson(url.slice(DEV_URL_PREFIX.length));
+  }
+
   // Overwritten blobs can be served stale from the edge nearest the function,
   // so every read is cache-busted — a decision must never act on old state.
   const fresh = `${url}${url.includes("?") ? "&" : "?"}ts=${Date.now()}`;
@@ -41,6 +55,8 @@ export function teamMemberPath(eventId: string, email: string) {
 }
 
 export async function readJsonByPath(path: string) {
+  if (useDevBlob()) return devReadJson(path);
+
   const found = await list({ prefix: path, limit: 1 });
   const blob = found.blobs.find((b) => b.pathname === path);
   if (!blob) return null;
@@ -48,6 +64,8 @@ export async function readJsonByPath(path: string) {
 }
 
 export async function putJson(path: string, data: unknown, overwrite: boolean) {
+  if (useDevBlob()) return devPutJson(path, data);
+
   return put(path, JSON.stringify(data), {
     access: "private",
     addRandomSuffix: false,

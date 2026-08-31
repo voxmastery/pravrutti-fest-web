@@ -151,13 +151,29 @@ export default function DashboardPage() {
                           <p className="text-sm font-medium truncate">{p.name}</p>
                           <p className="text-sm text-white/45 truncate">{p.college}</p>
                         </div>
-                        <span className="text-sm shrink-0">
+                        {/* Raw statuses come through lowercase ("pending",
+                            "declined") while the derived ones were sentence
+                            case, so the column read as two different systems.
+                            Capitalised here, and the check-in time is shown —
+                            "when did they arrive" is the question this column
+                            exists to answer on the day. */}
+                        <span className="text-sm shrink-0 text-right">
                           {p.checkedInAt ? (
-                            <span className="text-[#7BE3A8]">Checked in</span>
+                            <>
+                              <span className="block text-[#7BE3A8]">Checked in</span>
+                              <span className="block text-xs text-white/35 tabular-nums">
+                                {new Date(p.checkedInAt).toLocaleTimeString([], {
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                })}
+                              </span>
+                            </>
                           ) : p.status === "confirmed" ? (
                             <span className="text-white/45">Not arrived</span>
                           ) : (
-                            <span className="text-[#F2D2AE]">{p.status}</span>
+                            <span className={p.status === "declined" ? "text-white/30" : "text-[#F2D2AE]"}>
+                              {p.status.charAt(0).toUpperCase() + p.status.slice(1)}
+                            </span>
                           )}
                         </span>
                       </div>
