@@ -33,6 +33,8 @@ type OrganiserEntry = RosterEntry & {
   members: string | null;
   payment: Application["payment"];
   appliedAt: string;
+  paymentVerifiedBy: string | null;
+  paymentVerifiedAt: string | null;
 };
 
 export async function GET(
@@ -74,6 +76,8 @@ export async function GET(
             members: r.members ?? null,
             payment: r.payment,
             appliedAt: r.appliedAt,
+            paymentVerifiedBy: r.paymentVerifiedBy ?? null,
+            paymentVerifiedAt: r.paymentVerifiedAt ?? null,
           } satisfies OrganiserEntry)
         : base(r)
     )

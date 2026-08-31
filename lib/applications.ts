@@ -54,6 +54,12 @@ export type Application = {
   checkedInAt?: string;
   /** Organiser email that performed the scan. */
   checkedInBy?: string;
+  /** When an organiser confirmed the money had actually arrived. */
+  paymentVerifiedAt?: string;
+  /** Which organiser confirmed it. This is why the shared ADMIN_KEY isn't
+      good enough for this action: a decision about money needs a name
+      against it, and one password shared by the team gives none. */
+  paymentVerifiedBy?: string;
 };
 
 /**
