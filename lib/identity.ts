@@ -1,6 +1,6 @@
 import { clerkEnabled } from "@/lib/clerk-config";
 import { authOptions, googleAuthEnabled } from "@/lib/auth";
-import { devImpersonatedEmail } from "@/lib/dev-identity";
+import { devImpersonatedEmail, devEmailFromCookieHeader, isDev } from "@/lib/dev-identity";
 
 /**
  * Returns the verified email of whoever is signed in, or null.
@@ -8,9 +8,23 @@ import { devImpersonatedEmail } from "@/lib/dev-identity";
  * swapping backends never changes application logic.
  */
 export async function resolveEmail(): Promise<string | null> {
-  /* Local dev override. Compiled out of production builds — see dev-identity.ts. */
-  const dev = devImpersonatedEmail();
-  if (dev) return dev;
+  /* Local dev override. Compiled out of production builds — see dev-identity.ts.
+     Env var first (set once at boot), then the cookie the demo buttons write,
+     which is what lets you switch role without restarting. */
+  if (isDev()) {
+    const fromEnv = devImpersonatedEmail();
+    if (fromEnv) return fromEnv;
+
+    const { cookies } = await import("next/headers");
+    const jar = await cookies().catch(() => null);
+    const fromCookie = devEmailFromCookieHeader(
+      jar
+        ?.getAll()
+        .map((c) => `${c.name}=${c.value}`)
+        .join("; ")
+    );
+    if (fromCookie) return fromCookie;
+  }
 
   if (clerkEnabled) {
     const { currentUser } = await import("@clerk/nextjs/server");

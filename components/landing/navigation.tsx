@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Menu, X, Ticket, LogIn, LogOut, LayoutDashboard, ScanLine } from "lucide-react";
 import { useIdentity } from "@/lib/identity-context";
 import { useDashboardRole, dashboardLabel } from "@/hooks/use-dashboard-role";
+import { isDev, setDevLogin } from "@/lib/dev-identity";
 import { SignInModal } from "@/components/sign-in-modal";
 import {
   DropdownMenu,
@@ -31,6 +32,13 @@ export function Navigation() {
   const pathname = usePathname();
   const me = useIdentity();
   const dash = useDashboardRole();
+
+  /* Sign-out has to clear the dev cookie too, or a demo session survives it
+     and the button silently does nothing. */
+  const signOutAll = () => {
+    if (isDev()) setDevLogin(null);
+    me.signOut();
+  };
   const signedIn = me.signedIn && !!me.email;
   const initials = (me.name || me.email || "?")
     .trim()
@@ -167,13 +175,18 @@ export function Navigation() {
                       </Link>
                     </DropdownMenuItem>
                   )}
-                  <DropdownMenuItem className="focus:bg-[#721F4C]/30 focus:text-[#F2D2AE] rounded-lg cursor-pointer">
-                    <Link href="/ticket" className="flex items-center gap-2 w-full font-mono text-xs tracking-wider py-1.5">
-                      <Ticket className="w-4 h-4 text-[#D64D8D]" /> My Tickets
-                    </Link>
-                  </DropdownMenuItem>
+                  {/* Staff don't get My Tickets: organisers and coordinators
+                      run events rather than attend them, and a ticket list
+                      that is always empty is worse than no entry at all. */}
+                  {dash.ready && dash.role === "none" && (
+                    <DropdownMenuItem className="focus:bg-[#721F4C]/30 focus:text-[#F2D2AE] rounded-lg cursor-pointer">
+                      <Link href="/ticket" className="flex items-center gap-2 w-full font-mono text-xs tracking-wider py-1.5">
+                        <Ticket className="w-4 h-4 text-[#D64D8D]" /> My Tickets
+                      </Link>
+                    </DropdownMenuItem>
+                  )}
                   <DropdownMenuItem
-                    onClick={me.signOut}
+                    onClick={signOutAll}
                     className="focus:bg-[#721F4C]/30 focus:text-[#F2D2AE] rounded-lg cursor-pointer"
                   >
                     <span className="flex items-center gap-2 w-full font-mono text-xs tracking-wider py-1.5">
@@ -280,17 +293,19 @@ export function Navigation() {
                       <ScanLine className="w-4 h-4" /> CHECK-IN SCANNER
                     </Link>
                   )}
-                  <Link
-                    href="/ticket"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    className="flex items-center justify-center gap-2 w-full rounded-xl font-orbitron text-base py-4 font-black tracking-wider text-[#F2D2AE] border border-[#4A1C3A] active:bg-[#721F4C]/25"
-                  >
-                    <Ticket className="w-4 h-4" /> MY TICKETS
-                  </Link>
+                  {dash.ready && dash.role === "none" && (
+                    <Link
+                      href="/ticket"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className="flex items-center justify-center gap-2 w-full rounded-xl font-orbitron text-base py-4 font-black tracking-wider text-[#F2D2AE] border border-[#4A1C3A] active:bg-[#721F4C]/25"
+                    >
+                      <Ticket className="w-4 h-4" /> MY TICKETS
+                    </Link>
+                  )}
                   <Button
                     onClick={() => {
                       setIsMobileMenuOpen(false);
-                      me.signOut();
+                      signOutAll();
                     }}
                     variant="ghost"
                     className="w-full rounded-xl font-orbitron text-base py-6 h-auto font-black tracking-wider text-[#F2D2AE] border border-[#4A1C3A] hover:border-[#D64D8D] hover:bg-[#721F4C]/25 hover:text-[#F7EEE4]"

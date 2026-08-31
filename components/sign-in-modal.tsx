@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { useIdentity } from "@/lib/identity-context";
 import { FEST } from "@/lib/pravrutti-data";
 import { LogIn } from "lucide-react";
+import { isDev, setDevLogin } from "@/lib/dev-identity";
+import { events } from "@/lib/pravrutti-data";
 
 function GoogleMark() {
   return (
@@ -72,7 +74,55 @@ export function SignInModal({ open, onClose }: { open: boolean; onClose: () => v
             ? "Your ticket stays tied to your Google inbox, so you can reopen it on any device."
             : "Sign-in isn't switched on yet. You can still browse events and register with your email."}
         </p>
+
+        <DemoLogins />
       </DialogContent>
     </Dialog>
+  );
+}
+
+/**
+ * Dev-only shortcuts into the two staff roles.
+ *
+ * `isDev()` is a NODE_ENV comparison, which Next inlines at build time — in a
+ * production bundle this component's body is unreachable and gets dropped, so
+ * these buttons cannot ship. They write a cookie rather than an env var so the
+ * role can change without restarting the server.
+ *
+ * The coordinator address is read from the event data rather than hardcoded:
+ * a fake address would resolve to no role and the button would do nothing.
+ */
+function DemoLogins() {
+  if (!isDev()) return null;
+
+  const organiser = (process.env.NEXT_PUBLIC_DEMO_ORGANISER_EMAIL ?? "").trim();
+  const coordinatorEvent = events.find((e) => (e.dashboardEmails ?? []).length > 0);
+  const coordinator = coordinatorEvent?.dashboardEmails?.[0];
+
+  return (
+    <div className="mt-4 pt-4 border-t border-white/[0.08]">
+      <p className="text-[11px] uppercase tracking-[0.2em] text-[#D64D8D] text-center mb-2.5">
+        Dev only · not in production
+      </p>
+      <div className="grid grid-cols-2 gap-2">
+        <button
+          onClick={() => setDevLogin(organiser || "organiser@example.com")}
+          className="rounded-xl border border-[#4A1C3A] bg-[#150B1E] px-3 py-2.5 text-left transition-colors hover:border-[#D64D8D]/60"
+        >
+          <span className="block font-ui text-[13px] font-semibold text-[#F2D2AE]">Organiser</span>
+          <span className="block font-mono text-[10px] text-white/40 truncate">All events + scanner</span>
+        </button>
+        <button
+          onClick={() => coordinator && setDevLogin(coordinator)}
+          disabled={!coordinator}
+          className="rounded-xl border border-[#4A1C3A] bg-[#150B1E] px-3 py-2.5 text-left transition-colors hover:border-[#D64D8D]/60 disabled:opacity-40"
+        >
+          <span className="block font-ui text-[13px] font-semibold text-[#F2D2AE]">Coordinator</span>
+          <span className="block font-mono text-[10px] text-white/40 truncate">
+            {coordinatorEvent ? coordinatorEvent.name : "no data"}
+          </span>
+        </button>
+      </div>
+    </div>
   );
 }
