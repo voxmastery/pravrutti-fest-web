@@ -15,6 +15,26 @@ type RosterEntry = {
   checkedInAt: string | null;
 };
 
+/**
+ * What an organiser additionally gets.
+ *
+ * Organisers hold the contact details already — they are the people a
+ * coordinator is told to go through — so showing them here removes a
+ * pointless relay rather than widening who can see them. Coordinators
+ * continue to receive RosterEntry and nothing else.
+ *
+ * The two shapes are separate types on purpose: the coordinator's payload is
+ * built from a projection that has no contact field to accidentally include.
+ */
+type OrganiserEntry = RosterEntry & {
+  email: string;
+  phone: string;
+  teamName: string | null;
+  members: string | null;
+  payment: Application["payment"];
+  appliedAt: string;
+};
+
 export async function GET(
   _req: Request,
   { params }: { params: Promise<{ eventId: string }> }
@@ -34,13 +54,29 @@ export async function GET(
 
   const mine = records.filter((r) => r.eventId === eventId);
 
-  const roster: RosterEntry[] = mine
-    .map((r) => ({
-      name: r.name,
-      college: r.college,
-      status: r.status,
-      checkedInAt: r.checkedInAt ?? null,
-    }))
+  const base = (r: Application): RosterEntry => ({
+    name: r.name,
+    college: r.college,
+    status: r.status,
+    checkedInAt: r.checkedInAt ?? null,
+  });
+
+  /* Branch on the role, not on a request flag — a coordinator asking for
+     contacts must not be able to get them by asking differently. */
+  const roster: (RosterEntry | OrganiserEntry)[] = mine
+    .map((r) =>
+      role.kind === "organiser"
+        ? ({
+            ...base(r),
+            email: r.email,
+            phone: r.phone,
+            teamName: r.teamName ?? null,
+            members: r.members ?? null,
+            payment: r.payment,
+            appliedAt: r.appliedAt,
+          } satisfies OrganiserEntry)
+        : base(r)
+    )
     .sort((a, b) => a.name.localeCompare(b.name));
 
   const confirmed = mine.filter((r) => r.status === "confirmed");

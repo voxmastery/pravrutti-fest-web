@@ -7,7 +7,19 @@ import { useDashboardRole } from "@/hooks/use-dashboard-role";
 import { ArrowLeft, AlertTriangle } from "lucide-react";
 
 type Counts = { registered: number; confirmed: number; checkedIn: number; notArrived: number };
-type Entry = { name: string; college: string; status: string; checkedInAt: string | null };
+/** Contact fields arrive only for organisers — see the event route. */
+type Entry = {
+  name: string;
+  college: string;
+  status: string;
+  checkedInAt: string | null;
+  email?: string;
+  phone?: string;
+  teamName?: string | null;
+  members?: string | null;
+  payment?: string;
+  appliedAt?: string;
+};
 
 type Row = {
   eventId: string;
@@ -290,33 +302,129 @@ function EventDetail({ eventId }: { eventId: string }) {
         {data.roster.length === 0 ? (
           <p className="p-5 text-sm text-white/45">No registrations yet.</p>
         ) : (
-          data.roster.map((p, i) => (
-            <div key={i} className="flex items-center justify-between gap-4 px-4 py-2.5">
-              <span className="min-w-0">
-                <span className="block text-sm font-medium text-[#F7EEE4] truncate">{p.name}</span>
-                <span className="block text-sm text-white/40 truncate">{p.college}</span>
-              </span>
-              <span className="text-sm shrink-0 text-right">
-                {p.checkedInAt ? (
-                  <>
-                    <span className="block text-[#7BE3A8]">Checked in</span>
-                    <span className="block text-xs text-white/35 tabular-nums">
-                      {new Date(p.checkedInAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                    </span>
-                  </>
-                ) : p.status === "confirmed" ? (
-                  <span className="text-white/45">Not arrived</span>
-                ) : (
-                  <span className={p.status === "declined" ? "text-white/30" : "text-[#F2D2AE]"}>
-                    {p.status.charAt(0).toUpperCase() + p.status.slice(1)}
-                  </span>
-                )}
-              </span>
-            </div>
-          ))
+          data.roster.map((p, i) => <Participant key={i} p={p} />)
         )}
       </div>
-      <p className="mt-2 text-xs text-white/30">Contact details are held by the organising team.</p>
+      {/* Only true for coordinators now; organisers see them inline. */}
+      {data.roster.length > 0 && data.roster[0].email === undefined && (
+        <p className="mt-2 text-xs text-white/30">Contact details are held by the organising team.</p>
+      )}
+    </div>
+  );
+}
+
+/**
+ * One roster line. For an organiser the name is a button that opens the
+ * person's contact details; for a coordinator no contact fields arrive, so it
+ * stays a plain row rather than an affordance that leads nowhere.
+ */
+function Participant({ p }: { p: Entry }) {
+  const [open, setOpen] = useState(false);
+  const hasDetail = p.email !== undefined;
+
+  const team = (() => {
+    if (!p.members) return null;
+    try {
+      const parsed = JSON.parse(p.members);
+      if (Array.isArray(parsed))
+        return parsed.map((m: { name?: string; phone?: string }) =>
+          [m.name, m.phone].filter(Boolean).join(" · ")
+        );
+    } catch {
+      // Older records stored a comma-separated string.
+      return p.members.split(",").map((s) => s.trim()).filter(Boolean);
+    }
+    return null;
+  })();
+
+  const status = p.checkedInAt ? (
+    <>
+      <span className="block text-[#7BE3A8]">Checked in</span>
+      <span className="block text-xs text-white/35 tabular-nums">
+        {new Date(p.checkedInAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+      </span>
+    </>
+  ) : p.status === "confirmed" ? (
+    <span className="text-white/45">Not arrived</span>
+  ) : (
+    <span className={p.status === "declined" ? "text-white/30" : "text-[#F2D2AE]"}>
+      {p.status.charAt(0).toUpperCase() + p.status.slice(1)}
+    </span>
+  );
+
+  const row = (
+    <>
+      <span className="min-w-0 text-left">
+        <span className={`block text-sm font-medium truncate ${hasDetail ? "text-[#F2D2AE]" : "text-[#F7EEE4]"}`}>
+          {p.name}
+        </span>
+        <span className="block text-sm text-white/40 truncate">{p.college}</span>
+      </span>
+      <span className="text-sm shrink-0 text-right">{status}</span>
+    </>
+  );
+
+  if (!hasDetail)
+    return <div className="flex items-center justify-between gap-4 px-4 py-2.5">{row}</div>;
+
+  return (
+    <div>
+      <button
+        onClick={() => setOpen(!open)}
+        aria-expanded={open}
+        className={`w-full flex items-center justify-between gap-4 px-4 py-2.5 transition-colors ${
+          open ? "bg-white/[0.06]" : "hover:bg-white/[0.04]"
+        }`}
+      >
+        {row}
+      </button>
+
+      {open && (
+        <dl className="px-4 pb-3 pt-1 bg-white/[0.03] text-sm space-y-1.5">
+          <Detail k="Email">
+            <a href={`mailto:${p.email}`} className="text-[#F2D2AE] hover:underline break-all">
+              {p.email}
+            </a>
+          </Detail>
+          <Detail k="Phone">
+            {/* tel: so it dials straight from the phone an organiser is holding. */}
+            <a href={`tel:${p.phone}`} className="text-[#F2D2AE] hover:underline">
+              {p.phone}
+            </a>
+          </Detail>
+          {p.teamName && <Detail k="Team">{p.teamName}</Detail>}
+          {team && team.length > 0 && (
+            <Detail k="Members">
+              <span className="block space-y-0.5">
+                {team.map((m, i) => (
+                  <span key={i} className="block text-white/70">{m}</span>
+                ))}
+              </span>
+            </Detail>
+          )}
+          {p.payment && (
+            <Detail k="Payment">
+              <span className={p.payment === "paid" ? "text-[#7BE3A8]" : "text-[#F2D2AE]"}>
+                {p.payment.replace(/_/g, " ")}
+              </span>
+            </Detail>
+          )}
+          {p.appliedAt && (
+            <Detail k="Applied">
+              {new Date(p.appliedAt).toLocaleDateString([], { day: "numeric", month: "short" })}
+            </Detail>
+          )}
+        </dl>
+      )}
+    </div>
+  );
+}
+
+function Detail({ k, children }: { k: string; children: React.ReactNode }) {
+  return (
+    <div className="flex gap-3">
+      <dt className="w-20 shrink-0 text-white/35">{k}</dt>
+      <dd className="min-w-0">{children}</dd>
     </div>
   );
 }

@@ -40,7 +40,30 @@ beforeEach(() => {
 });
 
 describe("GET /api/dashboard/event/[eventId]", () => {
-  it("NEVER returns contact details", async () => {
+  /* Organisers may now see contacts; coordinators still may not — they were
+     always told to go through organisers, who hold the details anyway.
+     This asserts on the serialised payload rather than the rendered UI, so a
+     future widening of the query cannot pass by relying on the client to
+     hide fields. */
+  it("returns contact details to an organiser", async () => {
+    role.current = { kind: "organiser" };
+    const body = await (await get("robo-climb")).json();
+    const asha = body.roster.find((p: { name: string }) => p.name === "Asha");
+    expect(asha.email).toBe("a@x.com");
+    expect(asha.phone).toBe("9000000001");
+  });
+
+  it("a coordinator cannot obtain contacts by asking differently", async () => {
+    // The role decides the shape; nothing in the request can change it.
+    role.current = { kind: "coordinator", eventIds: ["robo-climb"] };
+    const res = await GET(new Request("http://t?contacts=1&full=true"), {
+      params: Promise.resolve({ eventId: "robo-climb" }),
+    });
+    expect(JSON.stringify(await res.json())).not.toContain("@x.com");
+  });
+
+  it("NEVER returns contact details to a coordinator", async () => {
+    role.current = { kind: "coordinator", eventIds: ["robo-climb"] };
     const body = await (await get("robo-climb")).json();
     const serialised = JSON.stringify(body);
     expect(serialised).not.toContain("@x.com");
