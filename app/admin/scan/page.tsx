@@ -154,10 +154,15 @@ export default function ScanPage() {
     result?.tone === "warn" ? "bg-[#BF8A1B]" :
     result?.tone === "err" ? "bg-[#AC355D]" : "bg-white/10";
 
-  const desks = [
-    ...(dash.role === "organiser" ? [{ id: GATE, label: "Gate entry" }] : []),
-    ...dash.events.map((e) => ({ id: e.eventId, label: e.name })),
-  ];
+  /* Organisers work the gate and nothing else, so they get no picker — all
+     24 event pills were noise on a screen that is mostly camera. Coordinators
+     get only the events they actually run, and a coordinator with one event
+     gets no picker either. The API still lets an organiser admit to any event
+     as a backstop; it just isn't a control anyone has to scroll past. */
+  const desks =
+    dash.role === "organiser"
+      ? [{ id: GATE, label: "Gate entry" }]
+      : dash.events.map((e) => ({ id: e.eventId, label: e.name }));
 
   return (
     <main className="min-h-screen bg-[#0A0818] text-white font-ui flex flex-col">
