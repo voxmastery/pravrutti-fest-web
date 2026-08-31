@@ -203,7 +203,7 @@ export function EventDetailPanel({
                 <div>
                   <p className="text-sm font-bold text-[#F7EEE4]">{FEST.dates}</p>
                   <p className="text-xs text-[#F7EEE4]/55 font-mono">
-                    Slot timings on the{" "}
+                    Timings on the{" "}
                     <Link href="/schedule" className="underline hover:text-[#D64D8D]" onClick={onClose}>
                       schedule page
                     </Link>

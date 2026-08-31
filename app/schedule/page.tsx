@@ -3,8 +3,9 @@
 import { useState, useEffect } from "react";
 import { Navigation } from "@/components/landing/navigation";
 import { FooterSection } from "@/components/landing/footer-section";
-import { Button } from "@/components/ui/button";
-import { Download, Calendar, Info } from "lucide-react";
+import Link from "next/link";
+import { Calendar, Info, ArrowRight } from "lucide-react";
+import { events, FEST } from "@/lib/pravrutti-data";
 
 export default function SchedulePage() {
   const [isVisible, setIsVisible] = useState(false);
@@ -50,7 +51,7 @@ export default function SchedulePage() {
             PRAVRUTTI <span className="text-stroke">SCHEDULE</span>
           </h1>
           <p className="text-base md:text-xl text-[#F7EEE4]/70 leading-relaxed max-w-2xl mx-auto font-sharetech">
-            Map out your symposium roadmap. Check dates, venue lobbies, and level time slots across all 3 days.
+            Three days, 24 arenas. The day-by-day timetable is being finalised with the event coordinators.
           </p>
         </div>
 
@@ -58,38 +59,32 @@ export default function SchedulePage() {
         <div className="max-w-2xl mx-auto mb-12 p-4 rounded-xl border border-[#D64D8D]/40 bg-[#150B1E]/90 flex gap-4 items-center justify-center shadow-xl shadow-[#721F4C]/15 cyber-box">
           <Info className="w-5 h-5 text-[#F2D2AE] shrink-0" />
           <p className="text-sm md:text-base text-[#F7EEE4]/85 text-center font-sharetech">
-            Timings are subject to minor adjustments on event day. Please reach venues 15 mins prior.
+            Venues are confirmed and shown on each event's page. Start times follow shortly.
           </p>
         </div>
 
-        {/* Schedule Display Card inside cyber-box bezel */}
-        <div className="relative border border-[#4A1C3A] rounded-3xl bg-[#150B1E]/60 backdrop-blur-md p-4 md:p-8 overflow-hidden shadow-2xl shadow-[#721F4C]/25 max-w-4xl mx-auto space-y-6 cyber-box">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-4 pb-6 border-b border-[#4A1C3A] font-orbitron">
-            <div className="flex items-center gap-3">
-              <div className="p-3.5 rounded-xl bg-[#721F4C]/40 text-[#F2D2AE]">
-                <Calendar className="w-6 h-6" />
-              </div>
-              <div>
-                <h3 className="text-xl font-extrabold text-[#F7EEE4] tracking-wide">Official Level Map</h3>
-                <p className="text-sm text-[#D64D8D] font-mono uppercase tracking-widest font-bold mt-1">14th, 15th &amp; 16th October 2026</p>
-              </div>
-            </div>
-
-            <a href="/Schedule.jpeg" download="Pravrutti_Schedule_2026.jpeg">
-              <Button size="sm" className="rounded-xl text-white font-orbitron text-sm px-6 h-12 cursor-pointer font-bold uppercase tracking-widest arcade-btn-magenta border-[#D64D8D] hover:text-white">
-                <Download className="w-4 h-4 mr-2" /> DOWNLOAD MAP
-              </Button>
-            </a>
+        {/* The image that sat here was last year's: it read "15th–17th
+            October 2025" and listed the previous roster (ElectroXcape,
+            SkyHack, Wind Rush…), none of which run in 2026. A wrong schedule
+            is worse than none, because it reads as authoritative — so it is
+            replaced by an honest placeholder until the real one exists. */}
+        <div className="relative border border-[#4A1C3A] rounded-3xl bg-[#150B1E]/60 backdrop-blur-md px-6 py-20 md:py-28 overflow-hidden shadow-2xl shadow-[#721F4C]/25 max-w-4xl mx-auto text-center cyber-box">
+          <div className="mx-auto w-16 h-16 rounded-2xl bg-[#721F4C]/40 text-[#F2D2AE] grid place-items-center mb-6">
+            <Calendar className="w-7 h-7" />
           </div>
-
-          {/* Schedule Image Container */}
-          <div className="relative rounded-2xl overflow-hidden border border-[#721F4C]/50 bg-[#0A0818]">
-            <img
-              src="/Schedule.jpeg"
-              alt="Pravrutti Techfest Event Schedule Map"
-              className="w-full h-auto object-contain mx-auto"
-            />
-          </div>
+          <h3 className="font-orbitron text-2xl md:text-3xl font-black tracking-wide text-[#F7EEE4] mb-3">
+            SCHEDULE COMING SOON
+          </h3>
+          <p className="font-sharetech text-[#F7EEE4]/60 max-w-md mx-auto leading-relaxed">
+            The day-by-day timetable for all {events.length} arenas is being finalised with
+            the event coordinators. It lands here well before {FEST.dates}.
+          </p>
+          <Link
+            href="/events"
+            className="inline-flex items-center gap-2 mt-8 rounded-xl border border-[#4A1C3A] hover:border-[#D64D8D] px-5 h-11 font-orbitron text-sm font-bold tracking-widest uppercase text-[#F2D2AE] transition-colors"
+          >
+            Browse events <ArrowRight className="w-4 h-4" />
+          </Link>
         </div>
       </div>
 

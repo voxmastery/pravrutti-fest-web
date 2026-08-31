@@ -5,6 +5,7 @@ import { FooterSection } from "@/components/landing/footer-section";
 import { GallerySection } from "@/components/landing/gallery-section";
 import { Users, Zap, Target } from "lucide-react";
 import { useEffect, useState } from "react";
+import { formatINR, totalPrizePool } from "@/lib/pravrutti-data";
 
 export default function AboutPage() {
   const [isVisible, setIsVisible] = useState(false);
@@ -93,7 +94,7 @@ export default function AboutPage() {
                 { k: "Dates", v: "14–16 October 2026" },
                 { k: "Venue", v: "Ramaiah Technology Campus, Bengaluru" },
                 { k: "Events", v: "24 technical arenas" },
-                { k: "Prize Pool", v: "₹8,00,000+", accent: true },
+                { k: "Prize Pool", v: formatINR(totalPrizePool()), accent: true },
               ].map((row) => (
                 <div key={row.k} className="flex items-baseline justify-between gap-4 px-5 py-3.5">
                   <dt className="font-mono text-xs sm:text-sm uppercase tracking-[0.18em] text-[#D64D8D] shrink-0">

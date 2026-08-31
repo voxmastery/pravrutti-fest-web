@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Calendar, Download, Trophy, ChevronDown } from "lucide-react";
 import { useParallax, useMousePosition } from "@/hooks/use-animations";
-import { events } from "@/lib/pravrutti-data";
+import { events, formatINR, totalPrizePool } from "@/lib/pravrutti-data";
 
 /* ───────────────────── Neon Flicker Text ───────────────────── */
 function NeonFlickerText({ text, className = "" }: { text: string; className?: string }) {
@@ -164,7 +164,7 @@ export function HeroSection() {
         <div className="h-px bg-gradient-to-l from-[#D64D8D]/40 to-transparent w-20 ml-auto" />
         <div className="space-y-1.5">
           <div>STATUS: <span className="text-green-400">LIVE</span></div>
-          <div>PRIZE_POOL: <span className="text-[#F2D2AE]/90">₹8,00,000+</span></div>
+          <div>PRIZE_POOL: <span className="text-[#F2D2AE]/90">{formatINR(totalPrizePool())}</span></div>
           <div>EVENTS_ARENA: <span className="text-[#D64D8D]">OFFLINE</span></div>
           <div>HOST_NEXUS: <span className="text-[#F2D2AE]/70">RAMAIAH_TECHNOLOGY_CAMPUS</span></div>
         </div>
@@ -307,7 +307,7 @@ export function HeroSection() {
                     filter: "drop-shadow(0 0 22px rgba(242,210,174,0.35))",
                   }}
                 >
-                  ₹8,00,000+
+                  {formatINR(totalPrizePool())}
                 </div>
               </div>
 

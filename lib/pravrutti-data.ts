@@ -50,6 +50,17 @@ export const formatINR = (n: number) => `₹${n.toLocaleString("en-IN")}`;
 /** An event's total purse across all its prizes. */
 export const prizePool = (e: Event) => e.prizes.reduce((a, b) => a + b, 0);
 
+/**
+ * Every prize across every event, added up.
+ *
+ * Derived rather than written down. The headline previously read
+ * "₹8,00,000+" in three places while the coordinators' own figures totalled
+ * ₹4,14,000 — an advertised number roughly double what is actually being
+ * awarded. Computing it means the claim cannot drift from the prizes again,
+ * and it rises on its own as events are added.
+ */
+export const totalPrizePool = () => events.reduce((sum, e) => sum + prizePool(e), 0);
+
 /** How the team rule reads on screen, e.g. "Teams of 2–4" or "Solo or up to 3". */
 export function teamLabel(e: Event): string {
   const { min, max, soloAllowed } = e.teamSize;

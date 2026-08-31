@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
 import { BrowserQRCodeReader } from "@zxing/browser";
 import { useIdentity } from "@/lib/identity-context";
 import { useDashboardRole } from "@/hooks/use-dashboard-role";
@@ -127,12 +129,25 @@ export default function ScanPage() {
     return () => stop?.();
   }, [dash.ready, dash.role]);
 
+  /* Both dead ends previously rendered a bare sentence with no way out. */
   if (me.ready && !me.signedIn)
-    return <main className="min-h-screen grid place-items-center text-white font-ui">Sign in to scan.</main>;
+    return (
+      <main className="min-h-screen grid place-items-center text-white font-ui px-6 text-center gap-4">
+        <p>Sign in to scan.</p>
+        <Link href="/" className="text-sm text-[#D64D8D] hover:underline">
+          Back to Pravrutti
+        </Link>
+      </main>
+    );
   if (dash.ready && dash.role === "none")
-    return <main className="min-h-screen grid place-items-center text-white font-ui px-6 text-center">
-      You don&apos;t run any events, so there&apos;s nothing to scan for.
-    </main>;
+    return (
+      <main className="min-h-screen grid place-items-center text-white font-ui px-6 text-center gap-4">
+        <p>You don&apos;t run any events, so there&apos;s nothing to scan for.</p>
+        <Link href="/" className="text-sm text-[#D64D8D] hover:underline">
+          Back to Pravrutti
+        </Link>
+      </main>
+    );
 
   const tone =
     result?.tone === "ok" ? "bg-[#12B76A]" :
@@ -146,11 +161,21 @@ export default function ScanPage() {
 
   return (
     <main className="min-h-screen bg-[#0A0818] text-white font-ui flex flex-col">
-      <div className="p-4 flex items-center justify-between border-b border-white/10">
+      {/* This page hides the site nav to keep the camera full-bleed, which
+          left no way out at all — on a phone, mid-shift, that is a trap.
+          Nielsen's "user control and freedom": always give a clearly marked
+          exit. 44px tall so it survives a gloved thumb at a busy door. */}
+      <div className="p-3 flex items-center justify-between border-b border-white/10">
+        <Link
+          href="/dashboard"
+          className="inline-flex items-center gap-1.5 h-11 pl-1 pr-3 -ml-1 rounded-lg text-sm text-white/70 hover:text-white hover:bg-white/[0.06] transition-colors"
+        >
+          <ArrowLeft className="w-4 h-4" /> Dashboard
+        </Link>
         <span className="font-orbitron font-black">
           {mode === GATE ? "GATE" : "CHECK-IN"}
         </span>
-        <span className="text-sm text-white/60">
+        <span className="text-sm text-white/60 tabular-nums">
           {count} {mode === GATE ? "entered" : "admitted"}
         </span>
       </div>
