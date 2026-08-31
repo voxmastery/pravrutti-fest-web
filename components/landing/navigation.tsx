@@ -4,8 +4,9 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Menu, X, Ticket, LogIn, LogOut } from "lucide-react";
+import { Menu, X, Ticket, LogIn, LogOut, LayoutDashboard, ScanLine } from "lucide-react";
 import { useIdentity } from "@/lib/identity-context";
+import { useDashboardRole, dashboardLabel } from "@/hooks/use-dashboard-role";
 import { SignInModal } from "@/components/sign-in-modal";
 import {
   DropdownMenu,
@@ -29,6 +30,7 @@ export function Navigation() {
   const [signInOpen, setSignInOpen] = useState(false);
   const pathname = usePathname();
   const me = useIdentity();
+  const dash = useDashboardRole();
   const signedIn = me.signedIn && !!me.email;
   const initials = (me.name || me.email || "?")
     .trim()
@@ -145,7 +147,26 @@ export function Navigation() {
                     {me.name?.split(" ")[0]?.toUpperCase() ?? "ACCOUNT"}
                   </span>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent className="bg-[#0A0818]/95 backdrop-blur-xl border border-[#4A1C3A] text-[#F7EEE4] w-52 p-1 rounded-xl shadow-2xl shadow-black/60">
+                <DropdownMenuContent className="bg-[#0A0818]/95 backdrop-blur-xl border border-[#4A1C3A] text-[#F7EEE4] w-56 p-1 rounded-xl shadow-2xl shadow-black/60">
+                  {/* The dashboard had no link anywhere in the UI — a
+                      coordinator could sign in and never learn it existed.
+                      Shown only once the server has confirmed a role, so it
+                      doesn't flash in and then vanish. */}
+                  {dash.ready && dash.role !== "none" && (
+                    <DropdownMenuItem className="focus:bg-[#721F4C]/30 focus:text-[#F2D2AE] rounded-lg cursor-pointer">
+                      <Link href="/dashboard" className="flex items-center gap-2 w-full font-mono text-xs tracking-wider py-1.5">
+                        <LayoutDashboard className="w-4 h-4 text-[#D64D8D]" />
+                        {dashboardLabel(dash)}
+                      </Link>
+                    </DropdownMenuItem>
+                  )}
+                  {dash.ready && dash.role === "organiser" && (
+                    <DropdownMenuItem className="focus:bg-[#721F4C]/30 focus:text-[#F2D2AE] rounded-lg cursor-pointer">
+                      <Link href="/admin/scan" className="flex items-center gap-2 w-full font-mono text-xs tracking-wider py-1.5">
+                        <ScanLine className="w-4 h-4 text-[#D64D8D]" /> Check-in scanner
+                      </Link>
+                    </DropdownMenuItem>
+                  )}
                   <DropdownMenuItem className="focus:bg-[#721F4C]/30 focus:text-[#F2D2AE] rounded-lg cursor-pointer">
                     <Link href="/ticket" className="flex items-center gap-2 w-full font-mono text-xs tracking-wider py-1.5">
                       <Ticket className="w-4 h-4 text-[#D64D8D]" /> My Tickets
@@ -238,8 +259,27 @@ export function Navigation() {
                       <p className="font-mono text-xs text-[#F7EEE4]/50 truncate">{me.email}</p>
                     </div>
                   </div>
-                  {/* Desktop reaches tickets from the account chip menu; this
-                      is that same link for mobile, which has no chip. */}
+                  {/* Desktop reaches these from the account chip menu; mobile
+                      has no chip, so they live here. Coordinators run their
+                      event from a phone, so this is the likelier surface. */}
+                  {dash.ready && dash.role !== "none" && (
+                    <Link
+                      href="/dashboard"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className="flex items-center justify-center gap-2 w-full rounded-xl font-orbitron text-base py-4 font-black tracking-wider text-[#0A0818] bg-[#D64D8D] active:bg-[#c04680]"
+                    >
+                      <LayoutDashboard className="w-4 h-4" /> {dashboardLabel(dash).toUpperCase()}
+                    </Link>
+                  )}
+                  {dash.ready && dash.role === "organiser" && (
+                    <Link
+                      href="/admin/scan"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className="flex items-center justify-center gap-2 w-full rounded-xl font-orbitron text-base py-4 font-black tracking-wider text-[#F2D2AE] border border-[#4A1C3A] active:bg-[#721F4C]/25"
+                    >
+                      <ScanLine className="w-4 h-4" /> CHECK-IN SCANNER
+                    </Link>
+                  )}
                   <Link
                     href="/ticket"
                     onClick={() => setIsMobileMenuOpen(false)}
