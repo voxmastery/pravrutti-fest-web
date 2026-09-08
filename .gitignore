@@ -21,3 +21,11 @@ node_modules
 
 # Local filesystem stand-in for Vercel Blob (dev only)
 .dev-blob/
+
+# Backups of .env.local hold live secrets — never committable.
+.env*.bak
+
+# TypeScript incremental build state
+tsconfig.tsbuildinfo
+# Local agent settings
+.claude/

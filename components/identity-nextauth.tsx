@@ -19,8 +19,17 @@ export function NextAuthIdentity({ children }: { children: React.ReactNode }) {
 
   /* The server override alone isn't enough: /dashboard gates on this context,
      not on the API's answer, so both sides have to agree. Named "DEV …" so a
-     glance at the account chip tells you this isn't a real session. */
-  const devAs = devImpersonatedEmailClient();
+     glance at the account chip tells you this isn't a real session.
+
+     Read in an effect, not during render: the cookie only exists in the
+     browser, so reading it while rendering made the first client paint
+     "signed in" against server HTML that said "signed out" — a hydration
+     mismatch on every page with the nav. Starting null keeps both sides
+     identical for the first paint; the override lands one tick later. */
+  const [devAs, setDevAs] = useState<string | null>(null);
+  useEffect(() => {
+    setDevAs(devImpersonatedEmailClient());
+  }, []);
 
   return (
     <IdentityContext.Provider
