@@ -98,8 +98,9 @@ export type Application = {
       good enough for this action: a decision about money needs a name
       against it, and one password shared by the team gives none. */
   paymentVerifiedBy?: string;
-  /** UPI/UTR or gateway transaction reference. Supplied by the applicant when
-      they have one, otherwise typed in by whoever reconciles the statement. */
+  /** Transaction ID from the applicant's Juno portal receipt, entered at
+      registration. The desk verifies it against the statement; it does not
+      edit it (the API still accepts set_payment_ref for corrections). */
   paymentRef?: string | null;
   /** When the confirmation email carrying the ticket QR last went out. */
   confirmationEmailAt?: string;

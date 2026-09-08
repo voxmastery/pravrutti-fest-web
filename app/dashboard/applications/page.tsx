@@ -316,16 +316,15 @@ function Row({
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [flash, setFlash] = useState<string | null>(null);
+  /* The Juno transaction ID the applicant typed at registration. The desk
+     reads it and checks it against the statement; it never edits it — an
+     ID an organiser could rewrite is not evidence of anything. */
   const storedRef = readPaymentRef(a.paymentRef);
-  const [ref, setRef] = useState(storedRef);
   const [qr, setQr] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
-  useEffect(() => setRef(readPaymentRef(a.paymentRef)), [a.paymentRef]);
-
   const act = async (
-    action: "verify_payment" | "unverify_payment" | "decline" | "set_payment_ref" | "resend_confirmation",
-    extra?: { paymentRef?: string | null }
+    action: "verify_payment" | "unverify_payment" | "decline" | "resend_confirmation"
   ) => {
     setBusy(action);
     setError(null);
@@ -334,7 +333,7 @@ function Row({
       const res = await fetch("/api/dashboard/applications", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action, eventId: a.eventId, email: a.email, ...extra }),
+        body: JSON.stringify({ action, eventId: a.eventId, email: a.email }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "That didn't go through.");
@@ -345,7 +344,6 @@ function Row({
       if (data.mail?.sent) setFlash("Ticket emailed.");
       else if (data.mail?.skipped) setFlash("Saved. Mail isn't configured, so no email went out.");
       else if (data.mail?.error) setError(`Saved, but the email failed: ${data.mail.error}`);
-      else if (action === "set_payment_ref") setFlash("Payment ID saved.");
     } catch (e) {
       setError(e instanceof Error ? e.message : "That didn't go through.");
     } finally {
@@ -440,9 +438,9 @@ function Row({
               </Detail>
             )}
             {a.checkedInAt && <Detail k="Checked in">{when(a.checkedInAt)}</Detail>}
-            <Detail k="Payment ID">
+            <Detail k="Juno txn ID">
               {storedRef ? (
-                <span className="break-all">{storedRef}</span>
+                <span className="break-all tracking-wider">{storedRef}</span>
               ) : a.payment === "not_required" ? (
                 "None — this application isn't charged"
               ) : (
@@ -463,27 +461,15 @@ function Row({
               )}
             </div>
 
-            <div className="flex flex-wrap items-end gap-2">
-              <label className="min-w-[200px] flex-1">
-                <span className="mb-1 block text-xs text-white/45">Payment ID / UTR</span>
-                <Input
-                  value={ref}
-                  onChange={(e) => setRef(e.target.value)}
-                  placeholder={storedRef ? undefined : "e.g. 4183 7712 9930"}
-                  aria-label="Payment ID / UTR"
-                  autoComplete="off"
-                  spellCheck={false}
-                  className="h-10 rounded-lg border-white/[0.10] bg-white/[0.05] text-white placeholder:text-white/25 focus-visible:ring-cyber-pink/70"
-                />
-              </label>
-              <Button
-                variant="subtle"
-                size="lg"
-                onClick={() => act("set_payment_ref", { paymentRef: ref })}
-                disabled={working || readPaymentRef(ref) === storedRef}
-              >
-                {busy === "set_payment_ref" ? <Loader2 className="animate-spin" /> : "Save ID"}
-              </Button>
+            <div className="text-sm">
+              <span className="mb-1 block text-xs text-white/45">Juno transaction ID</span>
+              {storedRef ? (
+                <span className="break-all font-semibold tracking-wider text-pearl-white">{storedRef}</span>
+              ) : a.payment === "not_required" ? (
+                <span className="text-white/45">Not charged</span>
+              ) : (
+                <span className="text-champagne-gold">Not given at registration — ask the applicant for their Juno receipt before verifying.</span>
+              )}
             </div>
             {a.payment === "not_required" && !storedRef && (
               <p className="text-xs text-white/35">
@@ -508,7 +494,7 @@ function Row({
                 <Button
                   variant="success"
                   size="default"
-                  onClick={() => act("verify_payment", { paymentRef: ref || null })}
+                  onClick={() => act("verify_payment")}
                   disabled={working}
                 >
                   {spin("verify_payment", Check)}

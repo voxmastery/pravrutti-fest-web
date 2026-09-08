@@ -768,23 +768,24 @@ export function RegistrationDialog({
                     </div>
                   </div>
 
-                  {/* Optional, because most people apply before they have paid.
-                      Supplying it here is what lets an organiser match the
-                      money to the application without chasing them for it. */}
-                  <Field label="Payment ID / UTR (if you've already paid)">
+                  {/* The fee is paid on the college's Juno portal before applying;
+                      the transaction ID from that receipt is what the desk checks
+                      against the statement. Kept optional so someone who pays a
+                      little later isn't locked out of the queue. */}
+                  <Field label="Juno transaction ID">
                     <Input
                       className={inputCls}
                       value={form.paymentRef}
                       onChange={set("paymentRef")}
-                      placeholder="UPI reference or transaction ID" maxLength={80}
-                      aria-label="Payment ID" />
+                      placeholder="From your Juno payment receipt" maxLength={80}
+                      aria-label="Juno transaction ID" />
                   </Field>
 
                   {!PAYMENTS_LIVE && (
                     <p className="text-xs text-champagne-gold/80 border border-soft-gold/20 bg-soft-gold/[0.07] rounded-lg px-3 py-2.5 leading-relaxed">
-                      Payment is online. Apply now to hold your place in the queue — you’ll get a
-                      payment link for {applicantFee} before your application is reviewed. Once we
-                      verify it, your ticket and QR are emailed to you.
+                      Pay {applicantFee} on the college Juno portal, then enter the transaction ID
+                      from the receipt above. Organisers match it against the statement — once
+                      verified, your ticket and QR are emailed to you.
                     </p>
                   )}
 
@@ -862,7 +863,7 @@ export function RegistrationDialog({
               </div>
 
               <p className="text-[13px] text-white/55 leading-relaxed text-center px-2">
-                {result.payment === "not_required" ? "Nothing to pay for this one. " : result.payment === "awaiting" ? `Pay ${result.fee} online — a payment link will be sent for this application. ` : `${result.fee} received — refunded in full if you aren't confirmed. `}
+                {result.payment === "not_required" ? "Nothing to pay for this one. " : result.payment === "awaiting" ? `Pay ${result.fee} on the college Juno portal if you haven't yet — organisers verify the transaction ID against the statement. ` : `${result.fee} received — refunded in full if you aren't confirmed. `}
                 You'll get your ticket and QR once the organisers approve.
                 {result.teamCode
                   ? " Share the team code — teammates can still join until the team is full." : ""}
