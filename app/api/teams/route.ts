@@ -1,11 +1,10 @@
 import { NextResponse } from "next/server";
 import { randomBytes } from "crypto";
-import { events, eventId, capacityFor, registrationOpen } from "@/lib/pravrutti-data";
+import { events, eventId, capacityFor, registrationOpen, registrationUnavailableMessage } from "@/lib/pravrutti-data";
 import {
   Application,
-  PAYMENTS_LIVE,
-  MAX_TEAM_SIZE,
-  formatFee,
+  PHONE_HINT,
+  feeForApplicant,
   isValidPhone,
   normalizePhone,
 } from "@/lib/applications";
@@ -17,8 +16,12 @@ import {
   normalizeTeamCode,
   isValidTeamCode,
   toTeamPreview,
+  maxTeamSizeFor,
 } from "@/lib/teams";
 import { resolveEmail, authRequired } from "@/lib/identity";
+import { resolveRole, roleForEmail } from "@/lib/roles";
+import { staffBlocksApplication, STAFF_CANNOT_APPLY } from "@/lib/staff-cockpit";
+import { newTicketId } from "@/lib/ticket-id";
 import {
   listAll,
   applicationPath,
@@ -75,19 +78,22 @@ function blobFailed(e: unknown, label: string) {
   return jsonError("Couldn't reach team storage. Try again in a moment.", 500);
 }
 
-async function previewResponse(team: Team) {
+async function previewResponse(team: Team, maxMembers: number, includeRoster = false) {
   const members = await listTeamMembers(team.eventId, team.code);
-  return NextResponse.json(toTeamPreview(team, members), { headers: { "cache-control": "no-store" } });
+  return NextResponse.json(toTeamPreview(team, members, maxMembers, includeRoster), {
+    headers: { "cache-control": "no-store" },
+  });
 }
 
 async function verifyTeam(evId: string, rawCode: string) {
   const code = normalizeTeamCode(rawCode);
-  if (!evId || !findEvent(evId)) return jsonError("That event doesn't exist.", 400);
+  const event = findEvent(evId);
+  if (!evId || !event) return jsonError("That event doesn't exist.", 400);
   if (!isValidTeamCode(code)) return jsonError("Enter a valid team code.", 400);
   try {
     const team = await loadTeam(evId, code);
     if (!team) return jsonError("No team found for that code.", 404);
-    return await previewResponse(team);
+    return await previewResponse(team, maxTeamSizeFor(event));
   } catch (e) {
     return blobFailed(e, "team verify failed");
   }
@@ -95,7 +101,8 @@ async function verifyTeam(evId: string, rawCode: string) {
 
 /** Restore the caller's existing team for this event — code never regenerates. */
 async function mineTeam(evId: string, bodyEmail: string) {
-  if (!evId || !findEvent(evId)) return jsonError("That event doesn't exist.", 400);
+  const event = findEvent(evId);
+  if (!evId || !event) return jsonError("That event doesn't exist.", 400);
   const who = await resolveApplicantEmail(bodyEmail);
   if ("error" in who) return who.error;
   try {
@@ -104,14 +111,14 @@ async function mineTeam(evId: string, bodyEmail: string) {
     if (!isValidTeamCode(code)) return NextResponse.json({ team: null }, { headers: { "cache-control": "no-store" } });
     const team = await loadTeam(evId, code);
     if (!team) return NextResponse.json({ team: null }, { headers: { "cache-control": "no-store" } });
-    return NextResponse.json({ team: toTeamPreview(team) }, { headers: { "cache-control": "no-store" } });
+    const members = await listTeamMembers(evId, code);
+    return NextResponse.json(
+      { team: toTeamPreview(team, members, maxTeamSizeFor(event), true) },
+      { headers: { "cache-control": "no-store" } }
+    );
   } catch (e) {
     return blobFailed(e, "team mine failed");
   }
-}
-
-function ticketId() {
-  return `PRV-${randomBytes(4).toString("hex").toUpperCase()}`;
 }
 
 function personApplication(args: {
@@ -123,14 +130,18 @@ function personApplication(args: {
   college: string;
   team: Team;
 }): Application {
-  const isFree = args.event.fee.toLowerCase().startsWith("free");
+  const { payment, fee } = feeForApplicant({
+    eventFree: args.event.fee.toLowerCase().startsWith("free"),
+    eventFee: args.event.fee,
+    isJoiner: true,
+  });
   return {
-    ticketId: ticketId(),
+    ticketId: newTicketId(),
     eventId: args.evId,
     eventName: args.event.name,
     status: "pending",
-    payment: isFree ? "not_required" : PAYMENTS_LIVE ? "paid" : "awaiting",
-    fee: isFree ? args.event.fee : formatFee(1),
+    payment,
+    fee,
     name: args.name,
     email: args.email,
     phone: args.phone,
@@ -143,7 +154,7 @@ function personApplication(args: {
 }
 
 async function createTeam(body: any) {
-  if (!registrationOpen()) return jsonError("Applications closed on 4 October 2026.", 409);
+  if (!registrationOpen()) return jsonError(registrationUnavailableMessage(), 409);
 
   const evId = String(body?.eventId ?? "").trim();
   const event = findEvent(evId);
@@ -152,6 +163,9 @@ async function createTeam(body: any) {
   const who = await resolveApplicantEmail(String(body?.email ?? ""));
   if ("error" in who) return who.error;
   const email = who.email;
+  const session = await resolveRole();
+  if (staffBlocksApplication(session.kind, roleForEmail(email).kind))
+    return jsonError(STAFF_CANNOT_APPLY, 403);
 
   const name = String(body?.name ?? "").trim();
   const bio = String(body?.bio ?? "").trim();
@@ -162,7 +176,7 @@ async function createTeam(body: any) {
   if (name.length < 2 || name.length > 80) return jsonError("Enter a team name.", 400);
   if (bio.length > MAX_TEAM_BIO) return jsonError("Team bio is too long.", 400);
   if (leadName.length < 2 || leadName.length > 80) return jsonError("Enter your full name.", 400);
-  if (!isValidPhone(phone)) return jsonError("Enter a 10-digit phone number.", 400);
+  if (!isValidPhone(phone)) return jsonError(PHONE_HINT, 400);
   if (college.length < 2 || college.length > 120) return jsonError("Enter your college name.", 400);
 
   try {
@@ -173,7 +187,14 @@ async function createTeam(body: any) {
     if (existingMembership?.code) {
       const code = normalizeTeamCode(existingMembership.code);
       const existing = await loadTeam(evId, code);
-      if (existing) return NextResponse.json({ ...toTeamPreview(existing), created: false, restored: true });
+      if (existing) {
+        const members = await listTeamMembers(evId, code);
+        return NextResponse.json({
+          ...toTeamPreview(existing, members, maxTeamSizeFor(event), true),
+          created: false,
+          restored: true,
+        });
+      }
       return jsonError("You're already on a team for this event.", 409);
     }
   } catch (e) {
@@ -222,11 +243,11 @@ async function createTeam(body: any) {
     return jsonError("Your team didn't save. Try again in a moment.", 500);
   }
 
-  return NextResponse.json({ ...toTeamPreview(team, [lead]), created: true });
+  return NextResponse.json({ ...toTeamPreview(team, [lead], maxTeamSizeFor(event), true), created: true });
 }
 
 async function joinTeam(body: any) {
-  if (!registrationOpen()) return jsonError("Applications closed on 4 October 2026.", 409);
+  if (!registrationOpen()) return jsonError(registrationUnavailableMessage(), 409);
 
   const evId = String(body?.eventId ?? "").trim();
   const event = findEvent(evId);
@@ -235,6 +256,9 @@ async function joinTeam(body: any) {
   const who = await resolveApplicantEmail(String(body?.email ?? ""));
   if ("error" in who) return who.error;
   const email = who.email;
+  const session = await resolveRole();
+  if (staffBlocksApplication(session.kind, roleForEmail(email).kind))
+    return jsonError(STAFF_CANNOT_APPLY, 403);
 
   const code = normalizeTeamCode(String(body?.code ?? ""));
   const name = String(body?.name ?? "").trim();
@@ -243,7 +267,7 @@ async function joinTeam(body: any) {
 
   if (!isValidTeamCode(code)) return jsonError("Enter a valid team code.", 400);
   if (name.length < 2 || name.length > 80) return jsonError("Enter your full name.", 400);
-  if (!isValidPhone(phone)) return jsonError("Enter a 10-digit phone number.", 400);
+  if (!isValidPhone(phone)) return jsonError(PHONE_HINT, 400);
   if (college.length < 2 || college.length > 120) return jsonError("Enter your college name.", 400);
 
   let team: Team;
@@ -264,15 +288,14 @@ async function joinTeam(body: any) {
     return blobFailed(e, "team join precheck failed");
   }
 
-  // Roster comes from per-member records; the team blob's members[] is a cache
-  // that concurrent joins can leave stale.
+  const maxMembers = maxTeamSizeFor(event);
   const roster = await listTeamMembers(evId, code);
   const alreadyMember = roster.some((m: any) => m.email === email);
   if (alreadyMember && team.createdByEmail === email)
     return jsonError("You're the team lead — continue to submit your application.", 409);
 
-  if (!alreadyMember && roster.length >= MAX_TEAM_SIZE)
-    return jsonError(`This team is full (${MAX_TEAM_SIZE} including the lead).`, 409);
+  if (!alreadyMember && roster.length >= maxMembers)
+    return jsonError(`This team is full (${maxMembers} including the lead).`, 409);
 
   const joiner: TeamMember = {
     name,
@@ -314,18 +337,20 @@ async function joinTeam(body: any) {
     capacity: capacityFor(evId),
     teamName: team.name,
     teamCode: team.code,
-    memberCount: team.members.length,
-    maxMembers: MAX_TEAM_SIZE,
+    memberCount: alreadyMember ? roster.length : roster.length + 1,
+    maxMembers,
   });
 }
 
 /**
  * GET  /api/teams?event=&code=          -> team preview (name, bio, member count)
- * GET  /api/teams?event=&mine=1         -> caller's existing team (auth), or { team: null }
- * POST /api/teams { action: "verify" }  -> same preview
+ * GET  /api/teams?event=&mine=1         -> caller's existing team + {name,email} roster
+ * POST /api/teams { action: "verify" }  -> same preview (no member emails)
  * POST /api/teams { action: "mine" }    -> same as GET mine
  * POST /api/teams { action: "create" }  -> mint a code (auth required); restores if already created
  * POST /api/teams { action: "join" }    -> add member + create their application
+ *                                         (allowed after the lead has submitted,
+ *                                         until event.teamSize.max is reached)
  */
 export async function GET(req: Request) {
   const url = new URL(req.url);

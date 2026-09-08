@@ -1,6 +1,12 @@
+/**
+ * A coordinator as the public site knows them: a name, and nothing to dial.
+ *
+ * Phone numbers deliberately live in lib/coordinator-phones.ts instead. This
+ * file is imported by client components for the events array, so anything
+ * added here ships to every browser whether or not it is rendered.
+ */
 export interface Coordinator {
   name: string;
-  phone: string;
 }
 
 export interface Event {
@@ -30,8 +36,13 @@ export interface Event {
   };
   /** Rulebook PDF, usually a Google Drive link from the sheet. */
   brochureUrl: string;
-  /** Hall / lab inside the campus. Falls back to FEST.venue when unset. */
-  venue?: string;
+  /** The club running this event, matching a `name` in `clubs` below so its
+      tagline can be looked up. Set only where the repo says so outright —
+      a description that names its own host, or a club email in
+      dashboardEmails. Left unset rather than guessed: the wrong club on a
+      public page is worse than no club, and the coordinators stand in as the
+      hosts until someone confirms the attribution. */
+  club?: string;
   /** Poster artwork (e.g. "/posters/electroxcape.png"). Falls back to a
       generated gradient cover when unset. */
   poster?: string;
@@ -60,6 +71,15 @@ export const prizePool = (e: Event) => e.prizes.reduce((a, b) => a + b, 0);
  * and it rises on its own as events are added.
  */
 export const totalPrizePool = () => events.reduce((sum, e) => sum + prizePool(e), 0);
+
+/**
+ * The prize pool as announced by the organising committee, shown on the hero,
+ * HUD and About page. It is deliberately NOT the sum of the per-event prizes
+ * in the sheet (totalPrizePool, currently lower): the committee's headline
+ * figure includes prizes not yet allocated to events. Update this when they
+ * revise the announcement; per-event amounts stay the source for event pages.
+ */
+export const ANNOUNCED_PRIZE_POOL = 600_000;
 
 /** How the team rule reads on screen, e.g. "Teams of 2–4" or "Solo or up to 3". */
 /**
@@ -148,6 +168,18 @@ export const clubs: Club[] = [
   { name: "Circuitopia", tagline: "Circuit Design Club" },
 ];
 
+/**
+ * The club named on an event, with the tagline from `clubs` attached.
+ *
+ * Null when the event has no `club` set, which is most of them — see the field
+ * comment on Event.club. Callers fall back to listing the coordinators as the
+ * hosts, so a missing attribution reads as a complete block rather than a gap.
+ */
+export function clubFor(e: Event): Club | null {
+  if (!e.club) return null;
+  return clubs.find((c) => c.name === e.club) ?? { name: e.club, tagline: "Organising club" };
+}
+
 export const faqs = [
   {
     question: "Who can participate in PRAVRUTTI?",
@@ -155,7 +187,7 @@ export const faqs = [
   },
   {
     question: "Is there a registration fee?",
-    answer: "Yes — ₹200 per head. Solo entries pay ₹200; teams pay ₹200 times the number of participants (up to 4 including the lead). Payment is collected online."
+    answer: "Yes — ₹200 per team, paid online by the team lead (or by you if you enter solo). Teammates who join with a code do not pay."
   },
   {
     question: "What is the last date for registration?",
@@ -221,10 +253,9 @@ export const events: Event[] = [
     capacity: 80,
     capacityUnit: "teams",
     duration: "3 hours",
-    venue: "GROUND",
     coordinators: {
       faculty: [],
-      student: [{ name: "A R BHARAATH", phone: "7259513381" }, { name: "JOSHIKA S", phone: "9611367397" }],
+      student: [{ name: "A R BHARAATH" }, { name: "JOSHIKA S" }],
     },
     dashboardEmails: ["arbharaath@gmail.com", "joshika2505@gmail.com"],
     brochureUrl: "https://drive.google.com/open?id=1XFa3H41-N8zeFVjLJ3atgOAIAiE4I9Kh",
@@ -240,10 +271,9 @@ export const events: Event[] = [
     capacity: 96,
     capacityUnit: "teams",
     duration: "3 hours",
-    venue: "C BLOCK",
     coordinators: {
       faculty: [],
-      student: [{ name: "SHASHANK", phone: "9449913019" }, { name: "JOSHIKA S", phone: "9611367397" }],
+      student: [{ name: "SHASHANK" }, { name: "JOSHIKA S" }],
     },
     dashboardEmails: ["shashankrpatil077@gmail.com", "joshika2505@gmail.com"],
     brochureUrl: "https://drive.google.com/open?id=13buhy5x71UbpF4pzXDKqMsMUFXBDg9VS",
@@ -259,10 +289,9 @@ export const events: Event[] = [
     capacity: 64,
     capacityUnit: "teams",
     duration: "3 hours",
-    venue: "Quadrangle",
     coordinators: {
       faculty: [],
-      student: [{ name: "A R BHARAATH", phone: "7259513381" }, { name: "RATHAN", phone: "6363548034" }],
+      student: [{ name: "A R BHARAATH" }, { name: "RATHAN" }],
     },
     dashboardEmails: ["arbharaath@gmail.com", "rathannraj1@gmail.com"],
     brochureUrl: "https://drive.google.com/open?id=1vLwTFYfBYOhMs8thP1fuYEZoph7zpDzK",
@@ -278,10 +307,9 @@ export const events: Event[] = [
     capacity: 60,
     capacityUnit: "teams",
     duration: "3 hours",
-    venue: "Classroom",
     coordinators: {
       faculty: [],
-      student: [{ name: "Sambal Agarwal", phone: "7307430193" }, { name: "Radhe S,", phone: "9686138774" }],
+      student: [{ name: "Sambal Agarwal" }, { name: "Radhe S," }],
     },
     dashboardEmails: ["sambalagarwal@gmail.com", "radheofficial11@gmail.com"],
     brochureUrl: "https://drive.google.com/open?id=1gsVbyHl7gd1QLAmE2iVsHKvngdUQQZSw",
@@ -298,10 +326,9 @@ export const events: Event[] = [
     capacityUnit: "teams",
     duration: "3 hours",
     eligibility: "ECE and related engineering students.",
-    venue: "Labs",
     coordinators: {
       faculty: [],
-      student: [{ name: "SACHIN R SHENOY", phone: "9353539822" }, { name: "Megha H", phone: "8867365326" }],
+      student: [{ name: "SACHIN R SHENOY" }, { name: "Megha H" }],
     },
     dashboardEmails: ["23etec004041@msruas.ac.in", "23etec004029@msruas.ac.in"],
     brochureUrl: "https://drive.google.com/open?id=18KxuqhLxOT4JSr8f3mEzE5Kcxtv3AFvN",
@@ -317,10 +344,9 @@ export const events: Event[] = [
     capacity: 60,
     capacityUnit: "participants",
     duration: "3 hours",
-    venue: "Seminar Hall ( A-206)",
     coordinators: {
       faculty: [],
-      student: [{ name: "Aaliyah Aijaz Ali Khan", phone: "8197092607" }, { name: "Gnaneshwari N", phone: "7829004057" }],
+      student: [{ name: "Aaliyah Aijaz Ali Khan" }, { name: "Gnaneshwari N" }],
     },
     dashboardEmails: ["24etis411003@msruas.ac.in", "24etis411024@msruas.ac.in"],
     brochureUrl: "https://drive.google.com/open?id=18erNy24IizpT-tTM8fRlfAfMVoNut9M_",
@@ -336,10 +362,9 @@ export const events: Event[] = [
     capacity: 60,
     capacityUnit: "teams",
     duration: "3 hours",
-    venue: "Basketball Court",
     coordinators: {
       faculty: [],
-      student: [{ name: "Bhauthik V", phone: "9742385315" }, { name: "Vimal Kanth", phone: "6361245327" }],
+      student: [{ name: "Bhauthik V" }, { name: "Vimal Kanth" }],
     },
     dashboardEmails: ["bhauthikfirefly@gmail.com", "vimalkanth411@gmail.com"],
     brochureUrl: "https://drive.google.com/open?id=1Nww0T18stoR2-cxuD5qIa2sd1S38WcBo",
@@ -355,10 +380,9 @@ export const events: Event[] = [
     capacity: 240,
     capacityUnit: "teams",
     duration: "3 hours",
-    venue: "Seminar Hall (capacity of about 70-90 students)",
     coordinators: {
       faculty: [],
-      student: [{ name: "Akshay", phone: "9686226622" }, { name: "Nikhita", phone: "9380268311" }],
+      student: [{ name: "Akshay" }, { name: "Nikhita" }],
     },
     dashboardEmails: ["akshayworkofficial01@gmail.com", "nikhita.n0601@gmail.com"],
     brochureUrl: "https://drive.google.com/open?id=1nn121x9xhfh1-sBKjEvltB1T4UdWJQIi",
@@ -374,10 +398,9 @@ export const events: Event[] = [
     capacity: 160,
     capacityUnit: "teams",
     duration: "3 hours",
-    venue: "Executive Seminar Hall (capacity of about 70-90 students)",
     coordinators: {
       faculty: [],
-      student: [{ name: "Akshy P M", phone: "9686226622" }, { name: "Nikhita", phone: "9380268311" }],
+      student: [{ name: "Akshy P M" }, { name: "Nikhita" }],
     },
     dashboardEmails: ["akshayworkofficial01@gmail.com", "nikhita.n0601@gmail.com"],
     brochureUrl: "https://drive.google.com/open?id=1nn121x9xhfh1-sBKjEvltB1T4UdWJQIi",
@@ -393,10 +416,9 @@ export const events: Event[] = [
     capacity: 160,
     capacityUnit: "teams",
     duration: "3 hours",
-    venue: "Classrooms",
     coordinators: {
       faculty: [],
-      student: [{ name: "Jeslene Iniya D", phone: "8148817683" }, { name: "Sooraj Chackravarthy", phone: "63602 69253" }],
+      student: [{ name: "Jeslene Iniya D" }, { name: "Sooraj Chackravarthy" }],
     },
     dashboardEmails: ["jesleneiniya@gmail.com", "25etai@msruas.ac.in"],
     brochureUrl: "https://drive.google.com/open?id=1ElTKXfek8BiWYo1kUeftetELkYiwshJU",
@@ -413,7 +435,7 @@ export const events: Event[] = [
     duration: "3 hours",
     coordinators: {
       faculty: [],
-      student: [{ name: "B S Mokshada", phone: "93538 24957" }, { name: "Siddharth P", phone: "70223 95629" }],
+      student: [{ name: "B S Mokshada" }, { name: "Siddharth P" }],
     },
     dashboardEmails: ["24etas012008@msruas.ac.in", "24etas012048@msruas.ac.in"],
     brochureUrl: "https://drive.google.com/open?id=1HHwcSPITqCzUs5vOgqvZsIOUVqQQe-Ij",
@@ -431,7 +453,7 @@ export const events: Event[] = [
     duration: "3 hours",
     coordinators: {
       faculty: [],
-      student: [{ name: "Spandana J S", phone: "6364220817" }, { name: "Dhvani Viroja", phone: "8460357383" }],
+      student: [{ name: "Spandana J S" }, { name: "Dhvani Viroja" }],
     },
     dashboardEmails: ["25etmc412021@msruas.ac.in,", "24etmc412010@msruas.ac.in"],
     brochureUrl: "https://drive.google.com/open?id=12PxcuNAKMp-XQCC1ACFht2C6jXHV0Z4o",
@@ -449,7 +471,7 @@ export const events: Event[] = [
     duration: "3 hours",
     coordinators: {
       faculty: [],
-      student: [{ name: "Shravya T", phone: "99948 35916" }, { name: "Pranav P J", phone: "95677 34887" }],
+      student: [{ name: "Shravya T" }, { name: "Pranav P J" }],
     },
     dashboardEmails: ["24etas012046@msruas.ac.in", "24etas012033@msruas.ac.in"],
     brochureUrl: "https://drive.google.com/open?id=1YqfGErhuVVse0_nbROkZ3KTdZugd3pcz",
@@ -467,8 +489,9 @@ export const events: Event[] = [
     duration: "2h 15m",
     coordinators: {
       faculty: [],
-      student: [{ name: "Nuthan.H", phone: "9019133340" }, { name: "Kunal Bhadauria", phone: "9019857885" }],
+      student: [{ name: "Nuthan.H" }, { name: "Kunal Bhadauria" }],
     },
+    club: "LEADS",
     dashboardEmails: ["nuthann268@gmail.com", "kunalbhadauria232005@gmail.com"],
     brochureUrl: "https://drive.google.com/open?id=1u5DF4HDP9whgfiCe5OwqOgzV-CXd3IPd",
   },
@@ -486,7 +509,7 @@ export const events: Event[] = [
     eligibility: "Phd students only",
     coordinators: {
       faculty: [],
-      student: [{ name: "Ankush Chadichal", phone: "8073411261" }, { name: "Abhilashree B Hosmani", phone: "7975965514" }],
+      student: [{ name: "Ankush Chadichal" }, { name: "Abhilashree B Hosmani" }],
     },
     dashboardEmails: ["ankush.chadichal@gmail.com", "gowuri.kotabagi@gmail.com"],
     brochureUrl: "https://drive.google.com/open?id=1CEDr_uGifU8BXsAPK3ZwU968vxwZtHA-",
@@ -504,7 +527,7 @@ export const events: Event[] = [
     duration: "3 hours",
     coordinators: {
       faculty: [],
-      student: [{ name: "Ankith A Joshi", phone: "8217684051" }, { name: "Afifa Fatima Karigar", phone: "9741698766" }],
+      student: [{ name: "Ankith A Joshi" }, { name: "Afifa Fatima Karigar" }],
     },
     dashboardEmails: ["23etas012004@msruas.ac.in", "23etas012002@msruas.ac.in"],
     brochureUrl: "https://drive.google.com/open?id=1_-znmVyUw5XJYEnpXfQ0SzuQXG0_Lq68",
@@ -520,11 +543,11 @@ export const events: Event[] = [
     capacity: 80,
     capacityUnit: "teams",
     duration: "3 hours",
-    venue: "Normal Class room",
     coordinators: {
       faculty: [],
-      student: [{ name: "Abhilash N M", phone: "8618488065" }, { name: "Rajeshwari", phone: "9019328888" }],
+      student: [{ name: "Abhilash N M" }, { name: "Rajeshwari" }],
     },
+    club: "Civil Club",
     dashboardEmails: ["ramaiahcivilclub@gmail.com", "kadaganchirajeshwaariv@gmail.com"],
     brochureUrl: "https://drive.google.com/open?id=154puKWw4eax-7EaWMGhwhuRj1yztw_N_",
   },
@@ -538,11 +561,11 @@ export const events: Event[] = [
     teamSize: { min: 2, max: 4, soloAllowed: false },
     capacityUnit: "teams",
     duration: "8 hours",
-    venue: "Seminar Hall or Lab",
     coordinators: {
       faculty: [],
-      student: [{ name: "Ganesh", phone: "7975324769" }, { name: "Shravanth", phone: "6363860239" }],
+      student: [{ name: "Ganesh" }, { name: "Shravanth" }],
     },
+    club: "IEEE",
     dashboardEmails: ["voxmastery@gmail.com", "shravanth.polisetty@gmail.com"],
     brochureUrl: "https://drive.google.com/open?id=1OMN_3v5Wxu6UhkZXUKWaAXtyNw6aROmo",
   },
@@ -556,11 +579,11 @@ export const events: Event[] = [
     teamSize: { min: 2, max: 4, soloAllowed: false },
     capacityUnit: "teams",
     duration: "24 hours",
-    venue: "Lab or Workshop",
     coordinators: {
       faculty: [],
-      student: [{ name: "Ganesh", phone: "7975324769" }, { name: "Shravanth", phone: "6363860239" }],
+      student: [{ name: "Ganesh" }, { name: "Shravanth" }],
     },
+    club: "IEEE",
     dashboardEmails: ["voxmastery@gmail.com", "shravanth.polisetty@gmail.com"],
     brochureUrl: "https://drive.google.com/open?id=1agRe2bIb_QXyatw1OcwjvKi0EtU5W0VL",
   },
@@ -575,10 +598,9 @@ export const events: Event[] = [
     capacity: 60,
     capacityUnit: "teams",
     duration: "1h 30m",
-    venue: "A BLOCK CLASSROOM",
     coordinators: {
       faculty: [],
-      student: [{ name: "Madhumitha A", phone: "9025678951" }, { name: "N Anushka", phone: "9606853110" }],
+      student: [{ name: "Madhumitha A" }, { name: "N Anushka" }],
     },
     dashboardEmails: ["mynaamadhu30@gmail.com", "anushkanagabhyru05@gmail.com"],
     brochureUrl: "https://drive.google.com/open?id=1o8gS1yTY5fSg8XD3qbfgg-rGfo07WueJ",
@@ -594,10 +616,9 @@ export const events: Event[] = [
     capacity: 60,
     capacityUnit: "teams",
     duration: "3 hours",
-    venue: "cad lab - 3d printing",
     coordinators: {
       faculty: [],
-      student: [{ name: "Pradeep Raj M", phone: "9025329551" }, { name: "Suman A", phone: "6364519267" }],
+      student: [{ name: "Pradeep Raj M" }, { name: "Suman A" }],
     },
     dashboardEmails: ["pradeepmadasamy55@gmail.com"],
     brochureUrl: "https://drive.google.com/file/d/1gXYhjUKu1XHG3I-icVGC9wN_kt0yI8AZ/view",
@@ -613,10 +634,9 @@ export const events: Event[] = [
     capacity: 200,
     capacityUnit: "teams",
     duration: "3 hours",
-    venue: "A BLOCK 5 classrooms",
     coordinators: {
       faculty: [],
-      student: [{ name: "Sudeepa Priyadarshini", phone: "9900964418" }, { name: "Tanya Shedde", phone: "7483573793" }],
+      student: [{ name: "Sudeepa Priyadarshini" }, { name: "Tanya Shedde" }],
     },
     dashboardEmails: ["sudeepapriyadarshini1826@gmail.com", "tanyashedde@gmail.com"],
     brochureUrl: "https://drive.google.com/file/d/1oh_df3Ze1iqCe1sLigOMs1Ywi63ysGNS/view",
@@ -635,7 +655,7 @@ export const events: Event[] = [
     eligibility: "Teams must consist of 3 to 4 members.",
     coordinators: {
       faculty: [],
-      student: [{ name: "Hrithik A", phone: "9686505558" }, { name: "L Mahadeva Balan", phone: "8147197853" }],
+      student: [{ name: "Hrithik A" }, { name: "L Mahadeva Balan" }],
     },
     dashboardEmails: ["hrithik18a@gmail.com", "mahadevlakshmanan@gmail.com"],
     brochureUrl: "https://drive.google.com/file/d/1ReNsPaD1nCLpK5bnTO9dHwFjVXEH-_tt/view?usp=drive_open",
@@ -652,34 +672,12 @@ export const events: Event[] = [
     capacityUnit: "teams",
     duration: "3 hours",
     eligibility: "Teams must have 2–3 members. All members must be present for the full event. Team members cannot be changed once the event begins.",
-    venue: "Seminar Hall / Classroom (Round 1) and Computer Lab (Rounds 2 and 3)",
     coordinators: {
       faculty: [],
-      student: [{ name: "Aman Tebriwal", phone: "62046 75554" }, { name: "Sneha", phone: "73558 82325" }],
+      student: [{ name: "Aman Tebriwal" }, { name: "Sneha" }],
     },
     dashboardEmails: ["amantebriwal104@gmail.com", "snehajangid027@gmail.com"],
     brochureUrl: "https://drive.google.com/open?id=1sSsvN1DOCowLaWqpeNWncriNXRJkmS8O",
-  },
-];
-
-export interface GalleryImage {
-  src: string;
-  alt: string;
-  caption: string;
-}
-
-/**
- * Photos from the previous edition (Pravrutti, 15–17 October 2025).
- *
- * TO ADD PHOTOS: drop the files into `public/gallery/` and append an entry here.
- * The About-page gallery renders exactly what this list contains and hides itself
- * entirely when the list is empty, so it can never ship as a broken/empty grid.
- */
-export const previousEditionGallery: GalleryImage[] = [
-  {
-    src: "/about.jpeg",
-    alt: "Pravrutti 2025 campaign poster — 15 to 17 October 2025, 10 lakh prize pool",
-    caption: "Pravrutti 2025 — the edition that set the bar",
   },
 ];
 
@@ -691,7 +689,20 @@ export const DEFAULT_CAPACITY = 100;
 export const EVENT_CAPACITY: Record<string, number> = {
   // override per-event: "electroxcape": 60,
 };
-export const capacityFor = (id: string) => EVENT_CAPACITY[id] ?? DEFAULT_CAPACITY;
+
+/**
+ * Seat cap for the registration meter. Sourced from the event's own
+ * `capacity` (the coordinators' head count) so the meter and the event
+ * panel always quote the same number — a blanket default here once had
+ * ROBO RACE showing "Capacity 80" beside "0 of 100 seats".
+ */
+const CAPACITY_BY_ID: Record<string, number> = Object.fromEntries(
+  events
+    .filter((e) => e.capacity != null)
+    .map((e) => [eventId(e.name), e.capacity as number])
+);
+export const capacityFor = (id: string) =>
+  EVENT_CAPACITY[id] ?? CAPACITY_BY_ID[id] ?? DEFAULT_CAPACITY;
 
 export const FEST = {
   name: "Pravrutti 2026",
@@ -700,7 +711,122 @@ export const FEST = {
   // IST (UTC+5:30) converted to UTC for calendar invites
   startUtc: "20261014T033000Z", // 09:00 IST, 14 Oct
   endUtc: "20261016T123000Z",   // 18:00 IST, 16 Oct
-  registrationCloses: "2026-10-04T18:29:59.000Z" // 04 Oct 2026, 11:59 PM IST
+  registrationCloses: "2026-10-04T18:29:59.000Z", // 04 Oct 2026, 11:59 PM IST
+  /** ISO instant registration opens. null until the committee announces it,
+      which the site renders as "Opening soon" and refuses applications. */
+  registrationOpens: null as string | null,
 };
 
-export const registrationOpen = () => Date.now() < Date.parse(FEST.registrationCloses);
+export type RegistrationState = "upcoming" | "open" | "closed";
+
+/**
+ * Where registration is in its lifecycle. Three states, not a boolean: before
+ * the announced opening (or while none is announced) the site must say
+ * "opening soon", never "closed", and it must not accept applications either.
+ * `now` and `fest` are parameters so the boundaries are testable.
+ */
+export const registrationState = (
+  now: number = Date.now(),
+  fest: { registrationCloses: string; registrationOpens: string | null } = FEST
+): RegistrationState => {
+  if (now >= Date.parse(fest.registrationCloses)) return "closed";
+  if (!fest.registrationOpens || now < Date.parse(fest.registrationOpens)) return "upcoming";
+  return "open";
+};
+
+export const registrationOpen = (
+  now: number = Date.now(),
+  fest: { registrationCloses: string; registrationOpens: string | null } = FEST
+) => registrationState(now, fest) === "open";
+
+const MONTHS_SHORT = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
+
+/** IST is UTC+5:30; the fest's own timestamps are stored as UTC instants. */
+const IST_OFFSET_MS = (5 * 60 + 30) * 60 * 1000;
+
+/**
+ * Day one, for the calendar-tile badges. Read off startUtc rather than typed
+ * again by hand, because a badge that disagrees with FEST.dates sends someone
+ * to campus on the wrong morning.
+ */
+export const FEST_START = (() => {
+  const m = /^(\d{4})(\d{2})(\d{2})/.exec(FEST.startUtc);
+  if (!m) return { day: "", month: "" };
+  return { day: String(Number(m[3])), month: MONTHS_SHORT[Number(m[2]) - 1] ?? "" };
+})();
+
+/**
+ * The closing deadline as participants read it: an IST calendar date.
+ *
+ * Shifted into IST before the parts are read, because the stored instant is
+ * 18:29:59Z — a bare toLocaleDateString() renders 04 October in India and
+ * 04 or 05 depending on the runtime elsewhere, and Vercel builds in UTC.
+ */
+export const REGISTRATION_CLOSES_DISPLAY = (() => {
+  const ist = new Date(Date.parse(FEST.registrationCloses) + IST_OFFSET_MS);
+  if (Number.isNaN(ist.getTime())) return "";
+  const day = String(ist.getUTCDate()).padStart(2, "0");
+  return `${day} ${MONTHS_SHORT[ist.getUTCMonth()] ?? ""} ${ist.getUTCFullYear()}`;
+})();
+
+/** API refusal text, so every route says the same thing for the same reason. */
+export const registrationUnavailableMessage = (state: RegistrationState = registrationState()) =>
+  state === "upcoming"
+    ? "Registration hasn\u2019t opened yet \u2014 check back soon."
+    : `Applications closed on ${REGISTRATION_CLOSES_DISPLAY}.`;
+
+
+/**
+ * Campus coordinates, read off the map embed that already points at the venue.
+ * The hero HUD used to carry hand-typed coordinates ~5km from campus; the embed
+ * URL is the one place in this repo where the real position is already correct,
+ * so it is the source. Null if the URL shape ever changes — callers drop the
+ * line rather than print a guess.
+ */
+export const CAMPUS_COORDS = (() => {
+  const url = contacts.location.embedUrl;
+  const lat = Number(/!3d(-?\d+(?:\.\d+)?)/.exec(url)?.[1]);
+  const lng = Number(/!2d(-?\d+(?:\.\d+)?)/.exec(url)?.[1]);
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
+  const label =
+    `${Math.abs(lat).toFixed(4)}\u00B0 ${lat >= 0 ? "N" : "S"}, ` +
+    `${Math.abs(lng).toFixed(4)}\u00B0 ${lng >= 0 ? "E" : "W"}`;
+  return { lat, lng, label };
+})();
+
+/**
+ * The organisation behind every event, for the "Presented by" block.
+ *
+ * The same for all 24 events, unlike Event.club: IIC is recorded as the fest's
+ * main organiser in the `clubs` list above, and the university hosts it.
+ */
+export const PRESENTER = {
+  name: FEST.name,
+  org: "Institution Innovation Council · Ramaiah University of Applied Sciences",
+  blurb:
+    "The annual inter-college technical fest of Ramaiah University of Applied Sciences \u2014 24 events across engineering, research, code and enterprise, run by 16 student clubs.",
+  email: contacts.email,
+};
+
+/**
+ * The one-line "when" for an event, Luma's compact date row.
+ *
+ * Uses the event's own day and start time once the coordinators supply them,
+ * and otherwise states the fest range rather than inventing a slot — an event
+ * page that guesses a time sends someone to campus on the wrong morning.
+ */
+export function eventWhen(e: Event): { line: string; exact: boolean } {
+  if (!e.day) return { line: FEST.dates, exact: false };
+
+  const start = new Date(Date.UTC(2026, 9, 13 + e.day, 3, 30));
+  const date = new Intl.DateTimeFormat("en-IN", {
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+    timeZone: "Asia/Kolkata",
+  }).format(start);
+
+  return e.startsAt
+    ? { line: `${date}, ${e.startsAt}`, exact: true }
+    : { line: date, exact: false };
+}

@@ -1,17 +1,20 @@
 import { NextResponse } from "next/server";
-import { randomBytes } from "crypto";
-import { events, eventId, capacityFor, registrationOpen } from "@/lib/pravrutti-data";
+import { events, eventId, capacityFor, registrationOpen, registrationUnavailableMessage } from "@/lib/pravrutti-data";
+import { newTicketId } from "@/lib/ticket-id";
 import {
   Application,
-  PAYMENTS_LIVE,
   MAX_TEAM_SIZE,
   Teammate,
-  formatFee,
+  feeForApplicant,
   isValidPhone,
   normalizePhone,
+  PHONE_HINT,
+  readPaymentRef,
 } from "@/lib/applications";
 import { Team, normalizeTeamCode, isValidTeamCode } from "@/lib/teams";
 import { resolveEmail } from "@/lib/identity";
+import { resolveRole, roleForEmail } from "@/lib/roles";
+import { staffBlocksApplication, STAFF_CANNOT_APPLY } from "@/lib/staff-cockpit";
 import {
   listAll,
   readPrivate,
@@ -76,6 +79,9 @@ export async function POST(req: Request) {
   // someone else, and the ticket always lands on an inbox they control.
   const verified = await resolveEmail();
   const email = (verified ?? String(body?.email ?? "")).trim().toLowerCase();
+  const session = await resolveRole();
+  if (staffBlocksApplication(session.kind, roleForEmail(email).kind))
+    return NextResponse.json({ error: STAFF_CANNOT_APPLY }, { status: 403 });
   const phone = normalizePhone(body?.phone);
   const college = String(body?.college ?? "").trim();
   const evId = String(body?.eventId ?? "").trim();
@@ -122,13 +128,13 @@ export async function POST(req: Request) {
   const event = events.find((e) => eventId(e.name) === evId);
   if (!event) return NextResponse.json({ error: "That event doesn't exist." }, { status: 400 });
   if (!registrationOpen())
-    return NextResponse.json({ error: "Applications closed on 4 October 2026." }, { status: 409 });
+    return NextResponse.json({ error: registrationUnavailableMessage() }, { status: 409 });
   if (name.length < 2 || name.length > 80)
     return NextResponse.json({ error: "Enter your full name." }, { status: 400 });
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email) || email.length > 120)
     return NextResponse.json({ error: "Enter a valid email address." }, { status: 400 });
   if (!isValidPhone(phone))
-    return NextResponse.json({ error: "Enter a 10-digit phone number." }, { status: 400 });
+    return NextResponse.json({ error: PHONE_HINT }, { status: 400 });
   if (college.length < 2 || college.length > 120)
     return NextResponse.json({ error: "Enter your college name." }, { status: 400 });
   if (teamName.length > 80)
@@ -142,26 +148,28 @@ export async function POST(req: Request) {
     const m = membersList[i];
     if (m.name.length < 2 || m.name.length > 80)
       return NextResponse.json({ error: `Enter teammate ${i + 1}'s name.` }, { status: 400 });
+    // Legacy comma-separated rosters carry names only, so a missing phone there
+    // is the shape of the payload rather than something the applicant skipped.
     if (Array.isArray(body?.members) && !isValidPhone(m.phone))
-      return NextResponse.json({ error: `Enter a valid phone for teammate ${i + 1}.` }, { status: 400 });
+      return NextResponse.json({ error: `Teammate ${i + 1}: ${PHONE_HINT}` }, { status: 400 });
   }
 
   const isFree = event.fee.toLowerCase().startsWith("free");
-  const headCount = team ? 1 : 1 + membersList.length;
-  const fee = isFree ? event.fee : formatFee(headCount);
+  const isJoiner = Boolean(team && team.createdByEmail !== email);
+  const { payment, fee } = feeForApplicant({ eventFree: isFree, eventFee: event.fee, isJoiner });
   const membersPayload =
     membersList.length === 0
       ? null
       : JSON.stringify(membersList.map((m) => ({ name: m.name, phone: m.phone || null })));
 
-  const ticketId = `PRV-${randomBytes(4).toString("hex").toUpperCase()}`;
+  const ticketId = newTicketId();
 
   const record: Application = {
     ticketId,
     eventId: evId,
     eventName: event.name,
     status: "pending",
-    payment: isFree ? "not_required" : PAYMENTS_LIVE ? "paid" : "awaiting",
+    payment,
     fee,
     name,
     email,
@@ -170,6 +178,10 @@ export async function POST(req: Request) {
     teamName: teamName || null,
     teamCode: team ? team.code : null,
     members: membersPayload,
+    // Applicant-supplied, so it is a claim to reconcile rather than proof.
+    // Bounded here because it is displayed verbatim on the organiser desk.
+    // Joiners are not charged — ignore anything they send here.
+    paymentRef: isJoiner ? null : readPaymentRef(body?.paymentRef) || null,
     appliedAt: new Date().toISOString(),
   };
 
