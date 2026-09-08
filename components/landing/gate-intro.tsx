@@ -91,8 +91,7 @@ export function GateIntro({ onComplete }: { onComplete: () => void }) {
 
   return (
     <div
-      className="fixed inset-0 z-[9999] pointer-events-none select-none overflow-hidden flex items-center justify-center px-6"
-      style={{
+      className="fixed inset-0 z-[9999] pointer-events-none select-none overflow-hidden flex items-center justify-center px-6" style={{
         // Branded ground from the very first paint — the old flat #000 read as a
         // blank/broken screen while the logo was still downloading.
         background:
@@ -107,8 +106,7 @@ export function GateIntro({ onComplete }: { onComplete: () => void }) {
           Kept well below the old strength — with the scanline layer on top it
           muddied the ground it was supposed to quieten. */}
       <div
-        className="absolute inset-0 pointer-events-none"
-        style={{
+        className="absolute inset-0 pointer-events-none" style={{
           backgroundImage:
             "linear-gradient(to right, rgba(114,31,76,0.10) 1px, transparent 1px), linear-gradient(to bottom, rgba(114,31,76,0.10) 1px, transparent 1px)",
           backgroundSize: "72px 72px",
@@ -120,8 +118,7 @@ export function GateIntro({ onComplete }: { onComplete: () => void }) {
       {/* Central content — drifts up a few pixels as it leaves, which reads as
           the page rising into place instead of the loader zooming at the viewer. */}
       <div
-        className="relative z-10 flex flex-col items-center justify-center text-center w-full"
-        style={{
+        className="relative z-10 flex flex-col items-center justify-center text-center w-full" style={{
           transform: revealing ? "translateY(-10px)" : "translateY(0)",
           opacity: revealing ? 0 : 1,
           transition:
@@ -132,8 +129,7 @@ export function GateIntro({ onComplete }: { onComplete: () => void }) {
             time the wordmark lands. */}
         <div
           data-intro-motion
-          className="absolute w-[520px] h-[520px] max-w-[110vw] max-h-[110vw] rounded-full pointer-events-none"
-          style={{
+          className="absolute w-[520px] h-[520px] max-w-[110vw] max-h-[110vw] rounded-full pointer-events-none" style={{
             background:
               "radial-gradient(circle, rgba(214,77,141,0.2) 0%, rgba(114,31,76,0.09) 45%, transparent 70%)",
             filter: "blur(30px)",
@@ -145,8 +141,7 @@ export function GateIntro({ onComplete }: { onComplete: () => void }) {
         {revealing && (
           <div
             data-intro-motion
-            className="absolute w-[320px] h-[320px] max-w-[80vw] max-h-[80vw] rounded-full pointer-events-none border border-[#D64D8D]"
-            style={{
+            className="absolute w-[320px] h-[320px] max-w-[80vw] max-h-[80vw] rounded-full pointer-events-none border border-cyber-pink" style={{
               animation: "intro-iris 0.95s cubic-bezier(0.22, 1, 0.36, 1) forwards",
               boxShadow: "0 0 40px rgba(214,77,141,0.5)",
             }}
@@ -156,8 +151,7 @@ export function GateIntro({ onComplete }: { onComplete: () => void }) {
         {/* Wordmark — reserved box keeps the layout stable and prevents the
             "blank screen then pop" the old version produced. */}
         <div
-          className="relative mb-10 w-[min(76vw,290px)] sm:w-[min(58vw,350px)] md:w-[400px]"
-          style={{ aspectRatio: "2 / 1" }}
+          className="relative mb-10 w-[min(76vw,290px)] sm:w-[min(58vw,350px)] md:w-[400px]" style={{ aspectRatio: "2 / 1" }}
         >
           {/* No skeleton placeholder here. A pulsing block where the wordmark
               belongs reads as a broken image, not as an entrance — and with the
@@ -165,13 +159,10 @@ export function GateIntro({ onComplete }: { onComplete: () => void }) {
               long enough to earn its keep. The reserved box below still holds
               the layout, so nothing shifts when the image lands. */}
           <img
-            src="/pravrutti-logo.png"
-            alt="Pravrutti 2.0 — National Tech Fest, RUAS"
-            width={1600}
+            src="/pravrutti-logo.png" alt="Pravrutti 2.0 — National Tech Fest, RUAS" width={1600}
             height={800}
             onLoad={() => setLogoReady(true)}
-            className="relative w-full h-full object-contain"
-            style={{
+            className="relative w-full h-full object-contain" style={{
               opacity: logoReady ? 1 : 0,
               transform: logoReady ? "translateY(0)" : "translateY(6px)",
               transition:
@@ -185,8 +176,7 @@ export function GateIntro({ onComplete }: { onComplete: () => void }) {
           {logoReady && (
             <div
               data-intro-motion
-              className="absolute inset-0 pointer-events-none overflow-hidden"
-              style={{
+              className="absolute inset-0 pointer-events-none overflow-hidden" style={{
                 maskImage: "url('/pravrutti-logo.png')",
                 WebkitMaskImage: "url('/pravrutti-logo.png')",
                 maskSize: "contain",
@@ -198,8 +188,7 @@ export function GateIntro({ onComplete }: { onComplete: () => void }) {
               }}
             >
               <div
-                className="absolute inset-y-0 w-1/3"
-                style={{
+                className="absolute inset-y-0 w-1/3" style={{
                   background:
                     "linear-gradient(100deg, transparent, rgba(255,245,230,0.85), transparent)",
                   animation: "intro-sweep 1.15s cubic-bezier(0.4, 0, 0.2, 1) 0.35s both",
@@ -215,8 +204,7 @@ export function GateIntro({ onComplete }: { onComplete: () => void }) {
             "National Tech Fest · RUAS" subtitle were both removed, the latter
             because the logo artwork already says exactly that. */}
         <div
-          className="w-[min(56vw,200px)] md:w-56 h-px bg-[#F7EEE4]/12 overflow-hidden relative"
-          style={{
+          className="w-[min(56vw,200px)] md:w-56 h-px bg-pearl-white/12 overflow-hidden relative" style={{
             // Staged: the rule widens into place after the wordmark has settled,
             // so the two don't arrive on top of each other.
             transform: logoReady ? "scaleX(1)" : "scaleX(0.2)",
@@ -226,8 +214,7 @@ export function GateIntro({ onComplete }: { onComplete: () => void }) {
           }}
         >
           <div
-            className="absolute top-0 left-0 h-full bg-gradient-to-r from-[#D64D8D] to-[#F2D2AE]"
-            style={{
+            className="absolute top-0 left-0 h-full bg-gradient-to-r from-cyber-pink to-champagne-gold" style={{
               width: `${progress}%`,
               transition: "width 0.35s cubic-bezier(0.22, 1, 0.36, 1)",
               boxShadow: "0 0 10px rgba(214,77,141,0.6)",

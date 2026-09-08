@@ -62,6 +62,14 @@ for (const eventId of eventIds) {
       phone: `9${Math.floor(100000000 + rand() * 899999999)}`,
       college: pick(COLLEGES),
       status,
+      /* Real rows always carry a fee + payment (see feeForApplicant); the
+         desk renders an "Unknown" badge for rows that lack them, so seeded
+         data must not. Confirmed people have paid; pending owe; declined
+         are refunded. */
+      fee: "Rs. 200/-",
+      payment: status === "confirmed" ? "paid" : status === "declined" ? "refunded" : "awaiting",
+      paymentVerifiedAt: status === "confirmed" ? new Date(Date.UTC(2026, 8, 28)).toISOString() : undefined,
+      paymentVerifiedBy: status === "confirmed" ? "voxmastery@gmail.com" : undefined,
       createdAt: new Date(Date.UTC(2026, 8, 1 + Math.floor(rand() * 25))).toISOString(),
       checkedInAt: checkedIn
         ? new Date(Date.UTC(2026, 9, 15, 9 + Math.floor(rand() * 6), Math.floor(rand() * 60))).toISOString()

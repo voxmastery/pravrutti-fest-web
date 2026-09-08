@@ -33,8 +33,7 @@ export function FloatingParticles() {
       const drift = (Math.random() - 0.5) * 100;
       const color = colors[Math.floor(Math.random() * colors.length)];
 
-      particle.style.cssText = `
-        width: ${size}px;
+      particle.style.cssText = ` width: ${size}px;
         height: ${size}px;
         left: ${left}%;
         bottom: -10px;
@@ -52,8 +51,6 @@ export function FloatingParticles() {
   return (
     <div
       ref={containerRef}
-      className="absolute inset-0 overflow-hidden pointer-events-none z-[2]"
-      aria-hidden="true"
-    />
+      className="absolute inset-0 overflow-hidden pointer-events-none z-[2]" aria-hidden="true" />
   );
 }

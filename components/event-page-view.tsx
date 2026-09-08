@@ -91,10 +91,8 @@ export function EventPageView({ event, slug }: { event: Event; slug: string }) {
 
   const contactAction = showHostActions ? (
     <button
-      type="button"
-      onClick={() => setContacting(true)}
-      className="shrink-0 font-sharetech text-sm text-pearl-white/50 hover:text-champagne-gold transition-colors cursor-pointer rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyber-pink"
-    >
+      type="button" onClick={() => setContacting(true)}
+      className="shrink-0 text-sm text-pearl-white/50 hover:text-champagne-gold transition-colors cursor-pointer rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyber-pink" >
       Contact
     </button>
   ) : undefined;
@@ -105,28 +103,21 @@ export function EventPageView({ event, slug }: { event: Event; slug: string }) {
           this route, so this bar is the way back and the way to share. */}
       <div className="lg:hidden sticky top-0 z-40 -mx-6 mb-5 px-2 h-14 flex items-center gap-1 bg-midnight-navy/90 backdrop-blur-md border-b border-royal-wine/60">
         <Link
-          href="/events"
-          aria-label="Back to all events"
-          className="w-11 h-11 shrink-0 rounded-xl flex items-center justify-center text-pearl-white/70 hover:text-champagne-gold hover:bg-cosmic-purple transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyber-pink"
-        >
+          href="/events" aria-label="Back to all events" className="w-11 h-11 shrink-0 rounded-xl flex items-center justify-center text-pearl-white/70 hover:text-champagne-gold hover:bg-cosmic-purple transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyber-pink" >
           <ArrowLeft className="w-5 h-5" aria-hidden="true" />
         </Link>
         <span
-          aria-hidden="true"
-          className={`min-w-0 flex-1 font-orbitron text-sm font-bold text-pearl-white truncate transition-opacity duration-200 ${
-            collapsed ? "opacity-100" : "opacity-0"
-          }`}
+          aria-hidden="true" className={`min-w-0 flex-1 font-display text-sm font-bold text-pearl-white truncate transition-opacity duration-200 ${
+            collapsed ? "opacity-100" : "opacity-0" }`}
         >
           {event.name}
         </span>
         <button
-          type="button"
-          onClick={share}
+          type="button" onClick={share}
           aria-label={copied ? "Link copied" : "Share this event"}
-          className="w-11 h-11 shrink-0 rounded-xl flex items-center justify-center text-pearl-white/70 hover:text-champagne-gold hover:bg-cosmic-purple transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyber-pink"
-        >
+          className="w-11 h-11 shrink-0 rounded-xl flex items-center justify-center text-pearl-white/70 hover:text-champagne-gold hover:bg-cosmic-purple transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyber-pink" >
           {copied ? (
-            <Check className="w-5 h-5 text-[#7BE3A8]" aria-hidden="true" />
+            <Check className="w-5 h-5 text-success-soft" aria-hidden="true" />
           ) : (
             <Share2 className="w-5 h-5" aria-hidden="true" />
           )}
@@ -134,9 +125,7 @@ export function EventPageView({ event, slug }: { event: Event; slug: string }) {
       </div>
 
       <Link
-        href="/events"
-        className="hidden lg:inline-flex items-center gap-2 mb-8 font-orbitron text-xs uppercase tracking-widest text-pearl-white/50 hover:text-cyber-pink transition-colors rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyber-pink"
-      >
+        href="/events" className="hidden lg:inline-flex items-center gap-2 mb-8 font-display text-xs uppercase tracking-widest text-pearl-white/50 hover:text-cyber-pink transition-colors rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyber-pink" >
         <ArrowLeft className="w-3.5 h-3.5" aria-hidden="true" /> All events
       </Link>
 
@@ -148,8 +137,7 @@ export function EventPageView({ event, slug }: { event: Event; slug: string }) {
               about the event below the fold. */}
           <div className="order-1 lg:order-none relative w-full max-w-[420px] mx-auto lg:max-w-none">
             <div
-              aria-hidden="true"
-              className={`absolute -inset-3 rounded-3xl bg-gradient-to-br ${COVER_GRADIENTS[event.category]} blur-2xl opacity-45`}
+              aria-hidden="true" className={`absolute -inset-3 rounded-3xl bg-gradient-to-br ${COVER_GRADIENTS[event.category]} blur-2xl opacity-45`}
             />
             <div className="relative aspect-square w-full rounded-2xl overflow-hidden border border-royal-wine">
               <EventPoster event={event} name={event.name} priority className="absolute inset-0 w-full h-full" />
@@ -170,17 +158,17 @@ export function EventPageView({ event, slug }: { event: Event; slug: string }) {
         <div className="contents lg:block lg:space-y-6">
           <div ref={titleRef} className="order-2 lg:order-none min-w-0 space-y-3">
             <div className="flex flex-wrap items-center gap-2">
-              <span className="px-3 py-1 max-w-full rounded-full font-orbitron text-[10px] font-black uppercase tracking-widest bg-neon-purple/50 text-champagne-gold border border-royal-wine break-words">
+              <span className="px-3 py-1 max-w-full rounded-full font-display text-[10px] font-black uppercase tracking-widest bg-neon-purple/50 text-champagne-gold border border-royal-wine break-words">
                 {event.category}
               </span>
-              <span className="px-3 py-1 rounded-full font-orbitron text-[10px] font-black uppercase tracking-widest bg-cyber-pink/20 text-cyber-pink border border-cyber-pink/40">
+              <span className="px-3 py-1 rounded-full font-display text-[10px] font-black uppercase tracking-widest bg-cyber-pink/20 text-cyber-pink border border-cyber-pink/40">
                 {teamLabel(event)}
               </span>
             </div>
-            <h1 className="font-orbitron text-3xl sm:text-4xl lg:text-5xl font-black tracking-wide text-pearl-white leading-[1.1] text-balance break-words">
+            <h1 className="font-display text-3xl sm:text-4xl lg:text-5xl font-black tracking-wide text-pearl-white leading-[1.1] text-balance break-words">
               {event.name}
             </h1>
-            <p className="font-sharetech text-sm text-cyber-pink uppercase tracking-widest break-words">{event.subCategory}</p>
+            <p className="text-sm text-cyber-pink uppercase tracking-widest break-words">{event.subCategory}</p>
           </div>
 
           <div className="order-3 lg:order-none min-w-0">
@@ -199,8 +187,7 @@ export function EventPageView({ event, slug }: { event: Event; slug: string }) {
             ticketHref={`/ticket?event=${encodeURIComponent(slug)}`}
             onContact={() => setContacting(true)}
             onMore={() => setMoreOpen(true)}
-            className="order-6 lg:order-none min-w-0"
-          />
+            className="order-6 lg:order-none min-w-0" />
 
           <div className="order-7 lg:order-none min-w-0 empty:hidden">
             <EventRegisterPanel
@@ -217,7 +204,7 @@ export function EventPageView({ event, slug }: { event: Event; slug: string }) {
 
           <section className="order-10 lg:order-none min-w-0 space-y-3">
             <SectionLabel>About this event</SectionLabel>
-            <p className="font-sharetech text-pearl-white/75 leading-relaxed whitespace-pre-line break-words">
+            <p className="text-pearl-white/75 leading-relaxed whitespace-pre-line break-words">
               {event.description}
             </p>
           </section>
@@ -230,13 +217,12 @@ export function EventPageView({ event, slug }: { event: Event; slug: string }) {
                 <div
                   key={i}
                   className={`p-4 rounded-2xl bg-cosmic-purple/60 border text-center ${
-                    i === 0 ? "text-champagne-gold border-soft-gold/40" : "text-pearl-white border-royal-wine"
-                  }`}
+                    i === 0 ? "text-champagne-gold border-soft-gold/40" : "text-pearl-white border-royal-wine" }`}
                 >
-                  <p className="font-sharetech text-[10px] uppercase tracking-widest text-pearl-white/40">
+                  <p className="text-[10px] uppercase tracking-widest text-pearl-white/40">
                     {PLACES[i]}
                   </p>
-                  <p className="font-orbitron text-lg font-black mt-1 tabular-nums">{formatINR(amount)}</p>
+                  <p className="font-display text-lg font-black mt-1 tabular-nums">{formatINR(amount)}</p>
                 </div>
               ))}
             </div>
@@ -249,13 +235,11 @@ export function EventPageView({ event, slug }: { event: Event; slug: string }) {
           <div className="order-[13] lg:order-none min-w-0 space-y-3">
             <a href={event.brochureUrl} download={`${event.name}_Rules.pdf`} className="block">
               <Button
-                variant="outline"
-                className="w-full h-12 rounded-xl border-royal-wine bg-cosmic-purple font-orbitron text-xs font-bold uppercase tracking-widest text-champagne-gold hover:bg-deep-plum cursor-pointer"
-              >
+                variant="outline" className="w-full h-12 rounded-xl border-royal-wine bg-cosmic-purple font-display text-xs font-bold uppercase tracking-widest text-champagne-gold hover:bg-deep-plum cursor-pointer" >
                 <Download className="w-4 h-4 mr-2" aria-hidden="true" /> Download the rulebook
               </Button>
             </a>
-            <p className="flex items-start gap-2 min-w-0 font-sharetech text-xs text-pearl-white/35">
+            <p className="flex items-start gap-2 min-w-0 text-xs text-pearl-white/35">
               <Trophy className="w-3.5 h-3.5 shrink-0 text-soft-gold" aria-hidden="true" />
               <span className="min-w-0 break-words">{FEST.name} · {FEST.dates}</span>
             </p>

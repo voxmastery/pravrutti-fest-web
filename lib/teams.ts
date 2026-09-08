@@ -24,7 +24,14 @@ export type Team = {
   createdAt: string;
 };
 
-/** Public confirm-this-is-the-right-team payload. No member PII. */
+/** Name + email only. Phones stay on the team-member blob. */
+export type TeamPerson = {
+  name: string;
+  email: string;
+};
+
+/** Public confirm-this-is-the-right-team payload. No member PII unless
+    `members` is set — that field is mine/create only, never verify-by-code. */
 export type TeamPreview = {
   code: string;
   name: string;
@@ -32,7 +39,18 @@ export type TeamPreview = {
   memberCount: number;
   maxMembers: number;
   isFull: boolean;
+  members?: TeamPerson[];
 };
+
+/** Strip phones and college before anything leaves the teams API. */
+export function rosterPeople(members: TeamMember[]): TeamPerson[] {
+  return members
+    .map((m) => ({
+      name: String(m?.name ?? "").trim(),
+      email: String(m?.email ?? "").trim().toLowerCase(),
+    }))
+    .filter((p) => p.name.length >= 2 && p.email.includes("@"));
+}
 
 export function normalizeTeamCode(raw: string) {
   return String(raw ?? "")
@@ -47,19 +65,33 @@ export function isValidTeamCode(code: string) {
   return n.length >= TEAM_CODE_LENGTH_MIN && n.length <= TEAM_CODE_LENGTH;
 }
 
+/** Cap for this event, including the lead. Falls back to the global 4. */
+export function maxTeamSizeFor(event: { teamSize?: { max?: number } } | null | undefined) {
+  const max = Number(event?.teamSize?.max);
+  if (!Number.isFinite(max) || max < 1) return MAX_TEAM_SIZE;
+  return Math.floor(max);
+}
+
 /**
  * Pass `members` from listTeamMembers() — the team blob's own `members[]` is a
  * cache and can undercount after concurrent joins.
  */
-export function toTeamPreview(team: Team, members?: TeamMember[]): TeamPreview {
+export function toTeamPreview(
+  team: Team,
+  members?: TeamMember[],
+  maxMembers: number = MAX_TEAM_SIZE,
+  includeRoster = false,
+): TeamPreview {
   const roster = members ?? (Array.isArray(team.members) ? team.members : []);
   const memberCount = roster.length;
+  const cap = Math.max(1, maxMembers);
   return {
     code: team.code,
     name: team.name,
     bio: team.bio ?? "",
     memberCount,
-    maxMembers: MAX_TEAM_SIZE,
-    isFull: memberCount >= MAX_TEAM_SIZE,
+    maxMembers: cap,
+    isFull: memberCount >= cap,
+    ...(includeRoster ? { members: rosterPeople(roster) } : {}),
   };
 }

@@ -51,8 +51,8 @@ export function EventCoordinators({
           <li className="flex items-center gap-3 min-h-11 py-1.5">
             <InitialsAvatar name={club.name} org className="w-9 h-9 text-[10px]" />
             <div className="min-w-0 flex-1">
-              <p className="font-orbitron text-sm font-bold text-champagne-gold break-words">{club.name}</p>
-              <p className="font-sharetech text-xs text-pearl-white/45 break-words">{club.tagline}</p>
+              <p className="font-display text-sm font-bold text-champagne-gold break-words">{club.name}</p>
+              <p className="text-xs text-pearl-white/45 break-words">{club.tagline}</p>
             </div>
           </li>
         )}
@@ -63,15 +63,14 @@ export function EventCoordinators({
             <li key={c.name + c.role} className="flex items-center gap-3 min-h-11 py-1.5">
               <InitialsAvatar name={c.name} className="w-9 h-9 text-[10px]" />
               <div className="min-w-0 flex-1">
-                <p className="font-sharetech text-sm font-bold text-pearl-white break-words">{c.name}</p>
-                <p className="font-sharetech text-xs text-pearl-white/45 break-words">{c.role}</p>
+                <p className="text-sm font-bold text-pearl-white break-words">{c.name}</p>
+                <p className="text-xs text-pearl-white/45 break-words">{c.role}</p>
               </div>
               {phone && (
                 <a
                   href={`tel:${phone}`}
                   aria-label={`Call ${c.name} on ${phone}`}
-                  className="shrink-0 w-11 h-11 -mr-2 rounded-xl flex items-center justify-center text-cyber-pink hover:text-champagne-gold hover:bg-neon-purple/25 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyber-pink"
-                >
+                  className="shrink-0 w-11 h-11 -mr-2 rounded-xl flex items-center justify-center text-cyber-pink hover:text-champagne-gold hover:bg-neon-purple/25 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyber-pink" >
                   <Phone className="w-4 h-4" aria-hidden="true" />
                 </a>
               )}

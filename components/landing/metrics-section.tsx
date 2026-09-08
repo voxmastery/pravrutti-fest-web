@@ -66,8 +66,7 @@ function AnimatedNumber({ end, suffix = "", prefix = "" }: { end: number; suffix
           <span
             key={i}
             className={`inline-block transition-all duration-150 ${
-              isScrambling && char !== "," ? "blur-[1px]" : ""
-            }`}
+              isScrambling && char !== "," ? "blur-[1px]" : "" }`}
           >
             {char}
           </span>
@@ -137,8 +136,7 @@ function GridBackground() {
   return (
     <canvas
       ref={canvasRef}
-      className="absolute inset-0 pointer-events-none"
-      style={{ width: "100%", height: "100%" }}
+      className="absolute inset-0 pointer-events-none" style={{ width: "100%", height: "100%" }}
     />
   );
 }
@@ -194,9 +192,7 @@ function DotGraph({
 
         ctx.beginPath();
         ctx.arc(x, dotY, r, 0, Math.PI * 2);
-        ctx.fillStyle = color === "green"
-          ? `rgba(236, 168, 214, ${alpha})`
-          : `rgba(255, 255, 255, ${alpha})`;
+        ctx.fillStyle = color === "green" ? `rgba(236, 168, 214, ${alpha})` : `rgba(255, 255, 255, ${alpha})`;
         ctx.fill();
       }
 
@@ -247,18 +243,17 @@ export function MetricsSection() {
         <div className="grid lg:grid-cols-12 gap-8 mb-20 lg:mb-32">
           <div className="lg:col-span-8 lg:col-start-1">
             <div className="flex items-center gap-4 mb-6">
-              <span className="flex items-center gap-2 px-3 py-1 bg-[#eca8d6]/10 text-[#eca8d6] text-xs font-mono">
-                <span className="w-2 h-2 rounded-full bg-[#eca8d6] animate-pulse" />
+              <span className="flex items-center gap-2 px-3 py-1 bg-cyber-pink-light/10 text-cyber-pink-light text-xs">
+                <span className="w-2 h-2 rounded-full bg-cyber-pink-light animate-pulse" />
                 LIVE
               </span>
-              <span className="text-sm font-mono text-muted-foreground">
+              <span className="text-sm text-muted-foreground">
                 {time ? `${time.toLocaleTimeString("en-GB")} UTC` : ""}
               </span>
             </div>
 
             <h2 className={`text-6xl md:text-7xl lg:text-[140px] font-display tracking-tight leading-[0.95] transition-all duration-1000 ${
-              isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
-            }`}>
+              isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8" }`}>
               Real-time
               <br />
               <span className="text-muted-foreground">agent metrics.</span>
@@ -268,22 +263,16 @@ export function MetricsSection() {
 
         {/* Organic graph image */}
         <div className={`w-full mb-0 transition-all duration-1000 delay-200 ${
-          isVisible ? "opacity-100" : "opacity-0"
-        }`}>
+          isVisible ? "opacity-100" : "opacity-0" }`}>
           <img
-            src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/real-time-graph-INFmn3u0MlUwvNPynoIhwxtPaPjxM5.png"
-            alt=""
-            aria-hidden="true"
-            className="w-full h-auto object-cover"
-          />
+            src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/real-time-graph-INFmn3u0MlUwvNPynoIhwxtPaPjxM5.png" alt="" aria-hidden="true" className="w-full h-auto object-cover" />
         </div>
 
         {/* Metrics grid */}
         <div className="grid lg:grid-cols-3 gap-6">
           {/* Large metric */}
           <div className={`lg:col-span-1 bg-foreground/[0.02] border border-foreground/10 p-10 lg:p-14 transition-all duration-700 ${
-            isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-12"
-          }`}>
+            isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-12" }`}>
             <div className="text-4xl md:text-5xl lg:text-6xl font-display tracking-tight mb-4 whitespace-nowrap overflow-hidden">
               <AnimatedNumber end={metrics[0].value} suffix={metrics[0].suffix} prefix={metrics[0].prefix} />
             </div>
@@ -291,7 +280,7 @@ export function MetricsSection() {
               <DotGraph color="white" height={36} freq1={0.28} freq2={0.09} freqT={0.5} speed={0.018} baseline={0.35} amplitude={0.55} />
             </div>
             <div className="text-lg text-foreground mb-2">{metrics[0].label}</div>
-            <div className="text-sm text-muted-foreground font-mono">{metrics[0].sublabel}</div>
+            <div className="text-sm text-muted-foreground">{metrics[0].sublabel}</div>
           </div>
 
           {/* Metrics */}
@@ -299,12 +288,11 @@ export function MetricsSection() {
             <div
               key={metric.label}
               className={`bg-foreground/[0.02] border border-foreground/10 p-8 flex flex-col items-start justify-between gap-6 transition-all duration-700 ${
-                isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-12"
-              }`}
+                isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-12" }`}
               style={{ transitionDelay: `${(index + 1) * 100}ms` }}
             >
               <div className="w-full">
-                <div className="text-sm text-muted-foreground font-mono mb-2">{metric.sublabel}</div>
+                <div className="text-sm text-muted-foreground mb-2">{metric.sublabel}</div>
                 <div className="text-base text-foreground mb-3">{metric.label}</div>
                 <DotGraph
                   color={index === 0 ? "green" : "white"}
@@ -325,9 +313,8 @@ export function MetricsSection() {
         </div>
 
         {/* Bottom ticker */}
-        <div className={`mt-16 pt-8 border-t border-foreground/10 flex flex-wrap items-center gap-x-12 gap-y-4 text-sm font-mono text-muted-foreground transition-all duration-1000 delay-500 ${
-          isVisible ? "opacity-100" : "opacity-0"
-        }`}>
+        <div className={`mt-16 pt-8 border-t border-foreground/10 flex flex-wrap items-center gap-x-12 gap-y-4 text-sm text-muted-foreground transition-all duration-1000 delay-500 ${
+          isVisible ? "opacity-100" : "opacity-0" }`}>
           <span>OpenAI GPT-4 Turbo</span>
           <span>Anthropic Claude 3</span>
           <span>Mistral Large</span>

@@ -65,9 +65,9 @@ export const STATUS_META: Record<RegistrationStatus, StatusMeta> = {
 
 /** Tailwind classes per tone, so the pills stay consistent wherever they appear. */
 export const TONE_CLASSES: Record<StatusMeta["tone"], string> = {
-  pending: "text-[#F2D2AE] bg-[#BF8A1B]/15 border-[#BF8A1B]/45",
-  success: "text-[#7BE3A8] bg-[#12B76A]/15 border-[#12B76A]/45",
-  error: "text-[#FF8FA3] bg-[#F04438]/15 border-[#F04438]/45",
+  pending: "text-champagne-gold bg-soft-gold/15 border-soft-gold/45",
+  success: "text-success-soft bg-success/15 border-success/45",
+  error: "text-danger bg-danger-strong/15 border-danger-strong/45",
 };
 
 /**

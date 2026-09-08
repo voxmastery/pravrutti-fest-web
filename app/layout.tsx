@@ -1,40 +1,9 @@
 import React from "react"
 import type { Metadata } from 'next'
-import { 
-  Instrument_Sans, 
-  Instrument_Serif, 
-  JetBrains_Mono,
-  Press_Start_2P,
-  Orbitron,
-  Rajdhani,
-  VT323,
-  Share_Tech_Mono
-} from 'next/font/google'
+import { Orbitron, Rajdhani } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import { AuthProvider } from "@/components/session-provider"
 import './globals.css'
-
-const instrumentSans = Instrument_Sans({ 
-  subsets: ["latin"],
-  variable: '--font-instrument'
-});
-
-const instrumentSerif = Instrument_Serif({ 
-  subsets: ["latin"],
-  weight: "400",
-  variable: '--font-instrument-serif'
-});
-
-const jetbrainsMono = JetBrains_Mono({ 
-  subsets: ["latin"],
-  variable: '--font-jetbrains'
-});
-
-const arcadeFont = Press_Start_2P({
-  subsets: ["latin"],
-  weight: "400",
-  variable: '--font-arcade'
-});
 
 const orbitronFont = Orbitron({
   subsets: ["latin"],
@@ -46,18 +15,6 @@ const rajdhaniFont = Rajdhani({
   subsets: ["latin"],
   weight: ["300", "400", "500", "600", "700"],
   variable: '--font-rajdhani'
-});
-
-const vt323Font = VT323({
-  subsets: ["latin"],
-  weight: "400",
-  variable: '--font-vt323'
-});
-
-const shareTechMonoFont = Share_Tech_Mono({
-  subsets: ["latin"],
-  weight: "400",
-  variable: '--font-sharetech'
 });
 
 export const metadata: Metadata = {
@@ -79,16 +36,9 @@ export default function RootLayout({
         <link rel="preload" as="image" href="/pravrutti-logo.png" fetchPriority="high" />
         <link rel="preload" as="image" href="/gate-temple.png" />
       </head>
-      <body className={`
-        ${instrumentSans.variable} 
-        ${instrumentSerif.variable} 
-        ${jetbrainsMono.variable} 
-        ${arcadeFont.variable} 
-        ${orbitronFont.variable} 
+      <body className={` ${orbitronFont.variable} 
         ${rajdhaniFont.variable} 
-        ${vt323Font.variable} 
-        ${shareTechMonoFont.variable} 
-        font-sans antialiased text-[#F7EEE4]
+        antialiased text-pearl-white
       `}>
         <AuthProvider>{children}</AuthProvider>
         <Analytics />

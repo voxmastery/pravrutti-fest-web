@@ -1,7 +1,7 @@
 /**
  * Local-only sign-in override.
  *
- * Lets you open /dashboard and /admin/scan on a dev machine without a Google
+ * Lets you open /dashboard and /dashboard/scan on a dev machine without a Google
  * round-trip. It exists because the dashboards are the hardest surfaces to
  * inspect — every view behind them needs a real session and a real role.
  *

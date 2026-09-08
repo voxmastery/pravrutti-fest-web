@@ -1,5 +1,13 @@
 import { describe, it, expect } from "vitest";
-import { capacityInPeople, events, type Event } from "@/lib/pravrutti-data";
+import {
+  capacityFor,
+  capacityInPeople,
+  DEFAULT_CAPACITY,
+  eventId,
+  events,
+  EVENT_CAPACITY,
+  type Event,
+} from "@/lib/pravrutti-data";
 
 const make = (over: Partial<Event>): Event =>
   ({
@@ -56,5 +64,30 @@ describe("capacityInPeople", () => {
       if (people === null || !e.capacity) continue;
       expect(people).toBe(e.capacity);
     }
+  });
+});
+
+/**
+ * The registration meter and the event panel must quote the same number.
+ * capacityFor used to return a blanket 100 for every event, so ROBO RACE
+ * showed "Capacity 80" in one panel and "0 of 100 seats" in the other.
+ */
+describe("capacityFor", () => {
+  it("uses the event's own capacity from the coordinators' sheet", () => {
+    expect(capacityFor(eventId("ROBO RACE"))).toBe(80);
+  });
+
+  it("agrees with capacityInPeople for every capped event", () => {
+    for (const e of events) {
+      const people = capacityInPeople(e);
+      if (people === null) continue;
+      const id = eventId(e.name);
+      if (id in EVENT_CAPACITY) continue; // explicit override wins by design
+      expect(capacityFor(id)).toBe(people);
+    }
+  });
+
+  it("falls back to the default only when an event gave no cap", () => {
+    expect(capacityFor("no-such-event")).toBe(DEFAULT_CAPACITY);
   });
 });

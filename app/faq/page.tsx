@@ -20,7 +20,7 @@ export default function FAQPage() {
   }, []);
 
   return (
-    <main className="relative min-h-screen bg-transparent overflow-x-hidden text-[#F7EEE4] flex flex-col justify-between">
+    <main className="relative min-h-screen bg-transparent overflow-x-hidden text-pearl-white flex flex-col justify-between">
       <Navigation />
 
       {/* Grid overlay */}
@@ -28,15 +28,13 @@ export default function FAQPage() {
         {[...Array(8)].map((_, i) => (
           <div
             key={`h-${i}`}
-            className="absolute h-px bg-[#721F4C]/40"
-            style={{ top: `${12.5 * (i + 1)}%`, left: 0, right: 0 }}
+            className="absolute h-px bg-neon-purple/40" style={{ top: `${12.5 * (i + 1)}%`, left: 0, right: 0 }}
           />
         ))}
         {[...Array(12)].map((_, i) => (
           <div
             key={`v-${i}`}
-            className="absolute w-px bg-[#4A1C3A]/40"
-            style={{ left: `${8.33 * (i + 1)}%`, top: 0, bottom: 0 }}
+            className="absolute w-px bg-royal-wine/40" style={{ left: `${8.33 * (i + 1)}%`, top: 0, bottom: 0 }}
           />
         ))}
       </div>
@@ -47,15 +45,15 @@ export default function FAQPage() {
       <div className="relative z-10 flex-1 w-full max-w-[1000px] mx-auto px-6 py-32 lg:py-40">
         {/* Header */}
         <div className={`mb-16 text-center transition-all duration-700 ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}>
-          <span className="inline-flex items-center gap-3 text-sm font-orbitron tracking-widest text-[#D64D8D] uppercase font-bold mb-6 mx-auto">
-            <span className="w-8 h-px bg-[#721F4C]" />
+          <span className="inline-flex items-center gap-3 text-sm font-display tracking-widest text-cyber-pink uppercase font-bold mb-6 mx-auto">
+            <span className="w-8 h-px bg-neon-purple" />
             FAQS ARCHIVE
-            <span className="w-8 h-px bg-[#721F4C]" />
+            <span className="w-8 h-px bg-neon-purple" />
           </span>
-          <h1 className="text-4xl md:text-7xl font-orbitron tracking-wider text-[#F7EEE4] mb-6 font-black">
+          <h1 className="text-4xl md:text-7xl font-display tracking-wider text-pearl-white mb-6 font-black">
             FREQUENTLY ASKED <span className="text-stroke">QUESTIONS</span>
           </h1>
-          <p className="text-base md:text-xl text-[#F7EEE4]/70 leading-relaxed max-w-2xl mx-auto font-sharetech">
+          <p className="text-base md:text-xl text-pearl-white/70 leading-relaxed max-w-2xl mx-auto">
             Access the help logs. Find answers regarding entry coins, level venues, rules updates, and certificates.
           </p>
         </div>
@@ -70,15 +68,14 @@ export default function FAQPage() {
                    state against, so no panel ever expanded. */
                 key={`faq-${index}`}
                 value={`faq-${index}`}
-                className="border border-[#4A1C3A] rounded-2xl bg-[#150B1E]/60 backdrop-blur-md px-6 py-2 overflow-hidden transition-all duration-300 data-[state=open]:border-[#D64D8D] cyber-box"
-              >
-                <AccordionTrigger className="text-left font-orbitron text-base md:text-lg text-[#F7EEE4] hover:text-[#F2D2AE] hover:no-underline font-extrabold py-4">
+                className="border border-royal-wine rounded-2xl bg-cosmic-purple/60 backdrop-blur-md px-6 py-2 overflow-hidden transition-all duration-300 data-[state=open]:border-cyber-pink cyber-box" >
+                <AccordionTrigger className="text-left font-display text-base md:text-lg text-pearl-white hover:text-champagne-gold hover:no-underline font-extrabold py-4">
                   <div className="flex items-center gap-3 tracking-wide">
-                    <span className="text-sm font-mono text-[#D64D8D] font-bold">L{index + 1}.</span>
+                    <span className="text-sm text-cyber-pink font-bold">L{index + 1}.</span>
                     {faq.question}
                   </div>
                 </AccordionTrigger>
-                <AccordionContent className="text-base text-[#F7EEE4]/75 leading-relaxed pb-4 pt-2 font-sharetech">
+                <AccordionContent className="text-base text-pearl-white/75 leading-relaxed pb-4 pt-2">
                   {faq.answer}
                 </AccordionContent>
               </AccordionItem>
@@ -87,18 +84,16 @@ export default function FAQPage() {
         </div>
 
         {/* Contact Help Box in cyber-box bezel */}
-        <div className="p-8 border border-[#721F4C] bg-[#150B1E]/80 backdrop-blur-md rounded-3xl text-center max-w-xl mx-auto space-y-4 shadow-2xl shadow-[#721F4C]/25 cyber-box font-orbitron">
-          <div className="w-12 h-12 rounded-2xl bg-[#721F4C]/40 text-[#F2D2AE] flex items-center justify-center mx-auto">
+        <div className="p-8 border border-neon-purple bg-cosmic-purple/80 backdrop-blur-md rounded-3xl text-center max-w-xl mx-auto space-y-4 shadow-2xl shadow-neon-purple/25 cyber-box font-display">
+          <div className="w-12 h-12 rounded-2xl bg-neon-purple/40 text-champagne-gold flex items-center justify-center mx-auto">
             <Mail className="w-6 h-6" />
           </div>
-          <h3 className="text-2xl font-extrabold text-[#F7EEE4] tracking-wide">Still Have Questions?</h3>
-          <p className="text-base text-[#F7EEE4]/70 max-w-md mx-auto font-sharetech">
+          <h3 className="text-2xl font-extrabold text-pearl-white tracking-wide">Still Have Questions?</h3>
+          <p className="text-base text-pearl-white/70 max-w-md mx-auto">
             If you couldn't find an answer to your query, reach out directly to the core organizing committee.
           </p>
           <a
-            href="mailto:pravrutti@msruas.ac.in"
-            className="inline-block text-base font-bold text-[#F2D2AE] underline hover:text-white transition-colors"
-          >
+            href="mailto:pravrutti@msruas.ac.in" className="inline-block text-base font-bold text-champagne-gold underline hover:text-white transition-colors" >
             pravrutti@msruas.ac.in &rarr;
           </a>
         </div>

@@ -17,6 +17,15 @@ const badgeVariants = cva(
           'border-transparent bg-destructive text-white [a&]:hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60',
         outline:
           'text-foreground [a&]:hover:bg-accent [a&]:hover:text-accent-foreground',
+        /* Status tones (see lib/status-tone.ts). Pill-shaped, uppercase. */
+        success:
+          'rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider bg-success/15 border-success/45 text-success-soft',
+        warning:
+          'rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider bg-soft-gold/15 border-soft-gold/45 text-champagne-gold',
+        neutral:
+          'rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider bg-white/[0.05] border-white/[0.12] text-white/50',
+        danger:
+          'rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider bg-danger/15 border-danger/45 text-danger',
       },
     },
     defaultVariants: {

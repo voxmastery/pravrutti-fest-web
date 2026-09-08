@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server";
 import { resolveRole } from "@/lib/roles";
 import { resolveEmail } from "@/lib/identity";
-import { applicationPath, readJsonByPath, putJson } from "@/lib/blob-store";
-import type { Application } from "@/lib/applications";
+import { verifyPayment, unverifyPayment } from "@/lib/payment-review";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -17,13 +16,9 @@ const fail = (error: string, status: number) => NextResponse.json({ error }, { s
  * coordinator marking their own event's applicants as paid is exactly the
  * conflict of interest to avoid.
  *
- * Verifying also confirms a pending application, because the organisers'
- * own rule is "approve everyone who has paid" — leaving them separate would
- * mean two clicks for the only case that actually happens. A declined
- * application is never revived by a payment, which is the one exception.
- *
- * Reversible, because the common failure is a mis-click on the wrong row and
- * the only thing worse than no undo is a queue you cannot correct.
+ * The transitions themselves — and the confirmation email that follows a
+ * verification — live in lib/payment-review.ts, shared with the registrations
+ * desk at /dashboard/applications so the two screens cannot drift apart.
  */
 export async function POST(req: Request) {
   const role = await resolveRole();
@@ -42,39 +37,22 @@ export async function POST(req: Request) {
   const verified = body.verified !== false; // default to marking paid
   if (!eventId || !email) return fail("Missing event or applicant.", 400);
 
-  const path = applicationPath(eventId, email);
-  const record = (await readJsonByPath(path)) as Application | null;
-  if (!record) return fail("No application found.", 404);
-
   const by = (await resolveEmail()) ?? "unknown";
-  const at = new Date().toISOString();
+  const outcome = verified
+    ? await verifyPayment({ eventId, email, by })
+    : await unverifyPayment({ eventId, email });
 
-  const next: Application = verified
-    ? {
-        ...record,
-        payment: "paid",
-        paymentVerifiedAt: at,
-        paymentVerifiedBy: by,
-        // Paid means in — unless they were explicitly turned away.
-        status: record.status === "pending" ? "confirmed" : record.status,
-        decidedAt: record.status === "pending" ? at : record.decidedAt,
-      }
-    : {
-        ...record,
-        payment: "awaiting",
-        paymentVerifiedAt: undefined,
-        paymentVerifiedBy: undefined,
-        // Undo returns them to the queue, but never un-declines anyone.
-        status: record.status === "confirmed" ? "pending" : record.status,
-      };
+  if (!outcome) return fail("No application found.", 404);
 
-  await putJson(path, next, true);
-
+  const next = outcome.application;
   return NextResponse.json({
     ok: true,
     payment: next.payment,
     status: next.status,
     paymentVerifiedAt: next.paymentVerifiedAt ?? null,
     paymentVerifiedBy: next.paymentVerifiedBy ?? null,
+    // Null when nothing was attempted, so the roster can stay quiet rather
+    // than reporting on a send that never happened.
+    mail: outcome.mail,
   });
 }

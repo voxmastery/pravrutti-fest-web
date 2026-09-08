@@ -30,7 +30,7 @@ export function SectionLabel({
   const Heading = level === 2 ? "h2" : "h3";
   return (
     <div className="flex items-end justify-between gap-4 min-w-0 border-b border-royal-wine/70 pb-2">
-      <Heading className="min-w-0 font-orbitron text-[10px] font-black uppercase tracking-[0.22em] text-pearl-white/45 break-words">
+      <Heading className="min-w-0 font-display text-[10px] font-black uppercase tracking-[0.22em] text-pearl-white/45 break-words">
         {children}
       </Heading>
       {action}
@@ -59,12 +59,9 @@ export function InitialsAvatar({
 
   return (
     <span
-      aria-hidden="true"
-      className={`shrink-0 flex items-center justify-center border font-orbitron font-black ${
+      aria-hidden="true" className={`shrink-0 flex items-center justify-center border font-display font-black ${
         org
-          ? "rounded-xl bg-neon-purple/70 border-cyber-pink/40 text-champagne-gold"
-          : "rounded-full bg-deep-plum border-royal-wine text-pearl-white/80"
-      } ${className}`}
+          ? "rounded-xl bg-neon-purple/70 border-cyber-pink/40 text-champagne-gold" : "rounded-full bg-deep-plum border-royal-wine text-pearl-white/80" } ${className}`}
     >
       {initials}
     </span>
@@ -73,7 +70,7 @@ export function InitialsAvatar({
 
 const STATUS_LINE: Record<AppStatus, { label: string; tone: string; Icon: typeof Hourglass }> = {
   pending: { label: EVENT_PAGE_STATUS.pending, tone: "text-champagne-gold", Icon: Hourglass },
-  confirmed: { label: EVENT_PAGE_STATUS.confirmed, tone: "text-[#7BE3A8]", Icon: CheckCircle2 },
+  confirmed: { label: EVENT_PAGE_STATUS.confirmed, tone: "text-success-soft", Icon: CheckCircle2 },
   declined: { label: EVENT_PAGE_STATUS.declined, tone: "text-pearl-white/45", Icon: RotateCcw },
 };
 
@@ -101,8 +98,7 @@ export function EventStatusLine({
 
   return (
     <p
-      aria-live="polite"
-      className={`empty:hidden flex flex-wrap items-center gap-2 min-w-0 font-sharetech text-sm ${line?.tone ?? ""} ${className}`}
+      aria-live="polite" className={`empty:hidden flex flex-wrap items-center gap-2 min-w-0 text-sm ${line?.tone ?? ""} ${className}`}
     >
           {line && (
             <>
@@ -115,7 +111,7 @@ export function EventStatusLine({
 }
 
 const hostActionClass =
-  "h-16 min-w-0 rounded-xl font-orbitron text-[10px] sm:text-xs font-bold uppercase tracking-widest flex flex-col items-center justify-center gap-1 cursor-pointer";
+  "h-16 min-w-0 rounded-xl font-display text-[10px] sm:text-xs font-bold uppercase tracking-widest flex flex-col items-center justify-center gap-1 cursor-pointer";
 
 /**
  * Luma's action row under the status line.
@@ -156,16 +152,14 @@ export function EventHostActions({
         </Button>
       )}
       <Button
-        variant="outline"
-        onClick={onContact}
+        variant="outline" onClick={onContact}
         className={`${hostActionClass} border-royal-wine bg-cosmic-purple text-pearl-white/85 hover:bg-deep-plum hover:text-champagne-gold`}
       >
         <Mail className="w-5 h-5" aria-hidden="true" />
         Contact
       </Button>
       <Button
-        variant="outline"
-        onClick={onMore}
+        variant="outline" onClick={onMore}
         className={`${hostActionClass} border-royal-wine bg-cosmic-purple text-pearl-white/85 hover:bg-deep-plum hover:text-champagne-gold`}
       >
         <MoreHorizontal className="w-5 h-5" aria-hidden="true" />
@@ -188,11 +182,9 @@ export function EventHostLine({ event }: { event: Event }) {
 
   return (
     <Link
-      href="/about"
-      className="group flex items-center gap-2.5 -my-1 py-1 min-h-11 min-w-0 w-full max-w-full rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyber-pink"
-    >
+      href="/about" className="group flex items-center gap-2.5 -my-1 py-1 min-h-11 min-w-0 w-full max-w-full rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyber-pink" >
       <InitialsAvatar name={label} org className="w-7 h-7 text-[9px]" />
-      <span className="min-w-0 flex-1 font-sharetech text-sm leading-snug text-pearl-white/70 group-hover:text-champagne-gold transition-colors break-words">
+      <span className="min-w-0 flex-1 text-sm leading-snug text-pearl-white/70 group-hover:text-champagne-gold transition-colors break-words">
         {label}
         <span className="text-pearl-white/35"> · {sub}</span>
       </span>
@@ -207,15 +199,13 @@ export function EventWhenRow({ event, onNavigate }: { event: Event; onNavigate?:
   const when = eventWhen(event);
 
   return (
-    <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 min-w-0 font-sharetech text-sm">
+    <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 min-w-0 text-sm">
       <CalendarDays className="w-4 h-4 shrink-0 text-cyber-pink" aria-hidden="true" />
       <span className="min-w-0 text-pearl-white font-bold break-words">{when.line}</span>
       {!when.exact && (
         <Link
-          href="/schedule"
-          onClick={onNavigate}
-          className="text-pearl-white/45 underline decoration-royal-wine hover:text-champagne-gold hover:decoration-champagne-gold transition-colors"
-        >
+          href="/schedule" onClick={onNavigate}
+          className="text-pearl-white/45 underline decoration-royal-wine hover:text-champagne-gold hover:decoration-champagne-gold transition-colors" >
           see timings
         </Link>
       )}
@@ -248,25 +238,23 @@ export function EventLocation({ access, level = 2 }: { access: CoordinatorPhones
 
       {hall ? (
         <div className="space-y-0.5">
-          <p className="font-orbitron text-base font-bold text-pearl-white break-words">{hall}</p>
-          <p className="font-sharetech text-sm text-pearl-white/55 break-words">
+          <p className="font-display text-base font-bold text-pearl-white break-words">{hall}</p>
+          <p className="text-sm text-pearl-white/55 break-words">
             {campus} · {address}
           </p>
         </div>
       ) : (
         <div className="space-y-1.5">
-          <p className="font-orbitron text-base font-bold text-pearl-white break-words">{campus}</p>
-          <p className="flex items-start gap-2 min-w-0 font-sharetech text-sm text-pearl-white/55">
+          <p className="font-display text-base font-bold text-pearl-white break-words">{campus}</p>
+          <p className="flex items-start gap-2 min-w-0 text-sm text-pearl-white/55">
             <Lock className="w-3.5 h-3.5 mt-0.5 shrink-0 text-cyber-pink" aria-hidden="true" />
             <span className="min-w-0 break-words">
               {access.unlocked
-                ? "Your exact hall is still being assigned — it will appear here and on your ticket."
-                : access.registered
-                ? "The exact hall unlocks once your registration is confirmed."
-                : "Please register to see the exact location of this event."}
+                ? "Your exact hall is still being assigned — it will appear here and on your ticket." : access.registered
+                ? "The exact hall unlocks once your registration is confirmed." : "Please register to see the exact location of this event."}
             </span>
           </p>
-          <p className="font-sharetech text-sm text-pearl-white/35 break-words">{address}</p>
+          <p className="text-sm text-pearl-white/35 break-words">{address}</p>
         </div>
       )}
 
@@ -274,18 +262,12 @@ export function EventLocation({ access, level = 2 }: { access: CoordinatorPhones
         <iframe
           title={`Map — ${campus}`}
           src={`https://maps.google.com/maps?q=${encodeURIComponent(address)}&z=15&output=embed`}
-          className="w-full h-44 sm:h-52 border-0"
-          loading="lazy"
-          referrerPolicy="no-referrer-when-downgrade"
-        />
+          className="w-full h-44 sm:h-52 border-0" loading="lazy" referrerPolicy="no-referrer-when-downgrade" />
       </div>
 
       <a
         href={`https://maps.google.com/?q=${encodeURIComponent(address)}`}
-        target="_blank"
-        rel="noreferrer"
-        className="inline-flex items-center gap-2 min-h-11 -my-1 py-1 font-sharetech text-sm text-pearl-white/55 hover:text-champagne-gold transition-colors rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyber-pink"
-      >
+        target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 min-h-11 -my-1 py-1 text-sm text-pearl-white/55 hover:text-champagne-gold transition-colors rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyber-pink" >
         <MapPin className="w-3.5 h-3.5 shrink-0 text-cyber-pink" aria-hidden="true" /> Get directions
       </a>
     </section>
@@ -303,8 +285,8 @@ export function EventFormat({ rows, level = 2 }: { rows: { k: string; v: string 
       <dl className="rounded-2xl border border-royal-wine bg-cosmic-purple/50 divide-y divide-royal-wine/60">
         {rows.map((r) => (
           <div key={r.k} className="flex items-start justify-between gap-4 px-4 py-3 min-w-0">
-            <dt className="font-sharetech text-sm text-pearl-white/50 shrink-0">{r.k}</dt>
-            <dd className="font-sharetech text-sm text-pearl-white text-right min-w-0 break-words">{r.v}</dd>
+            <dt className="text-sm text-pearl-white/50 shrink-0">{r.k}</dt>
+            <dd className="text-sm text-pearl-white text-right min-w-0 break-words">{r.v}</dd>
           </div>
         ))}
       </dl>
@@ -321,16 +303,15 @@ export function EventPresenter({ level = 2 }: { level?: 2 | 3 }) {
       <div className="flex items-start gap-3">
         <InitialsAvatar name={PRESENTER.name} org className="w-11 h-11 text-xs" />
         <div className="min-w-0 space-y-1">
-          <p className="font-orbitron text-sm font-bold text-champagne-gold break-words">{PRESENTER.name}</p>
-          <p className="font-sharetech text-xs text-pearl-white/45 break-words">{PRESENTER.org}</p>
+          <p className="font-display text-sm font-bold text-champagne-gold break-words">{PRESENTER.name}</p>
+          <p className="text-xs text-pearl-white/45 break-words">{PRESENTER.org}</p>
         </div>
       </div>
-      <p className="font-sharetech text-sm text-pearl-white/60 leading-relaxed break-words">{PRESENTER.blurb}</p>
-      <p className="font-sharetech text-sm">
+      <p className="text-sm text-pearl-white/60 leading-relaxed break-words">{PRESENTER.blurb}</p>
+      <p className="text-sm">
         <a
           href={`mailto:${PRESENTER.email}`}
-          className="inline-flex items-center min-h-11 -my-1 py-1 text-pearl-white/55 hover:text-champagne-gold transition-colors underline decoration-royal-wine rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyber-pink"
-        >
+          className="inline-flex items-center min-h-11 -my-1 py-1 text-pearl-white/55 hover:text-champagne-gold transition-colors underline decoration-royal-wine rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyber-pink" >
           {PRESENTER.email}
         </a>
       </p>

@@ -12,10 +12,16 @@
   --neon-purple: #721F4C;
   --electric-magenta: #AC355D;
   --cyber-pink: #D64D8D;
+  --cyber-pink-light: #ECA8D6;
   --champagne-gold: #F2D2AE;
+  --champagne-gold-light: #FFF3E0;
   --soft-gold: #BF8A1B;
   --warm-bronze: #B68A67;
   --pearl-white: #F7EEE4;
+  --success: #12B76A;
+  --success-soft: #7BE3A8;
+  --danger: #F87171;
+  --danger-strong: #F04438;
 
   --background: #000000;
   --foreground: #F7EEE4;
@@ -40,18 +46,47 @@
 }
 
 @theme inline {
+  /* Two families, site-wide. Display = Orbitron for headings, numerals and
+     brand moments; sans = Rajdhani for every other run of text. Anything that
+     needs to read as "code" (ticket ids, hashes) uses tracking + tabular
+     figures, not a third face. */
   --font-sans: var(--font-rajdhani), 'Rajdhani', system-ui, sans-serif;
-  /* Neutral product-UI stack (what luma.com itself renders in) for the
-     apply form and panels; the site face (Rajdhani) is display-only. */
-  --font-ui: -apple-system, BlinkMacSystemFont, Inter, Roboto, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
-  --font-mono: var(--font-sharetech), 'Share Tech Mono', monospace;
   --font-display: var(--font-orbitron), 'Orbitron', sans-serif;
 
-  --font-arcade: var(--font-arcade), 'Press Start 2P', monospace;
-  --font-orbitron: var(--font-orbitron), 'Orbitron', sans-serif;
-  --font-rajdhani: var(--font-rajdhani), 'Rajdhani', sans-serif;
-  --font-vt323: var(--font-vt323), 'VT323', monospace;
-  --font-sharetech: var(--font-sharetech), 'Share Tech Mono', monospace;
+  /* Motion vocabulary. One easing for UI movement; the five custom
+     animations the app uses, declared here so `animate-*` classes resolve
+     (they were referenced in components but never defined). Durations use
+     Tailwind's scale — 200/300/500/700/1000 — nothing bespoke. */
+  --ease-brand: cubic-bezier(0.22, 1, 0.36, 1);
+
+  --animate-step: step 0.35s var(--ease-brand) both;
+  --animate-fade: fade 0.4s ease-out both;
+  --animate-shake: shake 0.4s ease-in-out;
+  --animate-meter: meter 0.7s var(--ease-brand) both;
+  --animate-seat-blink: seat-blink 1.6s ease-in-out infinite;
+
+  @keyframes step {
+    from { opacity: 0; transform: translateX(12px); }
+    to { opacity: 1; transform: none; }
+  }
+  @keyframes fade {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  @keyframes shake {
+    10%, 90% { transform: translateX(-1px); }
+    20%, 80% { transform: translateX(2px); }
+    30%, 50%, 70% { transform: translateX(-4px); }
+    40%, 60% { transform: translateX(4px); }
+  }
+  @keyframes meter {
+    from { transform: scaleX(0); transform-origin: left; }
+    to { transform: scaleX(1); transform-origin: left; }
+  }
+  @keyframes seat-blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.45; }
+  }
 
   --color-void-black: var(--void-black);
   --color-midnight-navy: var(--midnight-navy);
@@ -61,10 +96,16 @@
   --color-neon-purple: var(--neon-purple);
   --color-electric-magenta: var(--electric-magenta);
   --color-cyber-pink: var(--cyber-pink);
+  --color-cyber-pink-light: var(--cyber-pink-light);
   --color-champagne-gold: var(--champagne-gold);
+  --color-champagne-gold-light: var(--champagne-gold-light);
   --color-soft-gold: var(--soft-gold);
   --color-warm-bronze: var(--warm-bronze);
   --color-pearl-white: var(--pearl-white);
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-danger: var(--danger);
+  --color-danger-strong: var(--danger-strong);
 
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -594,13 +635,6 @@
     50% { opacity: 1; transform: scale(1.05); }
   }
 
-  /* ============================
-     HUD — BAR PULSE
-     ============================ */
-  @keyframes bar-pulse {
-    0%   { height: 30%; background-color: rgba(114, 31, 76, 0.4); }
-    100% { height: 90%; background-color: rgba(214, 77, 141, 0.5); }
-  }
 }
   
 /* ============================
@@ -621,13 +655,26 @@
 
 body {
   background-color: var(--ambient-base);
+  transition: background-color 600ms ease;
+}
+
+/* The wash lives on a fixed, composited layer rather than on the body's own
+   background. `background-attachment: fixed` forced Chrome to repaint all
+   four viewport-sized gradients on every scroll frame — on modest GPUs the
+   compositor stalled for tens of seconds after a fling. A fixed pseudo-
+   element rasterises once and just gets re-composited. */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  pointer-events: none;
   background-image:
     radial-gradient(ellipse 120% 70% at 18% -10%, rgba(var(--ambient-1), 0.42), transparent 58%),
     radial-gradient(ellipse 95% 60% at 100% 6%, rgba(var(--ambient-2), 0.55), transparent 62%),
     radial-gradient(ellipse 75% 50% at 80% 52%, rgba(var(--ambient-1), 0.18), transparent 62%),
     radial-gradient(ellipse 135% 95% at 45% 120%, rgba(var(--ambient-3), 0.70), transparent 68%);
-  background-attachment: fixed;
-  transition: background-color 600ms ease;
+  transform: translateZ(0);
 }
 
 /* Film-grain over the wash — the texture Luma layers on its event gradients.
@@ -639,6 +686,7 @@ body::before {
   z-index: -1;
   pointer-events: none;
   opacity: 0.5;
+  transform: translateZ(0);
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.16'/%3E%3C/svg%3E");
 }
 
@@ -657,4 +705,13 @@ body::before {
 }
 [data-ambient="Enterprise and Expression"] {
   --ambient-1: 172, 53, 93;  --ambient-2: 74, 28, 58;   --ambient-3: 43, 18, 44;  --ambient-base: #120912;
+}
+
+/* Gold headline treatment (hero prize pool, big numerals). One place, so the
+   ramp never drifts between components. */
+@utility text-gold-gradient {
+  background: linear-gradient(180deg, var(--champagne-gold-light) 0%, var(--champagne-gold) 45%, var(--soft-gold) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
 }

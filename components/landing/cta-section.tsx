@@ -34,16 +34,13 @@ export function CtaSection() {
       <div className="max-w-[1400px] mx-auto px-6 lg:px-12">
         <div
           className={`relative border border-foreground transition-all duration-1000 ${
-            isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
-          }`}
+            isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8" }`}
           onMouseMove={handleMouseMove}
         >
           {/* Spotlight effect */}
           <div 
-            className="absolute inset-0 opacity-10 pointer-events-none transition-opacity duration-300"
-            style={{
-              background: `radial-gradient(600px circle at ${mousePosition.x}% ${mousePosition.y}%, rgba(0,0,0,0.15), transparent 40%)`
-            }}
+            className="absolute inset-0 opacity-10 pointer-events-none transition-opacity duration-300" style={{
+              background: `radial-gradient(600px circle at ${mousePosition.x}% ${mousePosition.y}%, rgba(0,0,0,0.15), transparent 40%)` }}
           />
           
           <div className="relative z-10 px-8 lg:px-16 py-16 lg:py-24">
@@ -63,22 +60,17 @@ export function CtaSection() {
 
                 <div className="flex flex-col sm:flex-row items-start gap-4">
                   <Button
-                    size="lg"
-                    className="bg-foreground hover:bg-foreground/90 text-background px-8 h-14 text-base rounded-full group"
-                  >
+                    size="lg" className="bg-foreground hover:bg-foreground/90 text-background px-8 h-14 text-base rounded-full group" >
                     Deploy your first agent
                     <ArrowRight className="w-4 h-4 ml-2 transition-transform group-hover:translate-x-1" />
                   </Button>
                   <Button
-                    size="lg"
-                    variant="outline"
-                    className="h-14 px-8 text-base rounded-full border-foreground/20 hover:bg-foreground/5"
-                  >
+                    size="lg" variant="outline" className="h-14 px-8 text-base rounded-full border-foreground/20 hover:bg-foreground/5" >
                     Book a demo
                   </Button>
                 </div>
 
-                <p className="text-sm text-muted-foreground mt-8 font-mono">
+                <p className="text-sm text-muted-foreground mt-8">
                   1,000 free tasks with COMPUTE
                 </p>
               </div>
@@ -86,10 +78,7 @@ export function CtaSection() {
               {/* Right image */}
               <div className="hidden lg:flex items-end justify-center w-[600px] h-[650px] -mr-16">
                 <img
-                  src="/images/bridge.png"
-                  alt="Two trees connected by glowing arcs"
-                  className="w-full h-full object-contain object-bottom"
-                />
+                  src="/images/bridge.png" alt="Two trees connected by glowing arcs" className="w-full h-full object-contain object-bottom" />
               </div>
             </div>
           </div>

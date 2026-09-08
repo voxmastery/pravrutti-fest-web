@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { PALETTE } from "@/lib/palette";
 
 /**
  * Animated SVG circuit/wire lines that pulse and glow.
@@ -20,11 +21,7 @@ export function CircuitLines() {
   return (
     <div className="absolute inset-0 z-[2] pointer-events-none overflow-hidden" aria-hidden="true">
       <svg
-        className="absolute inset-0 w-full h-full"
-        viewBox="0 0 1920 1080"
-        preserveAspectRatio="xMidYMid slice"
-        xmlns="http://www.w3.org/2000/svg"
-      >
+        className="absolute inset-0 w-full h-full" viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg" >
         <defs>
           {/* Animated glow filter */}
           <filter id="circuit-glow">
@@ -35,11 +32,11 @@ export function CircuitLines() {
           {/* Pulse gradient for energy traveling along wires */}
           <linearGradient id="wire-pulse-1" x1="0%" y1="0%" x2="100%" y2="0%">
             <stop offset="0%" stopColor="transparent" />
-            <stop offset="40%" stopColor="#D64D8D" stopOpacity="0" />
-            <stop offset="50%" stopColor="#D64D8D" stopOpacity="0.8">
+            <stop offset="40%" stopColor={PALETTE.cyberPink} stopOpacity="0" />
+            <stop offset="50%" stopColor={PALETTE.cyberPink} stopOpacity="0.8">
               <animate attributeName="offset" values="0;1" dur="4s" repeatCount="indefinite" />
             </stop>
-            <stop offset="60%" stopColor="#D64D8D" stopOpacity="0">
+            <stop offset="60%" stopColor={PALETTE.cyberPink} stopOpacity="0">
               <animate attributeName="offset" values="0.1;1.1" dur="4s" repeatCount="indefinite" />
             </stop>
             <stop offset="100%" stopColor="transparent" />
@@ -47,11 +44,11 @@ export function CircuitLines() {
 
           <linearGradient id="wire-pulse-2" x1="0%" y1="0%" x2="0%" y2="100%">
             <stop offset="0%" stopColor="transparent" />
-            <stop offset="40%" stopColor="#F2D2AE" stopOpacity="0" />
-            <stop offset="50%" stopColor="#F2D2AE" stopOpacity="0.6">
+            <stop offset="40%" stopColor={PALETTE.champagneGold} stopOpacity="0" />
+            <stop offset="50%" stopColor={PALETTE.champagneGold} stopOpacity="0.6">
               <animate attributeName="offset" values="0;1" dur="6s" repeatCount="indefinite" />
             </stop>
-            <stop offset="60%" stopColor="#F2D2AE" stopOpacity="0">
+            <stop offset="60%" stopColor={PALETTE.champagneGold} stopOpacity="0">
               <animate attributeName="offset" values="0.1;1.1" dur="6s" repeatCount="indefinite" />
             </stop>
             <stop offset="100%" stopColor="transparent" />
@@ -59,11 +56,11 @@ export function CircuitLines() {
 
           <linearGradient id="wire-pulse-3" x1="100%" y1="0%" x2="0%" y2="100%">
             <stop offset="0%" stopColor="transparent" />
-            <stop offset="45%" stopColor="#AC355D" stopOpacity="0" />
-            <stop offset="50%" stopColor="#AC355D" stopOpacity="0.5">
+            <stop offset="45%" stopColor={PALETTE.electricMagenta} stopOpacity="0" />
+            <stop offset="50%" stopColor={PALETTE.electricMagenta} stopOpacity="0.5">
               <animate attributeName="offset" values="0;1" dur="5s" repeatCount="indefinite" />
             </stop>
-            <stop offset="55%" stopColor="#AC355D" stopOpacity="0">
+            <stop offset="55%" stopColor={PALETTE.electricMagenta} stopOpacity="0">
               <animate attributeName="offset" values="0.05;1.05" dur="5s" repeatCount="indefinite" />
             </stop>
             <stop offset="100%" stopColor="transparent" />
@@ -71,7 +68,7 @@ export function CircuitLines() {
         </defs>
 
         {/* Static circuit framework — very subtle */}
-        <g opacity="0.08" stroke="#721F4C" strokeWidth="1" fill="none">
+        <g opacity="0.08" stroke={PALETTE.neonPurple} strokeWidth="1" fill="none">
           {/* Horizontal wires */}
           <path d="M0,200 L400,200 L420,180 L600,180" />
           <path d="M0,400 L300,400 L340,440 L500,440 L520,400 L800,400" />
@@ -90,56 +87,32 @@ export function CircuitLines() {
         <g strokeWidth="1.5" fill="none" filter="url(#circuit-glow)">
           {/* Left side - flows right */}
           <path
-            d="M-50,250 L200,250 L230,220 L500,220 L530,250 L750,250 L780,220 L960,220"
-            stroke="url(#wire-pulse-1)"
-            opacity="0.6"
-          />
+            d="M-50,250 L200,250 L230,220 L500,220 L530,250 L750,250 L780,220 L960,220" stroke="url(#wire-pulse-1)" opacity="0.6" />
           {/* Right side - flows left */}
           <path
-            d="M1970,450 L1700,450 L1670,480 L1400,480 L1370,450 L1150,450 L1120,480 L960,480"
-            stroke="url(#wire-pulse-1)"
-            opacity="0.5"
-          />
+            d="M1970,450 L1700,450 L1670,480 L1400,480 L1370,450 L1150,450 L1120,480 L960,480" stroke="url(#wire-pulse-1)" opacity="0.5" />
           {/* Bottom left */}
           <path
-            d="M-50,780 L180,780 L200,760 L400,760 L430,780 L650,780"
-            stroke="url(#wire-pulse-3)"
-            opacity="0.45"
-          />
+            d="M-50,780 L180,780 L200,760 L400,760 L430,780 L650,780" stroke="url(#wire-pulse-3)" opacity="0.45" />
           {/* Bottom right */}
           <path
-            d="M1970,700 L1750,700 L1720,720 L1500,720 L1470,700 L1300,700"
-            stroke="url(#wire-pulse-3)"
-            opacity="0.4"
-          />
+            d="M1970,700 L1750,700 L1720,720 L1500,720 L1470,700 L1300,700" stroke="url(#wire-pulse-3)" opacity="0.4" />
         </g>
 
         {/* Pulsing energy wires — vertical */}
         <g strokeWidth="1.5" fill="none" filter="url(#circuit-glow)">
           <path
-            d="M400,0 L400,180 L380,200 L380,350 L400,370 L400,500"
-            stroke="url(#wire-pulse-2)"
-            opacity="0.3"
-          />
+            d="M400,0 L400,180 L380,200 L380,350 L400,370 L400,500" stroke="url(#wire-pulse-2)" opacity="0.3" />
           <path
-            d="M1520,0 L1520,220 L1540,240 L1540,400 L1520,420 L1520,540"
-            stroke="url(#wire-pulse-2)"
-            opacity="0.25"
-          />
+            d="M1520,0 L1520,220 L1540,240 L1540,400 L1520,420 L1520,540" stroke="url(#wire-pulse-2)" opacity="0.25" />
           <path
-            d="M250,1080 L250,900 L270,880 L270,700 L250,680 L250,550"
-            stroke="url(#wire-pulse-2)"
-            opacity="0.25"
-          />
+            d="M250,1080 L250,900 L270,880 L270,700 L250,680 L250,550" stroke="url(#wire-pulse-2)" opacity="0.25" />
           <path
-            d="M1680,1080 L1680,850 L1660,830 L1660,680 L1680,660 L1680,540"
-            stroke="url(#wire-pulse-2)"
-            opacity="0.2"
-          />
+            d="M1680,1080 L1680,850 L1660,830 L1660,680 L1680,660 L1680,540" stroke="url(#wire-pulse-2)" opacity="0.2" />
         </g>
 
         {/* Junction nodes — small glowing dots at wire intersections */}
-        <g fill="#D64D8D" opacity="0.4">
+        <g fill={PALETTE.cyberPink} opacity="0.4">
           <circle cx="400" cy="200" r="2.5">
             <animate attributeName="opacity" values="0.2;0.8;0.2" dur="3s" repeatCount="indefinite" />
           </circle>
@@ -161,7 +134,7 @@ export function CircuitLines() {
         </g>
 
         {/* Gold accent nodes */}
-        <g fill="#F2D2AE" opacity="0.3">
+        <g fill={PALETTE.champagneGold} opacity="0.3">
           <circle cx="320" cy="300" r="1.5">
             <animate attributeName="opacity" values="0.2;0.6;0.2" dur="4s" repeatCount="indefinite" />
           </circle>
@@ -174,14 +147,11 @@ export function CircuitLines() {
         <circle
           cx={mousePos.x * 1920}
           cy={mousePos.y * 1080}
-          r="120"
-          fill="url(#mouse-glow)"
-          opacity="0.15"
-          style={{ transition: "cx 0.3s ease-out, cy 0.3s ease-out" }}
+          r="120" fill="url(#mouse-glow)" opacity="0.15" style={{ transition: "cx 0.3s ease-out, cy 0.3s ease-out" }}
         />
         <radialGradient id="mouse-glow">
-          <stop offset="0%" stopColor="#D64D8D" stopOpacity="0.3" />
-          <stop offset="100%" stopColor="#D64D8D" stopOpacity="0" />
+          <stop offset="0%" stopColor={PALETTE.cyberPink} stopOpacity="0.3" />
+          <stop offset="100%" stopColor={PALETTE.cyberPink} stopOpacity="0" />
         </radialGradient>
       </svg>
     </div>

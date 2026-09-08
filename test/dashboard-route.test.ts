@@ -29,7 +29,8 @@ beforeEach(() => {
   apps.length = 0;
   apps.push(
     { eventId: "robo-climb", name: "Asha", college: "RUAS", email: "a@x.com",
-      phone: "9000000001", status: "confirmed", checkedInAt: "2026-10-15T04:42:00.000Z" },
+      phone: "9000000001", status: "confirmed", checkedInAt: "2026-10-15T04:42:00.000Z",
+      paymentRef: "4183 7712 9930" },
     { eventId: "robo-climb", name: "Bala", college: "RUAS", email: "b@x.com",
       phone: "9000000002", status: "confirmed" },
     { eventId: "robo-climb", name: "Chetan", college: "BMS", email: "c@x.com",
@@ -51,6 +52,13 @@ describe("GET /api/dashboard/event/[eventId]", () => {
     const asha = body.roster.find((p: { name: string }) => p.name === "Asha");
     expect(asha.email).toBe("a@x.com");
     expect(asha.phone).toBe("9000000001");
+    expect(asha.paymentRef).toBe("4183 7712 9930");
+  });
+
+  it("does not invent a payment ID when the application has none", async () => {
+    const body = await (await get("robo-climb")).json();
+    const bala = body.roster.find((p: { name: string }) => p.name === "Bala");
+    expect(bala.paymentRef).toBeNull();
   });
 
   it("a coordinator cannot obtain contacts by asking differently", async () => {
@@ -71,7 +79,9 @@ describe("GET /api/dashboard/event/[eventId]", () => {
     for (const p of body.roster) {
       expect(p).not.toHaveProperty("email");
       expect(p).not.toHaveProperty("phone");
+      expect(p).not.toHaveProperty("paymentRef");
     }
+    expect(serialised).not.toContain("4183 7712 9930");
   });
 
   it("counts registered, confirmed, checked in and not arrived", async () => {

@@ -1,5 +1,5 @@
-import { describe, it, expect } from "vitest";
-import { events, eventId } from "@/lib/pravrutti-data";
+import { describe, it, expect, afterEach } from "vitest";
+import { events } from "@/lib/pravrutti-data";
 import { roleForEmail, canViewEvent } from "@/lib/roles";
 
 describe("Event.dashboardEmails", () => {
@@ -26,9 +26,26 @@ describe("Event.dashboardEmails", () => {
       .filter(([, a]) => !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(a));
     expect(bad).toEqual([]);
   });
+
+  it("does not grant roppashreeganesh@gmail.com every event", () => {
+    const granted = events
+      .filter((e) =>
+        (e.dashboardEmails ?? []).some(
+          (a) => a.trim().toLowerCase() === "roppashreeganesh@gmail.com"
+        )
+      )
+      .map((e) => e.name);
+    expect(granted).toEqual([]);
+  });
 });
 
 describe("roleForEmail", () => {
+  const originalOrganisers = process.env.ORGANISER_EMAILS;
+
+  afterEach(() => {
+    process.env.ORGANISER_EMAILS = originalOrganisers;
+  });
+
   it("returns organiser for an ORGANISER_EMAILS entry", () => {
     expect(roleForEmail("boss@pravrutti.test")).toEqual({ kind: "organiser" });
   });
@@ -43,6 +60,31 @@ describe("roleForEmail", () => {
 
   it("returns none for null", () => {
     expect(roleForEmail(null)).toEqual({ kind: "none" });
+  });
+
+  it("promotes a dashboardEmails address to organiser when it is also in ORGANISER_EMAILS", () => {
+    process.env.ORGANISER_EMAILS = "voxmastery@gmail.com";
+    expect(roleForEmail("voxmastery@gmail.com")).toEqual({ kind: "organiser" });
+  });
+
+  it("falls through to coordinator when ORGANISER_EMAILS is empty and the address is only in dashboardEmails", () => {
+    process.env.ORGANISER_EMAILS = "";
+    expect(roleForEmail("voxmastery@gmail.com")).toEqual({
+      kind: "coordinator",
+      eventIds: ["chaos", "hacktivate"],
+    });
+  });
+
+  it("gives a per-event coordinator only the events they are listed on", () => {
+    expect(roleForEmail("arbharaath@gmail.com")).toEqual({
+      kind: "coordinator",
+      eventIds: ["robo-race", "kurukshetra-the-robo-war"],
+    });
+  });
+
+  it("does not treat roppashreeganesh@gmail.com as a coordinator until an event is assigned", () => {
+    process.env.ORGANISER_EMAILS = "voxmastery@gmail.com";
+    expect(roleForEmail("roppashreeganesh@gmail.com")).toEqual({ kind: "none" });
   });
 });
 

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { resolveRole } from "@/lib/roles";
 import { listAll, readPrivate } from "@/lib/blob-store";
 import { events, eventId, capacityInPeople, FEST } from "@/lib/pravrutti-data";
+import { venueFor } from "@/lib/event-venues";
 import type { Application } from "@/lib/applications";
 
 export const runtime = "nodejs";
@@ -50,7 +51,7 @@ export async function GET() {
       eventId: id,
       name: e.name,
       category: e.category,
-      venue: e.venue ?? null,
+      venue: venueFor(id),
       capacity,
       ...t,
       // Null rather than 0 when there's no cap, so the UI shows no bar

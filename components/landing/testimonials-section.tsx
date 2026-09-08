@@ -80,11 +80,10 @@ export function TestimonialsSection() {
   return (
     <section ref={sectionRef} className="relative py-32 lg:py-40 bg-foreground text-background overflow-hidden">
       {/* ASCII background pattern */}
-      <div className="absolute inset-0 font-mono text-[10px] text-background/[0.02] leading-tight overflow-hidden whitespace-pre select-none">
+      <div className="absolute inset-0 text-[10px] text-background/[0.02] leading-tight overflow-hidden whitespace-pre select-none">
         {Array.from({ length: 60 }, (_, i) => 
           Array.from({ length: 100 }, () => 
-            Math.random() > 0.7 ? '"' : ' '
-          ).join("")
+            Math.random() > 0.7 ? '"' : ' ' ).join("")
         ).join("\n")}
       </div>
 
@@ -92,13 +91,12 @@ export function TestimonialsSection() {
         {/* Header */}
         <div className="flex items-center justify-between mb-20">
           <div>
-            <span className="inline-flex items-center gap-3 text-sm font-mono text-background/40 mb-4">
+            <span className="inline-flex items-center gap-3 text-sm text-background/40 mb-4">
               <span className="w-12 h-px bg-background/20" />
               Testimonials
             </span>
             <h2 className={`text-4xl lg:text-5xl font-display transition-all duration-1000 ${
-              isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
-            }`}>
+              isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4" }`}>
               Trusted by teams
               <span className="text-background/40"> worldwide.</span>
             </h2>
@@ -108,14 +106,12 @@ export function TestimonialsSection() {
           <div className="hidden lg:flex items-center gap-2">
             <button
               onClick={goPrev}
-              className="p-4 border border-background/20 hover:bg-background/10 transition-colors"
-            >
+              className="p-4 border border-background/20 hover:bg-background/10 transition-colors" >
               <ArrowLeft className="w-5 h-5" />
             </button>
             <button
               onClick={goNext}
-              className="p-4 border border-background/20 hover:bg-background/10 transition-colors"
-            >
+              className="p-4 border border-background/20 hover:bg-background/10 transition-colors" >
               <ArrowRight className="w-5 h-5" />
             </button>
           </div>
@@ -133,8 +129,7 @@ export function TestimonialsSection() {
             <div className="relative">
               <blockquote 
                 key={activeIndex}
-                className="text-3xl lg:text-4xl xl:text-5xl font-display leading-[1.2] tracking-tight animate-fadeSlideIn"
-              >
+                className="text-3xl lg:text-4xl xl:text-5xl font-display leading-[1.2] tracking-tight animate-fadeSlideIn" >
                 {activeTestimonial.quote}
               </blockquote>
 
@@ -160,8 +155,7 @@ export function TestimonialsSection() {
             {/* Active metric - Large */}
             <div 
               key={`metric-${activeIndex}`}
-              className="p-10 border border-background/20 bg-background/5 animate-fadeSlideIn"
-            >
+              className="p-10 border border-background/20 bg-background/5 animate-fadeSlideIn" >
               <span className="text-7xl lg:text-8xl font-display block mb-4">
                 {activeTestimonial.metric.value}
               </span>
@@ -176,12 +170,10 @@ export function TestimonialsSection() {
                 <button
                   key={idx}
                   onClick={() => goTo(idx)}
-                  className="flex-1 h-1 bg-background/20 overflow-hidden"
-                >
+                  className="flex-1 h-1 bg-background/20 overflow-hidden" >
                   <div 
                     className={`h-full bg-background transition-all duration-300 ${
-                      idx === activeIndex ? "w-full" : idx < activeIndex ? "w-full opacity-50" : "w-0"
-                    }`}
+                      idx === activeIndex ? "w-full" : idx < activeIndex ? "w-full opacity-50" : "w-0" }`}
                     style={idx === activeIndex ? { animation: "progress 8s linear forwards" } : {}}
                   />
                 </button>
@@ -190,7 +182,7 @@ export function TestimonialsSection() {
 
             {/* Company list */}
             <div className="mt-4 pt-6 border-t border-background/10">
-              <span className="text-xs font-mono text-background/30 uppercase tracking-widest block mb-4">
+              <span className="text-xs text-background/30 uppercase tracking-widest block mb-4">
                 Featured companies
               </span>
               <div className="flex flex-wrap gap-3">
@@ -200,9 +192,7 @@ export function TestimonialsSection() {
                     onClick={() => goTo(idx)}
                     className={`px-4 py-2 text-sm border transition-all ${
                       idx === activeIndex 
-                        ? "border-background/40 text-background" 
-                        : "border-background/10 text-background/40 hover:border-background/30"
-                    }`}
+                        ? "border-background/40 text-background" : "border-background/10 text-background/40 hover:border-background/30" }`}
                   >
                     {t.company}
                   </button>
@@ -213,8 +203,7 @@ export function TestimonialsSection() {
         </div>
       </div>
 
-      <style jsx>{`
-        @keyframes fadeSlideIn {
+      <style jsx>{` @keyframes fadeSlideIn {
           from {
             opacity: 0;
             transform: translateX(20px);

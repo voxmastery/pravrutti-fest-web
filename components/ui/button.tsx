@@ -19,6 +19,14 @@ const buttonVariants = cva(
         ghost:
           'hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50',
         link: 'text-primary underline-offset-4 hover:underline',
+        /* Brand variants — the three button roles the dashboards use. Kept in
+           the primitive so every desk renders the same control. */
+        brand:
+          'rounded-lg bg-cyber-pink text-white font-semibold hover:bg-electric-magenta focus-visible:ring-cyber-pink/50',
+        subtle:
+          'rounded-lg border border-white/[0.12] bg-white/[0.04] text-white/70 hover:text-white hover:border-white/25',
+        success:
+          'rounded-lg border border-success/45 bg-success/15 text-success-soft font-semibold hover:bg-success/25',
       },
       size: {
         default: 'h-9 px-4 py-2 has-[>svg]:px-3',

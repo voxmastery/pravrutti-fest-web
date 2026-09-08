@@ -11,8 +11,8 @@ export const dynamic = "force-dynamic";
 const fail = (error: string, status: number) =>
   NextResponse.json({ error }, { status });
 
-// A real ticket payload is `${ticketId}|${eventId}|${email}` — a PRV-xxxxxxxx
-// ticketId (~12 chars), a short event slug, and an email address (RFC 5321
+// A real ticket payload is `${ticketId}|${eventId}|${email}` — a PRV- prefix
+// plus 8 or 16 hex chars, a short event slug, and an email address (RFC 5321
 // caps that at 254 chars) — so a well-formed scan is well under 200 chars
 // end to end. This endpoint takes an HTTP body rather than a scanner's own
 // decode, so it is not guaranteed scanner-clean input. Bound it generously

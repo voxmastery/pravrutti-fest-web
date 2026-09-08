@@ -1,5 +1,4 @@
 import { events, eventId } from "@/lib/pravrutti-data";
-import { resolveEmail } from "@/lib/identity";
 
 export type Role =
   | { kind: "organiser" }
@@ -34,6 +33,7 @@ export function roleForEmail(email: string | null): Role {
 
 /** Resolves from the session. The only role source any route may use. */
 export async function resolveRole(): Promise<Role> {
+  const { resolveEmail } = await import("@/lib/identity");
   return roleForEmail(await resolveEmail());
 }
 

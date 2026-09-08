@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import type { Application } from "@/lib/applications";
 import { parseTicketPayload } from "@/lib/checkin";
+import { ticketPayload } from "@/lib/ticket-qr";
 
 describe("Application check-in fields", () => {
   it("accepts a record with no check-in fields (existing production data)", () => {
@@ -58,5 +59,19 @@ describe("parseTicketPayload", () => {
   it("rejects a non-Pravrutti QR", () => {
     expect(parseTicketPayload("https://example.com")).toBeNull();
     expect(parseTicketPayload("")).toBeNull();
+  });
+
+  it("agrees with ticketPayload, the only producer of QR contents", () => {
+    const raw = ticketPayload({
+      ticketId: "PRV-AABBCCDDEEFF0011",
+      eventId: "electroxcape",
+      email: "Ganesh.S@Example.com",
+    });
+    expect(raw).toBe("PRV-AABBCCDDEEFF0011|electroxcape|ganesh.s@example.com");
+    expect(parseTicketPayload(raw)).toEqual({
+      ticketId: "PRV-AABBCCDDEEFF0011",
+      eventId: "electroxcape",
+      email: "ganesh.s@example.com",
+    });
   });
 });

@@ -3,10 +3,19 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Navigation } from "@/components/landing/navigation";
 import { useIdentity } from "@/lib/identity-context";
 import { useDashboardRole } from "@/hooks/use-dashboard-role";
-import { readPaymentRef, type Application, type AppStatus, type PayStatus } from "@/lib/applications";
+import { readPaymentRef, type Application, type AppStatus } from "@/lib/applications";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { DashboardShell, ListSkeleton, Notice } from "@/components/dashboard/shell";
+import { StatTile } from "@/components/dashboard/stat-tile";
+import { FilterGroup } from "@/components/dashboard/filter-group";
+import { AppStatusBadge, PayStatusBadge } from "@/components/dashboard/status-badge";
+import { ConfirmAction } from "@/components/dashboard/confirm-action";
+import { Hint } from "@/components/dashboard/hint";
 import {
   ArrowLeft,
   Check,
@@ -44,26 +53,6 @@ const STATUS_FILTERS: { id: StatusFilter; label: string }[] = [
   { id: "confirmed", label: "Confirmed" },
   { id: "declined", label: "Declined" },
 ];
-
-const STATUS_TONE: Record<AppStatus, string> = {
-  pending: "bg-soft-gold/15 border-soft-gold/45 text-champagne-gold",
-  confirmed: "bg-[#12B76A]/15 border-[#12B76A]/45 text-[#7BE3A8]",
-  declined: "bg-white/[0.06] border-white/[0.12] text-white/45",
-};
-
-const PAY_LABEL: Record<PayStatus, string> = {
-  not_required: "No payment",
-  awaiting: "Payment due",
-  paid: "Paid",
-  refunded: "Refunded",
-};
-
-const PAY_TONE: Record<PayStatus, string> = {
-  not_required: "bg-white/[0.05] border-white/[0.12] text-white/50",
-  awaiting: "bg-soft-gold/15 border-soft-gold/45 text-champagne-gold",
-  paid: "bg-[#12B76A]/15 border-[#12B76A]/45 text-[#7BE3A8]",
-  refunded: "bg-white/[0.05] border-white/[0.12] text-white/45",
-};
 
 const key = (a: Application) => `${a.eventId}:${a.email}`;
 
@@ -169,152 +158,140 @@ export default function ApplicationsDeskPage() {
   };
 
   if (me.ready && !me.signedIn)
-    return <Shell><Note title="Sign in required">Sign in with your organiser account to open the registrations list.</Note></Shell>;
+    return (
+      <DashboardShell>
+        <Notice title="Sign in required">Sign in with your organiser account to open the registrations list.</Notice>
+      </DashboardShell>
+    );
 
-  if (!dash.ready) return <Shell><p className="text-white/50">Loading…</p></Shell>;
+  if (!dash.ready)
+    return (
+      <DashboardShell title="Registrations">
+        <ListSkeleton rows={8} />
+      </DashboardShell>
+    );
 
   if (dash.role !== "organiser")
     return (
-      <Shell>
-        <Note title="Organisers only">
+      <DashboardShell>
+        <Notice title="Organisers only">
           This page holds contact and payment details for the whole fest, so it is limited to
           organisers. Coordinators can see their own event roster on the{" "}
           <Link href="/dashboard" className="text-champagne-gold hover:underline">dashboard</Link>.
-        </Note>
-      </Shell>
+        </Notice>
+      </DashboardShell>
     );
 
   return (
-    <Shell>
-      <div className="flex flex-wrap items-end justify-between gap-4 mb-6">
+    <DashboardShell
+      wide
+      eyebrow={
+        <Link
+          href="/dashboard"
+          className="mb-2 inline-flex items-center gap-1.5 text-sm text-white/45 hover:text-white/80"
+        >
+          <ArrowLeft className="h-3.5 w-3.5" /> Fest control
+        </Link>
+      }
+    >
+      <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
         <div>
-          <Link
-            href="/dashboard"
-            className="inline-flex items-center gap-1.5 text-sm text-white/45 hover:text-white/80 mb-2"
-          >
-            <ArrowLeft className="w-3.5 h-3.5" /> Fest control
-          </Link>
-          <h1 className="font-orbitron text-3xl font-black">Registrations</h1>
-          <p className="text-sm text-white/45 mt-1">
+          <h1 className="font-display text-3xl font-black">Registrations</h1>
+          <p className="mt-1 text-sm text-white/45">
             Every application, the details each person filled in, and payment verification.
           </p>
         </div>
         <div className="flex gap-2">
-          <button
-            onClick={load}
-            className="inline-flex items-center gap-2 rounded-xl border border-white/[0.12] bg-white/[0.04] px-3 h-10 text-sm text-white/70 hover:text-white hover:border-white/25 transition-colors"
-          >
-            {state === "loading" ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+          <Button variant="subtle" size="lg" onClick={load}>
+            {state === "loading" ? <Loader2 className="animate-spin" /> : <RefreshCw />}
             Refresh
-          </button>
-          <button
-            onClick={exportCsv}
-            disabled={!rows.length}
-            className="inline-flex items-center gap-2 rounded-xl bg-cyber-pink px-4 h-10 text-sm font-semibold text-white hover:bg-[#c23f7d] disabled:opacity-40 transition-colors"
-          >
-            <Download className="w-4 h-4" /> CSV
-          </button>
+          </Button>
+          <Button variant="brand" size="lg" onClick={exportCsv} disabled={!rows.length}>
+            <Download /> CSV
+          </Button>
         </div>
       </div>
 
       {feed && !feed.mailConfigured && (
-        <p className="mb-5 rounded-xl border border-soft-gold/35 bg-soft-gold/[0.08] px-4 py-3 text-sm text-champagne-gold">
-          Mail isn&apos;t configured, so verifying a payment will approve the applicant without
-          emailing their ticket. Set <code className="font-mono text-xs">RESEND_API_KEY</code> and{" "}
-          <code className="font-mono text-xs">MAIL_FROM</code> to switch confirmation emails on.
-        </p>
+        <Notice title="Ticket emails are off" tone="warning">
+          Mail isn&apos;t configured, so verifying a payment approves the applicant without emailing
+          their ticket. Set <code className="text-xs">RESEND_API_KEY</code> and{" "}
+          <code className="text-xs">MAIL_FROM</code> to switch confirmation emails on.
+        </Notice>
       )}
 
       {state === "error" && (
-        <Note title="Couldn't load registrations">
+        <Notice title="Couldn't load registrations" tone="danger">
           The store didn&apos;t respond. Your access is fine — this is a problem at our end.
-        </Note>
+        </Notice>
       )}
 
       {feed && (
         <>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-6">
-            <Tile label="Applications" v={feed.totals.all} />
-            <Tile label="In review" v={feed.totals.pending} />
-            <Tile label="Payment due" v={feed.totals.awaitingPayment} />
-            <Tile label="Paid" v={feed.totals.paid} />
-            <Tile label="Confirmed" v={feed.totals.confirmed} />
-            <Tile label="Tickets emailed" v={feed.totals.emailed} />
+          <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+            <StatTile label="Applications" value={feed.totals.all} />
+            <StatTile label="In review" value={feed.totals.pending} />
+            <StatTile label="Payment due" value={feed.totals.awaitingPayment} />
+            <StatTile label="Paid" value={feed.totals.paid} />
+            <StatTile label="Confirmed" value={feed.totals.confirmed} />
+            <StatTile label="Tickets emailed" value={feed.totals.emailed} />
           </div>
 
-          <div className="flex flex-wrap items-center gap-2 mb-4">
-            <label className="relative flex-1 min-w-[220px]">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/35" />
-              <input
+          <div className="mb-4 flex flex-wrap items-center gap-2">
+            <label className="relative min-w-[220px] flex-1">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/35" />
+              <Input
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Name, email, phone, ticket, team, payment ID"
                 aria-label="Search registrations"
-                className="w-full h-10 rounded-xl border border-white/[0.10] bg-white/[0.05] pl-9 pr-3 text-sm text-white placeholder:text-white/30 focus:outline-none focus:ring-1 focus:ring-cyber-pink/70"
+                className="h-10 rounded-xl border-white/[0.10] bg-white/[0.05] pl-9 text-white placeholder:text-white/30 focus-visible:ring-cyber-pink/70"
               />
             </label>
-            <select
-              value={event}
-              onChange={(e) => setEvent(e.target.value)}
-              aria-label="Filter by event"
-              className="h-10 rounded-xl border border-white/[0.10] bg-midnight-navy px-3 text-sm text-white/80"
-            >
-              <option value="all">All events</option>
-              {feed.events.map((e) => (
-                <option key={e.eventId} value={e.eventId}>{e.name}</option>
-              ))}
-            </select>
-          </div>
-
-          <div className="flex flex-wrap gap-1.5 mb-4">
-            {STATUS_FILTERS.map((f) => (
-              <button
-                key={f.id}
-                onClick={() => setStatus(f.id)}
-                className={`rounded-lg px-3 py-1.5 text-xs border transition-colors ${
-                  status === f.id
-                    ? "bg-neon-purple/40 text-champagne-gold border-cyber-pink/50"
-                    : "bg-white/[0.03] text-white/50 border-white/[0.08] hover:text-white/80"
-                }`}
+            <Select value={event} onValueChange={setEvent}>
+              <SelectTrigger
+                aria-label="Filter by event"
+                className="h-10 min-w-[180px] rounded-xl border-white/[0.10] bg-midnight-navy text-white/80"
               >
-                {f.label}
-              </button>
-            ))}
-            <span className="ml-auto self-center text-xs text-white/35 tabular-nums">
-              {rows.length} shown
-            </span>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="border-royal-wine bg-cosmic-purple text-pearl-white">
+                <SelectItem value="all">All events</SelectItem>
+                {feed.events.map((e) => (
+                  <SelectItem key={e.eventId} value={e.eventId}>{e.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
-          <div className="rounded-2xl border border-royal-wine/70 bg-cosmic-purple/40 divide-y divide-royal-wine/50 overflow-hidden">
-            {rows.length === 0 ? (
-              <p className="p-8 text-center text-sm text-white/40">
-                {state === "loading" ? "Loading…" : "Nothing matches these filters."}
-              </p>
-            ) : (
-              rows.map((a) => (
-                <Row
-                  key={key(a)}
-                  a={a}
-                  open={open === key(a)}
-                  mailConfigured={feed.mailConfigured}
-                  onToggle={() => setOpen(open === key(a) ? null : key(a))}
-                  onChanged={patch}
-                />
-              ))
-            )}
+          <div className="mb-4 flex flex-wrap items-center gap-1.5">
+            <FilterGroup value={status} options={STATUS_FILTERS} onChange={setStatus} label="Filter by status" />
+            <span className="ml-auto self-center text-xs tabular-nums text-white/35">{rows.length} shown</span>
           </div>
+
+          <Card className="gap-0 overflow-hidden rounded-2xl border-royal-wine/70 bg-cosmic-purple/40 py-0 shadow-none">
+            {state === "loading" && rows.length === 0 ? (
+              <ListSkeleton />
+            ) : rows.length === 0 ? (
+              <p className="p-8 text-center text-sm text-white/40">Nothing matches these filters.</p>
+            ) : (
+              <div className="divide-y divide-royal-wine/50">
+                {rows.map((a) => (
+                  <Row
+                    key={key(a)}
+                    a={a}
+                    open={open === key(a)}
+                    mailConfigured={feed.mailConfigured}
+                    onToggle={() => setOpen(open === key(a) ? null : key(a))}
+                    onChanged={patch}
+                  />
+                ))}
+              </div>
+            )}
+          </Card>
         </>
       )}
-    </Shell>
-  );
-}
-
-function Tile({ label, v }: { label: string; v: number }) {
-  return (
-    <div className="rounded-2xl border border-royal-wine bg-cosmic-purple/60 px-4 py-3">
-      <p className="text-[10px] uppercase tracking-[0.18em] text-white/40">{label}</p>
-      <p className="font-orbitron font-black text-xl text-champagne-gold mt-1 tabular-nums">{v}</p>
-    </div>
+    </DashboardShell>
   );
 }
 
@@ -401,35 +378,44 @@ function Row({
 
   const members = readMembers(a.members);
   const working = busy !== null;
+  const spin = (id: string, Icon: typeof Check) =>
+    busy === id ? <Loader2 className="animate-spin" /> : <Icon />;
+
+  const mailHint = !mailConfigured
+    ? "Mail isn't configured"
+    : a.status !== "confirmed"
+      ? "Only a confirmed applicant has a ticket to send"
+      : null;
+  const qrHint = a.status !== "confirmed" ? "No ticket until this application is confirmed" : null;
 
   return (
     <div>
       <button
         onClick={onToggle}
         aria-expanded={open}
-        className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors ${
+        className={`flex w-full items-center gap-3 px-4 py-3 text-left transition-colors ${
           open ? "bg-white/[0.06]" : "hover:bg-white/[0.03]"
         }`}
       >
         <span className="min-w-0 flex-1">
-          <span className="block text-sm font-semibold text-champagne-gold truncate">{a.name}</span>
-          <span className="block text-xs text-white/40 truncate">{a.email}</span>
+          <span className="block truncate text-sm font-semibold text-champagne-gold">{a.name}</span>
+          <span className="block truncate text-xs text-white/40">{a.email}</span>
         </span>
-        <span className="hidden md:block min-w-0 w-44 shrink-0">
-          <span className="block text-xs text-white/70 truncate">{a.eventName}</span>
-          <span className="block text-[11px] font-mono text-white/30 truncate">{a.ticketId}</span>
+        <span className="hidden w-44 min-w-0 shrink-0 md:block">
+          <span className="block truncate text-xs text-white/70">{a.eventName}</span>
+          <span className="block truncate text-[11px] tracking-wider text-white/30">{a.ticketId}</span>
         </span>
-        <Chip className={PAY_TONE[a.payment]}>{PAY_LABEL[a.payment]}</Chip>
-        <Chip className={STATUS_TONE[a.status]}>{a.status}</Chip>
+        <PayStatusBadge payment={a.payment} />
+        <AppStatusBadge status={a.status} />
       </button>
 
       {open && (
-        <div className="px-4 pb-5 pt-1 bg-white/[0.02] space-y-4">
-          <div className="grid sm:grid-cols-2 gap-x-8 gap-y-1.5 text-sm">
+        <div className="space-y-4 bg-white/[0.02] px-4 pb-5 pt-1">
+          <dl className="grid gap-x-8 gap-y-1.5 text-sm sm:grid-cols-2">
             <Detail k="Name">{a.name}</Detail>
             <Detail k="Event">{a.eventName}</Detail>
             <Detail k="Email">
-              <a href={`mailto:${a.email}`} className="text-champagne-gold hover:underline break-all">{a.email}</a>
+              <a href={`mailto:${a.email}`} className="break-all text-champagne-gold hover:underline">{a.email}</a>
             </Detail>
             <Detail k="Phone">
               <a href={`tel:${a.phone}`} className="text-champagne-gold hover:underline">{a.phone}</a>
@@ -437,14 +423,11 @@ function Row({
             <Detail k="College">{a.college}</Detail>
             <Detail k="Fee">{a.fee}</Detail>
             {a.teamName && <Detail k="Team">{a.teamName}</Detail>}
-            {a.teamCode && <Detail k="Team code"><span className="font-mono">{a.teamCode}</span></Detail>}
+            {a.teamCode && <Detail k="Team code">{a.teamCode}</Detail>}
             <Detail k="Applied">{when(a.appliedAt)}</Detail>
             <Detail k="Ticket ID">
-              <button
-                onClick={copyTicket}
-                className="inline-flex items-center gap-1.5 font-mono text-champagne-gold hover:underline"
-              >
-                {a.ticketId} {copied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+              <button onClick={copyTicket} className="inline-flex items-center gap-1.5 text-champagne-gold hover:underline">
+                {a.ticketId} {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
               </button>
             </Detail>
             {members.length > 0 && (
@@ -459,19 +442,19 @@ function Row({
             {a.checkedInAt && <Detail k="Checked in">{when(a.checkedInAt)}</Detail>}
             <Detail k="Payment ID">
               {storedRef ? (
-                <span className="font-mono break-all">{storedRef}</span>
+                <span className="break-all">{storedRef}</span>
               ) : a.payment === "not_required" ? (
                 "None — this application isn't charged"
               ) : (
                 "Not given at registration"
               )}
             </Detail>
-          </div>
+          </dl>
 
-          <div className="rounded-xl border border-white/[0.08] bg-midnight-navy/60 p-4 space-y-3">
+          <Card className="gap-3 rounded-xl border-white/[0.08] bg-midnight-navy/60 p-4 shadow-none">
             <p className="text-xs uppercase tracking-[0.18em] text-white/40">Payment</p>
             <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
-              <Chip className={PAY_TONE[a.payment]}>{PAY_LABEL[a.payment]}</Chip>
+              <PayStatusBadge payment={a.payment} />
               {a.paymentVerifiedBy && (
                 <span className="text-xs text-white/40">
                   verified by {a.paymentVerifiedBy}
@@ -481,25 +464,26 @@ function Row({
             </div>
 
             <div className="flex flex-wrap items-end gap-2">
-              <label className="flex-1 min-w-[200px]">
-                <span className="block text-xs text-white/45 mb-1">Payment ID / UTR</span>
-                <input
+              <label className="min-w-[200px] flex-1">
+                <span className="mb-1 block text-xs text-white/45">Payment ID / UTR</span>
+                <Input
                   value={ref}
                   onChange={(e) => setRef(e.target.value)}
                   placeholder={storedRef ? undefined : "e.g. 4183 7712 9930"}
                   aria-label="Payment ID / UTR"
                   autoComplete="off"
                   spellCheck={false}
-                  className="w-full h-10 rounded-lg border border-white/[0.10] bg-white/[0.05] px-3 text-sm text-white placeholder:text-white/25 focus:outline-none focus:ring-1 focus:ring-cyber-pink/70"
+                  className="h-10 rounded-lg border-white/[0.10] bg-white/[0.05] text-white placeholder:text-white/25 focus-visible:ring-cyber-pink/70"
                 />
               </label>
-              <button
+              <Button
+                variant="subtle"
+                size="lg"
                 onClick={() => act("set_payment_ref", { paymentRef: ref })}
                 disabled={working || readPaymentRef(ref) === storedRef}
-                className="h-10 rounded-lg border border-white/[0.12] bg-white/[0.04] px-3 text-sm text-white/70 hover:text-white disabled:opacity-40 transition-colors"
               >
-                {busy === "set_payment_ref" ? <Loader2 className="w-4 h-4 animate-spin" /> : "Save ID"}
-              </button>
+                {busy === "set_payment_ref" ? <Loader2 className="animate-spin" /> : "Save ID"}
+              </Button>
             </div>
             {a.payment === "not_required" && !storedRef && (
               <p className="text-xs text-white/35">
@@ -510,60 +494,62 @@ function Row({
 
             <div className="flex flex-wrap gap-2 pt-1">
               {a.payment === "paid" ? (
-                <button
-                  onClick={() => act("unverify_payment")}
-                  disabled={working}
-                  className="inline-flex items-center gap-1.5 rounded-lg border border-white/[0.12] bg-white/[0.04] px-3 h-9 text-xs text-white/60 hover:text-white disabled:opacity-40 transition-colors"
+                <ConfirmAction
+                  title="Undo this payment verification?"
+                  description={`${a.name} goes back to "payment due". Their ticket stays issued until you decline the application.`}
+                  confirmLabel="Undo verification"
+                  onConfirm={() => act("unverify_payment")}
                 >
-                  {busy === "unverify_payment" ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <X className="w-3.5 h-3.5" />}
-                  Undo verification
-                </button>
+                  <Button variant="subtle" size="default" disabled={working}>
+                    {spin("unverify_payment", X)} Undo verification
+                  </Button>
+                </ConfirmAction>
               ) : (
-                <button
+                <Button
+                  variant="success"
+                  size="default"
                   onClick={() => act("verify_payment", { paymentRef: ref || null })}
                   disabled={working}
-                  className="inline-flex items-center gap-1.5 rounded-lg bg-[#12B76A]/15 border border-[#12B76A]/45 px-3 h-9 text-xs font-semibold text-[#7BE3A8] hover:bg-[#12B76A]/25 disabled:opacity-40 transition-colors"
                 >
-                  {busy === "verify_payment" ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
+                  {spin("verify_payment", Check)}
                   {a.payment === "not_required" ? "Approve" : "Verify payment & approve"}
-                </button>
+                </Button>
               )}
 
-              <button
-                onClick={() => act("resend_confirmation")}
-                disabled={working || a.status !== "confirmed" || !mailConfigured}
-                title={
-                  !mailConfigured
-                    ? "Mail isn't configured"
-                    : a.status !== "confirmed"
-                    ? "Only a confirmed applicant has a ticket to send"
-                    : undefined
-                }
-                className="inline-flex items-center gap-1.5 rounded-lg border border-white/[0.12] bg-white/[0.04] px-3 h-9 text-xs text-white/70 hover:text-white disabled:opacity-40 transition-colors"
-              >
-                {busy === "resend_confirmation" ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Mail className="w-3.5 h-3.5" />}
-                {a.confirmationEmailAt ? "Resend ticket email" : "Email ticket"}
-              </button>
+              <Hint text={mailHint}>
+                <Button
+                  variant="subtle"
+                  size="default"
+                  onClick={() => act("resend_confirmation")}
+                  disabled={working || !!mailHint}
+                >
+                  {spin("resend_confirmation", Mail)}
+                  {a.confirmationEmailAt ? "Resend ticket email" : "Email ticket"}
+                </Button>
+              </Hint>
 
-              <button
-                onClick={showQr}
-                disabled={working || a.status !== "confirmed"}
-                title={a.status !== "confirmed" ? "No ticket until this application is confirmed" : undefined}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-white/[0.12] bg-white/[0.04] px-3 h-9 text-xs text-white/70 hover:text-white disabled:opacity-40 transition-colors"
-              >
-                {busy === "qr" ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <QrCode className="w-3.5 h-3.5" />}
-                Show QR
-              </button>
+              <Hint text={qrHint}>
+                <Button variant="subtle" size="default" onClick={showQr} disabled={working || !!qrHint}>
+                  {spin("qr", QrCode)} Show QR
+                </Button>
+              </Hint>
 
               {a.status !== "declined" && (
-                <button
-                  onClick={() => act("decline")}
-                  disabled={working}
-                  className="inline-flex items-center gap-1.5 rounded-lg border border-white/[0.12] bg-white/[0.04] px-3 h-9 text-xs text-white/50 hover:text-white disabled:opacity-40 transition-colors"
+                <ConfirmAction
+                  title={`Decline ${a.name}?`}
+                  description={
+                    a.payment === "paid"
+                      ? "Their application is closed and the fee is marked for a full refund. They will not be admitted."
+                      : "Their application is closed. They will not be admitted."
+                  }
+                  confirmLabel={a.payment === "paid" ? "Decline + refund" : "Decline"}
+                  destructive
+                  onConfirm={() => act("decline")}
                 >
-                  {busy === "decline" ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <X className="w-3.5 h-3.5" />}
-                  Decline{a.payment === "paid" ? " + refund" : ""}
-                </button>
+                  <Button variant="subtle" size="default" disabled={working} className="text-white/50">
+                    {spin("decline", X)} Decline{a.payment === "paid" ? " + refund" : ""}
+                  </Button>
+                </ConfirmAction>
               )}
             </div>
 
@@ -574,40 +560,27 @@ function Row({
               {a.confirmationEmailError ? ` Last error: ${a.confirmationEmailError}` : ""}
             </p>
 
-            {flash && <p className="text-xs text-[#7BE3A8]">{flash}</p>}
-            {error && <p className="text-xs text-[#F87171]">{error}</p>}
-          </div>
+            <p aria-live="polite" className="text-xs">
+              {flash && <span className="text-success-soft">{flash}</span>}
+              {error && <span className="text-danger">{error}</span>}
+            </p>
+          </Card>
 
           {qr && (
-            <div className="rounded-xl border border-white/[0.08] bg-midnight-navy/60 p-4 flex items-center gap-4">
-              <Image
-                src={qr}
-                alt={`Entry QR for ${a.name}`}
-                width={132}
-                height={132}
-                unoptimized
-                className="rounded-lg"
-              />
-              <div className="text-xs text-white/45 space-y-1">
-                <p className="text-white/70 font-semibold">{a.ticketId}</p>
+            <Card className="flex-row items-center gap-4 rounded-xl border-white/[0.08] bg-midnight-navy/60 p-4 shadow-none">
+              <Image src={qr} alt={`Entry QR for ${a.name}`} width={132} height={132} unoptimized className="rounded-lg" />
+              <div className="space-y-1 text-xs text-white/45">
+                <p className="font-semibold tracking-wider text-white/70">{a.ticketId}</p>
                 <p>This is the same QR the applicant sees on their ticket page and receives by email.</p>
-                <button onClick={() => setQr(null)} className="text-white/40 hover:text-white/80 underline underline-offset-2">
+                <Button variant="link" size="sm" className="h-auto p-0 text-white/40 hover:text-white/80" onClick={() => setQr(null)}>
                   Hide
-                </button>
+                </Button>
               </div>
-            </div>
+            </Card>
           )}
         </div>
       )}
     </div>
-  );
-}
-
-function Chip({ className, children }: { className: string; children: React.ReactNode }) {
-  return (
-    <span className={`shrink-0 rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider ${className}`}>
-      {children}
-    </span>
   );
 }
 
@@ -617,23 +590,5 @@ function Detail({ k, children }: { k: string; children: React.ReactNode }) {
       <dt className="w-24 shrink-0 text-white/35">{k}</dt>
       <dd className="min-w-0 text-white/80">{children}</dd>
     </div>
-  );
-}
-
-function Note({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <div className="rounded-2xl border border-white/[0.08] bg-white/[0.04] p-8 text-center">
-      <p className="font-semibold mb-1.5">{title}</p>
-      <p className="text-sm text-white/50">{children}</p>
-    </div>
-  );
-}
-
-function Shell({ children }: { children: React.ReactNode }) {
-  return (
-    <main className="relative min-h-screen bg-transparent text-pearl-white">
-      <Navigation />
-      <div className="relative z-10 w-full max-w-[1100px] mx-auto px-6 py-28 font-ui">{children}</div>
-    </main>
   );
 }

@@ -1,4 +1,5 @@
 import QRCode from "qrcode";
+import { PALETTE } from "@/lib/palette";
 
 /**
  * The one place a ticket QR's contents are defined.
@@ -14,7 +15,7 @@ export function ticketPayload(a: { ticketId: string; eventId: string; email: str
 const RENDER = {
   margin: 1,
   width: 320,
-  color: { dark: "#0A0512", light: "#F7EEE4" },
+  color: { dark: PALETTE.midnightNavy, light: PALETTE.pearlWhite },
 } as const;
 
 export function ticketQrDataUrl(a: { ticketId: string; eventId: string; email: string }) {

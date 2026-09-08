@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { put } from "@vercel/blob";
 import { randomBytes } from "crypto";
+import { events, eventId } from "@/lib/pravrutti-data";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -23,7 +24,21 @@ export async function POST(req: Request) {
   if (message.length < 5 || message.length > 2000)
     return NextResponse.json({ error: "Message must be 5–2000 characters" }, { status: 400 });
 
-  const record = { name, email, message, sentAt: new Date().toISOString() };
+  /* Resolved against the events list rather than stored as sent, so the tag an
+     organiser triages by cannot be an arbitrary string from the request. An
+     unrecognised slug drops the tag instead of rejecting the message — losing
+     someone's question over a bad slug would be the worse failure. */
+  const slug = String(body?.eventId ?? "").trim().toLowerCase();
+  const event = slug ? events.find((e) => eventId(e.name) === slug) : undefined;
+
+  const record = {
+    name,
+    email,
+    message,
+    eventId: event ? eventId(event.name) : null,
+    eventName: event?.name ?? null,
+    sentAt: new Date().toISOString(),
+  };
   await put(
     `contact/${Date.now()}-${randomBytes(3).toString("hex")}.json`,
     JSON.stringify(record),

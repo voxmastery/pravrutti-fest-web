@@ -44,43 +44,41 @@ function RegistrationCard({ reg }: { reg: Registration }) {
   const meta = STATUS_META[reg.status];
 
   return (
-    <div className="relative rounded-2xl border border-[#4A1C3A] bg-[#150B1E]/60 backdrop-blur-sm overflow-hidden cyber-box">
+    <div className="relative rounded-2xl border border-royal-wine bg-cosmic-purple/60 backdrop-blur-sm overflow-hidden cyber-box">
       <div className="absolute inset-0 pointer-events-none crt-scanlines opacity-15" />
 
       <div className="relative p-6 space-y-5">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="min-w-0">
-            <h3 className="text-xl md:text-2xl font-orbitron font-extrabold text-[#F7EEE4] tracking-wide">
+            <h3 className="text-xl md:text-2xl font-display font-extrabold text-pearl-white tracking-wide">
               {reg.eventName}
             </h3>
-            <span className="block mt-1.5 text-xs font-mono tracking-widest uppercase text-[#D64D8D] font-bold">
+            <span className="block mt-1.5 text-xs tracking-widest uppercase text-cyber-pink font-bold">
               {reg.eventCategory}
               {reg.teamName ? ` · ${reg.teamName}` : ""}
             </span>
           </div>
           <span
-            className={`shrink-0 rounded-full border px-3 py-1.5 text-sm font-orbitron font-black uppercase ${TONE_CLASSES[meta.tone]}`}
+            className={`shrink-0 rounded-full border px-3 py-1.5 text-sm font-display font-black uppercase ${TONE_CLASSES[meta.tone]}`}
           >
             {meta.label}
           </span>
         </div>
 
         {/* What happens next — the whole point of the status. */}
-        <p className="text-base text-[#F7EEE4]/80 leading-relaxed font-sharetech">
+        <p className="text-base text-pearl-white/80 leading-relaxed">
           {meta.detail}
         </p>
 
-        <div className="flex flex-wrap items-center justify-between gap-4 pt-4 border-t border-[#4A1C3A]">
+        <div className="flex flex-wrap items-center justify-between gap-4 pt-4 border-t border-royal-wine">
           <div className="flex items-center gap-2">
-            <span className="font-mono text-xs uppercase tracking-widest text-[#F7EEE4]/60">
+            <span className="text-xs uppercase tracking-widest text-pearl-white/60">
               Amount
             </span>
             <span
-              className={`font-orbitron text-lg font-black uppercase ${
+              className={`font-display text-lg font-black uppercase ${
                 reg.amount.toLowerCase().startsWith("free")
-                  ? "text-[#7BE3A8]"
-                  : "text-[#F2D2AE]"
-              }`}
+                  ? "text-success-soft" : "text-champagne-gold" }`}
             >
               {reg.amount}
             </span>
@@ -88,8 +86,8 @@ function RegistrationCard({ reg }: { reg: Registration }) {
 
           {reg.ticketCode && (
             <div className="flex items-center gap-2">
-              <Ticket className="w-4 h-4 text-[#D64D8D]" />
-              <span className="font-mono text-lg font-bold text-[#F2D2AE] tracking-wider">
+              <Ticket className="w-4 h-4 text-cyber-pink" />
+              <span className="text-lg font-bold text-champagne-gold tracking-wider">
                 {reg.ticketCode}
               </span>
             </div>
@@ -116,7 +114,7 @@ export default function TicketsPage() {
   }, []);
 
   return (
-    <main className="relative min-h-screen bg-transparent overflow-x-hidden text-[#F7EEE4] flex flex-col justify-between">
+    <main className="relative min-h-screen bg-transparent overflow-x-hidden text-pearl-white flex flex-col justify-between">
       <Navigation />
 
       {/* Grid overlay */}
@@ -124,15 +122,13 @@ export default function TicketsPage() {
         {[...Array(8)].map((_, i) => (
           <div
             key={`h-${i}`}
-            className="absolute h-px bg-[#721F4C]/40"
-            style={{ top: `${12.5 * (i + 1)}%`, left: 0, right: 0 }}
+            className="absolute h-px bg-neon-purple/40" style={{ top: `${12.5 * (i + 1)}%`, left: 0, right: 0 }}
           />
         ))}
         {[...Array(12)].map((_, i) => (
           <div
             key={`v-${i}`}
-            className="absolute w-px bg-[#4A1C3A]/40"
-            style={{ left: `${8.33 * (i + 1)}%`, top: 0, bottom: 0 }}
+            className="absolute w-px bg-royal-wine/40" style={{ left: `${8.33 * (i + 1)}%`, top: 0, bottom: 0 }}
           />
         ))}
       </div>
@@ -143,18 +139,17 @@ export default function TicketsPage() {
         {/* Header — eyebrow dashes balanced on both sides, matching every other page */}
         <div
           className={`mb-14 text-center transition-all duration-700 ${
-            isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
-          }`}
+            isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4" }`}
         >
-          <span className="inline-flex items-center gap-3 text-sm font-orbitron tracking-widest text-[#D64D8D] uppercase font-bold mb-6 mx-auto">
-            <span className="w-8 h-px bg-[#721F4C]" />
+          <span className="inline-flex items-center gap-3 text-sm font-display tracking-widest text-cyber-pink uppercase font-bold mb-6 mx-auto">
+            <span className="w-8 h-px bg-neon-purple" />
             YOUR APPLICATIONS
-            <span className="w-8 h-px bg-[#721F4C]" />
+            <span className="w-8 h-px bg-neon-purple" />
           </span>
-          <h1 className="text-4xl md:text-7xl font-orbitron tracking-wider text-[#F7EEE4] mb-6 font-black">
+          <h1 className="text-4xl md:text-7xl font-display tracking-wider text-pearl-white mb-6 font-black">
             MY <span className="text-stroke">TICKETS</span>
           </h1>
-          <p className="text-base md:text-xl text-[#F7EEE4]/70 leading-relaxed max-w-2xl mx-auto font-sharetech">
+          <p className="text-base md:text-xl text-pearl-white/70 leading-relaxed max-w-2xl mx-auto">
             Track the status of every event you have applied to, and see exactly what
             happens next.
           </p>
@@ -163,26 +158,26 @@ export default function TicketsPage() {
         {/* Registrations, or the empty state */}
         <div className="space-y-5 mb-16">
           {registrations === null ? (
-            <div className="text-center py-16 border border-dashed border-[#4A1C3A] rounded-2xl bg-[#150B1E]/30">
-              <p className="font-mono text-sm text-[#F7EEE4]/60 uppercase tracking-widest animate-pulse">
+            <div className="text-center py-16 border border-dashed border-royal-wine rounded-2xl bg-cosmic-purple/30">
+              <p className="text-sm text-pearl-white/60 uppercase tracking-widest animate-pulse">
                 Loading your registrations…
               </p>
             </div>
           ) : registrations.length > 0 ? (
             registrations.map((reg) => <RegistrationCard key={reg.id} reg={reg} />)
           ) : (
-            <div className="text-center py-16 px-6 border border-dashed border-[#4A1C3A] rounded-2xl bg-[#150B1E]/30 cyber-box">
-              <Inbox className="w-10 h-10 text-[#D64D8D] mx-auto mb-5" />
-              <h2 className="text-xl md:text-2xl font-orbitron font-black text-[#F7EEE4] mb-3">
+            <div className="text-center py-16 px-6 border border-dashed border-royal-wine rounded-2xl bg-cosmic-purple/30 cyber-box">
+              <Inbox className="w-10 h-10 text-cyber-pink mx-auto mb-5" />
+              <h2 className="text-xl md:text-2xl font-display font-black text-pearl-white mb-3">
                 NO REGISTRATIONS YET
               </h2>
-              <p className="text-base text-[#F7EEE4]/70 font-sharetech max-w-md mx-auto leading-relaxed mb-7">
+              <p className="text-base text-pearl-white/70 max-w-md mx-auto leading-relaxed mb-7">
                 Once you register for an event, it will appear here along with its payment
                 status. Already registered? Your confirmation is sent by email — check your
                 inbox and spam folder.
               </p>
               <Link href="/events">
-                <Button className="arcade-btn-primary rounded-xl font-orbitron text-sm px-8 py-5 h-auto font-black tracking-wider cursor-pointer">
+                <Button className="arcade-btn-primary rounded-xl font-display text-sm px-8 py-5 h-auto font-black tracking-wider cursor-pointer">
                   BROWSE EVENTS <ArrowRight className="w-4 h-4 ml-2" />
                 </Button>
               </Link>
@@ -192,26 +187,26 @@ export default function TicketsPage() {
 
         {/* How registration works — shown always, because this is the answer to
             "my registration is in process, now what?" */}
-        <section className="rounded-2xl border border-[#721F4C] bg-[#150B1E]/60 backdrop-blur-md overflow-hidden cyber-box">
-          <div className="relative flex items-center gap-3 px-6 py-4 border-b border-[#4A1C3A] bg-[#0A0818]/80">
-            <CheckCircle2 className="w-5 h-5 text-[#F2D2AE] shrink-0" />
-            <h2 className="font-orbitron text-base md:text-lg font-black tracking-wider text-[#F7EEE4] uppercase">
+        <section className="rounded-2xl border border-neon-purple bg-cosmic-purple/60 backdrop-blur-md overflow-hidden cyber-box">
+          <div className="relative flex items-center gap-3 px-6 py-4 border-b border-royal-wine bg-midnight-navy/80">
+            <CheckCircle2 className="w-5 h-5 text-champagne-gold shrink-0" />
+            <h2 className="font-display text-base md:text-lg font-black tracking-wider text-pearl-white uppercase">
               What happens after you register
             </h2>
           </div>
 
-          <ol className="divide-y divide-[#4A1C3A]/60">
+          <ol className="divide-y divide-royal-wine/60">
             {FLOW.map((step, i) => (
               <li key={step.title} className="flex gap-4 px-6 py-5">
-                <div className="shrink-0 w-11 h-11 rounded-xl bg-[#721F4C]/30 border border-[#D64D8D]/30 flex items-center justify-center">
-                  <step.icon className="w-5 h-5 text-[#F2D2AE]" />
+                <div className="shrink-0 w-11 h-11 rounded-xl bg-neon-purple/30 border border-cyber-pink/30 flex items-center justify-center">
+                  <step.icon className="w-5 h-5 text-champagne-gold" />
                 </div>
                 <div className="min-w-0">
-                  <h3 className="font-orbitron text-base md:text-lg font-extrabold text-[#F7EEE4] tracking-wide mb-1.5">
-                    <span className="text-[#D64D8D] mr-2">0{i + 1}</span>
+                  <h3 className="font-display text-base md:text-lg font-extrabold text-pearl-white tracking-wide mb-1.5">
+                    <span className="text-cyber-pink mr-2">0{i + 1}</span>
                     {step.title}
                   </h3>
-                  <p className="text-base text-[#F7EEE4]/75 leading-relaxed font-sharetech">
+                  <p className="text-base text-pearl-white/75 leading-relaxed">
                     {step.body}
                   </p>
                 </div>
@@ -219,11 +214,11 @@ export default function TicketsPage() {
             ))}
           </ol>
 
-          <div className="px-6 py-5 border-t border-[#4A1C3A] bg-[#0A0818]/60">
-            <p className="text-base text-[#F7EEE4]/70 font-sharetech leading-relaxed">
+          <div className="px-6 py-5 border-t border-royal-wine bg-midnight-navy/60">
+            <p className="text-base text-pearl-white/70 leading-relaxed">
               Haven&apos;t received your confirmation email 48 hours after paying? Check your
               spam folder first, then{" "}
-              <Link href="/contact" className="font-bold text-[#F2D2AE] underline hover:text-white">
+              <Link href="/contact" className="font-bold text-champagne-gold underline hover:text-white">
                 contact the organising helpdesk
               </Link>{" "}
               with your payment reference.

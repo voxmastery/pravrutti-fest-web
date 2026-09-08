@@ -7,9 +7,11 @@ import { FooterSection } from "@/components/landing/footer-section";
 import { Button } from "@/components/ui/button";
 import { FEST, events, eventId as slugify } from "@/lib/pravrutti-data";
 import { STATUS_COPY, AppStatus, PayStatus } from "@/lib/applications";
+import { downloadEventIcs } from "@/lib/event-calendar";
 import { EventPoster } from "@/components/event-poster";
+import { TeamInviteCard, useMyTeam } from "@/components/team-invite-card";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
-import { Loader2, CalendarPlus, Hourglass, Check, RotateCcw, LogOut, MapPin, QrCode } from "lucide-react";
+import { Loader2, CalendarPlus, Hourglass, Check, RotateCcw, LogOut, MapPin, QrCode, ArrowLeft, Copy } from "lucide-react";
 
 type App = {
   ticketId: string;
@@ -19,19 +21,23 @@ type App = {
   payment: PayStatus;
   fee: string;
   name: string;
+  teamName?: string | null;
+  teamCode?: string | null;
   appliedAt: string;
+  /** The exact hall, sent only for confirmed applications. */
+  venue: string | null;
   qr: string | null;
 };
 
 const TONE: Record<AppStatus, { chip: string; dot: string; icon: typeof Check }> = {
   pending: {
-    chip: "bg-[#BF8A1B]/20 border-[#BF8A1B]/50 text-[#F2D2AE]",
-    dot: "bg-[#BF8A1B] border-[#BF8A1B]/40",
+    chip: "bg-soft-gold/20 border-soft-gold/50 text-champagne-gold",
+    dot: "bg-soft-gold border-soft-gold/40",
     icon: Hourglass,
   },
   confirmed: {
-    chip: "bg-[#12B76A]/15 border-[#12B76A]/45 text-[#7BE3A8]",
-    dot: "bg-[#12B76A] border-[#12B76A]/40",
+    chip: "bg-success/15 border-success/45 text-success-soft",
+    dot: "bg-success border-success/40",
     icon: Check,
   },
   declined: {
@@ -40,6 +46,54 @@ const TONE: Record<AppStatus, { chip: string; dot: string; icon: typeof Check }>
     icon: RotateCcw,
   },
 };
+
+function TicketTeamBlock({
+  eventId,
+  fallbackCode,
+  fallbackName,
+}: {
+  eventId: string;
+  fallbackCode: string;
+  fallbackName?: string | null;
+}) {
+  const team = useMyTeam(eventId, true);
+  const [copied, setCopied] = useState(false);
+
+  if (team) {
+    return (
+      <div className="pt-1">
+        <TeamInviteCard team={team} />
+      </div>
+    );
+  }
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(fallbackCode);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 1600);
+    } catch {
+      /* they can still select the code */
+    }
+  };
+
+  return (
+    <div className="flex flex-wrap items-center gap-2 pt-0.5">
+      <Button type="button" variant="ghost" size="sm" onClick={handleCopy} aria-label="Copy team code" className="h-auto gap-1.5 px-1 text-sm text-white/70 hover:bg-transparent hover:text-white">
+        <span className="text-white/40">Team code</span>
+        <span className="tracking-widest text-white">{fallbackCode}</span>
+        {copied ? (
+          <Check className="w-3.5 h-3.5" aria-hidden="true" />
+        ) : (
+          <Copy className="w-3.5 h-3.5" aria-hidden="true" />
+        )}
+      </Button>
+      <span className="text-xs text-white/35">
+        {fallbackName ? `${fallbackName} · ` : ""}share so teammates can still join
+      </span>
+    </div>
+  );
+}
 
 function GoogleMark() {
   return (
@@ -52,34 +106,20 @@ function GoogleMark() {
   );
 }
 
-function addToCalendar(eventName: string, ticketId: string) {
-  const ics = [
-    "BEGIN:VCALENDAR",
-    "VERSION:2.0",
-    "PRODID:-//Pravrutti//EN",
-    "BEGIN:VEVENT",
-    `UID:${ticketId}@pravrutti`,
-    `DTSTAMP:${new Date().toISOString().replace(/[-:]/g, "").split(".")[0]}Z`,
-    `DTSTART:${FEST.startUtc}`,
-    `DTEND:${FEST.endUtc}`,
-    `SUMMARY:${eventName} - ${FEST.name}`,
-    `LOCATION:${FEST.venue}`,
-    `DESCRIPTION:Ticket ${ticketId}. Show your QR at the registration desk.`,
-    "END:VEVENT",
-    "END:VCALENDAR",
-  ].join("\r\n");
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(new Blob([ics], { type: "text/calendar" }));
-  a.download = `${eventName.replace(/\s+/g, "-")}.ics`;
-  a.click();
-}
-
 export default function TicketPage() {
   const me = useIdentity();
   const [loading, setLoading] = useState(false);
   const [apps, setApps] = useState<App[] | null>(null);
   const [qrFor, setQrFor] = useState<App | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [focusEvent, setFocusEvent] = useState<string | null>(null);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const fromQuery = params.get("event");
+    const fromHash = window.location.hash.replace(/^#/, "");
+    setFocusEvent(fromQuery || fromHash || null);
+  }, []);
 
   const lookup = useCallback(
     async () => {
@@ -113,88 +153,127 @@ export default function TicketPage() {
   // there is no typed-email fallback to impersonate someone through.
   const needsSignIn = !signedIn;
 
+  const focused =
+    focusEvent && apps
+      ? apps.find((a) => a.eventId === focusEvent && a.status === "confirmed" && a.qr)
+      : null;
+
+  if (signedIn && focusEvent && !error && (loading || apps === null || focused)) {
+    return (
+      <main className="relative min-h-screen bg-midnight-navy overflow-x-hidden text-pearl-white flex flex-col">
+        <div className="absolute inset-0 z-[1] pointer-events-none crt-scanlines opacity-25" />
+        <div className="relative z-10 sticky top-0 flex items-center gap-2 px-3 h-14 bg-midnight-navy/90 backdrop-blur-md border-b border-royal-wine">
+          <a
+            href={`/events/${encodeURIComponent(focusEvent)}`}
+            aria-label="Back to event" className="w-11 h-11 shrink-0 rounded-xl flex items-center justify-center text-pearl-white/70 hover:text-champagne-gold hover:bg-cosmic-purple transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyber-pink" >
+            <ArrowLeft className="w-5 h-5" aria-hidden="true" />
+          </a>
+          <div className="min-w-0">
+            <h1 className="font-display text-sm font-bold text-pearl-white leading-tight">My Ticket</h1>
+            <p className="text-xs text-pearl-white/50 truncate">
+              {focused?.eventName ?? " "}
+            </p>
+          </div>
+        </div>
+
+        <div className="relative z-10 flex-1 flex flex-col items-center justify-center px-6 py-10 gap-6">
+          {focused?.qr ? (
+            <>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={focused.qr}
+                alt={`Entry QR for ${focused.eventName}`}
+                className="w-64 h-64 sm:w-72 sm:h-72 rounded-2xl bg-pearl-white p-3" />
+              <div className="text-center space-y-1">
+                <p className="font-display text-base font-bold text-pearl-white">{focused.name}</p>
+                <p className="text-sm text-pearl-white/50">{me.email}</p>
+              </div>
+            </>
+          ) : (
+            <Loader2 className="w-6 h-6 animate-spin text-cyber-pink" />
+          )}
+        </div>
+      </main>
+    );
+  }
+
   return (
-    <main className="relative min-h-screen bg-transparent overflow-x-hidden text-[#F7EEE4] flex flex-col justify-between">
+    <main className="relative min-h-screen bg-transparent overflow-x-hidden text-pearl-white flex flex-col justify-between">
       <Navigation />
       <div className="absolute inset-0 z-[1] pointer-events-none crt-scanlines opacity-25" />
 
       <div className="relative z-10 flex-1 w-full max-w-[720px] mx-auto px-6 py-28 lg:py-36">
         <div className="text-center mb-10">
-          <span className="inline-flex items-center gap-3 text-xs font-orbitron tracking-widest text-[#D64D8D] uppercase font-bold mb-5">
-            <span className="w-8 h-px bg-[#721F4C]" />
+          <span className="inline-flex items-center gap-3 text-xs font-display tracking-widest text-cyber-pink uppercase font-bold mb-5">
+            <span className="w-8 h-px bg-neon-purple" />
             Your applications
           </span>
-          <h1 className="text-4xl md:text-6xl font-orbitron tracking-wider font-black mb-4">
+          <h1 className="text-4xl md:text-6xl font-display tracking-wider font-black mb-4">
             MY <span className="text-stroke">TICKETS</span>
           </h1>
-          <p className="font-sharetech text-[#F7EEE4]/60">
+          <p className="text-pearl-white/60">
             {signedIn
-              ? "Every event you've applied to, and the QR for the ones that are confirmed."
-              : me.authEnabled
-              ? "Sign in with the Google account you applied with."
-              : "Enter the email you applied with to see where each application stands."}
+              ? "Every event you've applied to, and the QR for the ones that are confirmed." : me.authEnabled
+              ? "Sign in with the Google account you applied with." : "Enter the email you applied with to see where each application stands."}
           </p>
         </div>
 
         {/* Identity bar */}
         {!me.ready ? (
           <div className="flex justify-center py-10">
-            <Loader2 className="w-5 h-5 animate-spin text-[#D64D8D]" />
+            <Loader2 className="w-5 h-5 animate-spin text-cyber-pink" />
           </div>
         ) : needsSignIn ? (
-          <div className="p-8 border border-[#4A1C3A] rounded-3xl bg-[#150B1E]/60 cyber-box text-center space-y-5">
-            <p className="font-sharetech text-sm text-[#F7EEE4]/70">
+          <div className="p-8 border border-royal-wine rounded-3xl bg-cosmic-purple/60 cyber-box text-center space-y-5">
+            <p className="text-sm text-pearl-white/70">
               Signing in keeps your ticket tied to your inbox — you can reopen it on any device, and nobody
               else can pull up your applications.
             </p>
             <Button
               onClick={me.signIn}
-              className="w-full sm:w-auto rounded-xl h-12 px-8 bg-[#F7EEE4] hover:bg-white text-[#0A0512] text-xs font-orbitron font-black uppercase tracking-widest cursor-pointer inline-flex items-center gap-3"
-            >
+              className="w-full sm:w-auto rounded-xl h-12 px-8 bg-pearl-white hover:bg-white text-midnight-navy text-xs font-display font-black uppercase tracking-widest cursor-pointer inline-flex items-center gap-3" >
               <GoogleMark /> Continue with Google
             </Button>
           </div>
         ) : signedIn ? (
-          <div className="flex items-center gap-3 p-4 border border-[#4A1C3A] rounded-2xl bg-[#150B1E]/60 mb-8">
+          <div className="flex items-center gap-3 p-4 border border-royal-wine rounded-2xl bg-cosmic-purple/60 mb-8">
             {me.image ? (
               /* eslint-disable-next-line @next/next/no-img-element */
               <img src={me.image} alt="" className="w-10 h-10 rounded-xl shrink-0" />
             ) : (
-              <span className="w-10 h-10 shrink-0 rounded-xl bg-[#721F4C] text-[#F2D2AE] font-orbitron font-black flex items-center justify-center text-sm">
+              <span className="w-10 h-10 shrink-0 rounded-xl bg-neon-purple text-champagne-gold font-display font-black flex items-center justify-center text-sm">
                 {(me.name ?? "?")[0]}
               </span>
             )}
             <div className="min-w-0 flex-1">
               <p className="font-bold text-sm truncate">{me.name}</p>
-              <p className="font-sharetech text-xs text-[#F7EEE4]/50 truncate">{me.email}</p>
+              <p className="text-xs text-pearl-white/50 truncate">{me.email}</p>
             </div>
             <Button
-              variant="outline"
-              onClick={me.signOut}
-              className="rounded-xl h-9 border-[#4A1C3A] text-[#F7EEE4]/60 hover:bg-[#4A1C3A]/30 text-[10px] font-bold uppercase tracking-wider cursor-pointer"
-            >
+              variant="outline" onClick={me.signOut}
+              className="rounded-xl h-9 border-royal-wine text-pearl-white/60 hover:bg-royal-wine/30 text-[10px] font-bold uppercase tracking-wider cursor-pointer" >
               <LogOut className="w-3.5 h-3.5 mr-1.5" /> Sign out
             </Button>
           </div>
         ) : null}
 
         {error && (
-          <p className="text-xs font-sharetech text-[#D64D8D] border border-[#D64D8D]/40 bg-[#D64D8D]/10 rounded-xl p-3 mb-6">
+          <p className="text-xs text-cyber-pink border border-cyber-pink/40 bg-cyber-pink/10 rounded-xl p-3 mb-6">
             {error}
           </p>
         )}
 
         {loading && signedIn && (
           <div className="flex justify-center py-10">
-            <Loader2 className="w-5 h-5 animate-spin text-[#D64D8D]" />
+            <Loader2 className="w-5 h-5 animate-spin text-cyber-pink" />
           </div>
         )}
 
         {!loading && apps?.length === 0 && (
           <div className="text-center py-16 border border-white/[0.08] rounded-3xl bg-white/[0.04]">
-            <p className="font-ui font-semibold text-white mb-1.5">No applications yet</p>
-            <p className="font-ui text-sm text-white/50">
-              <a href="/events" className="text-[#F2D2AE] underline hover:text-[#D64D8D]">
+            <p className="font-semibold text-white mb-1.5">No applications yet</p>
+            <p className="text-sm text-white/50">
+              <a href="/events" className="text-champagne-gold underline hover:text-cyber-pink">
                 Browse the events
               </a>{" "}
               and apply — they&apos;ll show up here.
@@ -219,7 +298,7 @@ export default function TicketPage() {
             return (
               <section key={status} className="relative pl-7 pb-8 last:pb-0">
                 <span className={`absolute left-0 top-1.5 w-[11px] h-[11px] rounded-full border-2 ${tone.dot}`} />
-                <h2 className="font-ui text-sm font-medium text-white/50 mb-4">
+                <h2 className="text-sm font-medium text-white/50 mb-4">
                   {STATUS_COPY[status].label}
                   <span className="text-white/25"> · {group.length}</span>
                 </h2>
@@ -231,51 +310,48 @@ export default function TicketPage() {
                     return (
                       <article
                         key={a.ticketId}
-                        className="min-w-0 rounded-2xl border border-white/[0.08] bg-white/[0.04] p-4 flex gap-4 hover:bg-white/[0.06] transition-colors"
-                      >
+                        className="min-w-0 rounded-2xl border border-white/[0.08] bg-white/[0.04] p-4 flex gap-4 hover:bg-white/[0.06] transition-colors" >
                         <div className="min-w-0 flex-1 space-y-2">
-                          <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full border font-ui text-xs font-medium ${tone.chip}`}>
+                          <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full border text-xs font-medium ${tone.chip}`}>
                             <Icon className="w-3 h-3" /> {STATUS_COPY[a.status].label}
                           </span>
 
                           <a
                             href={`/events/${a.eventId}`}
-                            className="block font-ui font-semibold text-base text-white hover:text-[#F2D2AE] transition-colors leading-snug"
-                          >
+                            className="block font-semibold text-base text-white hover:text-champagne-gold transition-colors leading-snug" >
                             {a.eventName}
                           </a>
 
-                          <p className="flex items-center gap-1.5 font-ui text-sm text-white/50">
+                          <p className="flex items-center gap-1.5 text-sm text-white/50">
                             <MapPin className="w-3.5 h-3.5 shrink-0" />
-                            <span className="truncate">{ev?.venue ?? FEST.venue}</span>
+                            <span className="truncate">{a.venue ?? FEST.venue}</span>
                           </p>
 
-                          <p className="font-ui text-sm text-white/40">
-                            {a.payment === "not_required"
-                              ? "Free entry"
-                              : a.payment === "awaiting"
-                              ? `${a.fee} · pay online`
-                              : a.payment === "paid"
-                              ? `${a.fee} paid`
-                              : `${a.fee} refunded`}
+                          <p className="text-sm text-white/40">
+                            {a.payment === "not_required" ? "No payment due" : a.payment === "awaiting" ? `${a.fee} · pay online` : a.payment === "paid" ? `${a.fee} paid` : `${a.fee} refunded`}
                             <span className="text-white/25"> · {a.ticketId}</span>
                           </p>
+
+                          {a.teamCode && a.status !== "declined" && (
+                            <TicketTeamBlock
+                              eventId={a.eventId}
+                              fallbackCode={a.teamCode}
+                              fallbackName={a.teamName}
+                            />
+                          )}
 
                           {a.status === "confirmed" && (
                             <div className="flex flex-wrap gap-2 pt-1">
                               {a.qr && (
                                 <Button
                                   onClick={() => setQrFor(a)}
-                                  className="h-[34px] rounded-2xl bg-white text-black hover:bg-white/90 font-ui font-medium text-sm px-4 cursor-pointer"
-                                >
+                                  className="h-[34px] rounded-2xl bg-white text-black hover:bg-white/90 font-medium text-sm px-4 cursor-pointer" >
                                   <QrCode className="w-4 h-4 mr-1.5" /> My Ticket
                                 </Button>
                               )}
                               <Button
-                                variant="outline"
-                                onClick={() => addToCalendar(a.eventName, a.ticketId)}
-                                className="h-[34px] rounded-2xl border border-white/[0.08] bg-white/[0.04] text-white/70 hover:bg-white/[0.08] hover:text-white font-ui font-medium text-sm px-4 cursor-pointer"
-                              >
+                                variant="outline" onClick={() => downloadEventIcs(a.eventName, a.ticketId)}
+                                className="h-[34px] rounded-2xl border border-white/[0.08] bg-white/[0.04] text-white/70 hover:bg-white/[0.08] hover:text-white font-medium text-sm px-4 cursor-pointer" >
                                 <CalendarPlus className="w-4 h-4 mr-1.5" /> Calendar
                               </Button>
                             </div>
@@ -287,8 +363,7 @@ export default function TicketPage() {
                           <EventPoster
                             event={ev}
                             name={a.eventName}
-                            className="w-[80px] h-[80px] sm:w-[96px] sm:h-[96px] rounded-xl border border-white/[0.08]"
-                          />
+                            className="w-[80px] h-[80px] sm:w-[96px] sm:h-[96px] rounded-xl border border-white/[0.08]" />
                         </a>
                       </article>
                     );
@@ -305,9 +380,8 @@ export default function TicketPage() {
       <Dialog open={!!qrFor} onOpenChange={(o) => !o && setQrFor(null)}>
         <DialogContent
           aria-describedby={undefined}
-          className="max-w-[340px] rounded-2xl border border-white/[0.08] bg-[#141216]/95 backdrop-blur-xl text-white p-6 font-ui"
-        >
-          <DialogTitle className="font-ui font-semibold text-base text-center text-white leading-snug">
+          className="max-w-[340px] rounded-2xl border border-white/[0.08] bg-cosmic-purple/95 backdrop-blur-xl text-white p-6" >
+          <DialogTitle className="font-semibold text-base text-center text-white leading-snug">
             {qrFor?.eventName}
           </DialogTitle>
           {qrFor?.qr && (
@@ -315,14 +389,13 @@ export default function TicketPage() {
             <img
               src={qrFor.qr}
               alt={`Entry QR for ${qrFor.eventName}`}
-              className="w-52 h-52 mx-auto rounded-xl bg-white p-3"
-            />
+              className="w-52 h-52 mx-auto rounded-xl bg-white p-3" />
           )}
           <div className="text-center space-y-0.5">
-            <p className="font-ui font-medium text-white">{qrFor?.name}</p>
-            <p className="font-mono text-sm text-white/50">{qrFor?.ticketId}</p>
+            <p className="font-medium text-white">{qrFor?.name}</p>
+            <p className="text-sm text-white/50">{qrFor?.ticketId}</p>
           </div>
-          <p className="font-ui text-xs text-white/40 text-center leading-relaxed">
+          <p className="text-xs text-white/40 text-center leading-relaxed">
             Show this at the registration desk. {FEST.venue}.
           </p>
         </DialogContent>

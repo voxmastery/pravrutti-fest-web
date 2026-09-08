@@ -20,8 +20,8 @@ export default function SSOCallback() {
 
   return (
     <main className="min-h-screen bg-transparent flex flex-col items-center justify-center gap-4">
-      <Loader2 className="w-6 h-6 animate-spin text-[#D64D8D]" />
-      <p className="font-sharetech text-xs uppercase tracking-widest text-[#F7EEE4]/50">
+      <Loader2 className="w-6 h-6 animate-spin text-cyber-pink" />
+      <p className="text-xs uppercase tracking-widest text-pearl-white/50">
         Signing you in
       </p>
       {clerkConfigured && <ClerkCallback />}

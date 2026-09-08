@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach, beforeAll } from "vitest";
+import { ticketPayload } from "@/lib/ticket-qr";
 
 const store = new Map<string, any>();
 
@@ -137,5 +138,46 @@ describe("POST /api/checkin", () => {
     // ever reaching parseTicketPayload or a storage lookup.
     const res = await post("A".repeat(10_000));
     expect(res.status).toBe(400);
+  });
+
+  it("admits a payload built by ticketPayload at the named desk", async () => {
+    const payload = ticketPayload({
+      ticketId: "PRV-AAAA1111",
+      eventId: "robo-climb",
+      email: "asha@example.com",
+    });
+    const res = await POST(
+      new Request("http://t/api/checkin", {
+        method: "POST",
+        body: JSON.stringify({ payload, eventId: "robo-climb" }),
+      })
+    );
+    expect(res.status).toBe(200);
+    expect((await res.json()).name).toBe("Asha");
+  });
+
+  it("admits a 16-hex ticket id, the format newTicketId now issues", async () => {
+    store.set("app/robo-climb/bina@example.com.json", {
+      ticketId: "PRV-DEADBEEFCAFEBABE",
+      eventId: "robo-climb",
+      eventName: "Robo Climb",
+      status: "confirmed",
+      name: "Bina",
+      email: "bina@example.com",
+    });
+    const payload = ticketPayload({
+      ticketId: "PRV-DEADBEEFCAFEBABE",
+      eventId: "robo-climb",
+      email: "bina@example.com",
+    });
+    role.current = { kind: "coordinator", eventIds: ["robo-climb"] };
+    const res = await POST(
+      new Request("http://t/api/checkin", {
+        method: "POST",
+        body: JSON.stringify({ payload, eventId: "robo-climb" }),
+      })
+    );
+    expect(res.status).toBe(200);
+    expect((await res.json()).name).toBe("Bina");
   });
 });

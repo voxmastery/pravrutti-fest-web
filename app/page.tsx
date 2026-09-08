@@ -9,12 +9,28 @@ import { IntegrationsSection } from "@/components/landing/integrations-section";
 import { SponsorsSection } from "@/components/landing/sponsors-section";
 import { FooterSection } from "@/components/landing/footer-section";
 import { useGlobalScrollReveal } from "@/hooks/use-animations";
+import { useIdentity } from "@/lib/identity-context";
+import { useDashboardRole } from "@/hooks/use-dashboard-role";
+import { isStaffRole } from "@/lib/staff-cockpit";
 
 export default function Home() {
   const [gateOpen, setGateOpen] = useState(false);
+  const me = useIdentity();
+  const dash = useDashboardRole();
   useGlobalScrollReveal();
 
   const handleGateComplete = useCallback(() => setGateOpen(true), []);
+
+  /* Don't paint the visitor hero for a staff session — Navigation will
+     send them to /dashboard. Hold the page until the role is known so a
+     signed-in organiser never sees the gate open then bounce. */
+  if (me.signedIn && (!dash.ready || isStaffRole(dash.role))) {
+    return (
+      <main className="relative min-h-screen bg-transparent" aria-busy={!dash.ready}>
+        <Navigation />
+      </main>
+    );
+  }
 
   return (
     <>
@@ -22,7 +38,7 @@ export default function Home() {
       {!gateOpen && <GateIntro onComplete={handleGateComplete} />}
 
       {/* Site is always visible — gate just covers it until it opens */}
-      <main className="relative min-h-screen overflow-x-hidden bg-transparent text-[#F7EEE4]">
+      <main className="relative min-h-screen overflow-x-hidden bg-transparent text-pearl-white">
         <Navigation />
         <HeroSection />
         <HowItWorksSection />

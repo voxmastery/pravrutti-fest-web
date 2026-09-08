@@ -65,10 +65,8 @@ export function EventMoreSheet({
   return (
     <Sheet open={open} onOpenChange={(o) => !o && onClose()}>
       <SheetContent
-        side="bottom"
-        className="bg-midnight-navy border-t-2 border-neon-purple text-pearl-white rounded-t-3xl p-0 gap-0 max-h-[85dvh] overflow-y-auto overscroll-contain"
-      >
-        <SheetTitle className="px-5 pt-5 pb-3 font-orbitron text-[10px] font-black uppercase tracking-[0.22em] text-pearl-white/45">
+        side="bottom" className="bg-midnight-navy border-t-2 border-neon-purple text-pearl-white rounded-t-3xl p-0 gap-0 max-h-[85dvh] overflow-y-auto overscroll-contain" >
+        <SheetTitle className="px-5 pt-5 pb-3 font-display text-[10px] font-black uppercase tracking-[0.22em] text-pearl-white/45">
           {event.name}
         </SheetTitle>
 
@@ -76,10 +74,8 @@ export function EventMoreSheet({
           {rows.map(({ label, Icon, run }) => (
             <li key={label}>
               <button
-                type="button"
-                onClick={run}
-                className="w-full min-h-[52px] flex items-center gap-3.5 px-3 rounded-2xl font-sharetech text-base text-pearl-white/85 hover:bg-cosmic-purple hover:text-pearl-white transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyber-pink"
-              >
+                type="button" onClick={run}
+                className="w-full min-h-[52px] flex items-center gap-3.5 px-3 rounded-2xl text-base text-pearl-white/85 hover:bg-cosmic-purple hover:text-pearl-white transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyber-pink" >
                 <Icon className="w-4.5 h-4.5 shrink-0 text-cyber-pink" aria-hidden="true" />
                 {label}
               </button>
@@ -90,8 +86,7 @@ export function EventMoreSheet({
               href={event.brochureUrl}
               download={`${event.name}_Rules.pdf`}
               onClick={onClose}
-              className="w-full min-h-[52px] flex items-center gap-3.5 px-3 rounded-2xl font-sharetech text-base text-pearl-white/85 hover:bg-cosmic-purple hover:text-pearl-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyber-pink"
-            >
+              className="w-full min-h-[52px] flex items-center gap-3.5 px-3 rounded-2xl text-base text-pearl-white/85 hover:bg-cosmic-purple hover:text-pearl-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyber-pink" >
               <Download className="w-4.5 h-4.5 shrink-0 text-cyber-pink" aria-hidden="true" />
               Download the rulebook
             </a>

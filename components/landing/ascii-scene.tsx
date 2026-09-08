@@ -204,8 +204,7 @@ export function AsciiScene() {
   return (
     <canvas
       ref={canvasRef}
-      className="absolute inset-0 z-0"
-      style={{ display: "block" }}
+      className="absolute inset-0 z-0" style={{ display: "block" }}
     />
   );
 }

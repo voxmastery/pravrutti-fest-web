@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server";
 import { list } from "@vercel/blob";
 import { createHash } from "crypto";
-import QRCode from "qrcode";
 import { events, eventId } from "@/lib/pravrutti-data";
+import { venueFor } from "@/lib/event-venues";
 import { Application } from "@/lib/applications";
 import { resolveEmail, authRequired } from "@/lib/identity";
+import { ticketQrDataUrl } from "@/lib/ticket-qr";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -76,15 +77,15 @@ export async function POST(req: Request) {
       payment: r.payment,
       fee: r.fee,
       name: r.name,
+      teamName: r.teamName ?? null,
+      teamCode: r.teamCode ?? null,
       appliedAt: r.appliedAt,
-      qr:
-        r.status === "confirmed"
-          ? await QRCode.toDataURL(`${r.ticketId}|${r.eventId}|${r.email}`, {
-              margin: 1,
-              width: 320,
-              color: { dark: "#0A0512", light: "#F7EEE4" },
-            })
-          : null,
+      /* The hall is server-only data (lib/event-venues.ts) and the ticket page
+         is a client component, so it arrives here rather than from the events
+         array. Confirmed only, matching the gate on /api/events/coordinators:
+         someone still in review has not been told which room yet. */
+      venue: r.status === "confirmed" ? venueFor(r.eventId) : null,
+      qr: r.status === "confirmed" ? await ticketQrDataUrl(r) : null,
     }))
   );
 

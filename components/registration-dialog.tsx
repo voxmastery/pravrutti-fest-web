@@ -11,11 +11,15 @@ import {
   PAYMENTS_LIVE,
   FEE_PER_HEAD,
   MAX_TEAM_SIZE,
+  PHONE_HINT,
+  PHONE_INPUT_MAX,
   formatFee,
   isValidPhone,
+  phoneFieldValue,
 } from "@/lib/applications";
 import { MAX_TEAM_BIO, TEAM_CODE_LENGTH, isValidTeamCode, type TeamPreview } from "@/lib/teams";
 import { Loader2, ArrowLeft, Pencil, Hourglass, ShieldCheck, RotateCcw, Check, Copy, Users } from "lucide-react";
+import { PALETTE } from "@/lib/palette";
 
 const STORE_KEY = "pravrutti.guest";
 
@@ -31,7 +35,7 @@ function GoogleMark() {
 }
 
 type Guest = { name: string; email: string; phone: string; college: string };
-type FormState = Guest;
+type FormState = Guest & { paymentRef: string };
 type TeamPane = "idle" | "create" | "created" | "join" | "verified";
 type Result = {
   ticketId: string;
@@ -60,7 +64,7 @@ function loadGuest(): Guest | null {
 async function fireConfetti() {
   if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
   const confetti = (await import("canvas-confetti")).default;
-  const colors = ["#D64D8D", "#F2D2AE", "#BF8A1B", "#F7EEE4"];
+  const colors = [PALETTE.cyberPink, PALETTE.champagneGold, PALETTE.softGold, PALETTE.pearlWhite];
   confetti({ particleCount: 70, spread: 62, origin: { y: 0.35 }, colors, disableForReducedMotion: true });
   setTimeout(() => {
     confetti({ particleCount: 40, angle: 60, spread: 55, origin: { x: 0, y: 0.5 }, colors });
@@ -70,12 +74,12 @@ async function fireConfetti() {
 
 const card = "rounded-xl border border-white/[0.08] bg-white/[0.05]";
 const inputCls =
-  "h-[38px] rounded-lg border border-transparent bg-white/[0.08] font-ui text-base md:text-base text-white placeholder:text-white/25 focus-visible:ring-1 focus-visible:ring-[#D64D8D]/70 focus-visible:border-transparent";
+  "h-[38px] rounded-lg border border-transparent bg-white/[0.08] text-base md:text-base text-white placeholder:text-white/25 focus-visible:ring-1 focus-visible:ring-cyber-pink/70 focus-visible:border-transparent";
 const textareaCls =
-  "min-h-[76px] rounded-lg border border-transparent bg-white/[0.08] font-ui text-base text-white placeholder:text-white/25 focus-visible:ring-1 focus-visible:ring-[#D64D8D]/70 focus-visible:border-transparent";
+  "min-h-[76px] rounded-lg border border-transparent bg-white/[0.08] text-base text-white placeholder:text-white/25 focus-visible:ring-1 focus-visible:ring-cyber-pink/70 focus-visible:border-transparent";
 const labelCls = "block text-sm font-medium text-white/[0.79] mb-1.5";
 const primaryBtn =
-  "w-full h-[38px] rounded-2xl bg-[#D64D8D] text-white hover:bg-[#c23f7d] font-ui font-medium text-base cursor-pointer";
+  "w-full h-[38px] rounded-2xl bg-cyber-pink text-white hover:bg-electric-magenta font-medium text-base cursor-pointer";
 const ghostBtn =
   "h-[38px] rounded-2xl border border-transparent bg-white/[0.08] text-white/70 hover:bg-white/[0.14] hover:text-white cursor-pointer";
 
@@ -84,6 +88,7 @@ const emptyForm = (): FormState => ({
   email: "",
   phone: "",
   college: "",
+  paymentRef: "",
 });
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
@@ -129,7 +134,10 @@ export function RegistrationDialog({
     const g = loadGuest();
     if (g) {
       setKnown(g);
-      setForm((f) => ({ ...f, ...g }));
+      // Cached entries predate the digits-only rule, so a stored "+91 98765
+      // 43210" is re-normalised rather than shown back in a shape the field
+      // itself no longer accepts.
+      setForm((f) => ({ ...f, ...g, phone: phoneFieldValue(g.phone) }));
     }
     // A verified identity always wins over anything cached locally.
     if (me.email) {
@@ -155,11 +163,17 @@ export function RegistrationDialog({
     };
   }, [event, me.email]);
 
-  const set = (k: keyof Guest) => (e: React.ChangeEvent<HTMLInputElement>) =>
+  const set = (k: keyof FormState) => (e: React.ChangeEvent<HTMLInputElement>) =>
     setForm((f) => ({ ...f, [k]: e.target.value }));
 
+  const setPhone = (e: React.ChangeEvent<HTMLInputElement>) =>
+    setForm((f) => ({ ...f, phone: phoneFieldValue(e.target.value) }));
+
   const applicantFee = formatFee(1);
-  const teamSize = createdTeam?.memberCount ?? 1;
+  const teamCap = createdTeam?.maxMembers ?? verifiedTeam?.maxMembers ?? event?.teamSize.max ?? MAX_TEAM_SIZE;
+  const joining = teamPane === "join" || teamPane === "verified";
+  // Only nag once they have typed something — an empty field is not yet a mistake.
+  const phoneDirtyInvalid = form.phone.length > 0 && !isValidPhone(form.phone);
 
   const resetTeam = () => {
     setTeamPane("idle");
@@ -201,7 +215,7 @@ export function RegistrationDialog({
       return false;
     }
     if (!isValidPhone(form.phone)) {
-      fail("Enter a 10-digit phone number.");
+      fail(PHONE_HINT);
       return false;
     }
     if (form.college.trim().length < 2) {
@@ -241,6 +255,7 @@ export function RegistrationDialog({
           email: form.email,
           phone: form.phone,
           college: form.college,
+          paymentRef: form.paymentRef,
           teamName: createdTeam?.name ?? "",
           teamCode: createdTeam?.code ?? "",
           eventId: eventId(event.name),
@@ -331,7 +346,7 @@ export function RegistrationDialog({
   const handleJoinTeam = async () => {
     if (!event || teamBusy || !verifiedTeam) return;
     if (!detailsOk()) return;
-    if (verifiedTeam.isFull) return fail(`This team is full (${MAX_TEAM_SIZE} including the lead).`);
+    if (verifiedTeam.isFull) return fail(`This team is full (${verifiedTeam.maxMembers} including the lead).`);
     setTeamBusy(true);
     setError(null);
     try {
@@ -378,7 +393,7 @@ export function RegistrationDialog({
   const stepLabel = step === 1 ? "Your Info" : step === 2 ? "A Few Details" : "Review & Submit";
 
   const errorBox = error && (
-    <p ref={errRef} className="font-ui text-[13px] text-[#ff7aa8] border border-[#D64D8D]/30 bg-[#D64D8D]/10 rounded-lg px-3 py-2.5">
+    <p ref={errRef} className="text-[13px] text-cyber-pink-light border border-cyber-pink/30 bg-cyber-pink/10 rounded-lg px-3 py-2.5">
       {error}
     </p>
   );
@@ -388,18 +403,17 @@ export function RegistrationDialog({
       {event && (
         <DialogContent
           aria-describedby={undefined}
-          className="fixed inset-0 left-0 top-0 z-50 block h-full w-full max-w-none sm:max-w-none gap-0 translate-x-0 translate-y-0 rounded-none border-0 bg-[#0c0812]/[0.97] backdrop-blur-2xl text-white p-0 font-ui overflow-y-auto data-[state=open]:slide-in-from-bottom-4"
-        >
+          className="fixed inset-0 left-0 top-0 z-50 block h-full w-full max-w-none sm:max-w-none gap-0 translate-x-0 translate-y-0 rounded-none border-0 bg-midnight-navy/[0.97] backdrop-blur-2xl text-white p-0 overflow-y-auto data-[state=open]:slide-in-from-bottom-4" >
           <div className="mx-auto w-full max-w-[400px] px-5 pt-[9vh] pb-16">
           {!result ? (
             <>
               <DialogHeader className="text-left space-y-0 mb-5">
-                <DialogDescription className="font-ui text-[13px] text-white/45 truncate">
-                  {event.name} · ₹{FEE_PER_HEAD} per head
+                <DialogDescription className="text-[13px] text-white/45 truncate">
+                  {event.name} · {joining ? "no payment" : `₹${FEE_PER_HEAD} per team`}
                   {typeof seatsLeft === "number" && seatsLeft <= 0 && " · waitlist"}
                 </DialogDescription>
                 <div className="flex items-center justify-between pt-1">
-                  <DialogTitle className="font-ui font-semibold text-[22px] text-white">
+                  <DialogTitle className="font-semibold text-[22px] text-white">
                     {stepLabel}
                   </DialogTitle>
                   <div className="flex items-center gap-1.5">
@@ -407,8 +421,7 @@ export function RegistrationDialog({
                       <span
                         key={n}
                         className={`h-1.5 rounded-full transition-all duration-300 ${
-                          step === n ? "w-4 bg-white" : step > n ? "w-1.5 bg-white/60" : "w-1.5 bg-white/20"
-                        }`}
+                          step === n ? "w-4 bg-white" : step > n ? "w-1.5 bg-white/60" : "w-1.5 bg-white/20" }`}
                       />
                     ))}
                   </div>
@@ -441,15 +454,13 @@ export function RegistrationDialog({
                         <p className="text-[13px] text-white/45 truncate">{form.email}</p>
                       </div>
                       {signedIn ? (
-                        <span className="flex items-center gap-1 text-[11px] font-medium text-emerald-300/90 bg-emerald-400/10 border border-emerald-400/20 px-2 py-1 rounded-full shrink-0">
+                        <span className="flex items-center gap-1 text-[11px] font-medium text-success-soft/90 bg-success/10 border border-success/20 px-2 py-1 rounded-full shrink-0">
                           <Check className="w-3 h-3" /> Verified
                         </span>
                       ) : (
                         <button
                           onClick={() => setEditing(true)}
-                          className="text-white/40 hover:text-white p-2 cursor-pointer"
-                          aria-label="Use different details"
-                        >
+                          className="text-white/40 hover:text-white p-2 cursor-pointer" aria-label="Use different details" >
                           <Pencil className="w-4 h-4" />
                         </button>
                       )}
@@ -485,13 +496,22 @@ export function RegistrationDialog({
                       className={inputCls}
                       value={form.name}
                       onChange={set("name")}
-                      placeholder="Your full name"
-                      autoComplete="name"
-                      aria-label="Team lead name"
-                    />
+                      placeholder="Your full name" autoComplete="name" aria-label="Team lead name" />
                   </Field>
                   <Field label="Phone number *">
-                    <Input className={inputCls} type="tel" value={form.phone} onChange={set("phone")} autoComplete="tel" />
+                    <Input
+                      className={inputCls}
+                      type="tel" inputMode="numeric" maxLength={PHONE_INPUT_MAX}
+                      value={form.phone}
+                      onChange={setPhone}
+                      placeholder="10-digit mobile number" autoComplete="tel" aria-label="Phone number" aria-invalid={phoneDirtyInvalid || undefined}
+                      aria-describedby={phoneDirtyInvalid ? "phone-hint" : undefined}
+                    />
+                    {phoneDirtyInvalid && (
+                      <p id="phone-hint" className="mt-1.5 text-[12px] text-cyber-pink-light">
+                        {PHONE_HINT}
+                      </p>
+                    )}
                   </Field>
                   <Field label="College or university *">
                     <Input className={inputCls} value={form.college} onChange={set("college")} />
@@ -500,31 +520,27 @@ export function RegistrationDialog({
                   {teamPane === "idle" && (
                     <div className="space-y-3">
                       <Button
-                        type="button"
-                        onClick={() => { setError(null); setTeamPane("create"); }}
+                        type="button" onClick={() => { setError(null); setTeamPane("create"); }}
                         className={`${primaryBtn} inline-flex items-center justify-center gap-2`}
-                        aria-label="Create team"
-                      >
+                        aria-label="Create team" >
                         <Users className="w-4 h-4" /> Create team
                       </Button>
                       <div className={`${card} p-4 space-y-3`}>
                         <div>
                           <p className="text-sm font-medium text-white">Join team</p>
                           <p className="text-[13px] text-white/45 mt-0.5 leading-relaxed">
-                            Have a code from a teammate? Verify the team, then join. Your fee is ₹{FEE_PER_HEAD}.
+                            Have a code from a teammate? Verify the team, then join. You don&apos;t pay — the lead covers the team fee.
                           </p>
                         </div>
                         <Button
-                          type="button"
-                          onClick={() => { setError(null); setTeamPane("join"); }}
+                          type="button" onClick={() => { setError(null); setTeamPane("join"); }}
                           className={`${ghostBtn} w-full`}
-                          aria-label="Join team"
-                        >
+                          aria-label="Join team" >
                           Join team
                         </Button>
                       </div>
                       <p className="text-[13px] text-white/40 leading-relaxed">
-                        Solo is fine — continue without a team. Same ₹{FEE_PER_HEAD} online.
+                        Solo is fine — continue without a team. ₹{FEE_PER_HEAD} online, same as a team lead.
                       </p>
                     </div>
                   )}
@@ -537,36 +553,29 @@ export function RegistrationDialog({
                           className={inputCls}
                           value={teamNameDraft}
                           onChange={(e) => setTeamNameDraft(e.target.value)}
-                          placeholder="e.g. Skyward"
-                          maxLength={80}
-                          aria-label="Team name"
-                        />
+                          placeholder="e.g. Skyward" maxLength={80}
+                          aria-label="Team name" />
                       </Field>
                       <Field label="Team bio">
                         <Textarea
                           className={textareaCls}
                           value={teamBioDraft}
                           onChange={(e) => setTeamBioDraft(e.target.value)}
-                          placeholder="A line teammates will recognise"
-                          maxLength={MAX_TEAM_BIO}
-                          aria-label="Team bio"
-                        />
+                          placeholder="A line teammates will recognise" maxLength={MAX_TEAM_BIO}
+                          aria-label="Team bio" />
                       </Field>
                       <p className="text-[12px] text-white/40">
-                        You’ll get a shareable code. Each person pays ₹{FEE_PER_HEAD} — max {MAX_TEAM_SIZE} including you.
+                        You&apos;ll get a shareable code. You pay ₹{FEE_PER_HEAD} for the team — teammates who join with the code do not. Max {teamCap} including you. The code stays valid after you submit.
                       </p>
                       <div className="flex gap-2">
                         <Button
-                          type="button"
-                          variant="outline"
-                          onClick={() => { setError(null); setTeamPane("idle"); }}
+                          type="button" variant="outline" onClick={() => { setError(null); setTeamPane("idle"); }}
                           className={`${ghostBtn} px-4`}
                         >
                           Cancel
                         </Button>
                         <Button
-                          type="button"
-                          onClick={handleCreateTeam}
+                          type="button" onClick={handleCreateTeam}
                           disabled={teamBusy}
                           className={`${primaryBtn} flex-1`}
                         >
@@ -587,21 +596,18 @@ export function RegistrationDialog({
                       <div className="rounded-lg bg-white/[0.08] px-3 py-3 flex items-center justify-between gap-3">
                         <div>
                           <p className="text-[11px] uppercase tracking-wider text-white/40">Team code</p>
-                          <p className="font-mono text-base sm:text-lg tracking-[0.12em] text-white mt-0.5 break-all">{createdTeam.code}</p>
+                          <p className="text-base sm:text-lg tracking-[0.12em] text-white mt-0.5 break-all">{createdTeam.code}</p>
                         </div>
                         <Button
-                          type="button"
-                          onClick={() => handleCopyCode(createdTeam.code)}
+                          type="button" onClick={() => handleCopyCode(createdTeam.code)}
                           className={`${ghostBtn} px-3 shrink-0`}
-                          aria-label="Copy team code"
-                        >
+                          aria-label="Copy team code" >
                           {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
                           {copied ? "Copied" : "Copy"}
                         </Button>
                       </div>
                       <p className="text-[13px] text-white/50 leading-relaxed">
-                        Share this code so others can join this event’s team. Joining adds them; each person pays ₹{FEE_PER_HEAD}.
-                        Team total so far: ₹{FEE_PER_HEAD * createdTeam.memberCount} ({createdTeam.memberCount}/{MAX_TEAM_SIZE}).
+                        Share this code so others can join this event’s team. It stays valid after you submit — teammates can join until the team is full. You pay ₹{FEE_PER_HEAD} for the team; they do not.
                       </p>
                     </div>
                   )}
@@ -611,29 +617,22 @@ export function RegistrationDialog({
                       <p className="text-sm font-medium text-white">Join a team</p>
                       <Field label="Team code *">
                         <Input
-                          className={`${inputCls} font-mono tracking-[0.2em] uppercase`}
+                          className={`${inputCls} tracking-[0.2em] uppercase`}
                           value={joinCode}
                           onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
-                          placeholder="XXXXXXXXXXXX"
-                          maxLength={TEAM_CODE_LENGTH}
-                          autoCapitalize="characters"
-                          autoCorrect="off"
-                          spellCheck={false}
-                          aria-label="Team code"
-                        />
+                          placeholder="XXXXXXXXXXXX" maxLength={TEAM_CODE_LENGTH}
+                          autoCapitalize="characters" autoCorrect="off" spellCheck={false}
+                          aria-label="Team code" />
                       </Field>
                       <div className="flex gap-2">
                         <Button
-                          type="button"
-                          variant="outline"
-                          onClick={() => { setError(null); setJoinCode(""); setTeamPane("idle"); }}
+                          type="button" variant="outline" onClick={() => { setError(null); setJoinCode(""); setTeamPane("idle"); }}
                           className={`${ghostBtn} px-4`}
                         >
                           Cancel
                         </Button>
                         <Button
-                          type="button"
-                          onClick={handleVerifyTeam}
+                          type="button" onClick={handleVerifyTeam}
                           disabled={teamBusy}
                           className={`${primaryBtn} flex-1`}
                         >
@@ -658,21 +657,17 @@ export function RegistrationDialog({
                         {verifiedTeam.isFull ? " · full" : ""}
                       </p>
                       <p className="text-[13px] text-white/50 leading-relaxed">
-                        Joining adds you to this team for {event.name}. Your application fee is ₹{FEE_PER_HEAD}, paid online.
-                        Team total becomes ₹{FEE_PER_HEAD * Math.min(verifiedTeam.memberCount + 1, MAX_TEAM_SIZE)}.
+                        Joining adds you to this team for {event.name}. The team lead covers the fee — you don&apos;t pay.
                       </p>
                       <div className="flex gap-2">
                         <Button
-                          type="button"
-                          variant="outline"
-                          onClick={() => { setError(null); setVerifiedTeam(null); setTeamPane("join"); }}
+                          type="button" variant="outline" onClick={() => { setError(null); setVerifiedTeam(null); setTeamPane("join"); }}
                           className={`${ghostBtn} px-4`}
                         >
                           Back
                         </Button>
                         <Button
-                          type="button"
-                          onClick={handleJoinTeam}
+                          type="button" onClick={handleJoinTeam}
                           disabled={teamBusy || verifiedTeam.isFull}
                           className={`${primaryBtn} flex-1`}
                         >
@@ -684,17 +679,14 @@ export function RegistrationDialog({
 
                   <div className={`${card} flex items-center justify-between px-4 py-3`}>
                     <div>
-                      <p className="text-[13px] text-white/50">Your fee (online)</p>
+                      <p className="text-[13px] text-white/50">{joining ? "Your fee" : "Your fee (online)"}</p>
                       <p className="text-[12px] text-white/35 mt-0.5">
-                        ₹{FEE_PER_HEAD} per person
-                        {createdTeam
-                          ? ` · team total ₹${FEE_PER_HEAD * teamSize}`
-                          : verifiedTeam
-                          ? ` · team would be ₹${FEE_PER_HEAD * Math.min(verifiedTeam.memberCount + 1, MAX_TEAM_SIZE)}`
-                          : ""}
+                        {joining
+                          ? "The team lead covers the team fee." : createdTeam
+                          ? `₹${FEE_PER_HEAD} for the team · paid by you as lead` : `₹${FEE_PER_HEAD} per team · paid by the lead`}
                       </p>
                     </div>
-                    <p className="font-semibold text-lg text-white">{applicantFee}</p>
+                    <p className="font-semibold text-lg text-white">{joining ? "—" : applicantFee}</p>
                   </div>
 
                   {errorBox}
@@ -725,8 +717,8 @@ export function RegistrationDialog({
                       <span className="font-semibold text-lg text-white">{applicantFee}</span>
                     </div>
                     <p className="text-[12px] text-white/40 -mt-1">
-                      ₹{FEE_PER_HEAD} for you
-                      {createdTeam ? ` · team total ₹${FEE_PER_HEAD * createdTeam.memberCount} (${createdTeam.memberCount}/${MAX_TEAM_SIZE})` : ""}
+                      ₹{FEE_PER_HEAD} for the team
+                      {createdTeam ? ` · you pay as lead (${createdTeam.memberCount}/${createdTeam.maxMembers || teamCap})` : ""}
                     </p>
                     <div className="border-t border-white/[0.08] pt-3 space-y-2 text-[13px]">
                       <div className="flex justify-between gap-3">
@@ -749,7 +741,7 @@ export function RegistrationDialog({
                           </div>
                           <div className="flex justify-between gap-3">
                             <span className="text-white/45">Code</span>
-                            <span className="text-white font-mono tracking-widest">{createdTeam.code}</span>
+                            <span className="text-white tracking-widest">{createdTeam.code}</span>
                           </div>
                         </>
                       ) : (
@@ -776,10 +768,23 @@ export function RegistrationDialog({
                     </div>
                   </div>
 
+                  {/* Optional, because most people apply before they have paid.
+                      Supplying it here is what lets an organiser match the
+                      money to the application without chasing them for it. */}
+                  <Field label="Payment ID / UTR (if you've already paid)">
+                    <Input
+                      className={inputCls}
+                      value={form.paymentRef}
+                      onChange={set("paymentRef")}
+                      placeholder="UPI reference or transaction ID" maxLength={80}
+                      aria-label="Payment ID" />
+                  </Field>
+
                   {!PAYMENTS_LIVE && (
-                    <p className="text-xs text-amber-200/80 border border-amber-400/20 bg-amber-400/[0.07] rounded-lg px-3 py-2.5 leading-relaxed">
+                    <p className="text-xs text-champagne-gold/80 border border-soft-gold/20 bg-soft-gold/[0.07] rounded-lg px-3 py-2.5 leading-relaxed">
                       Payment is online. Apply now to hold your place in the queue — you’ll get a
-                      payment link for {applicantFee} before your application is reviewed.
+                      payment link for {applicantFee} before your application is reviewed. Once we
+                      verify it, your ticket and QR are emailed to you.
                     </p>
                   )}
 
@@ -793,10 +798,8 @@ export function RegistrationDialog({
                       {submitting ? (
                         <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Submitting…</>
                       ) : !PAYMENTS_LIVE ? (
-                        "Submit application"
-                      ) : (
-                        `Pay ${applicantFee} and apply`
-                      )}
+                        "Submit application" ) : (
+                        `Pay ${applicantFee} and apply` )}
                     </Button>
                   </div>
                 </div>
@@ -805,14 +808,14 @@ export function RegistrationDialog({
           ) : (
             <div className="space-y-4 py-1 animate-step">
               <div className="flex flex-col items-center text-center pt-2 space-y-3">
-                <span className="w-12 h-12 rounded-full bg-emerald-400/10 border border-emerald-400/25 flex items-center justify-center">
-                  <Hourglass className="w-5 h-5 text-emerald-300" />
+                <span className="w-12 h-12 rounded-full bg-success/10 border border-success/25 flex items-center justify-center">
+                  <Hourglass className="w-5 h-5 text-success-soft" />
                 </span>
                 <div>
-                  <DialogTitle className="font-ui font-semibold text-lg text-white">
+                  <DialogTitle className="font-semibold text-lg text-white">
                     Application submitted
                   </DialogTitle>
-                  <DialogDescription className="font-ui text-[13px] text-white/50 mt-0.5">
+                  <DialogDescription className="text-[13px] text-white/50 mt-0.5">
                     {result.eventName}
                   </DialogDescription>
                 </div>
@@ -821,7 +824,7 @@ export function RegistrationDialog({
               <div className={`${card} divide-y divide-white/[0.08]`}>
                 <div className="flex items-center justify-between px-4 py-3">
                   <span className="text-[13px] text-white/50">Status</span>
-                  <span className="text-[13px] font-medium text-amber-200/90">Pending approval</span>
+                  <span className="text-[13px] font-medium text-champagne-gold/90">Pending approval</span>
                 </div>
                 <div className="flex items-center justify-between px-4 py-3">
                   <span className="text-[13px] text-white/50">Queue position</span>
@@ -841,11 +844,8 @@ export function RegistrationDialog({
                   <div className="flex items-center justify-between gap-2 px-4 py-3">
                     <span className="text-[13px] text-white/50">Team code</span>
                     <button
-                      type="button"
-                      onClick={() => handleCopyCode(result.teamCode!)}
-                      className="inline-flex items-center gap-1.5 text-[13px] font-mono tracking-widest text-white/90 hover:text-white cursor-pointer"
-                      aria-label="Copy team code"
-                    >
+                      type="button" onClick={() => handleCopyCode(result.teamCode!)}
+                      className="inline-flex items-center gap-1.5 text-[13px] tracking-widest text-white/90 hover:text-white cursor-pointer" aria-label="Copy team code" >
                       {result.teamCode}
                       {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
                     </button>
@@ -857,17 +857,15 @@ export function RegistrationDialog({
                 </div>
                 <div className="flex items-center justify-between px-4 py-3">
                   <span className="text-[13px] text-white/50">Reference</span>
-                  <span className="text-[13px] font-mono text-white/80">{result.ticketId}</span>
+                  <span className="text-[13px] text-white/80">{result.ticketId}</span>
                 </div>
               </div>
 
               <p className="text-[13px] text-white/55 leading-relaxed text-center px-2">
-                {result.payment === "not_required"
-                  ? "Nothing to pay for this one. "
-                  : result.payment === "awaiting"
-                  ? `Pay ${result.fee} online — a payment link will be sent for this application. `
-                  : `${result.fee} received — refunded in full if you aren't confirmed. `}
+                {result.payment === "not_required" ? "Nothing to pay for this one. " : result.payment === "awaiting" ? `Pay ${result.fee} online — a payment link will be sent for this application. ` : `${result.fee} received — refunded in full if you aren't confirmed. `}
                 You'll get your ticket and QR once the organisers approve.
+                {result.teamCode
+                  ? " Share the team code — teammates can still join until the team is full." : ""}
               </p>
 
               <div className="flex gap-2">

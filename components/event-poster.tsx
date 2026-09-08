@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Event, eventId as slugify } from "@/lib/pravrutti-data";
-import { COVER_GRADIENTS } from "@/components/event-detail-panel";
+import { COVER_GRADIENTS } from "@/lib/event-covers";
 
 /**
  * Poster resolution, in order:
@@ -19,10 +19,14 @@ export function EventPoster({
   event,
   name,
   className = "",
+  priority = false,
 }: {
   event?: Event;
   name: string;
   className?: string;
+  /** Set on the one poster that leads a page. Everything in a grid of 24
+      stays lazy — the listing would otherwise fetch every poster at once. */
+  priority?: boolean;
 }) {
   const src = event?.poster ?? `/posters/${slugify(name)}.webp`;
   const [failed, setFailed] = useState(false);
@@ -34,12 +38,16 @@ export function EventPoster({
         src={src}
         alt={`Poster for ${name}`}
         onError={() => setFailed(true)}
+        loading={priority ? "eager" : "lazy"}
+        fetchPriority={priority ? "high" : "auto"}
+        width={1080}
+        height={1080}
         className={`object-cover ${className}`}
       />
     );
   }
 
-  const gradient = event ? COVER_GRADIENTS[event.category] : "from-[#721F4C] via-[#2B122C] to-[#0A0818]";
+  const gradient = event ? COVER_GRADIENTS[event.category] : "from-neon-purple via-deep-plum to-midnight-navy";
   const initials = name
     .split(/\s+/)
     .map((w) => w[0])
@@ -53,7 +61,7 @@ export function EventPoster({
       aria-label={`${name} cover`}
     >
       <div className="absolute inset-0 opacity-20 crt-scanlines pointer-events-none" />
-      <span className="font-orbitron font-black text-[#F7EEE4]/90 text-lg tracking-wider">
+      <span className="font-display font-black text-pearl-white/90 text-lg tracking-wider">
         {initials}
       </span>
     </div>

@@ -111,25 +111,21 @@ export default function AdminPage() {
 
   if (!authed) {
     return (
-      <main className="min-h-screen bg-transparent text-[#F7EEE4] flex items-center justify-center p-6">
-        <div className="w-full max-w-sm space-y-4 p-8 border border-[#4A1C3A] rounded-3xl bg-[#150B1E]/60">
-          <div className="flex items-center gap-2 font-orbitron font-black uppercase tracking-wider text-[#F2D2AE]">
-            <Lock className="w-5 h-5 text-[#D64D8D]" /> Admin console
+      <main className="min-h-screen bg-transparent text-pearl-white flex items-center justify-center p-6">
+        <div className="w-full max-w-sm space-y-4 p-8 border border-royal-wine rounded-3xl bg-cosmic-purple/60">
+          <div className="flex items-center gap-2 font-display font-black uppercase tracking-wider text-champagne-gold">
+            <Lock className="w-5 h-5 text-cyber-pink" /> Admin console
           </div>
           <Input
-            type="password"
-            placeholder="Admin key"
-            value={key}
+            type="password" placeholder="Admin key" value={key}
             onChange={(e) => setKey(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && load()}
-            className="bg-[#040616] border-[#4A1C3A] rounded-xl text-[#F7EEE4] font-mono"
-          />
-          {error && <p className="text-xs text-[#D64D8D] font-sharetech">{error}</p>}
+            className="bg-midnight-navy border-royal-wine rounded-xl text-pearl-white" />
+          {error && <p className="text-xs text-cyber-pink">{error}</p>}
           <Button
             onClick={() => load()}
             disabled={loading || !key}
-            className="w-full rounded-xl bg-[#D64D8D] hover:bg-[#AC355D] text-white font-orbitron text-xs font-bold uppercase tracking-widest cursor-pointer"
-          >
+            className="w-full rounded-xl bg-cyber-pink hover:bg-electric-magenta text-white font-display text-xs font-bold uppercase tracking-widest cursor-pointer" >
             {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Enter"}
           </Button>
         </div>
@@ -138,23 +134,23 @@ export default function AdminPage() {
   }
 
   return (
-    <main className="min-h-screen bg-transparent text-[#F7EEE4] p-6 md:p-10 font-sharetech">
+    <main className="min-h-screen bg-transparent text-pearl-white p-6 md:p-10">
       <div className="max-w-6xl mx-auto space-y-8">
         <div className="flex flex-wrap items-center justify-between gap-4">
-          <h1 className="font-orbitron font-black text-2xl uppercase tracking-wider text-[#F2D2AE]">
+          <h1 className="font-display font-black text-2xl uppercase tracking-wider text-champagne-gold">
             Pravrutti admin
           </h1>
           <div className="flex gap-2">
-            <Button onClick={() => load()} disabled={loading} variant="outline" className="rounded-xl border-[#4A1C3A] text-xs cursor-pointer">
+            <Button onClick={() => load()} disabled={loading} variant="outline" className="rounded-xl border-royal-wine text-xs cursor-pointer">
               {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
             </Button>
-            <Button onClick={exportCsv} className="rounded-xl bg-[#D64D8D] hover:bg-[#AC355D] text-white text-xs font-bold cursor-pointer">
+            <Button onClick={exportCsv} className="rounded-xl bg-cyber-pink hover:bg-electric-magenta text-white text-xs font-bold cursor-pointer">
               <Download className="w-4 h-4 mr-1" /> CSV
             </Button>
           </div>
         </div>
 
-        {error && <p className="text-xs text-[#D64D8D] border border-[#D64D8D]/40 bg-[#D64D8D]/10 rounded-xl p-3">{error}</p>}
+        {error && <p className="text-xs text-cyber-pink border border-cyber-pink/40 bg-cyber-pink/10 rounded-xl p-3">{error}</p>}
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {[
@@ -163,9 +159,9 @@ export default function AdminPage() {
             { label: "Refunds to issue", value: refundsDue.length },
             { label: "Messages", value: contacts.length },
           ].map((s) => (
-            <div key={s.label} className="p-4 border border-[#4A1C3A] rounded-2xl bg-[#150B1E]/60">
-              <p className="text-[10px] uppercase tracking-widest text-[#F7EEE4]/50">{s.label}</p>
-              <p className="font-orbitron font-black text-xl text-[#F2D2AE] mt-1">{s.value}</p>
+            <div key={s.label} className="p-4 border border-royal-wine rounded-2xl bg-cosmic-purple/60">
+              <p className="text-[10px] uppercase tracking-widest text-pearl-white/50">{s.label}</p>
+              <p className="font-display font-black text-xl text-champagne-gold mt-1">{s.value}</p>
             </div>
           ))}
         </div>
@@ -176,7 +172,7 @@ export default function AdminPage() {
               key={t.id}
               onClick={() => setTab(t.id)}
               variant={tab === t.id ? "default" : "outline"}
-              className={`rounded-xl text-xs cursor-pointer ${tab === t.id ? "bg-[#D64D8D] text-white" : "border-[#4A1C3A]"}`}
+              className={`rounded-xl text-xs cursor-pointer ${tab === t.id ? "bg-cyber-pink text-white" : "border-royal-wine"}`}
             >
               {t.id === "contacts" && <Mail className="w-4 h-4 mr-1" />}
               {t.label} ({t.id === "contacts" ? contacts.length : byStatus(t.id as AppStatus).length})
@@ -186,8 +182,7 @@ export default function AdminPage() {
             <select
               value={filter}
               onChange={(e) => setFilter(e.target.value)}
-              className="ml-auto bg-[#040616] border border-[#4A1C3A] rounded-xl text-xs px-3 py-2 text-[#F7EEE4]"
-            >
+              className="ml-auto bg-midnight-navy border border-royal-wine rounded-xl text-xs px-3 py-2 text-pearl-white" >
               <option value="all">All events</option>
               {perEvent.map((e) => (
                 <option key={e.id} value={e.id}>
@@ -205,30 +200,23 @@ export default function AdminPage() {
               const confirmedForEvent = apps.filter((x) => x.eventId === a.eventId && x.status === "confirmed").length;
               const wouldOverfill = a.status === "pending" && confirmedForEvent >= cap;
               return (
-                <div key={a.ticketId} className="border border-[#4A1C3A] rounded-2xl bg-[#150B1E]/50 p-4 flex flex-wrap gap-4 items-center">
+                <div key={a.ticketId} className="border border-royal-wine rounded-2xl bg-cosmic-purple/50 p-4 flex flex-wrap gap-4 items-center">
                   <div className="min-w-[180px] flex-1">
-                    <p className="font-bold text-sm text-[#F7EEE4]">{a.name}</p>
-                    <p className="text-xs text-[#F7EEE4]/50">{a.email} · {a.phone}</p>
-                    <p className="text-xs text-[#F7EEE4]/40">{a.college}{a.teamName ? ` · team ${a.teamName}` : ""}{a.teamCode ? ` · ${a.teamCode}` : ""}</p>
+                    <p className="font-bold text-sm text-pearl-white">{a.name}</p>
+                    <p className="text-xs text-pearl-white/50">{a.email} · {a.phone}</p>
+                    <p className="text-xs text-pearl-white/40">{a.college}{a.teamName ? ` · team ${a.teamName}` : ""}{a.teamCode ? ` · ${a.teamCode}` : ""}</p>
                   </div>
                   <div className="min-w-[150px]">
-                    <p className="text-xs font-bold text-[#F2D2AE]">{a.eventName}</p>
-                    <p className="text-[10px] font-mono text-[#D64D8D]">{a.ticketId}</p>
-                    <p className="text-[10px] text-[#F7EEE4]/40">
+                    <p className="text-xs font-bold text-champagne-gold">{a.eventName}</p>
+                    <p className="text-[10px] text-cyber-pink">{a.ticketId}</p>
+                    <p className="text-[10px] text-pearl-white/40">
                       {confirmedForEvent}/{cap} confirmed
                     </p>
                   </div>
                   <div className="min-w-[110px]">
                     <span
-                      className={`text-[10px] font-orbitron font-black uppercase tracking-wider px-2 py-1 rounded-full border ${
-                        a.payment === "paid"
-                          ? "bg-[#D64D8D]/15 border-[#D64D8D]/40 text-[#D64D8D]"
-                          : a.payment === "refunded"
-                          ? "bg-[#4A1C3A]/40 border-[#4A1C3A] text-[#F7EEE4]/60"
-                          : a.payment === "awaiting"
-                          ? "bg-[#BF8A1B]/15 border-[#BF8A1B]/40 text-[#BF8A1B]"
-                          : "bg-transparent border-[#4A1C3A] text-[#F7EEE4]/45"
-                      }`}
+                      className={`text-[10px] font-display font-black uppercase tracking-wider px-2 py-1 rounded-full border ${
+                        a.payment === "paid" ? "bg-cyber-pink/15 border-cyber-pink/40 text-cyber-pink" : a.payment === "refunded" ? "bg-royal-wine/40 border-royal-wine text-pearl-white/60" : a.payment === "awaiting" ? "bg-soft-gold/15 border-soft-gold/40 text-soft-gold" : "bg-transparent border-royal-wine text-pearl-white/45" }`}
                     >
                       {a.payment === "not_required" ? "Free" : a.payment === "awaiting" ? `${a.fee} due` : a.payment}
                     </span>
@@ -238,9 +226,7 @@ export default function AdminPage() {
                       <Button
                         onClick={() => act(a, "mark_paid")}
                         disabled={busy?.startsWith(`${a.eventId}:${a.email}`)}
-                        variant="outline"
-                        className="rounded-xl h-9 text-[10px] border-[#BF8A1B]/50 text-[#BF8A1B] hover:bg-[#BF8A1B]/10 font-bold uppercase cursor-pointer"
-                      >
+                        variant="outline" className="rounded-xl h-9 text-[10px] border-soft-gold/50 text-soft-gold hover:bg-soft-gold/10 font-bold uppercase cursor-pointer" >
                         <IndianRupee className="w-3 h-3 mr-1" /> Mark paid
                       </Button>
                     )}
@@ -250,8 +236,7 @@ export default function AdminPage() {
                         disabled={busy?.startsWith(`${a.eventId}:${a.email}`)}
                         title={wouldOverfill ? "This event is already at capacity" : undefined}
                         className={`rounded-xl h-9 text-[10px] font-bold uppercase cursor-pointer text-white ${
-                          wouldOverfill ? "bg-[#BF8A1B] hover:bg-[#a4750f]" : "bg-[#D64D8D] hover:bg-[#AC355D]"
-                        }`}
+                          wouldOverfill ? "bg-soft-gold hover:bg-soft-gold" : "bg-cyber-pink hover:bg-electric-magenta" }`}
                       >
                         <Check className="w-3.5 h-3.5 mr-1" /> {wouldOverfill ? "Confirm anyway" : "Confirm"}
                       </Button>
@@ -260,9 +245,7 @@ export default function AdminPage() {
                       <Button
                         onClick={() => act(a, "decline")}
                         disabled={busy?.startsWith(`${a.eventId}:${a.email}`)}
-                        variant="outline"
-                        className="rounded-xl h-9 text-[10px] border-[#4A1C3A] text-[#F7EEE4]/70 hover:bg-[#4A1C3A]/30 font-bold uppercase cursor-pointer"
-                      >
+                        variant="outline" className="rounded-xl h-9 text-[10px] border-royal-wine text-pearl-white/70 hover:bg-royal-wine/30 font-bold uppercase cursor-pointer" >
                         <X className="w-3.5 h-3.5 mr-1" /> Decline{a.fee.toLowerCase() !== "free" ? " + refund" : ""}
                       </Button>
                     )}
@@ -271,7 +254,7 @@ export default function AdminPage() {
               );
             })}
             {!shown.length && (
-              <div className="p-10 text-center text-[#F7EEE4]/40 border border-dashed border-[#4A1C3A] rounded-2xl text-sm">
+              <div className="p-10 text-center text-pearl-white/40 border border-dashed border-royal-wine rounded-2xl text-sm">
                 Nothing here yet
               </div>
             )}
@@ -279,15 +262,15 @@ export default function AdminPage() {
         ) : (
           <div className="space-y-3">
             {contacts.map((c, i) => (
-              <div key={i} className="p-4 border border-[#4A1C3A] rounded-2xl bg-[#150B1E]/40">
+              <div key={i} className="p-4 border border-royal-wine rounded-2xl bg-cosmic-purple/40">
                 <div className="flex justify-between text-xs mb-2">
-                  <span className="font-bold text-[#F2D2AE]">{c.name} · {c.email}</span>
-                  <span className="text-[#F7EEE4]/40">{new Date(c.sentAt).toLocaleString()}</span>
+                  <span className="font-bold text-champagne-gold">{c.name} · {c.email}</span>
+                  <span className="text-pearl-white/40">{new Date(c.sentAt).toLocaleString()}</span>
                 </div>
-                <p className="text-sm text-[#F7EEE4]/80 whitespace-pre-wrap">{c.message}</p>
+                <p className="text-sm text-pearl-white/80 whitespace-pre-wrap">{c.message}</p>
               </div>
             ))}
-            {!contacts.length && <p className="p-8 text-center text-[#F7EEE4]/40 text-sm">No messages yet</p>}
+            {!contacts.length && <p className="p-8 text-center text-pearl-white/40 text-sm">No messages yet</p>}
           </div>
         )}
       </div>

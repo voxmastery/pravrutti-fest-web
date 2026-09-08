@@ -5,8 +5,10 @@ export type TicketPayload = {
 };
 
 /**
- * Parses the string encoded into a ticket QR by app/api/status/route.ts:
- *   `${ticketId}|${eventId}|${email}`
+ * Parses the string encoded into a ticket QR by `ticketPayload` in
+ * lib/ticket-qr.ts (`${ticketId}|${eventId}|${email}`). Every producer — the
+ * ticket page, the confirmation email, /api/status — has to go through that
+ * helper so this parser cannot drift from what gets printed.
  *
  * Returns null for anything else, so a stray QR from another app is a clean
  * rejection rather than a lookup against garbage.

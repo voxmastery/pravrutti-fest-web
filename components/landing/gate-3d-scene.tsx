@@ -3,8 +3,7 @@
 /**
  * Depth-displaced 3D gate.
  *
- * `public/gate-temple.png` is a flat 2D painting. `public/gate-temple-depth.png`
- * is its monocular depth map, generated offline by Depth Anything V2 via
+ * `public/gate-temple.png` is a flat 2D painting. `public/gate-temple-depth.png` * is its monocular depth map, generated offline by Depth Anything V2 via
  * huggingface.js (see `scripts/generate-depth-map.mjs`).
  *
  * Here the colour image is mapped onto a densely subdivided plane whose vertices
@@ -66,8 +65,7 @@ const OPEN_DURATION_MS = 1400;
 const MAX_SWING_RAD = THREE.MathUtils.degToRad(46);
 const POINTER_SWAY = 0.06;
 
-const vertexShader = /* glsl */ `
-  uniform sampler2D uDepth;
+const vertexShader = /* glsl */ ` uniform sampler2D uDepth;
   uniform float uDepthScale;
   uniform float uUvOffset;
   uniform float uPlaneAspect;
@@ -113,8 +111,7 @@ const vertexShader = /* glsl */ `
   }
 `;
 
-const fragmentShader = /* glsl */ `
-  uniform sampler2D uMap;
+const fragmentShader = /* glsl */ ` uniform sampler2D uMap;
   uniform float uEdgeThreshold;
   uniform float uBrightness;
   uniform float uSaturation;
@@ -297,8 +294,7 @@ function GateScene({ phase, openStartedAt, onReady }: GateSceneProps) {
   return (
     <>
       <GatePanel
-        side="left"
-        width={panelWidth}
+        side="left" width={panelWidth}
         height={planeHeight}
         planeAspect={planeAspect}
         colorMap={colorMap}
@@ -306,8 +302,7 @@ function GateScene({ phase, openStartedAt, onReady }: GateSceneProps) {
         openRef={openRef}
       />
       <GatePanel
-        side="right"
-        width={panelWidth}
+        side="right" width={panelWidth}
         height={planeHeight}
         planeAspect={planeAspect}
         colorMap={colorMap}
@@ -375,8 +370,7 @@ function useSuspenseTexture(
 export function Gate3DScene({ phase, openStartedAt, onReady }: GateSceneProps) {
   return (
     <Canvas
-      className="absolute inset-0"
-      dpr={[1, 2]}
+      className="absolute inset-0" dpr={[1, 2]}
       gl={{ antialias: true, alpha: true }}
       camera={{ fov: FOV, position: [0, 0, CAMERA_START_Z], near: 0.1, far: 100 }}
     >

@@ -1,37 +1,46 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { RegistrationDialog } from "@/components/registration-dialog";
-import { Event, eventId, capacityFor, registrationOpen, FEST, formatINR, teamLabel } from "@/lib/pravrutti-data";
-import { FEE_PER_HEAD } from "@/lib/applications";
-import { POSTER_TINTS } from "@/lib/poster-tints";
+import { EventPoster } from "@/components/event-poster";
+import { EventRegisterPanel } from "@/components/event-register-panel";
+import { EventCoordinators } from "@/components/event-coordinators";
+import { EventContactSheet } from "@/components/event-contact-sheet";
+import { EventMoreSheet } from "@/components/event-more-sheet";
 import {
-  MapPin,
-  Copy,
-  Check,
-  ArrowUpRight,
-  UserCheck,
-  Phone,
-  User,
-  Download,
-  IndianRupee,
-  ChevronsRight,
-} from "lucide-react";
+  EventFormat,
+  EventHostActions,
+  EventHostLine,
+  EventLocation,
+  EventPresenter,
+  EventStatusLine,
+  EventWhenRow,
+  SectionLabel,
+} from "@/components/event-sections";
+import { Event, eventId, formatINR, teamLabel } from "@/lib/pravrutti-data";
+import { COVER_GRADIENTS } from "@/lib/event-covers";
+import { POSTER_TINTS } from "@/lib/poster-tints";
+import { useCoordinatorPhones } from "@/hooks/use-coordinator-phones";
+import { ArrowUpRight, ChevronsRight, Download } from "lucide-react";
 
-export const COVER_GRADIENTS: Record<Event["category"], string> = {
-  "Engineering and Design": "from-[#721F4C] via-[#2B122C] to-[#0A0818]",
-  "Research and Presentation": "from-[#BF8A1B] via-[#4A1C3A] to-[#0A0818]",
-  "Code and Compute": "from-[#D64D8D] via-[#2B122C] to-[#0A0818]",
-  "Enterprise and Expression": "from-[#4A1C3A] via-[#150B1E] to-[#0A0818]",
-};
+/** Re-exported because this is where it lived before it moved to lib. */
+export { COVER_GRADIENTS };
 
 /** 1st / 2nd / 3rd … as far as the event actually awards. */
 const PLACES = ["1st", "2nd", "3rd", "4th", "5th"];
 
+/**
+ * The slide-over opened from the events grid.
+ *
+ * Renders the same section components, in the same order, as the full event
+ * page — it is that page's phone layout in a panel. Every block it used to own
+ * a private copy of (location, hosts, registration, format) now comes from the
+ * shared components, because the copies had already drifted: this panel was
+ * quoting a different seat count and loading posters from a .png path that has
+ * never existed.
+ */
 export function EventDetailPanel({
   event,
   onClose,
@@ -39,33 +48,13 @@ export function EventDetailPanel({
   event: Event | null;
   onClose: () => void;
 }) {
-  const [copied, setCopied] = useState(false);
-  // Real artwork wins over the generated cover; a missing file falls back.
-  const [posterFailed, setPosterFailed] = useState(false);
   const [registering, setRegistering] = useState(false);
-  const [count, setCount] = useState<number | null>(null);
-  const [waiting, setWaiting] = useState(0);
+  const [contacting, setContacting] = useState(false);
+  const [moreOpen, setMoreOpen] = useState(false);
 
   const id = event ? eventId(event.name) : "";
-  const cap = event ? capacityFor(id) : 0;
-  const open = registrationOpen();
-
-  const load = useCallback(() => {
-    if (!id) return;
-    fetch(`/api/register?event=${id}`)
-      .then((r) => (r.ok ? r.json() : null))
-      .then((d) => {
-        if (!d) return;
-        setCount(d.confirmed?.[id] ?? 0);
-        setWaiting(d.pending?.[id] ?? 0);
-      })
-      .catch(() => setCount(null));
-  }, [id]);
-
-  useEffect(load, [load]);
-
-  // A different event means a different poster to try again.
-  useEffect(() => setPosterFailed(false), [event?.name]);
+  // Asked for only while a panel is actually showing an event.
+  const access = useCoordinatorPhones(id, Boolean(event));
 
   // Re-theme the page wash from THIS event's poster, the way Luma derives its
   // background from an event's cover. Category tinting gave eight events one
@@ -95,309 +84,162 @@ export function EventDetailPanel({
     };
   }, [event]);
 
-  const copyLink = async () => {
-    await navigator.clipboard.writeText(`${window.location.origin}/events/${id}`);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1600);
-  };
-
   if (!event) return null;
 
-  const taken = count ?? 0;
-  const left = Math.max(cap - taken, 0);
-  const full = count !== null && left === 0;
-  const prizes = event.prizes;
+  const formatRows = [
+    { k: "Team size", v: teamLabel(event) },
+    event.duration ? { k: "Duration", v: event.duration } : null,
+    event.capacity ? { k: "Capacity", v: `${event.capacity} ${event.capacityUnit}` } : null,
+    event.eligibility ? { k: "Eligibility", v: event.eligibility } : null,
+  ].filter((r): r is { k: string; v: string } => r !== null);
+
+  const showHostActions = access.registered;
+
+  const contactAction = showHostActions ? (
+    <button
+      type="button" onClick={() => setContacting(true)}
+      className="shrink-0 text-sm text-pearl-white/50 hover:text-champagne-gold transition-colors cursor-pointer rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyber-pink" >
+      Contact
+    </button>
+  ) : undefined;
 
   return (
     <>
-      <Sheet open={!!event && !registering} onOpenChange={(o) => !o && onClose()}>
+      {/* The panel steps aside for anything it opens rather than stacking a
+          second modal layer over itself: two nested focus traps is one too many
+          on a phone, and the layer underneath cannot be read anyway. */}
+      <Sheet
+        open={!!event && !registering && !contacting && !moreOpen}
+        onOpenChange={(o) => !o && onClose()}
+      >
         <SheetContent
-          side="right"
-          className="w-full sm:max-w-[535px] bg-[#0A0818] border-l-2 border-[#721F4C] text-[#F7EEE4] p-0 overflow-y-auto"
-        >
-          {/* Header bar — Luma-style: collapse, copy link, full event page */}
-          <div className="sticky top-0 z-20 flex items-center gap-2 px-4 py-3 bg-[#0A0818]/90 backdrop-blur-md border-b border-[#4A1C3A]">
+          side="right" className="w-full sm:max-w-[535px] bg-midnight-navy border-l-2 border-neon-purple text-pearl-white p-0 gap-0 overflow-y-auto overscroll-contain" >
+          {/* Header bar — collapse, and a way out to the full page. */}
+          <div className="sticky top-0 z-20 flex items-center gap-2 px-3 py-3 bg-midnight-navy/90 backdrop-blur-md border-b border-royal-wine">
             <button
-              onClick={onClose}
-              aria-label="Close panel"
-              className="w-8 h-8 rounded-lg border border-transparent hover:border-[#4A1C3A] hover:bg-[#150B1E] flex items-center justify-center text-[#F7EEE4]/60 hover:text-[#F7EEE4] transition-colors"
-            >
-              <ChevronsRight className="w-4 h-4" />
+              type="button" onClick={onClose}
+              aria-label="Close panel" className="w-11 h-11 shrink-0 rounded-xl flex items-center justify-center text-pearl-white/60 hover:text-pearl-white hover:bg-cosmic-purple transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyber-pink" >
+              <ChevronsRight className="w-5 h-5" aria-hidden="true" />
             </button>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={copyLink}
-              className="rounded-lg h-8 border-[#4A1C3A] bg-[#150B1E] text-xs font-bold tracking-wider text-[#F7EEE4]/85 hover:bg-[#2B122C]"
-            >
-              {copied ? <Check className="w-3.5 h-3.5 mr-1.5 text-[#7BE3A8]" /> : <Copy className="w-3.5 h-3.5 mr-1.5" />}
-              {copied ? "COPIED" : "COPY LINK"}
-            </Button>
-            <Link href={`/events/${id}`} onClick={onClose}>
+            <span className="min-w-0 flex-1 font-display text-sm font-bold text-pearl-white truncate">
+              {event.name}
+            </span>
+            <Link href={`/events/${id}`} onClick={onClose} className="shrink-0">
               <Button
-                size="sm"
-                variant="outline"
-                className="rounded-lg h-8 border-[#4A1C3A] bg-[#150B1E] text-xs font-bold tracking-wider text-[#F7EEE4]/85 hover:bg-[#2B122C]"
-              >
-                EVENT PAGE <ArrowUpRight className="w-3.5 h-3.5 ml-1" />
+                size="sm" variant="outline" className="h-11 rounded-xl border-royal-wine bg-cosmic-purple font-display text-[10px] font-bold uppercase tracking-widest text-pearl-white/85 hover:bg-deep-plum" >
+                Event page <ArrowUpRight className="w-3.5 h-3.5 ml-1" aria-hidden="true" />
               </Button>
             </Link>
           </div>
 
-          <div className="p-5 sm:p-6 space-y-6 font-orbitron">
-            {/* Cover — blurred copy behind it gives Luma's ambient glow */}
-            <div className="relative w-full max-w-[400px] mx-auto">
+          {/* Same order as the event page on a phone. */}
+          <div className="p-5 space-y-6">
+            <div className="relative w-full max-w-[420px] mx-auto">
               <div
-                aria-hidden
-                className={`absolute -inset-4 rounded-3xl bg-gradient-to-br ${COVER_GRADIENTS[event.category]} blur-2xl opacity-50`}
+                aria-hidden="true" className={`absolute -inset-3 rounded-3xl bg-gradient-to-br ${COVER_GRADIENTS[event.category]} blur-2xl opacity-45`}
               />
-            <div
-              className={`relative aspect-square w-full rounded-2xl overflow-hidden border border-[#4A1C3A] bg-gradient-to-br ${COVER_GRADIENTS[event.category]}`}
-            >
-              {!posterFailed && (
-                /* eslint-disable-next-line @next/next/no-img-element */
-                <img
-                  src={event.poster ?? `/posters/${id}.png`}
-                  alt={`Poster for ${event.name}`}
-                  onError={() => setPosterFailed(true)}
-                  className="absolute inset-0 w-full h-full object-cover"
-                />
-              )}
-              <div className="absolute inset-0 opacity-20 crt-scanlines pointer-events-none" />
-              <div className={`absolute inset-0 flex flex-col justify-between p-6 ${posterFailed ? "" : "hidden"}`}>
-                <span className="text-[11px] font-mono tracking-[0.3em] uppercase text-[#F7EEE4]/70">
-                  {FEST.name} · {event.category}
-                </span>
-                <div>
-                  <h2 className="text-3xl sm:text-4xl font-black text-[#F7EEE4] leading-tight tracking-wide uppercase">
-                    {event.name}
-                  </h2>
-                  <p className="text-xs font-mono tracking-widest uppercase text-[#F2D2AE] mt-2">
-                    {event.subCategory}
-                  </p>
-                </div>
+              <div className="relative aspect-square w-full rounded-2xl overflow-hidden border border-royal-wine">
+                <EventPoster event={event} name={event.name} className="absolute inset-0 w-full h-full" />
+                <div className="absolute inset-0 opacity-20 crt-scanlines pointer-events-none" />
               </div>
             </div>
-            </div>
 
-            {/* Title + host */}
-            <div className="space-y-2">
-              <SheetTitle className="text-2xl sm:text-3xl font-orbitron font-extrabold text-[#F2D2AE] tracking-wide leading-snug">
+            <div className="space-y-3">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="px-3 py-1 rounded-full font-display text-[10px] font-black uppercase tracking-widest bg-neon-purple/50 text-champagne-gold border border-royal-wine">
+                  {event.category}
+                </span>
+                <span className="px-3 py-1 rounded-full font-display text-[10px] font-black uppercase tracking-widest bg-cyber-pink/20 text-cyber-pink border border-cyber-pink/40">
+                  {teamLabel(event)}
+                </span>
+              </div>
+              <SheetTitle className="font-display text-2xl sm:text-3xl font-black tracking-wide text-pearl-white leading-[1.15] text-balance">
                 {event.name}
               </SheetTitle>
-              <p className="text-xs text-[#F7EEE4]/60 font-mono tracking-wider">
-                {FEST.name} · Ramaiah University of Applied Sciences
+              <p className="text-sm text-cyber-pink uppercase tracking-widest">
+                {event.subCategory}
               </p>
-              <Badge className="rounded-full px-3 py-1 text-[10px] uppercase tracking-wider font-bold border bg-[#BF8A1B]/20 text-[#F2D2AE] border-[#BF8A1B]/40" variant="outline">
-                {teamLabel(event)} · {event.fee}
-              </Badge>
             </div>
 
-            {/* Date + venue rows — Luma info rows */}
-            <div className="space-y-3">
-              <div className="flex items-center gap-3">
-                <div className="w-11 h-11 rounded-xl border border-[#4A1C3A] bg-[#150B1E] flex flex-col items-center justify-center shrink-0">
-                  <span className="text-[8px] font-mono uppercase text-[#D64D8D] leading-none">OCT</span>
-                  <span className="text-base font-black text-[#F7EEE4] leading-tight">15</span>
-                </div>
-                <div>
-                  <p className="text-sm font-bold text-[#F7EEE4]">{FEST.dates}</p>
-                  <p className="text-xs text-[#F7EEE4]/55 font-mono">
-                    Timings on the{" "}
-                    <Link href="/schedule" className="underline hover:text-[#D64D8D]" onClick={onClose}>
-                      schedule page
-                    </Link>
-                  </p>
-                </div>
-              </div>
-              <a
-                href={`https://maps.google.com/?q=${encodeURIComponent(event.venue ?? FEST.venue)}`}
-                target="_blank"
-                rel="noreferrer"
-                className="flex items-center gap-3 group/loc"
-              >
-                <div className="w-11 h-11 rounded-xl border border-[#4A1C3A] bg-[#150B1E] flex items-center justify-center shrink-0">
-                  <MapPin className="w-4.5 h-4.5 text-[#D64D8D]" />
-                </div>
-                <div>
-                  <p className="text-sm font-bold text-[#F7EEE4] group-hover/loc:text-[#F2D2AE] transition-colors flex items-center gap-1">
-                    {event.venue ?? FEST.venue}
-                    <ArrowUpRight className="w-3 h-3 opacity-0 group-hover/loc:opacity-60 transition-opacity" />
-                  </p>
-                  <p className="text-xs text-[#F7EEE4]/55 font-mono">Offline · At registration desk</p>
-                </div>
-              </a>
-            </div>
+            <EventHostLine event={event} />
+            <EventWhenRow event={event} onNavigate={onClose} />
+            <EventStatusLine status={access.status} />
 
-            {/* Registration card — Luma-style */}
-            <div className="rounded-2xl border border-[#4A1C3A] bg-[#150B1E]/80 overflow-hidden cyber-box">
-              <div className="px-4 py-2.5 bg-[#0A0818]/80 border-b border-[#4A1C3A]">
-                <span className="text-[11px] uppercase tracking-[0.25em] text-[#F7EEE4]/60 font-bold">
-                  Registration
-                </span>
-              </div>
-              <div className="p-4 space-y-4">
-                <div className="flex items-start gap-3">
-                  <div className="w-9 h-9 rounded-full border border-[#4A1C3A] bg-[#0A0818] flex items-center justify-center shrink-0">
-                    <UserCheck className="w-4 h-4 text-[#F2D2AE]" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-bold text-[#F7EEE4]">Approval Required</p>
-                    <p className="text-xs text-[#F7EEE4]/60 leading-relaxed font-sharetech">
-                      Your registration is subject to organiser approval
-                      {count !== null && ` — ${left} of ${cap} spots left${waiting > 0 ? `, ${waiting} in queue` : ""}`}.
-                    </p>
-                  </div>
-                </div>
+            <EventHostActions
+              registered={showHostActions}
+              confirmed={access.status === "confirmed"}
+              ticketHref={`/ticket?event=${encodeURIComponent(id)}`}
+              onContact={() => setContacting(true)}
+              onMore={() => setMoreOpen(true)}
+            />
 
-                <p className="text-sm text-[#F7EEE4]/80 font-sharetech">
-                  Welcome! To join {event.name}, please register below.
-                </p>
+            <EventRegisterPanel
+              event={event}
+              level={3}
+              onRegisterOpenChange={setRegistering}
+              onAccessRefresh={access.refresh}
+              viewerStatus={access.status}
+              viewerReady={access.ready}
+            />
 
-                {open ? (
-                  <Button
-                    onClick={() => setRegistering(true)}
-                    className="w-full h-12 rounded-xl text-sm font-black uppercase tracking-widest arcade-btn-magenta border-[#D64D8D] text-white"
-                  >
-                    {full ? "JOIN WAITLIST" : "REQUEST TO JOIN"}
-                  </Button>
-                ) : (
-                  <Button disabled className="w-full h-12 rounded-xl text-sm font-black uppercase tracking-widest bg-[#AC355D]/10 text-[#AC355D]/70 border border-[#AC355D]/30">
-                    REGISTRATION CLOSED
-                  </Button>
-                )}
-              </div>
-            </div>
+            <EventLocation access={access} level={3} />
 
-            {/* About */}
-            <div className="space-y-2">
-              <h4 className="text-xs font-bold uppercase tracking-[0.25em] text-[#D64D8D]">About Event</h4>
-              <p className="text-sm text-[#F7EEE4]/85 leading-relaxed font-sharetech">{event.description}</p>
-            </div>
+            <EventCoordinators event={event} access={access} action={contactAction} level={3} />
 
-            {/* Format — everything the coordinators specified per event.
-                Each row is omitted when that event has no answer, so this
-                block shrinks rather than showing blanks. */}
-            <div className="space-y-2">
-              <h4 className="text-xs font-bold uppercase tracking-[0.25em] text-[#D64D8D]">Format</h4>
-              <dl className="rounded-xl border border-[#4A1C3A] bg-[#150B1E]/60 divide-y divide-[#4A1C3A]/60">
-                {[
-                  { k: "Team size", v: teamLabel(event) },
-                  event.duration ? { k: "Duration", v: event.duration } : null,
-                  event.capacity ? { k: "Capacity", v: `${event.capacity} ${event.capacityUnit}` } : null,
-                  event.eligibility ? { k: "Eligibility", v: event.eligibility } : null,
-                ]
-                  .filter((r): r is { k: string; v: string } => r !== null)
-                  .map((r) => (
-                    <div key={r.k} className="flex items-start justify-between gap-4 px-4 py-2.5">
-                      <dt className="text-sm text-[#F7EEE4]/50 font-sharetech shrink-0">{r.k}</dt>
-                      <dd className="text-sm text-[#F7EEE4] text-right">{r.v}</dd>
-                    </div>
-                  ))}
-              </dl>
-            </div>
+            <section className="space-y-3">
+              <SectionLabel level={3}>About this event</SectionLabel>
+              <p className="text-sm text-pearl-white/80 leading-relaxed whitespace-pre-line">
+                {event.description}
+              </p>
+            </section>
 
-            {/* Prizes */}
-            <div className="space-y-3">
-              <h4 className="text-xs font-bold uppercase tracking-[0.25em] text-[#D64D8D]">Prizes</h4>
+            <section className="space-y-3">
+              <SectionLabel level={3}>Prizes</SectionLabel>
               {/* Some events award two places, some three — render exactly
                   as many as the event actually has. */}
-              <div className={`grid gap-3 ${prizes.length === 2 ? "grid-cols-2" : "grid-cols-3"}`}>
-                {prizes.map((amount, i) => (
-                  <div key={i} className="p-3 border border-[#4A1C3A] rounded-xl bg-[#150B1E] text-center">
-                    <span className="block text-[10px] text-[#F7EEE4]/60 uppercase font-bold">{PLACES[i]}</span>
-                    <span className="block text-base font-black text-[#F2D2AE] mt-1">{formatINR(amount)}</span>
-                  </div>
-                ))}
-              </div>
-              <div className="flex items-center justify-between p-3 border border-[#721F4C] bg-[#2B122C]/40 rounded-xl">
-                <span className="flex items-center gap-2 text-xs text-[#F7EEE4]/75 font-bold uppercase tracking-wider">
-                  <IndianRupee className="w-4 h-4 text-[#F2D2AE]" /> Entry
-                </span>
-                <span className="text-lg font-black text-[#F2D2AE]">
-                  ₹{FEE_PER_HEAD} per head · online
-                </span>
-              </div>
-            </div>
-
-            {/* Location map — Luma embeds one under the event details */}
-            <div className="space-y-2">
-              <h4 className="text-xs font-bold uppercase tracking-[0.25em] text-[#D64D8D]">Location</h4>
-              <p className="text-sm font-bold text-[#F7EEE4]">{event.venue ?? FEST.venue}</p>
-              <p className="text-xs text-[#F7EEE4]/55 font-mono">Offline · At registration desk</p>
-              <div className="rounded-2xl overflow-hidden border border-[#4A1C3A] grayscale-[35%] contrast-[1.05]">
-                <iframe
-                  title={`Map — ${event.venue ?? FEST.venue}`}
-                  src={`https://maps.google.com/maps?q=${encodeURIComponent(event.venue ?? FEST.venue)}&z=14&output=embed`}
-                  className="w-full h-44 border-0"
-                  loading="lazy"
-                  referrerPolicy="no-referrer-when-downgrade"
-                />
-              </div>
-            </div>
-
-            {/* Hosted by */}
-            <div className="space-y-3">
-              <h4 className="text-xs font-bold uppercase tracking-[0.25em] text-[#D64D8D]">Hosted By</h4>
-              <div className="space-y-2 font-mono text-xs">
-                {[...event.coordinators.faculty, ...event.coordinators.student].map((c) => (
-                  <div key={c.name} className="flex justify-between items-center border border-[#4A1C3A] bg-[#150B1E] px-4 py-2.5 rounded-xl">
-                    <span className="flex items-center gap-2">
-                      <User className="w-3.5 h-3.5 text-[#F2D2AE]" /> {c.name}
+              <div className={`grid gap-3 ${event.prizes.length === 2 ? "grid-cols-2" : "grid-cols-3"}`}>
+                {event.prizes.map((amount, i) => (
+                  <div key={i} className="p-3 rounded-xl border border-royal-wine bg-cosmic-purple text-center">
+                    <span className="block text-[10px] uppercase tracking-widest text-pearl-white/40">
+                      {PLACES[i]}
                     </span>
-                    {/* -my-1.5 py-1.5 lifts the tap area to 24px without
-                        changing the row's height — this is a phone number a
-                        student taps on a moving bus. */}
-                    <a
-                      href={`tel:${c.phone}`}
-                      className="font-bold hover:text-[#D64D8D] inline-flex items-center gap-1.5 text-[#F2D2AE] -my-1.5 py-1.5"
-                    >
-                      <Phone className="w-3 h-3 text-[#D64D8D]" /> {c.phone}
-                    </a>
+                    <span className="block font-display text-base font-black text-champagne-gold mt-1 tabular-nums">
+                      {formatINR(amount)}
+                    </span>
                   </div>
                 ))}
               </div>
-            </div>
+            </section>
 
-            {/* Rulebook */}
+            <EventFormat rows={formatRows} level={3} />
+
             <a href={event.brochureUrl} download={`${event.name}_Rules.pdf`} className="block">
               <Button
-                variant="outline"
-                className="w-full h-11 rounded-xl border-[#4A1C3A] bg-[#150B1E] text-xs font-bold uppercase tracking-widest text-[#F7EEE4]/85 hover:bg-[#2B122C]"
-              >
-                <Download className="w-4 h-4 mr-2" /> Download Rulebook
+                variant="outline" className="w-full h-12 rounded-xl border-royal-wine bg-cosmic-purple font-display text-xs font-bold uppercase tracking-widest text-champagne-gold hover:bg-deep-plum" >
+                <Download className="w-4 h-4 mr-2" aria-hidden="true" /> Download the rulebook
               </Button>
             </a>
 
-            {/* Quiet footer links — Luma-style */}
-            <div className="flex items-center gap-5 pt-2 pb-8 border-t border-[#4A1C3A]/60">
+            <EventPresenter level={3} />
+
+            <div className="flex items-center gap-5 pt-2 pb-8 border-t border-royal-wine/60">
               <Link
-                href="/contact"
-                onClick={onClose}
-                className="text-xs font-mono text-[#F7EEE4]/50 hover:text-[#D64D8D] transition-colors pt-3"
-              >
-                Contact the Host
+                href="/faq" onClick={onClose}
+                className="pt-3 text-sm text-pearl-white/50 hover:text-cyber-pink transition-colors" >
+                FAQs
               </Link>
               <Link
-                href="/faq"
-                onClick={onClose}
-                className="text-xs font-mono text-[#F7EEE4]/50 hover:text-[#D64D8D] transition-colors pt-3"
-              >
-                FAQs
+                href="/schedule" onClick={onClose}
+                className="pt-3 text-sm text-pearl-white/50 hover:text-cyber-pink transition-colors" >
+                Schedule
               </Link>
             </div>
           </div>
         </SheetContent>
       </Sheet>
 
-      <RegistrationDialog
-        event={registering ? event : null}
-        onClose={() => setRegistering(false)}
-        onRegistered={() => {
-          load();
-        }}
-        seatsLeft={left}
-      />
+      <EventContactSheet event={contacting ? event : null} onClose={() => setContacting(false)} />
+      <EventMoreSheet event={event} open={moreOpen} onClose={() => setMoreOpen(false)} />
     </>
   );
 }

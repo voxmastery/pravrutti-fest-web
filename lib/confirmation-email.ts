@@ -2,6 +2,7 @@ import { FEST } from "@/lib/pravrutti-data";
 import type { Application } from "@/lib/applications";
 import { ticketQrBase64 } from "@/lib/ticket-qr";
 import { sendMail, siteOrigin, type SendResult } from "@/lib/mailer";
+import { PALETTE } from "@/lib/palette";
 
 /**
  * The "you're in" email.
@@ -16,12 +17,12 @@ function firstName(full: string) {
 }
 
 const BRAND = {
-  ink: "#0A0818",
-  panel: "#150B1E",
-  line: "#4A1C3A",
-  cream: "#F7EEE4",
-  gold: "#F2D2AE",
-  pink: "#D64D8D",
+  ink: PALETTE.midnightNavy,
+  panel: PALETTE.cosmicPurple,
+  line: PALETTE.royalWine,
+  cream: PALETTE.pearlWhite,
+  gold: PALETTE.champagneGold,
+  pink: PALETTE.cyberPink,
 };
 
 function html(a: Application, ticketUrl: string) {

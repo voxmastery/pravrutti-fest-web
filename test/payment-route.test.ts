@@ -100,4 +100,15 @@ describe("POST /api/dashboard/payment", () => {
     expect(rec.status).toBe("confirmed");
     expect(Date.parse(rec.paymentVerifiedAt)).toBeGreaterThanOrEqual(Date.parse(first));
   });
+
+  it("approves a joiner without rewriting not_required into paid", async () => {
+    store.get(KEY).payment = "not_required";
+    store.get(KEY).fee = "Covered by team lead";
+    const res = await post({ eventId: "robo-race", email: "asha@example.com" });
+    expect(res.status).toBe(200);
+    const rec = store.get(KEY);
+    expect(rec.status).toBe("confirmed");
+    expect(rec.payment).toBe("not_required");
+    expect(rec.paymentVerifiedBy).toBeUndefined();
+  });
 });

@@ -21,6 +21,7 @@ import {
   CircuitBoard,
 } from "lucide-react";
 import { useScrollReveal, useMousePosition, useCountUp } from "@/hooks/use-animations";
+import { PALETTE } from "@/lib/palette";
 
 const clubs = [
   { name: "AI Club", cat: "AI & ML", icon: Sparkles },
@@ -65,20 +66,19 @@ function StatTile({
   const [ref, n] = useCountUp<HTMLDivElement>(value);
 
   return (
-    <div ref={ref} className="group relative bg-[#0A0818] px-6 py-8 text-center transition-colors hover:bg-[#150B1E]">
+    <div ref={ref} className="group relative bg-midnight-navy px-6 py-8 text-center transition-colors hover:bg-cosmic-purple">
       <div
-        className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-500 group-hover:opacity-100"
-        style={{ background: `radial-gradient(ellipse at 50% 0%, ${glow} 0%, transparent 70%)` }}
+        className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-500 group-hover:opacity-100" style={{ background: `radial-gradient(ellipse at 50% 0%, ${glow} 0%, transparent 70%)` }}
       />
       <div className="relative">
         <span
-          className={`block font-orbitron text-4xl font-black tabular-nums leading-none ${tone}`}
+          className={`block font-display text-4xl font-black tabular-nums leading-none ${tone}`}
           style={{ textShadow: `0 0 24px ${glow}` }}
         >
           {n}
           {suffix}
         </span>
-        <span className="mt-2.5 block font-mono text-[11px] uppercase tracking-[0.22em] text-[#F7EEE4]/55">
+        <span className="mt-2.5 block text-[11px] uppercase tracking-[0.22em] text-pearl-white/55">
           {label}
         </span>
       </div>
@@ -90,7 +90,7 @@ function ClubCard({ club, index }: { club: typeof clubs[0]; index: number }) {
   const ref = useRef<HTMLDivElement>(null);
   const mouse = useMousePosition(ref);
   const Icon = club.icon;
-  const accentColors = ["#D64D8D", "#F2D2AE", "#BF8A1B", "#AC355D"];
+  const accentColors = [PALETTE.cyberPink, PALETTE.champagneGold, PALETTE.softGold, PALETTE.electricMagenta];
   const accent = accentColors[index % accentColors.length];
 
   return (
@@ -98,39 +98,35 @@ function ClubCard({ club, index }: { club: typeof clubs[0]; index: number }) {
     // icon and two short strings, so twelve of them ate most of a screen.
     <div
       ref={ref}
-      className="reveal-up group relative flex items-center gap-3.5 p-3.5 rounded-xl border border-[#4A1C3A] bg-[#150B1E]/30 backdrop-blur-sm neon-border magnetic-card cursor-default overflow-hidden"
-      style={{ transitionDelay: `${index * 40}ms` }}
+      className="reveal-up group relative flex items-center gap-3.5 p-3.5 rounded-xl border border-royal-wine bg-cosmic-purple/30 backdrop-blur-sm neon-border magnetic-card cursor-default overflow-hidden" style={{ transitionDelay: `${index * 40}ms` }}
     >
       {mouse.active && (
         <div
-          className="absolute inset-0 rounded-xl pointer-events-none z-0"
-          style={{
+          className="absolute inset-0 rounded-xl pointer-events-none z-0" style={{
             background: `radial-gradient(150px circle at ${mouse.x * 100}% ${mouse.y * 100}%, ${accent}12, transparent 60%)`,
           }}
         />
       )}
 
       <div
-        className="relative z-10 w-11 h-11 shrink-0 flex items-center justify-center rounded-lg transition-transform duration-300 group-hover:scale-110"
-        style={{ background: `${accent}15`, border: `1px solid ${accent}30` }}
+        className="relative z-10 w-11 h-11 shrink-0 flex items-center justify-center rounded-lg transition-transform duration-300 group-hover:scale-110" style={{ background: `${accent}15`, border: `1px solid ${accent}30` }}
       >
         <Icon className="w-5 h-5" style={{ color: accent }} />
       </div>
 
       <div className="relative z-10 min-w-0">
-        <span className="block font-orbitron font-black text-base text-[#F7EEE4] tracking-wide truncate group-hover:text-[#F2D2AE] transition-colors">
+        <span className="block font-display font-black text-base text-pearl-white tracking-wide truncate group-hover:text-champagne-gold transition-colors">
           {club.name}
         </span>
         <span
-          className="block font-mono text-[11px] tracking-[0.15em] uppercase font-bold mt-0.5 truncate"
-          style={{ color: accent }}
+          className="block text-[11px] tracking-[0.15em] uppercase font-bold mt-0.5 truncate" style={{ color: accent }}
         >
           {club.cat}
         </span>
       </div>
 
       {/* Bottom fill line */}
-      <div className="absolute bottom-0 left-0 right-0 h-px bg-[#4A1C3A] overflow-hidden">
+      <div className="absolute bottom-0 left-0 right-0 h-px bg-royal-wine overflow-hidden">
         <div className="h-full w-0 group-hover:w-full transition-all duration-500" style={{ background: accent }} />
       </div>
     </div>
@@ -142,20 +138,20 @@ export function IntegrationsSection() {
   const statsRef = useScrollReveal();
 
   return (
-    <section className="relative py-20 lg:py-28 bg-[#0A0818] overflow-hidden border-t border-[#4A1C3A]/40">
-      <div className="absolute top-1/4 left-0 w-[400px] h-[400px] bg-[#721F4C]/6 rounded-full blur-[150px] pointer-events-none" />
+    <section className="relative py-20 lg:py-28 bg-midnight-navy overflow-hidden border-t border-royal-wine/40">
+      <div className="absolute top-1/4 left-0 w-[400px] h-[400px] bg-neon-purple/6 rounded-full blur-[150px] pointer-events-none" />
 
       <div className="relative z-10 max-w-[1200px] mx-auto px-6">
         <div ref={headerRef} className="reveal-up text-center max-w-3xl mx-auto mb-14">
-          <span className="inline-flex items-center gap-3 font-mono text-xs md:text-sm tracking-[0.28em] uppercase text-[#D64D8D] mb-6">
-            <span className="w-10 h-px bg-[#721F4C]" />
+          <span className="inline-flex items-center gap-3 text-xs md:text-sm tracking-[0.28em] uppercase text-cyber-pink mb-6">
+            <span className="w-10 h-px bg-neon-purple" />
             ALLIED FACTIONS
-            <span className="w-10 h-px bg-[#721F4C]" />
+            <span className="w-10 h-px bg-neon-purple" />
           </span>
-          <h2 className="text-4xl md:text-6xl font-orbitron font-black tracking-wider">
+          <h2 className="text-4xl md:text-6xl font-display font-black tracking-wider">
             ASSOCIATED <span className="text-stroke">CLUBS</span>
           </h2>
-          <p className="mt-6 text-base md:text-lg text-[#F7EEE4]/70 font-mono max-w-xl mx-auto">
+          <p className="mt-6 text-base md:text-lg text-pearl-white/70 max-w-xl mx-auto">
             The student guilds and technical chapters at RUAS powering Pravrutti's events.
           </p>
         </div>
@@ -170,11 +166,10 @@ export function IntegrationsSection() {
             to be remembered every time a club was added or removed. */}
         <div
           ref={statsRef}
-          className="reveal-up grid grid-cols-1 sm:grid-cols-3 gap-px overflow-hidden rounded-2xl border border-[#4A1C3A]/60 bg-[#4A1C3A]/40 mt-4"
-        >
-          <StatTile value={clubs.length} suffix="" label="Clubs" tone="text-[#F2D2AE]" glow="rgba(242,210,174,0.20)" />
-          <StatTile value={50} suffix="+" label="Faculty Advisors" tone="text-[#D64D8D]" glow="rgba(214,77,141,0.22)" />
-          <StatTile value={100} suffix="+" label="Coordinators" tone="text-[#BF8A1B]" glow="rgba(191,138,27,0.22)" />
+          className="reveal-up grid grid-cols-1 sm:grid-cols-3 gap-px overflow-hidden rounded-2xl border border-royal-wine/60 bg-royal-wine/40 mt-4" >
+          <StatTile value={clubs.length} suffix="" label="Clubs" tone="text-champagne-gold" glow="rgba(242,210,174,0.20)" />
+          <StatTile value={50} suffix="+" label="Faculty Advisors" tone="text-cyber-pink" glow="rgba(214,77,141,0.22)" />
+          <StatTile value={100} suffix="+" label="Coordinators" tone="text-soft-gold" glow="rgba(191,138,27,0.22)" />
         </div>
       </div>
     </section>

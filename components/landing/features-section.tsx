@@ -122,8 +122,7 @@ function ParticleVisualization() {
   return (
     <canvas
       ref={canvasRef}
-      className="absolute inset-0 pointer-events-auto"
-      style={{ width: "100%", height: "100%" }}
+      className="absolute inset-0 pointer-events-auto" style={{ width: "100%", height: "100%" }}
     />
   );
 }
@@ -147,23 +146,20 @@ export function FeaturesSection() {
 
   return (
     <section
-      id="features"
-      ref={sectionRef}
-      className="relative py-24 lg:py-32 overflow-hidden"
-    >
+      id="features" ref={sectionRef}
+      className="relative py-24 lg:py-32 overflow-hidden" >
       <div className="max-w-[1400px] mx-auto px-6 lg:px-12">
         {/* Header - Full width with diagonal layout */}
         <div className="relative mb-24 lg:mb-32">
           <div className="grid lg:grid-cols-12 gap-8 items-end">
             <div className="lg:col-span-7">
-              <span className="inline-flex items-center gap-3 text-sm font-mono text-muted-foreground mb-6">
+              <span className="inline-flex items-center gap-3 text-sm text-muted-foreground mb-6">
                 <span className="w-12 h-px bg-foreground/30" />
                 Capabilities
               </span>
               <h2
                 className={`text-6xl md:text-7xl lg:text-[128px] font-display tracking-tight leading-[0.9] transition-all duration-1000 ${
-                  isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
-                }`}
+                  isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8" }`}
               >
                 Intelligent
                 <br />
@@ -172,8 +168,7 @@ export function FeaturesSection() {
             </div>
             <div className="lg:col-span-5 lg:pb-4">
               <p className={`text-xl text-muted-foreground leading-relaxed transition-all duration-1000 delay-200 ${
-                isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
-              }`}>
+                isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4" }`}>
                 Deploy autonomous AI agents that execute complex tasks across distributed infrastructure. No supervision required.
               </p>
             </div>
@@ -185,15 +180,14 @@ export function FeaturesSection() {
           {/* Large feature card */}
           <div 
             className={`lg:col-span-12 relative bg-black border border-foreground/10 min-h-[500px] overflow-hidden group transition-all duration-700 flex ${
-              isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-12"
-            }`}
+              isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-12" }`}
             onMouseEnter={() => setActiveFeature(0)}
           >
             {/* Left: text content */}
             <div className="relative flex-1 p-8 lg:p-12 bg-black">
               <ParticleVisualization />
               <div className="relative z-10">
-                <span className="font-mono text-sm text-muted-foreground">{features[0].number}</span>
+                <span className="text-sm text-muted-foreground">{features[0].number}</span>
                 <h3 className="text-3xl lg:text-4xl font-display mt-4 mb-6 group-hover:translate-x-2 transition-transform duration-500">
                   {features[0].title}
                 </h3>
@@ -202,7 +196,7 @@ export function FeaturesSection() {
                 </p>
                 <div>
                   <span className="text-5xl lg:text-6xl font-display">{features[0].stats.value}</span>
-                  <span className="block text-sm text-muted-foreground font-mono mt-2">{features[0].stats.label}</span>
+                  <span className="block text-sm text-muted-foreground mt-2">{features[0].stats.label}</span>
                 </div>
               </div>
             </div>
@@ -210,11 +204,7 @@ export function FeaturesSection() {
             {/* Right: mirrored image, full height */}
             <div className="hidden lg:block relative w-[42%] shrink-0 overflow-hidden">
               <img
-                src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Upscaled%20Image%20%2812%29-ng3RrNnsPMJ5CrtOjcPTmhHg01W11q.png"
-                alt=""
-                aria-hidden="true"
-                className="absolute inset-0 w-full h-full object-cover object-center"
-                style={{ transform: "scaleX(-1)" }}
+                src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Upscaled%20Image%20%2812%29-ng3RrNnsPMJ5CrtOjcPTmhHg01W11q.png" alt="" aria-hidden="true" className="absolute inset-0 w-full h-full object-cover object-center" style={{ transform: "scaleX(-1)" }}
               />
               {/* Fade left edge into black */}
               <div className="absolute inset-0 bg-gradient-to-r from-black via-transparent to-transparent" />
