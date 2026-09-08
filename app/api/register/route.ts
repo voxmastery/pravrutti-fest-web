@@ -10,6 +10,7 @@ import {
   normalizePhone,
   PHONE_HINT,
   readPaymentRef,
+  PAYMENT_REF_HINT,
 } from "@/lib/applications";
 import { Team, normalizeTeamCode, isValidTeamCode } from "@/lib/teams";
 import { resolveEmail } from "@/lib/identity";
@@ -157,6 +158,12 @@ export async function POST(req: Request) {
   const isFree = event.fee.toLowerCase().startsWith("free");
   const isJoiner = Boolean(team && team.createdByEmail !== email);
   const { payment, fee } = feeForApplicant({ eventFree: isFree, eventFee: event.fee, isJoiner });
+  // Whoever is charged pays on Juno first and proves it with the receipt's
+  // transaction ID. `awaiting` is exactly "charged and not yet verified";
+  // joiners and free events never reach this branch.
+  const paymentRef = isJoiner ? null : readPaymentRef(body?.paymentRef) || null;
+  if (payment === "awaiting" && !paymentRef)
+    return NextResponse.json({ error: PAYMENT_REF_HINT }, { status: 400 });
   const membersPayload =
     membersList.length === 0
       ? null
@@ -179,9 +186,8 @@ export async function POST(req: Request) {
     teamCode: team ? team.code : null,
     members: membersPayload,
     // Applicant-supplied, so it is a claim to reconcile rather than proof.
-    // Bounded here because it is displayed verbatim on the organiser desk.
-    // Joiners are not charged — ignore anything they send here.
-    paymentRef: isJoiner ? null : readPaymentRef(body?.paymentRef) || null,
+    // Bounded (readPaymentRef) because it is shown verbatim on the desk.
+    paymentRef,
     appliedAt: new Date().toISOString(),
   };
 

@@ -32,6 +32,10 @@ export const COVERED_BY_LEAD = "Covered by team lead";
 /** Indian mobile numbers are exactly 10 digits, so the field caps there. */
 export const PHONE_LENGTH = 10;
 
+/** Charged applicants must supply the transaction ID from their Juno receipt.
+    Shown by the form and returned by the API, so both say the same thing. */
+export const PAYMENT_REF_HINT = "Enter the transaction ID from your Juno payment receipt.";
+
 /** Shown next to the field and returned by the API, so both read the same. */
 export const PHONE_HINT = "Enter a 10-digit mobile number starting with 6-9.";
 

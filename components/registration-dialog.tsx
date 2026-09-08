@@ -15,6 +15,8 @@ import {
   PHONE_INPUT_MAX,
   formatFee,
   isValidPhone,
+  PAYMENT_REF_HINT,
+  readPaymentRef,
   phoneFieldValue,
 } from "@/lib/applications";
 import { MAX_TEAM_BIO, TEAM_CODE_LENGTH, isValidTeamCode, type TeamPreview } from "@/lib/teams";
@@ -220,6 +222,11 @@ export function RegistrationDialog({
     }
     if (form.college.trim().length < 2) {
       fail("Enter your college name.");
+      return false;
+    }
+    // Joiners are covered by their lead; everyone else has paid on Juno.
+    if (!joining && readPaymentRef(form.paymentRef) === "") {
+      fail(PAYMENT_REF_HINT);
       return false;
     }
     return true;
@@ -770,9 +777,9 @@ export function RegistrationDialog({
 
                   {/* The fee is paid on the college's Juno portal before applying;
                       the transaction ID from that receipt is what the desk checks
-                      against the statement. Kept optional so someone who pays a
-                      little later isn't locked out of the queue. */}
-                  <Field label="Juno transaction ID">
+                      against the statement. Required for anyone who is charged —
+                      the API refuses the application without it. */}
+                  <Field label="Juno transaction ID (required)">
                     <Input
                       className={inputCls}
                       value={form.paymentRef}

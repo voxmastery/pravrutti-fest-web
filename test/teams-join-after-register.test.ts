@@ -57,6 +57,7 @@ const lead = {
   email: "asha@example.com",
   phone: "9876543210",
   college: "Ramaiah Institute of Technology",
+  paymentRef: "JUNO-TEST-0001",
 };
 
 const teammate = {

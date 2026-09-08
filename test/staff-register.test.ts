@@ -41,6 +41,7 @@ const application = (over: Record<string, unknown> = {}) => ({
   phone: "9876543210",
   college: "Ramaiah Institute of Technology",
   eventId: "robo-race",
+  paymentRef: "JUNO-TEST-0001",
   ...over,
 });
 
