@@ -124,12 +124,13 @@ export function EventDetailPanel({
             <span className="min-w-0 flex-1 font-display text-sm font-bold text-pearl-white truncate">
               {event.name}
             </span>
-            <Link href={`/events/${id}`} onClick={onClose} className="shrink-0">
-              <Button
-                size="sm" variant="outline" className="h-11 rounded-xl border-royal-wine bg-cosmic-purple font-display text-[10px] font-bold uppercase tracking-widest text-pearl-white/85 hover:bg-deep-plum" >
+            <Button
+              asChild
+              size="sm" variant="outline" className="h-11 shrink-0 rounded-xl border-royal-wine bg-cosmic-purple font-display text-[10px] font-bold uppercase tracking-widest text-pearl-white/85 hover:bg-deep-plum" >
+              <Link href={`/events/${id}`} onClick={onClose}>
                 Event page <ArrowUpRight className="w-3.5 h-3.5 ml-1" aria-hidden="true" />
-              </Button>
-            </Link>
+              </Link>
+            </Button>
           </div>
 
           {/* Same order as the event page on a phone. */}

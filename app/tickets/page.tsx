@@ -176,11 +176,11 @@ export default function TicketsPage() {
                 status. Already registered? Your confirmation is sent by email — check your
                 inbox and spam folder.
               </p>
-              <Link href="/events">
-                <Button className="arcade-btn-primary rounded-xl font-display text-sm px-8 py-5 h-auto font-black tracking-wider cursor-pointer">
+              <Button asChild className="arcade-btn-primary rounded-xl font-display text-sm px-8 py-5 h-auto font-black tracking-wider cursor-pointer">
+                <Link href="/events">
                   BROWSE EVENTS <ArrowRight className="w-4 h-4 ml-2" />
-                </Button>
-              </Link>
+                </Link>
+              </Button>
             </div>
           )}
         </div>

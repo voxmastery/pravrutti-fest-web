@@ -133,11 +133,11 @@ export function HowItWorksSection() {
 
         {/* CTA */}
         <div ref={ctaRef} className="reveal-up text-center">
-          <Link href="/events">
-            <Button className="arcade-btn-primary rounded-xl font-display text-xs px-10 py-6 h-auto font-black tracking-wider cursor-pointer">
+          <Button asChild className="arcade-btn-primary rounded-xl font-display text-xs px-10 py-6 h-auto font-black tracking-wider cursor-pointer">
+            <Link href="/events">
               VIEW ALL EVENTS <ArrowRight className="w-4 h-4 ml-2" />
-            </Button>
-          </Link>
+            </Link>
+          </Button>
         </div>
       </div>
     </section>

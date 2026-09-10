@@ -333,12 +333,13 @@ export function HeroSection() {
           className={`flex flex-wrap items-center justify-center gap-3 transition-all duration-1000 ${isLoaded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"}`}
           style={{ transitionDelay: "1.5s" }}
         >
-          <Link href="/events">
-            <Button
-              size="lg" className="arcade-btn-primary rounded-lg font-display text-xs md:text-sm px-7 md:px-9 py-5 h-auto font-black tracking-[0.12em] cursor-pointer" >
+          <Button
+            asChild
+            size="lg" className="arcade-btn-primary rounded-lg font-display text-xs md:text-sm px-7 md:px-9 py-5 h-auto font-black tracking-[0.12em] cursor-pointer" >
+            <Link href="/events">
               EXPLORE EVENTS <ArrowRight className="w-4 h-4 ml-2" />
-            </Button>
-          </Link>
+            </Link>
+          </Button>
         </div>
 
         {/* The stats bar (5000+ Participants / 3 Days / 20+ Clubs) is gone:
