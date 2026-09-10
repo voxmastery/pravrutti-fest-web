@@ -455,7 +455,7 @@ export const events: Event[] = [
       faculty: [],
       student: [{ name: "Spandana J S" }, { name: "Dhvani Viroja" }],
     },
-    dashboardEmails: ["25etmc412021@msruas.ac.in,", "24etmc412010@msruas.ac.in"],
+    dashboardEmails: ["25etmc412021@msruas.ac.in", "24etmc412010@msruas.ac.in"],
     brochureUrl: "https://drive.google.com/open?id=12PxcuNAKMp-XQCC1ACFht2C6jXHV0Z4o",
   },
   {

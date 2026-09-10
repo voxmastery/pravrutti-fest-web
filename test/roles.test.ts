@@ -20,10 +20,14 @@ describe("Event.dashboardEmails", () => {
     expect(notLower).toEqual([]);
   });
 
+  /* A comma or pipe left in an address is the failure mode this catches: the
+     sheet is comma-separated, so a stray separator survives the paste and the
+     coordinator can never match their real Google login. The old pattern used
+     [^@\s]+, which happily accepts both. */
   it("gives each event at least one reachable address", () => {
     const bad = events
       .flatMap((e) => (e.dashboardEmails ?? []).map((a) => [e.name, a] as const))
-      .filter(([, a]) => !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(a));
+      .filter(([, a]) => !/^[^@\s,;|]+@[^@\s,;|]+\.[^@\s,;|]{2,}$/.test(a));
     expect(bad).toEqual([]);
   });
 
