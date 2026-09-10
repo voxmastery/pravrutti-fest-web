@@ -627,7 +627,9 @@ export const events: Event[] = [
       student: [{ name: "Madhumitha A" }, { name: "N Anushka" }],
     },
     dashboardEmails: ["mynaamadhu30@gmail.com", "anushkanagabhyru05@gmail.com"],
-    brochureUrl: "https://drive.google.com/open?id=1o8gS1yTY5fSg8XD3qbfgg-rGfo07WueJ",
+    /* Served from public/ rather than Drive: a Drive link shows a
+       "request access" wall to anyone outside the owner's account. */
+    brochureUrl: "/escape-room-rules.pdf",
   },
   {
     name: "Bracket blitz",
