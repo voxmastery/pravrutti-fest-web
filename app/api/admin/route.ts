@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
-import { list, put } from "@vercel/blob";
-import { createHash } from "crypto";
+import { listAll, readPrivate, readJsonByPath, putJson, applicationPath } from "@/lib/blob-store";
 import { Application, AppStatus } from "@/lib/applications";
 
 export const runtime = "nodejs";
@@ -9,29 +8,6 @@ export const dynamic = "force-dynamic";
 function authed(req: Request) {
   const key = req.headers.get("x-admin-key");
   return !!process.env.ADMIN_KEY && key === process.env.ADMIN_KEY;
-}
-
-async function readPrivate(url: string) {
-  // Overwritten blobs can be served stale from the edge nearest the function,
-  // so every read is cache-busted — a decision must never act on old state.
-  const fresh = `${url}${url.includes("?") ? "&" : "?"}ts=${Date.now()}`;
-  const res = await fetch(fresh, {
-    headers: { authorization: `Bearer ${process.env.BLOB_READ_WRITE_TOKEN}` },
-    cache: "no-store",
-  });
-  if (!res.ok) return null;
-  return res.json().catch(() => null);
-}
-
-async function listAll(prefix: string) {
-  const out: { pathname: string; url: string }[] = [];
-  let cursor: string | undefined = undefined;
-  do {
-    const res: Awaited<ReturnType<typeof list>> = await list({ prefix, cursor, limit: 1000 });
-    for (const b of res.blobs) out.push({ pathname: b.pathname, url: b.url });
-    cursor = res.hasMore ? res.cursor : undefined;
-  } while (cursor);
-  return out;
 }
 
 async function readAll(prefix: string) {
@@ -78,13 +54,11 @@ export async function POST(req: Request) {
   if (!["confirm", "decline", "mark_paid"].includes(action))
     return NextResponse.json({ error: "Unknown action" }, { status: 400 });
 
-  const key = createHash("sha256").update(`${evId}:${email}`).digest("hex").slice(0, 24);
-  const path = `app/${evId}/${key}.json`;
-  const found = await list({ prefix: path, limit: 1 });
-  if (!found.blobs.length) return NextResponse.json({ error: "Application not found" }, { status: 404 });
-
-  const record: Application | null = await readPrivate(found.blobs[0].url);
-  if (!record) return NextResponse.json({ error: "Application unreadable" }, { status: 500 });
+  // applicationPath owns the hashing, so the admin console and the rest of
+  // the app can never disagree about where a record lives.
+  const path = applicationPath(evId, email);
+  const record: Application | null = await readJsonByPath(path);
+  if (!record) return NextResponse.json({ error: "Application not found" }, { status: 404 });
 
   const now = new Date().toISOString();
   if (action === "mark_paid") {
@@ -98,13 +72,7 @@ export async function POST(req: Request) {
     }
   }
 
-  await put(path, JSON.stringify(record), {
-    access: "private",
-    addRandomSuffix: false,
-    allowOverwrite: true,
-    contentType: "application/json",
-    cacheControlMaxAge: 0,
-  });
+  await putJson(path, record, true);
 
   return NextResponse.json({ ok: true, application: record });
 }

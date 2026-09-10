@@ -543,13 +543,20 @@ await putJson(path, record, true);
 Run: `npx vitest run test/no-vercel-blob.test.ts && npx vitest run && npx tsc --noEmit -p tsconfig.json`
 Expected: all PASS, no type errors.
 
-- [ ] **Step 5: Drop the dependency**
+- [ ] **Step 5: Leave the dependency installed for now**
+
+`@vercel/blob` stays in `package.json` until Task 4 has copied every blob
+across — the migration script is the one remaining legitimate reader of it.
+Uninstalling here would break that script. The `npm uninstall @vercel/blob`
+and the matching `package.json` assertion in `test/no-vercel-blob.test.ts`
+belong to Task 4's final commit.
+
+Run the build to confirm the app itself no longer needs it:
 
 ```bash
-cd /home/voxmastery/Desktop/fest-web && npm uninstall @vercel/blob
-npx next build
+cd /home/voxmastery/Desktop/fest-web && npx next build
 ```
-Expected: build succeeds.
+Expected: build succeeds with no `@vercel/blob` resolution in app or lib.
 
 - [ ] **Step 6: Commit**
 

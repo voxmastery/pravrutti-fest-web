@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { put } from "@vercel/blob";
+import { putJson } from "@/lib/blob-store";
 import { randomBytes } from "crypto";
 import { events, eventId } from "@/lib/pravrutti-data";
 
@@ -39,10 +39,10 @@ export async function POST(req: Request) {
     eventName: event?.name ?? null,
     sentAt: new Date().toISOString(),
   };
-  await put(
+  await putJson(
     `contact/${Date.now()}-${randomBytes(3).toString("hex")}.json`,
-    JSON.stringify(record),
-    { access: "private", addRandomSuffix: false, contentType: "application/json" }
+    record,
+    false
   );
   return NextResponse.json({ ok: true });
 }

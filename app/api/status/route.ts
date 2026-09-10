@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { list } from "@vercel/blob";
+import { readJsonByPath } from "@/lib/blob-store";
 import { createHash } from "crypto";
 import { events, eventId } from "@/lib/pravrutti-data";
 import { venueFor } from "@/lib/event-venues";
@@ -9,18 +9,6 @@ import { ticketQrDataUrl } from "@/lib/ticket-qr";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-
-async function readPrivate(url: string) {
-  // Overwritten blobs can be served stale from the edge nearest the function,
-  // so every read is cache-busted — a decision must never act on old state.
-  const fresh = `${url}${url.includes("?") ? "&" : "?"}ts=${Date.now()}`;
-  const res = await fetch(fresh, {
-    headers: { authorization: `Bearer ${process.env.BLOB_READ_WRITE_TOKEN}` },
-    cache: "no-store",
-  });
-  if (!res.ok) return null;
-  return res.json().catch(() => null);
-}
 
 /**
  * POST /api/status
@@ -59,11 +47,7 @@ export async function POST(req: Request) {
   const CHUNK = 12;
   for (let i = 0; i < paths.length; i += CHUNK) {
     const batch = await Promise.all(
-      paths.slice(i, i + CHUNK).map(async (p) => {
-        const res = await list({ prefix: p, limit: 1 });
-        if (!res.blobs.length) return null;
-        return readPrivate(res.blobs[0].url);
-      })
+      paths.slice(i, i + CHUNK).map((p) => readJsonByPath(p))
     );
     for (const r of batch) if (r) found.push(r as Application);
   }
