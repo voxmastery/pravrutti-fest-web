@@ -22,7 +22,12 @@ describe("Vercel Blob is fully removed", () => {
     expect(offenders).toEqual([]);
   });
 
-  /* The package itself stays installed until the migration script has copied
-     every blob across — that script is the one remaining legitimate reader.
-     The assertion that it is gone from package.json lands with that commit. */
+  /* Runtime must not depend on it. It stays a devDependency because
+     scripts/migrate-blob-to-mysql.mjs is the rollback path and is the one
+     remaining legitimate reader. */
+  it("is not a runtime dependency", () => {
+    const pkg = JSON.parse(readFileSync("package.json", "utf8"));
+    expect(pkg.dependencies["@vercel/blob"]).toBeUndefined();
+    expect(pkg.devDependencies["@vercel/blob"]).toBeDefined();
+  });
 });
