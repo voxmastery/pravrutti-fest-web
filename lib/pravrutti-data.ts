@@ -230,9 +230,9 @@ export const faqs = [
 export const contacts = {
   email: "pravrutti@msruas.ac.in",
   helpdesk: [
-    { name: "Renuka", phone: "+91 8147192405" },
     { name: "Aryan", phone: "+91 8077134700" },
-    { name: "Rathan Raj", phone: "+91 6363548034" }
+    { name: "Rathan Raj", phone: "+91 6363548034" },
+    { name: "Renuka", phone: "+91 8147192405" }
   ],
   location: {
     campus: "Ramaiah Technology Campus",
