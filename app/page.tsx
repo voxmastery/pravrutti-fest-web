@@ -6,7 +6,9 @@ import { Navigation } from "@/components/landing/navigation";
 import { HeroSection } from "@/components/landing/hero-section";
 import { HowItWorksSection } from "@/components/landing/how-it-works-section";
 import { IntegrationsSection } from "@/components/landing/integrations-section";
-import { SponsorsSection } from "@/components/landing/sponsors-section";
+// Hidden until sponsors are confirmed — restore this import and the
+// <SponsorsSection /> below together.
+// import { SponsorsSection } from "@/components/landing/sponsors-section";
 import { FooterSection } from "@/components/landing/footer-section";
 import { useGlobalScrollReveal } from "@/hooks/use-animations";
 import { useIdentity } from "@/lib/identity-context";
@@ -42,9 +44,10 @@ export default function Home() {
         <Navigation />
         <HeroSection />
         <HowItWorksSection />
-        {/* Sponsors sit above clubs: partners who fund the fest get the
-            higher slot on the page. */}
-        <SponsorsSection />
+        {/* Sponsors are hidden until the partner list is confirmed. When it
+            is, restore this and the import above; sponsors sit above clubs so
+            partners who fund the fest get the higher slot. */}
+        {/* <SponsorsSection /> */}
         <IntegrationsSection />
         <FooterSection />
       </main>
