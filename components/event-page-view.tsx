@@ -20,7 +20,7 @@ import {
   SectionLabel,
 } from "@/components/event-sections";
 import { useCoordinatorPhones } from "@/hooks/use-coordinator-phones";
-import { Event, FEST, formatINR, teamLabel } from "@/lib/pravrutti-data";
+import { Event, FEST, formatINR, teamLabel, capacityLabel } from "@/lib/pravrutti-data";
 import { COVER_GRADIENTS } from "@/lib/event-covers";
 
 /** 1st / 2nd / 3rd … as far as the event actually awards. */
@@ -83,7 +83,7 @@ export function EventPageView({ event, slug }: { event: Event; slug: string }) {
   const formatRows = [
     { k: "Team size", v: teamLabel(event) },
     event.duration ? { k: "Duration", v: event.duration } : null,
-    event.capacity ? { k: "Capacity", v: `${event.capacity} ${event.capacityUnit}` } : null,
+    capacityLabel(event) ? { k: "Capacity", v: capacityLabel(event)! } : null,
     event.eligibility ? { k: "Eligibility", v: event.eligibility } : null,
   ].filter((r): r is { k: string; v: string } => r !== null);
 

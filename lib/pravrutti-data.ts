@@ -101,6 +101,30 @@ export function capacityInPeople(e: Event): number | null {
   return e.capacity ?? null;
 }
 
+/**
+ * The capacity as a reader should see it.
+ *
+ * `capacity` is a head count, but for a team event the coordinators think in
+ * teams — Robo War's 64 is "16 teams of 4". Printing the raw number beside the
+ * word "teams" therefore claimed 64 teams, four times the real field, so the
+ * team count is derived here instead of trusting the unit as a label.
+ *
+ * Falls back to participants whenever teams would be a lie: a head count that
+ * is not a whole number of teams (TRIATHLON's 210 is 52.5 teams, and rounding
+ * would invent or destroy a place), or a solo event.
+ */
+export function capacityLabel(e: Event): string | null {
+  const cap = e.capacity;
+  if (!cap) return null;
+
+  const perTeam = e.teamSize.max;
+  if (e.capacityUnit === "teams" && perTeam > 1 && cap % perTeam === 0) {
+    const teams = cap / perTeam;
+    return `${teams} ${teams === 1 ? "team" : "teams"}`;
+  }
+  return `${cap} participants`;
+}
+
 export function teamLabel(e: Event): string {
   const { min, max, soloAllowed } = e.teamSize;
   if (max === 1) return "Solo only";

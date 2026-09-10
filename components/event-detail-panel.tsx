@@ -19,7 +19,7 @@ import {
   EventWhenRow,
   SectionLabel,
 } from "@/components/event-sections";
-import { Event, eventId, formatINR, teamLabel } from "@/lib/pravrutti-data";
+import { Event, eventId, formatINR, teamLabel, capacityLabel } from "@/lib/pravrutti-data";
 import { COVER_GRADIENTS } from "@/lib/event-covers";
 import { POSTER_TINTS } from "@/lib/poster-tints";
 import { useCoordinatorPhones } from "@/hooks/use-coordinator-phones";
@@ -89,7 +89,7 @@ export function EventDetailPanel({
   const formatRows = [
     { k: "Team size", v: teamLabel(event) },
     event.duration ? { k: "Duration", v: event.duration } : null,
-    event.capacity ? { k: "Capacity", v: `${event.capacity} ${event.capacityUnit}` } : null,
+    capacityLabel(event) ? { k: "Capacity", v: capacityLabel(event)! } : null,
     event.eligibility ? { k: "Eligibility", v: event.eligibility } : null,
   ].filter((r): r is { k: string; v: string } => r !== null);
 
