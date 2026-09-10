@@ -20,7 +20,7 @@ import {
   Stethoscope,
   CircuitBoard,
 } from "lucide-react";
-import { useScrollReveal, useMousePosition, useCountUp } from "@/hooks/use-animations";
+import { useScrollReveal, useMousePosition } from "@/hooks/use-animations";
 import { PALETTE } from "@/lib/palette";
 
 const clubs = [
@@ -50,42 +50,6 @@ const clubs = [
  * as the digits change — without it, 7 → 17 → 100 shoves the label about while
  * you're reading it, which is the thing that makes counters feel cheap.
  */
-function StatTile({
-  value,
-  suffix,
-  label,
-  tone,
-  glow,
-}: {
-  value: number;
-  suffix: string;
-  label: string;
-  tone: string;
-  glow: string;
-}) {
-  const [ref, n] = useCountUp<HTMLDivElement>(value);
-
-  return (
-    <div ref={ref} className="group relative bg-midnight-navy px-6 py-8 text-center transition-colors hover:bg-cosmic-purple">
-      <div
-        className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-500 group-hover:opacity-100" style={{ background: `radial-gradient(ellipse at 50% 0%, ${glow} 0%, transparent 70%)` }}
-      />
-      <div className="relative">
-        <span
-          className={`block font-display text-4xl font-black tabular-nums leading-none ${tone}`}
-          style={{ textShadow: `0 0 24px ${glow}` }}
-        >
-          {n}
-          {suffix}
-        </span>
-        <span className="mt-2.5 block text-[11px] uppercase tracking-[0.22em] text-pearl-white/55">
-          {label}
-        </span>
-      </div>
-    </div>
-  );
-}
-
 function ClubCard({ club, index }: { club: typeof clubs[0]; index: number }) {
   const ref = useRef<HTMLDivElement>(null);
   const mouse = useMousePosition(ref);
@@ -135,7 +99,6 @@ function ClubCard({ club, index }: { club: typeof clubs[0]; index: number }) {
 
 export function IntegrationsSection() {
   const headerRef = useScrollReveal();
-  const statsRef = useScrollReveal();
 
   return (
     <section className="relative py-20 lg:py-28 bg-midnight-navy overflow-hidden border-t border-royal-wine/40">
@@ -156,20 +119,10 @@ export function IntegrationsSection() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 lg:gap-4 mb-12">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 lg:gap-4">
           {clubs.map((club, i) => (
             <ClubCard key={club.name} club={club} index={i} />
           ))}
-        </div>
-
-        {/* Clubs is derived from the array right above it — the literal 17 had
-            to be remembered every time a club was added or removed. */}
-        <div
-          ref={statsRef}
-          className="reveal-up grid grid-cols-1 sm:grid-cols-3 gap-px overflow-hidden rounded-2xl border border-royal-wine/60 bg-royal-wine/40 mt-4" >
-          <StatTile value={clubs.length} suffix="" label="Clubs" tone="text-champagne-gold" glow="rgba(242,210,174,0.20)" />
-          <StatTile value={50} suffix="+" label="Faculty Advisors" tone="text-cyber-pink" glow="rgba(214,77,141,0.22)" />
-          <StatTile value={100} suffix="+" label="Coordinators" tone="text-soft-gold" glow="rgba(191,138,27,0.22)" />
         </div>
       </div>
     </section>
