@@ -115,7 +115,7 @@ export function Navigation() {
             <Link href={homeHref} className="transition-transform hover:scale-105 shrink-0">
               {/* Official mark including the NAAC A+ accreditation seal. */}
               <img
-                src="/ruas-logo-naac.png" alt="Ramaiah University of Applied Sciences — NAAC A+ accredited" className="h-[32px] sm:h-[38px] lg:h-[34px] xl:h-[46px] w-auto object-contain" width={907}
+                src="/ruas-logo-naac.webp" alt="Ramaiah University of Applied Sciences — NAAC A+ accredited" className="h-[32px] sm:h-[38px] lg:h-[34px] xl:h-[46px] w-auto object-contain" width={907}
                 height={259}
               />
             </Link>

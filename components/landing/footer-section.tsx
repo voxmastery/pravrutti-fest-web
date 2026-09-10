@@ -46,7 +46,7 @@ export function FooterSection() {
           <div className="space-y-6">
             <Link href="/" className="inline-block">
               <img
-                src="/pravrutti-logo.png" alt="Pravrutti 2.0" width={1600}
+                src="/pravrutti-logo.webp" alt="Pravrutti 2.0" width={1600}
                 height={800}
                 className="h-16 sm:h-20 w-auto object-contain" style={{ filter: "drop-shadow(0 0 16px rgba(214, 77, 141, 0.25))" }}
               />
@@ -114,7 +114,7 @@ export function FooterSection() {
         {/* ── Bottom bar ── */}
         <div className="py-7 flex flex-col md:flex-row items-center justify-between gap-5">
           <img
-            src="/ruas-logo-naac.png" alt="Ramaiah University of Applied Sciences — NAAC A+ accredited" width={907}
+            src="/ruas-logo-naac.webp" alt="Ramaiah University of Applied Sciences — NAAC A+ accredited" width={907}
             height={259}
             className="h-9 w-auto object-contain shrink-0" />
 

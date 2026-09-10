@@ -92,14 +92,23 @@ export function HeroSection() {
       {/* ===== BG 0: Full-screen gate temple image ===== */}
       <div className="absolute inset-0 z-0">
         <img
-          src="/gate-temple.png" alt="" aria-hidden="true" className="absolute inset-0 w-full h-full object-cover object-center select-none" style={{
+          /* .webp, not the .png original: Hostinger's CDN re-encodes PNG and
+             JPEG at its own quality and returned this hero at 20 KB on mobile,
+             which flattened the temple into unreadable mush. Files that are
+             already .webp are served byte-for-byte untouched. */
+          src="/gate-temple.webp" alt="" aria-hidden="true" className="absolute inset-0 w-full h-full object-cover object-center select-none" style={{
             /* The artwork carries the page; it is dimmed just enough for the
                headline to sit on it. Every layer below is a shaping gradient,
                not a second dimmer — stacking dimmers crushed the gate to a
                silhouette. */
             opacity: 0.92,
+            /* No transition here on purpose. The transform is rewritten on
+               every scroll frame, so a 0.4s ease would restart continuously and
+               the image would permanently chase the scroll — which reads as the
+               whole screen twitching. requestAnimationFrame in useParallax is
+               already the smoothing. */
             transform: `scale(1.08) translateY(${-parallaxOffset * 0.08}px)`,
-            transition: "transform 0.4s ease-out",
+            willChange: "transform",
             filter: "saturate(1.15) brightness(0.88)",
           }}
         />
@@ -136,7 +145,7 @@ export function HeroSection() {
       {/* ===== BG 1: Retro perspective grid ===== */}
       <div className="absolute inset-0 z-[2] pointer-events-none">
         <div
-          className="retro-grid" style={{ transform: `perspective(500px) rotateX(65deg) translateY(${parallaxOffset * 0.15}px)` }}
+          className="retro-grid" style={{ transform: `perspective(500px) rotateX(65deg) translateY(${parallaxOffset * 0.15}px)`, willChange: "transform" }}
         />
       </div>
 
@@ -230,7 +239,7 @@ export function HeroSection() {
           />
 
           <img
-            src="/pravrutti-logo.png" alt="Pravrutti 2.0" className="relative w-[320px] sm:w-[440px] md:w-[560px] lg:w-[680px] h-auto object-contain select-none" width={1600}
+            src="/pravrutti-logo.webp" alt="Pravrutti 2.0" className="relative w-[320px] sm:w-[440px] md:w-[560px] lg:w-[680px] h-auto object-contain select-none" width={1600}
             height={800}
             draggable={false}
             style={{

@@ -90,15 +90,26 @@ export function useParallax(speed = 0.3): number {
   const [offset, setOffset] = useState(0);
 
   useEffect(() => {
+    // Someone who asked for less motion should not get a moving background.
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
     let ticking = false;
+    let last = 0;
     const onScroll = () => {
-      if (!ticking) {
-        requestAnimationFrame(() => {
-          setOffset(window.scrollY * speed);
-          ticking = false;
-        });
-        ticking = true;
-      }
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(() => {
+        // Rounded, and only committed when it actually changed. Every update
+        // re-renders the whole hero, so a raw float from scrollY would trigger
+        // a render on literally every frame for sub-pixel movement nobody can
+        // see.
+        const next = Math.round(window.scrollY * speed);
+        if (next !== last) {
+          last = next;
+          setOffset(next);
+        }
+        ticking = false;
+      });
     };
 
     window.addEventListener("scroll", onScroll, { passive: true });

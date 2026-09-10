@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 
 /** Assets the hero needs before it is worth revealing. */
-const CRITICAL_ASSETS = ["/pravrutti-logo.png", "/gate-temple.png"];
+const CRITICAL_ASSETS = ["/pravrutti-logo.webp", "/gate-temple.webp"];
 
 /**
  * Long enough that the wordmark actually registers. Assets are usually cached
@@ -162,7 +162,7 @@ export function GateIntro({ onComplete }: { onComplete: () => void }) {
               long enough to earn its keep. The reserved box below still holds
               the layout, so nothing shifts when the image lands. */}
           <img
-            src="/pravrutti-logo.png" alt="Pravrutti 2.0 — National Tech Fest, RUAS" width={1600}
+            src="/pravrutti-logo.webp" alt="Pravrutti 2.0 — National Tech Fest, RUAS" width={1600}
             height={800}
             onLoad={() => setLogoReady(true)}
             className="relative w-full h-full object-contain" style={{
@@ -180,8 +180,8 @@ export function GateIntro({ onComplete }: { onComplete: () => void }) {
             <div
               data-intro-motion
               className="absolute inset-0 pointer-events-none overflow-hidden" style={{
-                maskImage: "url('/pravrutti-logo.png')",
-                WebkitMaskImage: "url('/pravrutti-logo.png')",
+                maskImage: "url('/pravrutti-logo.webp')",
+                WebkitMaskImage: "url('/pravrutti-logo.webp')",
                 maskSize: "contain",
                 WebkitMaskSize: "contain",
                 maskRepeat: "no-repeat",
