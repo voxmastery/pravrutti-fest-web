@@ -715,3 +715,23 @@ body::before {
   background-clip: text;
   color: transparent;
 }
+
+/* Gate failsafe. The intro overlay is server-rendered and normally unmounted
+   by React after at most GateIntro's 5s ceiling. If the JavaScript never runs
+   — a chunk 404 after a deploy, a parse error, a blocked bundle — nothing
+   would remove it and the visitor stares at the splash screen forever. This
+   animation dissolves the overlay on its own just after that ceiling, so the
+   worst case is a slow entrance rather than an unusable site. React normally
+   wins the race and unmounts long before this fires. */
+@keyframes gate-failsafe-reveal {
+  0%, 92% { opacity: 1; visibility: visible; }
+  100%    { opacity: 0; visibility: hidden; }
+}
+
+@utility gate-failsafe {
+  animation: gate-failsafe-reveal 6.5s ease-out forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gate-failsafe { animation-duration: 2s; }
+}

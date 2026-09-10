@@ -91,7 +91,10 @@ export function GateIntro({ onComplete }: { onComplete: () => void }) {
 
   return (
     <div
-      className="fixed inset-0 z-[9999] pointer-events-none select-none overflow-hidden flex items-center justify-center px-6" style={{
+      /* gate-failsafe is a pure-CSS dissolve that needs no JavaScript — see
+         app/globals.css. It is the net for a hydration failure, which is the
+         one way this overlay could otherwise never go away. */
+      className="gate-failsafe fixed inset-0 z-[9999] pointer-events-none select-none overflow-hidden flex items-center justify-center px-6" style={{
         // Branded ground from the very first paint — the old flat #000 read as a
         // blank/broken screen while the logo was still downloading.
         background:
