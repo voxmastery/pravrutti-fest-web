@@ -1,0 +1,105 @@
+import mysql from "mysql2/promise";
+
+/**
+ * MySQL-backed key/value store.
+ *
+ * One table, `path` -> JSON text, which is the shape the app already had on
+ * Vercel Blob — so this is a backend swap, not a data model change. Every
+ * storage path (`app/...`, `gate/...`, `team/...`, `team-member/...`) is
+ * carried over verbatim.
+ *
+ * Unlike Blob, MySQL gives real atomicity: an INSERT either wins or it does
+ * not. The duplicate-registration guard is therefore enforced by the database
+ * rather than by a read-then-write race that two simultaneous applicants
+ * could both pass.
+ */
+export const SQL_URL_PREFIX = "sql://";
+
+const TABLE = "kv";
+
+export function sqlEnabled(): boolean {
+  return Boolean(
+    process.env.MYSQL_HOST &&
+      process.env.MYSQL_DATABASE &&
+      process.env.MYSQL_USER &&
+      process.env.MYSQL_PASSWORD
+  );
+}
+
+let pool: any = null;
+function getPool() {
+  if (!pool) {
+    pool = mysql.createPool({
+      host: process.env.MYSQL_HOST,
+      port: Number(process.env.MYSQL_PORT ?? 3306),
+      database: process.env.MYSQL_DATABASE,
+      user: process.env.MYSQL_USER,
+      password: process.env.MYSQL_PASSWORD,
+      waitForConnections: true,
+      connectionLimit: Number(process.env.MYSQL_POOL_SIZE ?? 5),
+      charset: "utf8mb4_general_ci",
+    });
+  }
+  return pool;
+}
+
+export async function closeSqlPool() {
+  if (pool) {
+    await pool.end();
+    pool = null;
+  }
+}
+
+/* `_` and `%` are wildcards to LIKE. No event id contains either today, but
+   one that did would silently over-match and leak another event's roster
+   into this one, so escape rather than trust the data. */
+const escapeLike = (s: string) => s.replace(/[\\%_]/g, (c) => `\\${c}`);
+
+export async function sqlListAll(prefix: string) {
+  const [rows]: any = await getPool().execute(
+    `SELECT path FROM \`${TABLE}\` WHERE path LIKE ? ESCAPE '\\\\'`,
+    [`${escapeLike(prefix)}%`]
+  );
+  return (rows as { path: string }[]).map((r) => ({
+    pathname: r.path,
+    url: `${SQL_URL_PREFIX}${r.path}`,
+  }));
+}
+
+export async function sqlReadJson(path: string) {
+  const [rows]: any = await getPool().execute(
+    `SELECT data FROM \`${TABLE}\` WHERE path = ?`,
+    [path]
+  );
+  const row = (rows as { data: string }[])[0];
+  if (!row) return null;
+  try {
+    return JSON.parse(row.data);
+  } catch {
+    return null;
+  }
+}
+
+export async function sqlPutJson(path: string, data: unknown, overwrite: boolean) {
+  const json = JSON.stringify(data);
+
+  if (overwrite) {
+    await getPool().execute(
+      `INSERT INTO \`${TABLE}\` (path, data) VALUES (?, ?)
+       ON DUPLICATE KEY UPDATE data = VALUES(data)`,
+      [path, json]
+    );
+    return;
+  }
+
+  // INSERT IGNORE reports 0 affected rows when the key was already taken.
+  // Turning that into a throw preserves the contract the register and teams
+  // routes rely on to detect "this person has already applied".
+  const [res]: any = await getPool().execute(
+    `INSERT IGNORE INTO \`${TABLE}\` (path, data) VALUES (?, ?)`,
+    [path, json]
+  );
+  if (!res || res.affectedRows === 0) {
+    throw new Error(`A record already exists at ${path}`);
+  }
+}
