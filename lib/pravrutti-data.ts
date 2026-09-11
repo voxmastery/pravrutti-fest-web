@@ -11,7 +11,8 @@ export interface Coordinator {
 
 export interface Event {
   name: string;
-  category: "Engineering and Design" | "Research and Presentation" | "Code and Compute" | "Enterprise and Expression";
+  /** Track. Editorial grouping named by the organisers; see test/event-categories.test.ts. */
+  category: "MACHINA" | "TECHNOVERSE" | "CODE & CHAOS" | "INNOVENTURE" | "IDEAFORGE";
   subCategory: string;
   description: string;
   fee: string;
@@ -268,7 +269,7 @@ export const contacts = {
 export const events: Event[] = [
   {
     name: "ROBO RACE",
-    category: "Engineering and Design",
+    category: "MACHINA",
     subCategory: "Precision. Power. Victory.",
     description: "Robo Race is a competitive robotics event that challenges participants to navigate a specially designed obstacle track with their custom-RC bots. The event evaluates speed, precision, control, stability, and obstacle-handling capabilities. Key hints regarding the track will be provided to participants prior to the commencement of the event.",
     fee: "Rs. 200/-",
@@ -286,7 +287,7 @@ export const events: Event[] = [
   },
   {
     name: "LINE FOLLOWER",
-    category: "Engineering and Design",
+    category: "MACHINA",
     subCategory: "Autonomous Bot Time Trial",
     description: "Line Follower is a robotics competition that challenges participants to design and build an autonomous robot capable of following a predefined track with speed, precision, and accuracy. The robot must navigate turns and track variations while staying on the designated path.",
     fee: "Rs. 200/-",
@@ -304,7 +305,7 @@ export const events: Event[] = [
   },
   {
     name: "KURUKSHETRA - THE ROBO WAR",
-    category: "Engineering and Design",
+    category: "MACHINA",
     subCategory: "Engineering Meets Combat",
     description: "Kurushetra - The Robo War brings student-built 8 kg combat robots into the arena for an intense single-elimination showdown. Armed with spinners, flippers, crushers and more, teams battle through three-minute matches where damage, aggression and control decide victory.",
     fee: "Rs. 200/-",
@@ -322,7 +323,7 @@ export const events: Event[] = [
   },
   {
     name: "Terraform: The System Awakens",
-    category: "Code and Compute",
+    category: "CODE & CHAOS",
     subCategory: "Build an AI Survival System",
     description: "You wake up on unknown land with no memory, no knowledge of agriculture, and one tool between you and starvation: TERRAFORM — an interface built to guide you from bare soil to a full harvest. But right now, that System doesn't exist. It's up to you to build it. In this event, teams construct TERRAFORM from scratch across two laptops simultaneously: * One team building the Knowledge Base — deep, structured research that lets an AI genuinely reason about soil, treatment, and crops * The other building the Interface, the face users actually interact with. Both halves must be wired together by the end, forming a System that can walk a user through diagnosing soil, choosing crops, and guiding them all the way to harvest. Each team is assigned one of five distinct land scenarios, and at judging time, they're handed a brand-new, unseen variation of it — a live test of whether their System actually reasons, or just memorized one example. No agricultural background needed. No coding expertise required. Just two laptops, your creativity, and an AI assistant of your choice. The land is waiting. Will your System be ready?",
     fee: "Rs. 200/-",
@@ -340,7 +341,7 @@ export const events: Event[] = [
   },
   {
     name: "ELECTROXCAPE",
-    category: "Engineering and Design",
+    category: "CODE & CHAOS",
     subCategory: "ECE Engineering Challenge",
     description: "Teams of four progress through three common engineering missions followed by a semi-final and final. Round 1 is a timed system-intelligence challenge involving waveforms, protocols, RTL and circuit evidence. Round 2.1 is hands-on fault forensics using deliberately faulty hardware. Round 2.2 requires teams to implement a constrained system and adapt when a requirement changes. The top eight teams advance to a semi-final Blind Handoff, where one pair designs a solution and another implements it using only the provided documentation. The top four then compete in a final challenge.",
     fee: "Rs. 200/-",
@@ -359,7 +360,7 @@ export const events: Event[] = [
   },
   {
     name: "Discoverize (Research Paper Presentation)",
-    category: "Research and Presentation",
+    category: "INNOVENTURE",
     subCategory: "Research, Present, Inspire & Innovate",
     description: "Present your original research work and innovative ideas before a panel of experts and a larger audience! The event encourages academic excellence, knowledge sharing, and critical discussion on cutting-edge technologies and interdisciplinary innovations. Participants will undergo an abstract submission process, followed by live paper presentations during the Tech Fest. Students, professionals and researchers are welcome!",
     fee: "Rs. 200/-",
@@ -379,7 +380,7 @@ export const events: Event[] = [
   },
   {
     name: "FAULT x LOAD",
-    category: "Engineering and Design",
+    category: "MACHINA",
     subCategory: "Engineering Escape Challenge",
     description: "Step into a factory where everything has gone wrong. Teams must build, measure, troubleshoot and solve a series of hands-on engineering challenges before time runs out. From constructing a load-bearing spaghetti bridge to diagnosing machine failures and restarting the final system, participants will test their creativity, teamwork and problem-solving skills in an immersive engineering experience.",
     fee: "Rs. 200/-",
@@ -397,7 +398,7 @@ export const events: Event[] = [
   },
   {
     name: "Campus Innovators 2.0",
-    category: "Enterprise and Expression",
+    category: "IDEAFORGE",
     subCategory: "SDG Pitching Challenge",
     description: "● Round 1 [SDG Problem Scouting & Solution Blueprint (Online)]: Teams draw an SDG track at random (e.g., Affordable Clean Energy, Sustainable Cities, Industry & Innovation, Responsible Consumption, Good Health). Teams conduct rapid campus / regional field exploration, define a specific operational bottleneck, propose a feasible technological or business solution, and submit a structured 2-page executive summary by the deadline ● Round 2 (Live Venture Pitch): Top 10 shortlisted teams deliver a live investor-style pitch before an esteemed industry and academic jury. Each team gets 5 minutes for presentation (max 7 slides) followed by 3 minutes of rigorous Q&A with the jury",
     fee: "Rs. 200/-",
@@ -415,7 +416,7 @@ export const events: Event[] = [
   },
   {
     name: "Beyond the Blueprint 2.0",
-    category: "Enterprise and Expression",
+    category: "IDEAFORGE",
     subCategory: "Case Study",
     description: "● Round 1 (Case Study Analysis & Strategic Deck Submission): Registered teams receive a comprehensive case dossier on a contemporary tech venture navigating growth stagnation, product-market pivot, or ethical AI governance. Teams analyze quantitative/qualitative data and submit a structured 5-page case abstract covering root cause diagnosis, strategic options, feasibility, and 3-year financial impact ● Round 2 (Grand Boardroom Pitch): Top 10 qualifying teams present their strategic blueprint live in a boardroom simulation format. Each team receives 5 minutes of presentation time (maximum 7 slides) and faces 3 minutes of rigorous stress-testing questions from executive judges",
     fee: "Rs. 200/-",
@@ -433,7 +434,7 @@ export const events: Event[] = [
   },
   {
     name: "Respawn",
-    category: "Code and Compute",
+    category: "CODE & CHAOS",
     subCategory: "Game Building Challenge",
     description: "Respawn is a 2D Gameathon, Teams of 3 to 4 participants can participate in the event. The theme will be announced after registrations close in the official whatsApp group or discord group. Just a day before the event we willl provide a 12 hour time frame within which they have to develop the game based on the announced theme. They are free to use free AI tools and other permitted resources during the development process. Teams must submit three progress videos, one for every four hours of the 12 hour time frame, along with the date and time clearly visible in each video. These videos along with the final code must be submitted through the official google drive link which will be provided. If in case the registrations are high, shortlisted teams will be presenting their work during the finale.",
     fee: "Rs. 200/-",
@@ -451,7 +452,7 @@ export const events: Event[] = [
   },
   {
     name: "Glide-X",
-    category: "Engineering and Design",
+    category: "MACHINA",
     subCategory: "Non-Technical Event",
     description: "Glide-X is an aerodynamics-focused glider competition where participants design and build a non-RC, passively stable glider to compete under standardized launch conditions. The event challenges teams to apply aerodynamics, flight mechanics, and aircraft stability principles to optimize their designs for maximum flight time and distance while maintaining a straight and stable flight path. With an optional common mechanical launcher ensuring to help with launches, the competition places emphasis on design efficiency, aerodynamic performance, stability, and innovation.",
     fee: "Rs. 200/-",
@@ -468,7 +469,7 @@ export const events: Event[] = [
   },
   {
     name: "The Logic Circuit",
-    category: "Code and Compute",
+    category: "CODE & CHAOS",
     subCategory: "Mathematical logic driven digital competition",
     description: "Experience THE LOGIC CIRCUIT, Techfest’s high-stakes digital puzzle race. Teams of up to three share one laptop to crack logic problems and puzzles, and unlock progression keys on a competitive local network. Facing off against all teams simultaneously, only the sharpest problem-solvers will survive each round. The first three teams to complete the final challenge in the correct sequence claim victory. Do you want to explore and experience the hidden world of problem solving? Fasten your focus—it’s time to outsmart the circuit.",
     fee: "Rs. 200/-",
@@ -486,7 +487,7 @@ export const events: Event[] = [
   },
   {
     name: "RC-X",
-    category: "Engineering and Design",
+    category: "MACHINA",
     subCategory: "Technical Event",
     description: "RC–X puts your aircraft design, building and piloting skills to the test. Form a team of 3–4, build your aircraft, take to the skies and prove that you can stay in control when precision matters most. Before the challenge begins, every aircraft must clear a mandatory technical inspection to ensure it meets the event’s technical and safety requirements. Teams that pass move on to the qualification round where they must demonstrate stable flight, maneuverability and control over their plane by demonstrating a safe landing. The real challenge begins in the final round. Teams must complete two full loops around the designated field, navigate two obstacles, and accurately drop a 20 g payload into the target zone. So test your build, sharpen your flying and take on the course.",
     fee: "Rs. 200/-",
@@ -504,7 +505,7 @@ export const events: Event[] = [
   },
   {
     name: "LEADS Innovation Challenge",
-    category: "Enterprise and Expression",
+    category: "IDEAFORGE",
     subCategory: "Startup Simulation",
     description: "LEADS Innovation Challenge is a 2-hour startup leadership simulation where teams build a venture from a problem card, defend it through a live mid-event crisis twist, and pitch the complete journey to an investor-style panel testing innovation, adaptability, branding instinct, and leadership, all under real time pressure.",
     fee: "Rs. 200/-",
@@ -523,7 +524,7 @@ export const events: Event[] = [
   },
   {
     name: "DENT - INNOVATE",
-    category: "Research and Presentation",
+    category: "INNOVENTURE",
     subCategory: "Technical",
     description: "DENT-INNOVATE 2026 is an exciting postgraduate e-poster competition showcasing innovative ideas that enhance patient care through the integration of technology, clinical expertise, and improved outcomes. Participants will present creative concepts, research innovations, and technology-driven solutions addressing contemporary challenges in dentistry. Join this platform to share ideas, inspire collaboration, demonstrate innovation, and contribute towards shaping the future of patient-centred dental care.",
     fee: "Rs. 200/-",
@@ -542,7 +543,7 @@ export const events: Event[] = [
   },
   {
     name: "PITCH AT MACH",
-    category: "Enterprise and Expression",
+    category: "INNOVENTURE",
     subCategory: "Think. Design. Defend.",
     description: "PITCH AT MACH is an aerospace pitch competition, in which the teams are provided with a problem statement a week before the event. Each team will understand the problem, and come up with a feasible and innovative solution and pitch it infront of a jury on the day of the event. The team should also defend their solution against a set of rigorous Q&A, in which the jury will assess the team's technical understanding of both the given problem statement and their proposed solutions.",
     fee: "Rs. 200/-",
@@ -560,7 +561,7 @@ export const events: Event[] = [
   },
   {
     name: "BRIDGE IT",
-    category: "Engineering and Design",
+    category: "MACHINA",
     subCategory: "Bridging Knowledge, Innovation & Real-World Civil Engineering",
     description: "BRIDGE IT is a hands-on structural engineering challenge where participants design and construct a model bridge using limited materials. Teams must apply basic structural engineering concepts while focusing on load-carrying capacity, innovation, efficient material utilization, and technical presentation. The completed bridge will be tested under load to determine its structural performance.",
     fee: "Rs. 200/-",
@@ -579,7 +580,7 @@ export const events: Event[] = [
   },
   {
     name: "CHAOS",
-    category: "Code and Compute",
+    category: "TECHNOVERSE",
     subCategory: "8-Hour Software Hackathon",
     description: "CHAOS is an 8-hour on-site hackathon hosted by the IEEE Student Branch. Teams of 2 to 4 students build a working software solution from scratch against a real-world problem, judged live at the end of the day — no recorded demos, no slide-only submissions. Problem statements are revealed only on the day itself, so no team walks in pre-prepared. Every team starts from zero and builds the entire product within the same eight hours. What sets CHAOS apart is its Buffs & Debuffs wheel. Four times throughout the day, a spin on the main screen hands the entire hall either a helpful perk or a fun, bothersome restriction (voice-only coding, no Enter key, whisper-mode communication) for the next thirty minutes. Every team faces the same twist at the same time, keeping the day unpredictable without affecting anyone's score. Backed by industry sponsors including Cursor, CHAOS gives students a full problem-to-demo cycle in a single day, under the same pressure and unpredictability.",
     fee: "Rs. 200/-",
@@ -597,7 +598,7 @@ export const events: Event[] = [
   },
   {
     name: "Hacktivate",
-    category: "Code and Compute",
+    category: "TECHNOVERSE",
     subCategory: "24-Hour Predictive Systems Hackathon",
     description: "Hacktivate is a 24-hour overnight hackathon on the theme of Predictive Systems, hosted by the IEEE Student Branch. Teams of 2 to 4 design and build a working hardware and software system that senses real-world data and predicts an outcome — machine failure, demand shifts, anomalies, or early warnings. Teams move through the full development cycle: ideation, circuit and system design with simulation, component procurement from an on-site stall, hardware assembly and sensor integration, and finally layering in the predictive logic. Mentors are available throughout, including overnight. The event closes with a live demonstration — every system must power on and perform in front of the judges. Components are sourced on-site through PCB Cupid, the component partner. Meals, overnight refreshments, and a supervised rest area are provided. It is a full product build compressed into a single night, and the kind of end-to-end experience few students get before industry.",
     fee: "Rs. 200/-",
@@ -615,7 +616,7 @@ export const events: Event[] = [
   },
   {
     name: "AI ESCAPE ROOM",
-    category: "Code and Compute",
+    category: "CODE & CHAOS",
     subCategory: "Prompt Engineering Challenge",
     description: "Our event is an immersive, team-based escape room experience designed to challenge participants through a series of mysterious rooms filled with hidden clues, puzzles, and unexpected challenges. Each room presents a different type of problem that requires observation, logical thinking, creativity, teamwork, and careful attention to detail. Participants must work together, communicate effectively, and think beyond the obvious to uncover the path forward. The puzzles are designed to be challenging and deceptive, encouraging teams to question what they see and discover connections between seemingly unrelated elements. As teams progress through the rooms, the difficulty and mystery build, creating an exciting and competitive atmosphere. The event is not just about solving puzzles—it is about strategy, collaboration, time management, and thinking differently under pressure. Every team must rely on its collective skills and instincts to navigate the experience and ultimately complete the escape room challenge within the given time.",
     fee: "Rs. 200/-",
@@ -635,7 +636,7 @@ export const events: Event[] = [
   },
   {
     name: "Bracket blitz",
-    category: "Engineering and Design",
+    category: "MACHINA",
     subCategory: "Design",
     description: "Bracket Blitz is an exciting team-based technical event where team of 3 to 4 members design, test, and 3D print their models. Participating teams will be provided with design requirements, loading conditions, dimensional constraints, and material specifications. Based on the given specifications and constraints, teams should come up with their own alternative designs to withstand the given load. Teams will then use engineering calculations and FEA to validate their models to check for stress concentration and possible failures in their design to optimize it for better strength with minimal material usage.",
     fee: "Rs. 200/-",
@@ -653,7 +654,7 @@ export const events: Event[] = [
   },
   {
     name: "ZERO HOUR",
-    category: "Code and Compute",
+    category: "CODE & CHAOS",
     subCategory: "Code. Survive. Conquer.",
     description: "ZERO HOUR Think a hackathon is just pick a problem, open your laptop, and start coding? Think again. 3 hours. 4 people. 3 Gauntlets. 1 final goal. Welcome to Zero Hour — a hackathon where coding is only part of the game. At kickoff, the clock starts and so does the uncertainty. Your team will choose a mystery theme and race to build a working technical solution before time runs out. But just when you think you have found your rhythm, the Gauntlets begin. Three surprise challenges. Three different team members. Three chances to change your score. Every Gauntlet is timed, every point matters, and your team’s final score depends on how well each member performs when it is their turn. There is no hiding behind the strongest coder. No endless time to rethink. No guarantee that your perfect plan will survive the next challenge. You will have to code, adapt, communicate, make quick decisions, and keep your team moving when things stop going according to plan. Then comes the final push: submit your solution, face the judges, and defend what you built. The question is simple: When the clock hits zero, will your team have what it takes to survive Zero Hour?",
     fee: "Rs. 200/-",
@@ -671,7 +672,7 @@ export const events: Event[] = [
   },
   {
     name: "HAMMER",
-    category: "Code and Compute",
+    category: "TECHNOVERSE",
     subCategory: "Hack Analyze Master Market Execute Rule",
     description: "*The Cyber-Escape & Live IPL Auction Arena* We bring a unique two-stage competitive arena fusing high-pressure web debugging with the adrenaline of a live IPL Mega Auction. *The Battle Breakdown* * ROUND 1: IPL Technical Escape Room Teams enter a multi-stage cyber-investigation platform where they must inspect, analyse, and decode web components (HTML, CSS, JavaScript) to crack ciphers, analyze cricket datasets, and unlock master qualification keys. * ROUND 2: Live IPL Mega Auction The top 8 qualifying teams from round 1 step into the live auction war room. Armed with a virtual purse of 80 Crores and real-time digital bidding terminals, franchises will battle across marquee and accelerated sets to construct the ultimate championship roster under strict squad constraints.",
     fee: "Rs. 200/-",
@@ -690,7 +691,7 @@ export const events: Event[] = [
   },
   {
     name: "TRIATHLON",
-    category: "Code and Compute",
+    category: "CODE & CHAOS",
     subCategory: "Quiz. Build. Breach.",
     description: "Triathlon is a three-round technical event run as one connected game. Teams of 2–3 compete across a coding and computer-science quiz, a PC-building challenge, and a capture-the-flag puzzle hunt. Unlike a normal multi-round event, the rounds are linked: what a team earns in one round becomes a resource it spends in the next, so consistency across all three rounds decides the winner. There is no elimination — every team plays all three rounds and the scores are added up. The three rounds are: ● Round 1 – Coding & CS Quiz (25 min): a timed quiz on programming and computer-science fundamentals, including 'predict the output' and 'find the bug' questions and one question where AI-written code has a hidden mistake. The top 4 teams then play a live buzzer round. The Round 1 score sets each team's budget for Round 2. ● Round 2 – PC Build Fix & Adapt (60 min): teams are given a faulty PC parts list on PCPartPicker and must find and fix the mistakes. Midway through, the requirements change (budget or use-case) and teams must rework the build, then briefly justify their choices. The Round 2 score converts into hint points for Round 3. ● Round 3 – CTF Puzzle Hunt (50 min): a jeopardy-style set of cybersecurity puzzles — hidden messages, simple ciphers, web and forensics challenges, and one clue hidden on a poster in the CSE block. Each team gets team-specific flags so answers cannot be shared, a live scoreboard is projected, and teams can spend the hint points earned in Round 2. The team with the highest combined score across all three rounds wins. The tie-breaker is the time taken in Round 3.",
     fee: "Rs. 200/-",

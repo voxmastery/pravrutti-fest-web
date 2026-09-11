@@ -22,18 +22,12 @@ export default function EventsPage() {
   }, []);
 
   const categories: Event["category"][] = [
-    "Engineering and Design",
-    "Research and Presentation",
-    "Code and Compute",
-    "Enterprise and Expression" ];
-
-  /** Short chip labels. "Engineering and Design" never fits a phone row. */
-  const SHORT: Record<Event["category"], string> = {
-    "Engineering and Design": "Engineering",
-    "Research and Presentation": "Research",
-    "Code and Compute": "Code",
-    "Enterprise and Expression": "Enterprise",
-  };
+    "MACHINA",
+    "TECHNOVERSE",
+    "CODE & CHAOS",
+    "INNOVENTURE",
+    "IDEAFORGE",
+  ];
 
   const matchesSearch = (e: Event) => {
     const q = searchQuery.trim().toLowerCase();
@@ -157,7 +151,7 @@ export default function EventsPage() {
                       on
                         ? "bg-cyber-pink text-white border-cyber-pink" : "bg-white/[0.04] text-white/70 border-white/[0.1] hover:bg-white/[0.08] hover:text-white" }`}
                   >
-                    {SHORT[cat]} <span className="opacity-60">{n}</span>
+                    {cat} <span className="opacity-60">{n}</span>
                   </button>
                 );
               })}
