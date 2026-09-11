@@ -373,7 +373,9 @@ export const events: Event[] = [
       student: [{ name: "Aaliyah Aijaz Ali Khan" }, { name: "Gnaneshwari N" }],
     },
     dashboardEmails: ["24etis411003@msruas.ac.in", "24etis411024@msruas.ac.in"],
-    brochureUrl: "https://drive.google.com/open?id=18erNy24IizpT-tTM8fRlfAfMVoNut9M_",
+    /* Served from public/ so the coordinators can hand over a replacement
+       without anyone needing Drive permissions. */
+    brochureUrl: "/discoverize-rulebook.pdf",
   },
   {
     name: "FAULT x LOAD",
