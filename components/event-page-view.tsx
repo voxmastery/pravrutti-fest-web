@@ -22,6 +22,7 @@ import {
 import { useCoordinatorPhones } from "@/hooks/use-coordinator-phones";
 import { Event, FEST, formatINR, teamLabel, capacityLabel } from "@/lib/pravrutti-data";
 import { COVER_GRADIENTS } from "@/lib/event-covers";
+import { EventDescription } from "@/components/event-description";
 
 /** 1st / 2nd / 3rd … as far as the event actually awards. */
 const PLACES = ["1st", "2nd", "3rd", "4th", "5th"];
@@ -204,9 +205,7 @@ export function EventPageView({ event, slug }: { event: Event; slug: string }) {
 
           <section className="order-10 lg:order-none min-w-0 space-y-3">
             <SectionLabel>About this event</SectionLabel>
-            <p className="text-pearl-white/75 leading-relaxed whitespace-pre-line break-words">
-              {event.description}
-            </p>
+            <EventDescription description={event.description} className="text-pearl-white/75" />
           </section>
 
           <section className="order-11 lg:order-none min-w-0 space-y-3">

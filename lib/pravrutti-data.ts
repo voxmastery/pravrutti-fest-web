@@ -343,7 +343,13 @@ export const events: Event[] = [
     name: "ELECTROXCAPE",
     category: "CODE & CHAOS",
     subCategory: "ECE Engineering Challenge",
-    description: "Teams of four progress through three common engineering missions followed by a semi-final and final. Round 1 is a timed system-intelligence challenge involving waveforms, protocols, RTL and circuit evidence. Round 2.1 is hands-on fault forensics using deliberately faulty hardware. Round 2.2 requires teams to implement a constrained system and adapt when a requirement changes. The top eight teams advance to a semi-final Blind Handoff, where one pair designs a solution and another implements it using only the provided documentation. The top four then compete in a final challenge.",
+    description:
+      "Teams of four progress through three common engineering missions followed by a semi-final and final. " +
+      "\u25cf Round 1 \u2014 a timed system-intelligence challenge involving waveforms, protocols, RTL and circuit evidence. " +
+      "\u25cf Round 2.1 \u2014 hands-on fault forensics using deliberately faulty hardware. " +
+      "\u25cf Round 2.2 \u2014 implement a constrained system and adapt when a requirement changes. " +
+      "\u25cf Semi-final \u2014 the top eight teams face a Blind Handoff, where one pair designs a solution and another implements it using only the provided documentation. " +
+      "\u25cf Final \u2014 the top four compete in a final challenge.",
     fee: "Rs. 200/-",
     prizes: [7000, 5000, 3000],
     teamSize: { min: 4, max: 4, soloAllowed: false },

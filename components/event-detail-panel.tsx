@@ -24,6 +24,7 @@ import { COVER_GRADIENTS } from "@/lib/event-covers";
 import { POSTER_TINTS } from "@/lib/poster-tints";
 import { useCoordinatorPhones } from "@/hooks/use-coordinator-phones";
 import { ArrowUpRight, ChevronsRight, Download } from "lucide-react";
+import { EventDescription } from "@/components/event-description";
 
 /** Re-exported because this is where it lived before it moved to lib. */
 export { COVER_GRADIENTS };
@@ -189,9 +190,7 @@ export function EventDetailPanel({
 
             <section className="space-y-3">
               <SectionLabel level={3}>About this event</SectionLabel>
-              <p className="text-sm text-pearl-white/80 leading-relaxed whitespace-pre-line">
-                {event.description}
-              </p>
+              <EventDescription description={event.description} className="text-sm text-pearl-white/80" />
             </section>
 
             <section className="space-y-3">
