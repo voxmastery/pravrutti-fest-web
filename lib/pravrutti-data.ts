@@ -680,7 +680,7 @@ export const events: Event[] = [
     teamSize: { min: 3, max: 4, soloAllowed: false },
     capacity: 160,
     capacityUnit: "teams",
-    duration: "3 hours",
+    duration: "6 hours",
     eligibility: "Teams must consist of 3 to 4 members.",
     coordinators: {
       faculty: [],
