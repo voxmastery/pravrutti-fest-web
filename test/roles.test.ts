@@ -6,11 +6,25 @@ describe("Event.dashboardEmails", () => {
   /* This used to assert the field was absent "until the spreadsheet lands".
      It has landed, so the invariant inverts: an event with no dashboard
      emails is an event whose coordinators cannot see their own roster. */
-  it("is populated for every event", () => {
+  /* Events whose coordinators changed and whose replacements have not yet
+     given their Google addresses. Access was revoked rather than left with
+     people who no longer run the event, so these have NO coordinator login
+     until the new addresses arrive — an organiser has to cover the desk.
+     Empty this list as the addresses come in; it is not a place to park an
+     event indefinitely. */
+  const AWAITING_ADDRESSES = ["LEADS Innovation Challenge"];
+
+  it("is populated for every event except those awaiting new addresses", () => {
     const missing = events
       .filter((e) => (e.dashboardEmails ?? []).length === 0)
       .map((e) => e.name);
-    expect(missing).toEqual([]);
+    expect(missing).toEqual(AWAITING_ADDRESSES);
+  });
+
+  it("does not let the awaiting list grow silently", () => {
+    // One event without a coordinator login is a gap someone is covering by
+    // hand. Several is a broken fest.
+    expect(AWAITING_ADDRESSES.length).toBeLessThanOrEqual(1);
   });
 
   it("stores addresses lowercased, so role lookup matches", () => {

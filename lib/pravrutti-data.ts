@@ -522,10 +522,15 @@ export const events: Event[] = [
     duration: "2h 15m",
     coordinators: {
       faculty: [],
-      student: [{ name: "Nuthan.H" }, { name: "Kunal Bhadauria" }],
+      student: [{ name: "Pranav Bansal" }, { name: "Siddharth Gupta" }],
     },
     club: "LEADS",
-    dashboardEmails: ["nuthann268@gmail.com", "kunalbhadauria232005@gmail.com"],
+    /* Coordinators changed to Pranav Bansal and Siddharth Gupta, whose
+       Google addresses have not been supplied yet. The previous pair were
+       revoked deliberately rather than left with access to a roster they no
+       longer run. Until the new addresses land, only an organiser can open
+       this event's dashboard or scan its tickets. See test/roles.test.ts. */
+    dashboardEmails: [],
     brochureUrl: "https://drive.google.com/open?id=1u5DF4HDP9whgfiCe5OwqOgzV-CXd3IPd",
   },
   {
