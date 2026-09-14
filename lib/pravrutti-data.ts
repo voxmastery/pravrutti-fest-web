@@ -674,7 +674,9 @@ export const events: Event[] = [
       student: [{ name: "Sudeepa Priyadarshini" }, { name: "Tanya Shedde" }],
     },
     dashboardEmails: ["sudeepapriyadarshini1826@gmail.com", "tanyashedde@gmail.com"],
-    brochureUrl: "https://drive.google.com/file/d/1oh_df3Ze1iqCe1sLigOMs1Ywi63ysGNS/view",
+    /* Served from public/ so coordinators can hand over a replacement
+       without anyone needing Drive permissions. */
+    brochureUrl: "/zero-hour-rules.pdf",
   },
   {
     name: "HAMMER",
