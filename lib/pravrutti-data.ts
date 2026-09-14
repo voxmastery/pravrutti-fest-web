@@ -674,7 +674,9 @@ export const events: Event[] = [
       student: [{ name: "Pradeep Raj M" }, { name: "Suman A" }],
     },
     dashboardEmails: ["pradeepmadasamy55@gmail.com"],
-    brochureUrl: "https://drive.google.com/file/d/1gXYhjUKu1XHG3I-icVGC9wN_kt0yI8AZ/view",
+    /* Served from public/ so coordinators can hand over a replacement
+       without anyone needing Drive permissions. */
+    brochureUrl: "/bracket-blitz-rules.pdf",
   },
   {
     name: "ZERO HOUR",
