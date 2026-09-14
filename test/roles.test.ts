@@ -12,7 +12,7 @@ describe("Event.dashboardEmails", () => {
      until the new addresses arrive — an organiser has to cover the desk.
      Empty this list as the addresses come in; it is not a place to park an
      event indefinitely. */
-  const AWAITING_ADDRESSES = ["LEADS Innovation Challenge"];
+  const AWAITING_ADDRESSES: string[] = [];
 
   it("is populated for every event except those awaiting new addresses", () => {
     const missing = events

@@ -59,6 +59,9 @@ const PHONES: Record<string, CoordinatorPhone[]> = {
   "respawn": [
     { name: "Jeslene Iniya D", phone: "8148817683" },
     { name: "Sooraj Chackravarthy", phone: "63602 69253" },
+    // Same people as The Logic Circuit / Discoverize, same numbers.
+    { name: "Spandana J S", phone: "6364220817" },
+    { name: "Gnaneshwari N", phone: "7829004057" },
   ],
   "glide-x": [
     { name: "B S Mokshada", phone: "93538 24957" },

@@ -442,19 +442,37 @@ export const events: Event[] = [
     name: "Respawn",
     category: "CODE & CHAOS",
     subCategory: "Game Building Challenge",
-    description: "Respawn is a 2D Gameathon, Teams of 3 to 4 participants can participate in the event. The theme will be announced after registrations close in the official whatsApp group or discord group. Just a day before the event we willl provide a 12 hour time frame within which they have to develop the game based on the announced theme. They are free to use free AI tools and other permitted resources during the development process. Teams must submit three progress videos, one for every four hours of the 12 hour time frame, along with the date and time clearly visible in each video. These videos along with the final code must be submitted through the official google drive link which will be provided. If in case the registrations are high, shortlisted teams will be presenting their work during the finale.",
+    description:
+      "Beginner or an expert? Love games? Then RESPAWN – The 2D Game Jam is your chance to build it, play it and bring it to life!\n\nParticipants will be added to an official WhatsApp group after registration and the general theme will be revealed at 9AM on October 13, marking the start of the 12-Hour Online Building Round from 9:00 AM to 9:00 PM. Teams of 3–4 members can bring their ideas to life by building their own 2D game based on the given theme in any genre, using any game engine or framework of their choice. The Google Drive link for submitting their 3 screen-recorded progress videos at 4-hour intervals will be shared in the group along with further instructions. Simple creative elements such as patterns, symmetry or other mathematical touches can also be incorporated for additional points.\n\nAfter the 12-hour building round, teams will get 2 days (October 14 and 15) to polish their games, fix bugs, improve gameplay and get their final builds ready. The offline round will be on October 16 with a Live Pitching & Showcase, where teams will showcase their final playable games on campus before the judges, where each team will have 5 minutes to present their game, followed by 3 minutes for Q&A about their game and its technical implementation. Teams will be evaluated based on the submitted videos, documentation, creativity, technical execution, gameplay, and presentation, with the best teams competing to claim the title of RESPAWN Champion!",
     fee: "Rs. 200/-",
     prizes: [7000, 5000, 3000],
     teamSize: { min: 3, max: 4, soloAllowed: false },
     capacity: 160,
     capacityUnit: "teams",
-    duration: "3 hours",
+    duration: "12 hours",
     coordinators: {
       faculty: [],
-      student: [{ name: "Jeslene Iniya D" }, { name: "Sooraj Chackravarthy" }],
+      student: [
+        { name: "Jeslene Iniya D" },
+        { name: "Sooraj Chackravarthy" },
+        { name: "Niranjana Mahendran" },
+        { name: "Spandana J S" },
+        { name: "Gnaneshwari N" },
+      ],
     },
-    dashboardEmails: ["jesleneiniya@gmail.com", "25etai@msruas.ac.in"],
-    brochureUrl: "https://drive.google.com/open?id=1ElTKXfek8BiWYo1kUeftetELkYiwshJU",
+    /* Niranjana Mahendran has no Google address on record yet, so she is
+       listed publicly but cannot open the dashboard. Spandana and
+       Gnaneshwari reuse the addresses they sign in with for The Logic
+       Circuit and Discoverize. */
+    dashboardEmails: [
+      "jesleneiniya@gmail.com",
+      "25etai@msruas.ac.in",
+      "25etmc412021@msruas.ac.in",
+      "24etis411024@msruas.ac.in",
+    ],
+    /* Served from public/ so coordinators can hand over a replacement
+       without anyone needing Drive permissions. */
+    brochureUrl: "/respawn-rules.pdf",
   },
   {
     name: "Glide-X",
@@ -525,12 +543,7 @@ export const events: Event[] = [
       student: [{ name: "Pranav Bansal" }, { name: "Siddharth Gupta" }],
     },
     club: "LEADS",
-    /* Coordinators changed to Pranav Bansal and Siddharth Gupta, whose
-       Google addresses have not been supplied yet. The previous pair were
-       revoked deliberately rather than left with access to a roster they no
-       longer run. Until the new addresses land, only an organiser can open
-       this event's dashboard or scan its tickets. See test/roles.test.ts. */
-    dashboardEmails: [],
+    dashboardEmails: ["pranavbansal310@gmail.com", "gsiddharth214@gmail.com"],
     brochureUrl: "https://drive.google.com/open?id=1u5DF4HDP9whgfiCe5OwqOgzV-CXd3IPd",
   },
   {
