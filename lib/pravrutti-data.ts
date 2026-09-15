@@ -381,7 +381,13 @@ export const events: Event[] = [
     name: "Discoverize (Research Paper Presentation)",
     category: "INNOVENTURE",
     subCategory: "Research, Present, Inspire & Innovate",
-    description: "Present your original research work and innovative ideas before a panel of experts and a larger audience! The event encourages academic excellence, knowledge sharing, and critical discussion on cutting-edge technologies and interdisciplinary innovations. Participants will undergo an abstract submission process, followed by live paper presentations during the Tech Fest. Students, professionals and researchers are welcome!",
+    description:
+      "Showcase your research to a panel of experts! The ISTE Research Paper Presentation is a platform for students and researchers to present original work across disciplines. " +
+      "Each participant will submit an abstract and, if shortlisted, present a detailed paper during the fest. Presentations are 7 minutes with a 3-minute Q&A. " +
+      "Gain recognition, win cash prizes, and interact with academicians and professionals. Topics include AI/ML, Robotics, Energy, IoT, Biomedical Engineering, and more. " +
+      "Step up, share your findings, and make an impact. " +
+      "\u25cf Stage 1 (Abstract Submission) \u2014 participants submit an abstract of at most 300 words including Title, Objective, Methodology, Key Findings and Conclusion. " +
+      "\u25cf Stage 2 (Presentation Round) \u2014 selected participants present their paper live: 7 minutes for the presentation (PPT, max 10\u201315 slides) and 3 minutes for Q&A.",
     fee: "Rs. 200/-",
     prizes: [7000, 5000, 3000],
     teamSize: { min: 1, max: 4, soloAllowed: true },
