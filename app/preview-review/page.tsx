@@ -31,14 +31,17 @@ const team: ReviewResult = {
   teamCode: "RSPWN42XK",
 };
 
-const free: ReviewResult = {
-  eventName: "Discoverize",
-  queuePosition: 12,
-  capacity: 80,
-  name: "Meera Nair",
-  fee: "Free",
+/* No free events — every event is ₹200. The only non-charged case is a joiner
+   whose fee is covered by the team lead. */
+const joiner: ReviewResult = {
+  eventName: "Respawn",
+  queuePosition: 3,
+  capacity: 30,
+  name: "Rhea Kapoor",
+  fee: "Covered by team lead",
   ticketId: "PRV-5Q1A8B",
   payment: "not_required",
+  teamName: "Null Pointers",
 };
 
 function Panel({ title, result }: { title: string; result: ReviewResult }) {
@@ -68,9 +71,9 @@ export default function Page() {
         <p className="text-white/70 text-sm">
           Preview — Path B &ldquo;application under review&rdquo; state (sample data).
         </p>
-        <Panel title="Charged — verifying payment" result={solo} />
-        <Panel title="Team lead — verifying payment" result={team} />
-        <Panel title="Free / joiner — pending approval" result={free} />
+        <Panel title="Solo entry — verifying payment (₹200)" result={solo} />
+        <Panel title="Team lead — verifying payment (₹200)" result={team} />
+        <Panel title="Joiner — covered by team lead" result={joiner} />
       </div>
     </div>
   );
