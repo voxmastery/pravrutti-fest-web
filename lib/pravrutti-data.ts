@@ -544,7 +544,9 @@ export const events: Event[] = [
       student: [{ name: "Shravya T" }, { name: "Pranav P J" }],
     },
     dashboardEmails: ["24etas012046@msruas.ac.in", "24etas012033@msruas.ac.in"],
-    brochureUrl: "https://drive.google.com/open?id=1YqfGErhuVVse0_nbROkZ3KTdZugd3pcz",
+    /* Served from public/ so coordinators can hand over a replacement
+       without anyone needing Drive permissions. */
+    brochureUrl: "/rc-x-rules.pdf",
   },
   {
     name: "LEADS Innovation Challenge",
