@@ -555,12 +555,14 @@ export const events: Event[] = [
     description: "LEADS Innovation Challenge is a 2-hour startup leadership simulation where teams build a venture from a problem card, defend it through a live mid-event crisis twist, and pitch the complete journey to an investor-style panel testing innovation, adaptability, branding instinct, and leadership, all under real time pressure.",
     fee: "Rs. 200/-",
     prizes: [5000, 3000, 2000],
-    teamSize: { min: 1, max: 4, soloAllowed: true },
+    /* Rulebook: "Minimum Team Size: 2 Members". The sheet said 1 with solo
+       allowed, which had the site offering an entry the rulebook forbids. */
+    teamSize: { min: 2, max: 4, soloAllowed: false },
     capacity: 100,
     capacityUnit: "teams",
     duration: "2h 15m",
     coordinators: {
-      faculty: [],
+      faculty: [{ name: "Dr. Pallabi Mund" }],
       student: [{ name: "Pranav Bansal" }, { name: "Siddharth Gupta" }],
     },
     club: "LEADS",

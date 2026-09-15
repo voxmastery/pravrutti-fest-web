@@ -76,6 +76,7 @@ const PHONES: Record<string, CoordinatorPhone[]> = {
     { name: "Pranav P J", phone: "95677 34887" },
   ],
   "leads-innovation-challenge": [
+    { name: "Dr. Pallabi Mund", phone: "9916130272" },
     { name: "Pranav Bansal", phone: "7483160806" },
     { name: "Siddharth Gupta", phone: "8102116082" },
   ],
