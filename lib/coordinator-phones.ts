@@ -37,7 +37,7 @@ const PHONES: Record<string, CoordinatorPhone[]> = {
     { name: "Radhe S,", phone: "9686138774" },
   ],
   "electroxcape": [
-    { name: "SACHIN R SHENOY", phone: "9353539822" },
+    { name: "Sachin R Shenoy", phone: "9353539822" },
     { name: "Megha H", phone: "8867365326" },
   ],
   "discoverize-research-paper-presentation": [

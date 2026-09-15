@@ -359,8 +359,19 @@ export const events: Event[] = [
     eligibility: "ECE and related engineering students.",
     coordinators: {
       faculty: [],
-      student: [{ name: "SACHIN R SHENOY" }, { name: "Megha H" }],
+      student: [
+        { name: "Sachin R Shenoy" },
+        { name: "Megha H" },
+        { name: "K S Aashritha Reddy" },
+        { name: "Spoorthi K" },
+        { name: "Sanketh Rao" },
+        { name: "Prachi Joshi" },
+      ],
     },
+    /* Only Sachin and Megha came through the coordinators' form, so the
+       other four are listed publicly but have no phone entry (no call
+       button) and no login. Add their numbers to coordinator-phones.ts and
+       their Google addresses here when they arrive. */
     dashboardEmails: ["23etec004041@msruas.ac.in", "23etec004029@msruas.ac.in"],
     brochureUrl: "https://drive.google.com/open?id=18KxuqhLxOT4JSr8f3mEzE5Kcxtv3AFvN",
   },
