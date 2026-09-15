@@ -508,7 +508,7 @@ export const events: Event[] = [
       student: [{ name: "B S Mokshada" }, { name: "Siddharth P" }],
     },
     dashboardEmails: ["24etas012008@msruas.ac.in", "24etas012048@msruas.ac.in"],
-    brochureUrl: "https://drive.google.com/open?id=1HHwcSPITqCzUs5vOgqvZsIOUVqQQe-Ij",
+    brochureUrl: "/glide-x-rules.pdf",
   },
   {
     name: "The Logic Circuit",
