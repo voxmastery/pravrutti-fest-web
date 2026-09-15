@@ -22,6 +22,7 @@ import {
 import { MAX_TEAM_BIO, TEAM_CODE_LENGTH, isValidTeamCode, type TeamPreview } from "@/lib/teams";
 import { Loader2, ArrowLeft, Pencil, Hourglass, ShieldCheck, RotateCcw, Check, Copy, Users } from "lucide-react";
 import { PALETTE } from "@/lib/palette";
+import { JunoPaymentHandoff } from "@/components/juno-payment-handoff";
 
 const STORE_KEY = "pravrutti.guest";
 
@@ -778,8 +779,25 @@ export function RegistrationDialog({
                   {/* The fee is paid on the college's Juno portal before applying;
                       the transaction ID from that receipt is what the desk checks
                       against the statement. Required for anyone who is charged —
-                      the API refuses the application without it. */}
-                  <Field label="Juno transaction ID (required)">
+                      the API refuses the application without it.
+
+                      The handoff sits above the field because that is the order
+                      the applicant has to do it in: the ID does not exist until
+                      they have paid. */}
+                  <JunoPaymentHandoff
+                    fee={applicantFee}
+                    applicant={{
+                      name: form.name,
+                      phone: form.phone,
+                      email: form.email,
+                      /* A lead pays for the team, and teammates join with the
+                         code afterwards, so at this moment the honest count is
+                         whoever is on the roster — never fewer than the lead. */
+                      heads: createdTeam?.memberCount ?? 1,
+                    }}
+                  />
+
+                  <Field label="Step 2 — Juno transaction ID (required)">
                     <Input
                       className={inputCls}
                       value={form.paymentRef}
@@ -790,9 +808,9 @@ export function RegistrationDialog({
 
                   {!PAYMENTS_LIVE && (
                     <p className="text-xs text-champagne-gold/80 border border-soft-gold/20 bg-soft-gold/[0.07] rounded-lg px-3 py-2.5 leading-relaxed">
-                      Pay {applicantFee} on the college Juno portal, then enter the transaction ID
-                      from the receipt above. Organisers match it against the statement — once
-                      verified, your ticket and QR are emailed to you.
+                      Organisers match this ID against the portal&apos;s statement — once verified,
+                      your ticket and QR are emailed to you. Use the same name, number and email
+                      on both sides, or we cannot tell which payment is yours.
                     </p>
                   )}
 
