@@ -594,7 +594,10 @@ export const events: Event[] = [
     name: "PITCH AT MACH",
     category: "INNOVENTURE",
     subCategory: "Think. Design. Defend.",
-    description: "PITCH AT MACH is an aerospace pitch competition, in which the teams are provided with a problem statement a week before the event. Each team will understand the problem, and come up with a feasible and innovative solution and pitch it infront of a jury on the day of the event. The team should also defend their solution against a set of rigorous Q&A, in which the jury will assess the team's technical understanding of both the given problem statement and their proposed solutions.",
+    description:
+      "PITCH AT MACH is an aerospace pitch competition in which teams are provided with problem statements spanning Aeronautics, Astronautics, and UAVs a week before the event. " +
+      "Each team can pick a problem of their choice, understand the problem, come up with a feasible and innovative solution, and pitch it in front of a jury on the day of the event. " +
+      "The team should also defend their solution against a set of rigorous Q&A, in which the jury will assess the team's technical understanding of both the given problem statement and their proposed solution.",
     fee: "Rs. 200/-",
     prizes: [7000, 5000, 3000],
     teamSize: { min: 2, max: 4, soloAllowed: false },
