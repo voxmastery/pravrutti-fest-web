@@ -563,7 +563,9 @@ export const events: Event[] = [
     },
     club: "LEADS",
     dashboardEmails: ["pranavbansal310@gmail.com", "gsiddharth214@gmail.com"],
-    brochureUrl: "https://drive.google.com/open?id=1u5DF4HDP9whgfiCe5OwqOgzV-CXd3IPd",
+    /* Converted from the coordinators' .docx and served from public/, so it
+       downloads as the PDF the link promises rather than a Word file. */
+    brochureUrl: "/leads-rulebook.pdf",
   },
   {
     name: "DENT - INNOVATE",
