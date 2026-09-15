@@ -373,7 +373,9 @@ export const events: Event[] = [
        button) and no login. Add their numbers to coordinator-phones.ts and
        their Google addresses here when they arrive. */
     dashboardEmails: ["23etec004041@msruas.ac.in", "23etec004029@msruas.ac.in"],
-    brochureUrl: "https://drive.google.com/open?id=18KxuqhLxOT4JSr8f3mEzE5Kcxtv3AFvN",
+    /* Served from public/ so coordinators can hand over a replacement
+       without anyone needing Drive permissions. */
+    brochureUrl: "/electroxcape-rules.pdf",
   },
   {
     name: "Discoverize (Research Paper Presentation)",
