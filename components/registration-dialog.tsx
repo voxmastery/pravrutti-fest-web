@@ -16,6 +16,7 @@ import {
   formatFee,
   isValidPhone,
   PAYMENT_REF_HINT,
+  JUNO_REGID_HINT,
   readPaymentRef,
   phoneFieldValue,
 } from "@/lib/applications";
@@ -23,6 +24,7 @@ import { MAX_TEAM_BIO, TEAM_CODE_LENGTH, isValidTeamCode, type TeamPreview } fro
 import { Loader2, ArrowLeft, Pencil, Hourglass, ShieldCheck, RotateCcw, Check, Copy, Users } from "lucide-react";
 import { PALETTE } from "@/lib/palette";
 import { JunoPaymentHandoff } from "@/components/juno-payment-handoff";
+import { ApplicationReviewCard } from "@/components/application-review-card";
 
 const STORE_KEY = "pravrutti.guest";
 
@@ -38,7 +40,7 @@ function GoogleMark() {
 }
 
 type Guest = { name: string; email: string; phone: string; college: string };
-type FormState = Guest & { paymentRef: string };
+type FormState = Guest & { paymentRef: string; junoRegId: string };
 type TeamPane = "idle" | "create" | "created" | "join" | "verified";
 type Result = {
   ticketId: string;
@@ -92,6 +94,7 @@ const emptyForm = (): FormState => ({
   phone: "",
   college: "",
   paymentRef: "",
+  junoRegId: "",
 });
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
@@ -264,6 +267,7 @@ export function RegistrationDialog({
           phone: form.phone,
           college: form.college,
           paymentRef: form.paymentRef,
+          junoRegId: form.junoRegId,
           teamName: createdTeam?.name ?? "",
           teamCode: createdTeam?.code ?? "",
           eventId: eventId(event.name),
@@ -797,7 +801,20 @@ export function RegistrationDialog({
                     }}
                   />
 
-                  <Field label="Step 2 — Juno transaction ID (required)">
+                  {/* Path B's poll key. Juno shows "Successfully Registered with
+                      ID <id>" right after registering; that id is what we ask
+                      Juno about to auto-verify the payment. */}
+                  <Field label="Step 2 — Juno registration ID">
+                    <Input
+                      className={inputCls}
+                      value={form.junoRegId}
+                      onChange={set("junoRegId")}
+                      placeholder='The ID Juno shows: "Registered with ID …"' maxLength={40}
+                      aria-label="Juno registration ID" />
+                    <p className="mt-1 text-[11px] text-white/40 leading-relaxed">{JUNO_REGID_HINT}</p>
+                  </Field>
+
+                  <Field label="Juno transaction ID (required)">
                     <Input
                       className={inputCls}
                       value={form.paymentRef}
@@ -808,9 +825,9 @@ export function RegistrationDialog({
 
                   {!PAYMENTS_LIVE && (
                     <p className="text-xs text-champagne-gold/80 border border-soft-gold/20 bg-soft-gold/[0.07] rounded-lg px-3 py-2.5 leading-relaxed">
-                      Organisers match this ID against the portal&apos;s statement — once verified,
-                      your ticket and QR are emailed to you. Use the same name, number and email
-                      on both sides, or we cannot tell which payment is yours.
+                      We verify your payment automatically from your registration ID — your ticket
+                      and QR are emailed to you once it clears, with nothing more to do. Keep the
+                      same name, number and email on both sides so we can match it.
                     </p>
                   )}
 
@@ -832,79 +849,16 @@ export function RegistrationDialog({
               )}
             </>
           ) : (
-            <div className="space-y-4 py-1 animate-step">
-              <div className="flex flex-col items-center text-center pt-2 space-y-3">
-                <span className="w-12 h-12 rounded-full bg-success/10 border border-success/25 flex items-center justify-center">
-                  <Hourglass className="w-5 h-5 text-success-soft" />
-                </span>
-                <div>
-                  <DialogTitle className="font-semibold text-lg text-white">
-                    Application submitted
-                  </DialogTitle>
-                  <DialogDescription className="text-[13px] text-white/50 mt-0.5">
-                    {result.eventName}
-                  </DialogDescription>
-                </div>
-              </div>
-
-              <div className={`${card} divide-y divide-white/[0.08]`}>
-                <div className="flex items-center justify-between px-4 py-3">
-                  <span className="text-[13px] text-white/50">Status</span>
-                  <span className="text-[13px] font-medium text-champagne-gold/90">Pending approval</span>
-                </div>
-                <div className="flex items-center justify-between px-4 py-3">
-                  <span className="text-[13px] text-white/50">Queue position</span>
-                  <span className="text-[13px] font-semibold text-white">#{result.queuePosition} of {result.capacity}</span>
-                </div>
-                <div className="flex items-center justify-between px-4 py-3">
-                  <span className="text-[13px] text-white/50">Applicant</span>
-                  <span className="text-[13px] font-medium text-white truncate max-w-[55%]">{result.name}</span>
-                </div>
-                {result.teamName ? (
-                  <div className="flex items-center justify-between px-4 py-3">
-                    <span className="text-[13px] text-white/50">Team</span>
-                    <span className="text-[13px] font-medium text-white truncate max-w-[55%]">{result.teamName}</span>
-                  </div>
-                ) : null}
-                {result.teamCode ? (
-                  <div className="flex items-center justify-between gap-2 px-4 py-3">
-                    <span className="text-[13px] text-white/50">Team code</span>
-                    <button
-                      type="button" onClick={() => handleCopyCode(result.teamCode!)}
-                      className="inline-flex items-center gap-1.5 text-[13px] tracking-widest text-white/90 hover:text-white cursor-pointer" aria-label="Copy team code" >
-                      {result.teamCode}
-                      {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-                    </button>
-                  </div>
-                ) : null}
-                <div className="flex items-center justify-between px-4 py-3">
-                  <span className="text-[13px] text-white/50">Fee</span>
-                  <span className="text-[13px] font-medium text-white">{result.fee}</span>
-                </div>
-                <div className="flex items-center justify-between px-4 py-3">
-                  <span className="text-[13px] text-white/50">Reference</span>
-                  <span className="text-[13px] text-white/80">{result.ticketId}</span>
-                </div>
-              </div>
-
-              <p className="text-[13px] text-white/55 leading-relaxed text-center px-2">
-                {result.payment === "not_required" ? "Nothing to pay for this one. " : result.payment === "awaiting" ? `Pay ${result.fee} on the college Juno portal if you haven't yet — organisers verify the transaction ID against the statement. ` : `${result.fee} received — refunded in full if you aren't confirmed. `}
-                You'll get your ticket and QR once the organisers approve.
-                {result.teamCode
-                  ? " Share the team code — teammates can still join until the team is full." : ""}
-              </p>
-
-              <div className="flex gap-2">
-                <a href="/ticket" className="flex-1">
-                  <Button variant="outline" className={`${ghostBtn} w-full`}>
-                    Track status
-                  </Button>
-                </a>
-                <Button onClick={close} className={`${primaryBtn} flex-1`}>
-                  Done
-                </Button>
-              </div>
-            </div>
+            <>
+              <DialogTitle className="sr-only">Application under review</DialogTitle>
+              <DialogDescription className="sr-only">{result.eventName}</DialogDescription>
+              <ApplicationReviewCard
+                result={result}
+                copied={copied}
+                onCopyCode={handleCopyCode}
+                onClose={close}
+              />
+            </>
           )}
           </div>
         </DialogContent>

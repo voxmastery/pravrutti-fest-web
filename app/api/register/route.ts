@@ -10,6 +10,7 @@ import {
   normalizePhone,
   PHONE_HINT,
   readPaymentRef,
+  readJunoRegId,
   PAYMENT_REF_HINT,
 } from "@/lib/applications";
 import { Team, normalizeTeamCode, isValidTeamCode } from "@/lib/teams";
@@ -164,6 +165,9 @@ export async function POST(req: Request) {
   const paymentRef = isJoiner ? null : readPaymentRef(body?.paymentRef) || null;
   if (payment === "awaiting" && !paymentRef)
     return NextResponse.json({ error: PAYMENT_REF_HINT }, { status: 400 });
+  // Path B's poll key. Optional: an application without one simply falls back
+  // to manual verification, so it never blocks the form.
+  const junoRegId = isJoiner ? null : readJunoRegId(body?.junoRegId) || null;
   const membersPayload =
     membersList.length === 0
       ? null
@@ -188,6 +192,7 @@ export async function POST(req: Request) {
     // Applicant-supplied, so it is a claim to reconcile rather than proof.
     // Bounded (readPaymentRef) because it is shown verbatim on the desk.
     paymentRef,
+    junoRegId,
     appliedAt: new Date().toISOString(),
   };
 

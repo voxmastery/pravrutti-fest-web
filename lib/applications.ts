@@ -106,6 +106,11 @@ export type Application = {
       registration. The desk verifies it against the statement; it does not
       edit it (the API still accepts set_payment_ref for corrections). */
   paymentRef?: string | null;
+  /** The Juno registration ID the portal shows the applicant ("Successfully
+      Registered with ID <id>"), entered at registration. Path B's poll key:
+      what we ask Juno about to auto-verify the payment. Optional — an
+      application without one falls back to manual verification. */
+  junoRegId?: string | null;
   /** When the confirmation email carrying the ticket QR last went out. */
   confirmationEmailAt?: string;
   /** Failure text from the last send attempt, so the desk can see why an
@@ -116,6 +121,16 @@ export type Application = {
 /** The Payment ID the desk should show. Empty when nobody entered one — never invented. */
 export function readPaymentRef(raw: unknown): string {
   return String(raw ?? "").trim().slice(0, 80);
+}
+
+/** Shown by the form and returned by the API, so both say the same thing. */
+export const JUNO_REGID_HINT =
+  "After paying, Juno shows “Successfully Registered with ID …” — enter that ID so we can verify your payment automatically.";
+
+/** The Juno registration ID as the applicant pasted it. Bounded and trimmed;
+    kept permissive on characters because we do not control Juno's id format. */
+export function readJunoRegId(raw: unknown): string {
+  return String(raw ?? "").trim().slice(0, 40);
 }
 
 /**
