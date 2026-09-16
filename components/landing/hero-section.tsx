@@ -197,8 +197,9 @@ export function HeroSection() {
                 ? <span className="text-champagne-gold">OPENING SOON</span>
                 : <span className="text-cyber-pink">CLOSED</span>}
           </div>
-          {/* A deadline that has already passed is noise, so it goes with it. */}
-          {isRegistrationOpen && (
+          {/* A deadline that has already passed is noise, so it goes with it —
+              and with none announced there is no row to show at all. */}
+          {isRegistrationOpen && REGISTRATION_CLOSES_DISPLAY && (
             <div>CLOSES: <span className="text-champagne-gold/70">{REGISTRATION_CLOSES_DISPLAY}</span></div>
           )}
           <div>ENTRY: <span className="text-champagne-gold/70">₹{FEE_PER_HEAD}/TEAM</span></div>
@@ -383,7 +384,7 @@ export function HeroSection() {
                 )}
               </dd>
             </div>
-            {isRegistrationOpen && (
+            {isRegistrationOpen && REGISTRATION_CLOSES_DISPLAY && (
               <div className="flex items-baseline gap-2 whitespace-nowrap">
                 <dt className="text-[11px] uppercase tracking-[0.16em] text-pearl-white/55">Closes</dt>
                 <dd className="text-sm font-semibold text-champagne-gold">{REGISTRATION_CLOSES_DISPLAY}</dd>

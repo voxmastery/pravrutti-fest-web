@@ -12,38 +12,16 @@ import {
    hero quoting the old one. */
 
 describe("REGISTRATION_CLOSES_DISPLAY", () => {
-  it("names the IST calendar date of the closing instant", () => {
-    const parts = new Intl.DateTimeFormat("en-GB", {
-      timeZone: "Asia/Kolkata",
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-    }).formatToParts(new Date(FEST.registrationCloses));
-    const part = (type: string) => parts.find((p) => p.type === type)?.value ?? "";
-
-    expect(REGISTRATION_CLOSES_DISPLAY).toBe(
-      `${part("day")} ${part("month").toUpperCase()} ${part("year")}`
-    );
+  /* The committee has announced no closing date, so there is no date to show.
+     The helper must render nothing rather than an "Invalid Date" — the hero
+     reads this string straight out. */
+  it("is empty while no deadline is announced", () => {
+    expect(FEST.registrationCloses).toBeNull();
+    expect(REGISTRATION_CLOSES_DISPLAY).toBe("");
   });
 
-  it("does not fall on the UTC day, which is what a bare formatter would print", () => {
-    // 18:29:59Z is 23:59:59 IST the same evening here, but the whole point of the
-    // helper is that it reads IST parts; if the deadline ever moves past midnight
-    // UTC the two diverge and this keeps the HUD on the participants' date.
-    const ist = new Date(Date.parse(FEST.registrationCloses) + (5 * 60 + 30) * 60 * 1000);
-    expect(REGISTRATION_CLOSES_DISPLAY.startsWith(String(ist.getUTCDate()).padStart(2, "0"))).toBe(true);
-  });
-
-  it("describes a deadline that falls before the fest opens", () => {
-    const start = /^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})/.exec(FEST.startUtc)!;
-    const startMs = Date.UTC(
-      Number(start[1]),
-      Number(start[2]) - 1,
-      Number(start[3]),
-      Number(start[4]),
-      Number(start[5])
-    );
-    expect(Date.parse(FEST.registrationCloses)).toBeLessThan(startMs);
+  it("never renders a broken date", () => {
+    expect(REGISTRATION_CLOSES_DISPLAY).not.toMatch(/invalid|nan|undefined/i);
   });
 });
 

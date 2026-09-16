@@ -96,7 +96,7 @@ export async function POST(req: Request) {
     if (!isValidTeamCode(teamCode))
       return NextResponse.json({ error: "Enter a valid team code." }, { status: 400 });
     team = (await readJsonByPath(teamPath(evId, teamCode))) as Team | null;
-    if (!team || team.eventId !== evId || team.code !== teamCode)
+    if (!team || team.deletedAt || team.eventId !== evId || team.code !== teamCode)
       return NextResponse.json({ error: "No team found for that code." }, { status: 404 });
     const onTeam =
       team.createdByEmail === email ||

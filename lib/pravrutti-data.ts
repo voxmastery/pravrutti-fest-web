@@ -798,10 +798,13 @@ export const FEST = {
   // IST (UTC+5:30) converted to UTC for calendar invites
   startUtc: "20261014T033000Z", // 09:00 IST, 14 Oct
   endUtc: "20261016T123000Z",   // 18:00 IST, 16 Oct
-  registrationCloses: "2026-10-04T18:29:59.000Z", // 04 Oct 2026, 11:59 PM IST
+  /** ISO instant registration closes, or null for no announced deadline — the
+      committee has not set one, so registration simply stays open. Set it to an
+      instant to reinstate a cut-off; nothing else needs changing. */
+  registrationCloses: null as string | null,
   /** ISO instant registration opens. null until the committee announces it,
       which the site renders as "Opening soon" and refuses applications. */
-  registrationOpens: null as string | null,
+  registrationOpens: "2026-09-16T00:00:00.000Z" as string | null,
 };
 
 export type RegistrationState = "upcoming" | "open" | "closed";
@@ -814,16 +817,17 @@ export type RegistrationState = "upcoming" | "open" | "closed";
  */
 export const registrationState = (
   now: number = Date.now(),
-  fest: { registrationCloses: string; registrationOpens: string | null } = FEST
+  fest: { registrationCloses: string | null; registrationOpens: string | null } = FEST
 ): RegistrationState => {
-  if (now >= Date.parse(fest.registrationCloses)) return "closed";
+  // No announced deadline means registration does not close on its own.
+  if (fest.registrationCloses && now >= Date.parse(fest.registrationCloses)) return "closed";
   if (!fest.registrationOpens || now < Date.parse(fest.registrationOpens)) return "upcoming";
   return "open";
 };
 
 export const registrationOpen = (
   now: number = Date.now(),
-  fest: { registrationCloses: string; registrationOpens: string | null } = FEST
+  fest: { registrationCloses: string | null; registrationOpens: string | null } = FEST
 ) => registrationState(now, fest) === "open";
 
 /**
@@ -837,12 +841,12 @@ export const registrationOpen = (
  */
 export const effectiveRegistrationState = (
   now?: number,
-  fest?: { registrationCloses: string; registrationOpens: string | null }
+  fest?: { registrationCloses: string | null; registrationOpens: string | null }
 ): RegistrationState => (TEST_SITE ? "open" : registrationState(now, fest));
 
 export const effectiveRegistrationOpen = (
   now?: number,
-  fest?: { registrationCloses: string; registrationOpens: string | null }
+  fest?: { registrationCloses: string | null; registrationOpens: string | null }
 ) => (TEST_SITE ? true : registrationOpen(now, fest));
 
 const MONTHS_SHORT = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
@@ -869,6 +873,7 @@ export const FEST_START = (() => {
  * 04 or 05 depending on the runtime elsewhere, and Vercel builds in UTC.
  */
 export const REGISTRATION_CLOSES_DISPLAY = (() => {
+  if (!FEST.registrationCloses) return "";
   const ist = new Date(Date.parse(FEST.registrationCloses) + IST_OFFSET_MS);
   if (Number.isNaN(ist.getTime())) return "";
   const day = String(ist.getUTCDate()).padStart(2, "0");
@@ -879,7 +884,9 @@ export const REGISTRATION_CLOSES_DISPLAY = (() => {
 export const registrationUnavailableMessage = (state: RegistrationState = registrationState()) =>
   state === "upcoming"
     ? "Registration hasn\u2019t opened yet \u2014 check back soon."
-    : `Applications closed on ${REGISTRATION_CLOSES_DISPLAY}.`;
+    : REGISTRATION_CLOSES_DISPLAY
+    ? `Applications closed on ${REGISTRATION_CLOSES_DISPLAY}.`
+    : "Applications are closed.";
 
 
 /**

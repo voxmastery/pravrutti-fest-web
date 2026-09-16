@@ -24,6 +24,7 @@ import { staffBlocksApplication, STAFF_CANNOT_APPLY } from "@/lib/staff-cockpit"
 import { newTicketId } from "@/lib/ticket-id";
 import {
   listAll,
+  readPrivate,
   applicationPath,
   teamPath,
   teamMemberPath,
@@ -69,6 +70,8 @@ async function loadTeam(evId: string, code: string): Promise<Team | null> {
   if (!raw || typeof raw !== "object") return null;
   const team = raw as Team;
   if (team.eventId !== evId || team.code !== code) return null;
+  // Tombstoned by its lead — absent for every purpose (verify, join, mine).
+  if (team.deletedAt) return null;
   if (!Array.isArray(team.members)) team.members = [];
   return team;
 }
@@ -352,6 +355,74 @@ async function joinTeam(body: any) {
  *                                         (allowed after the lead has submitted,
  *                                         until event.teamSize.max is reached)
  */
+
+/**
+ * The lead deleting their own team.
+ *
+ * Soft, because the store has no delete: the record is tombstoned with
+ * deletedAt and loadTeam treats it as gone, so verify/join/mine all stop
+ * finding it. Members' own applications survive — they simply stop belonging
+ * to a team, which is the honest outcome of the lead dissolving it.
+ */
+async function deleteTeam(body: any) {
+  const evId = String(body?.eventId ?? "").trim();
+  const event = findEvent(evId);
+  if (!evId || !event) return jsonError("That event doesn't exist.", 400);
+
+  const who = await resolveApplicantEmail(String(body?.email ?? ""));
+  if ("error" in who) return who.error;
+
+  const code = normalizeTeamCode(String(body?.code ?? ""));
+  if (!isValidTeamCode(code)) return jsonError("Enter a valid team code.", 400);
+
+  try {
+    const team = await loadTeam(evId, code);
+    if (!team) return jsonError("No team found for that code.", 404);
+    if (team.createdByEmail !== who.email)
+      return jsonError("Only the team lead can delete this team.", 403);
+
+    await putJson(teamPath(evId, code), { ...team, deletedAt: new Date().toISOString() }, true);
+    return NextResponse.json({ ok: true }, { headers: { "cache-control": "no-store" } });
+  } catch (e) {
+    return blobFailed(e, "team delete failed");
+  }
+}
+
+/**
+ * Teams this person already has for OTHER events, so the dialog can offer to
+ * carry the name over instead of making them retype it. Only the name travels —
+ * a team is per-event, and pulling a roster across would enter people for an
+ * event they never agreed to.
+ */
+async function otherTeams(body: any) {
+  const evId = String(body?.eventId ?? "").trim();
+  const who = await resolveApplicantEmail(String(body?.email ?? ""));
+  if ("error" in who) return who.error;
+
+  try {
+    const rows = await listAll("team/");
+    const records = await Promise.all(rows.map((b) => readPrivate(b.url)));
+    const teams = (records.filter(Boolean) as Team[])
+      .filter((t) => t && !t.deletedAt && t.eventId && t.eventId !== evId)
+      .filter(
+        (t) =>
+          t.createdByEmail === who.email ||
+          (Array.isArray(t.members) && t.members.some((m) => m?.email === who.email))
+      )
+      .map((t) => ({
+        eventId: t.eventId,
+        eventName: findEvent(t.eventId)?.name ?? t.eventId,
+        code: t.code,
+        name: t.name,
+        isLead: t.createdByEmail === who.email,
+      }))
+      .slice(0, 5);
+    return NextResponse.json({ teams }, { headers: { "cache-control": "no-store" } });
+  } catch (e) {
+    return blobFailed(e, "team others failed");
+  }
+}
+
 export async function GET(req: Request) {
   const url = new URL(req.url);
   const evId = String(url.searchParams.get("event") ?? url.searchParams.get("eventId") ?? "").trim();
@@ -379,6 +450,8 @@ export async function POST(req: Request) {
     return mineTeam(evId, String(body?.email ?? ""));
   }
   if (action === "join") return joinTeam(body);
+  if (action === "delete") return deleteTeam(body);
+  if (action === "others") return otherTeams(body);
   if (action === "create") return createTeam(body);
   return jsonError("Unknown action.", 400);
 }

@@ -134,6 +134,10 @@ export function RegistrationDialog({
   /* The payment step is two screens: confirm-and-pay, then come back and quote
      the reference. Splitting them keeps the second screen about one thing. */
   const [payPhase, setPayPhase] = useState<"confirm" | "reference">("confirm");
+  /* Teams this person already has for other events, so we can offer the name
+     instead of making them retype it. */
+  const [otherTeams, setOtherTeams] = useState<{ eventId: string; eventName: string; name: string; isLead: boolean }[]>([]);
+  const [confirmDeleteTeam, setConfirmDeleteTeam] = useState(false);
   const [confirmCancel, setConfirmCancel] = useState(false);
   const errRef = useRef<HTMLParagraphElement>(null);
 
@@ -164,6 +168,17 @@ export function RegistrationDialog({
         if (!alive || !d?.team?.code) return;
         setCreatedTeam(d.team);
         setTeamPane("created");
+      })
+      .catch(() => {});
+
+    fetch("/api/teams", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "others", eventId: ev, email: me.email }),
+    })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (alive && Array.isArray(d?.teams)) setOtherTeams(d.teams);
       })
       .catch(() => {});
     return () => {
@@ -201,6 +216,7 @@ export function RegistrationDialog({
     setVerifiedTeam(null);
     setCopied(false);
     setTeamBusy(false);
+    setConfirmDeleteTeam(false);
   };
 
   const close = () => {
@@ -215,6 +231,33 @@ export function RegistrationDialog({
       setConfirmCancel(false);
       resetTeam();
     }, 200);
+  };
+
+  const handleDeleteTeam = async () => {
+    if (!event || !createdTeam || teamBusy) return;
+    setTeamBusy(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/teams", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "delete",
+          eventId: eventId(event.name),
+          code: createdTeam.code,
+          email: form.email,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setTeamBusy(false);
+        return fail(data?.error ?? "Couldn't delete the team. Try again.");
+      }
+      resetTeam();
+    } catch {
+      setTeamBusy(false);
+      fail("Network dropped. Check your connection and try again.");
+    }
   };
 
   /* Cancelling at the payment screen: nothing has been submitted yet, so this
@@ -553,6 +596,34 @@ export function RegistrationDialog({
 
                   {teamPane === "idle" && (
                     <div className="space-y-3">
+
+                      {/* They already have a team elsewhere — offer the name
+                          rather than making them retype it. Only the name
+                          travels; teammates join this event with the new code. */}
+                      {otherTeams.length > 0 && (
+                        <div className="rounded-xl border border-soft-gold/20 bg-soft-gold/[0.05] p-3.5 space-y-2.5">
+                          <p className="text-[13px] text-white/75 leading-relaxed">
+                            You’re on <span className="text-white font-medium">{otherTeams[0].name}</span> for{" "}
+                            {otherTeams[0].eventName}. Use the same team name here?
+                          </p>
+                          <div className="flex gap-2">
+                            <Button
+                              type="button"
+                              onClick={() => {
+                                setError(null);
+                                setTeamNameDraft(otherTeams[0].name);
+                                setTeamPane("create");
+                              }}
+                              className={`${primaryBtn} flex-1`}>
+                              Continue with {otherTeams[0].name}
+                            </Button>
+                          </div>
+                          <p className="text-[11px] text-white/40 leading-relaxed">
+                            A team is per event, so this makes a new team with a new code — your
+                            teammates join with that code. Or create/join a different team below.
+                          </p>
+                        </div>
+                      )}
                       <Button
                         type="button" onClick={() => { setError(null); setTeamPane("create"); }}
                         className={`${primaryBtn} inline-flex items-center justify-center gap-2`}
@@ -652,6 +723,38 @@ export function RegistrationDialog({
                       <p className="text-[13px] text-white/50 leading-relaxed">
                         Share this code so others can join this event’s team. It stays valid after you submit — teammates can join until the team is full. You pay ₹{FEE_PER_HEAD} for the team; they do not.
                       </p>
+
+                      {/* Dissolving the team is the lead's call and is allowed at
+                          any time; teammates keep their own applications and
+                          simply stop belonging to a team. */}
+                      {confirmDeleteTeam ? (
+                        <div className="rounded-lg border border-danger-strong/30 bg-danger-strong/[0.07] p-3 space-y-2.5">
+                          <p className="text-[13px] text-white/80 leading-relaxed">
+                            Delete {createdTeam.name}? The code stops working for everyone and anyone
+                            who joined is no longer on a team. You can create another after.
+                          </p>
+                          <div className="flex gap-2">
+                            <Button
+                              type="button" variant="outline"
+                              onClick={() => setConfirmDeleteTeam(false)}
+                              className={`${ghostBtn} flex-1`}>
+                              Keep team
+                            </Button>
+                            <Button
+                              type="button" onClick={handleDeleteTeam} disabled={teamBusy}
+                              className="flex-1 h-[38px] rounded-2xl bg-danger-strong/80 text-white hover:bg-danger-strong font-medium cursor-pointer">
+                              {teamBusy ? <Loader2 className="w-4 h-4 animate-spin" /> : "Delete team"}
+                            </Button>
+                          </div>
+                        </div>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => { setError(null); setConfirmDeleteTeam(true); }}
+                          className="text-xs text-danger hover:text-danger-strong underline underline-offset-2 cursor-pointer">
+                          Delete this team
+                        </button>
+                      )}
                     </div>
                   )}
 

@@ -22,6 +22,9 @@ export type Team = {
   createdByEmail: string;
   members: TeamMember[];
   createdAt: string;
+  /** Set when the lead deletes the team. The store has no delete operation, so
+      a deleted team is tombstoned and every reader treats it as absent. */
+  deletedAt?: string;
 };
 
 /** Name + email only. Phones stay on the team-member blob. */
