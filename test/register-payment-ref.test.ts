@@ -53,10 +53,11 @@ const team = (createdByEmail: string) => ({
 beforeEach(() => store.clear());
 
 describe("POST /api/register — Juno transaction ID", () => {
-  it("refuses a solo application without a transaction ID", async () => {
-    const res = await post(base());
-    expect(res.status).toBe(400);
-    expect((await res.json()).error).toMatch(/transaction ID/i);
+  /* Optional since Path B: it auto-verifies from the Juno registration ID, so
+     the transaction ID is a cross-check we record when given, not a gate. */
+  it("accepts a solo application without a transaction ID and stores null", async () => {
+    expect((await post(base())).status).toBe(200);
+    expect(store.get(`app/${EVENT}/asha@example.com.json`).paymentRef).toBeNull();
   });
 
   it("accepts a solo application with one and stores it", async () => {
@@ -64,9 +65,9 @@ describe("POST /api/register — Juno transaction ID", () => {
     expect(store.get(`app/${EVENT}/asha@example.com.json`).paymentRef).toBe("JUNO-2026-0091");
   });
 
-  it("refuses a team lead without one — the lead pays", async () => {
+  it("lets a team lead through without one", async () => {
     store.set(`team/${EVENT}/${CODE}.json`, team("asha@example.com"));
-    expect((await post(base({ teamCode: CODE }))).status).toBe(400);
+    expect((await post(base({ teamCode: CODE }))).status).toBe(200);
   });
 
   it("lets a joiner through without one — covered by the lead", async () => {

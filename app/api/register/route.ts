@@ -11,7 +11,6 @@ import {
   PHONE_HINT,
   readPaymentRef,
   readJunoRegId,
-  PAYMENT_REF_HINT,
 } from "@/lib/applications";
 import { Team, normalizeTeamCode, isValidTeamCode } from "@/lib/teams";
 import { resolveEmail } from "@/lib/identity";
@@ -162,9 +161,10 @@ export async function POST(req: Request) {
   // Whoever is charged pays on Juno first and proves it with the receipt's
   // transaction ID. `awaiting` is exactly "charged and not yet verified";
   // joiners and free events never reach this branch.
+  // Optional now: Path B auto-verifies from the Juno registration ID, so the
+  // transaction ID is a cross-check we record when given, not a gate. An
+  // application with neither reference waits for manual verification.
   const paymentRef = isJoiner ? null : readPaymentRef(body?.paymentRef) || null;
-  if (payment === "awaiting" && !paymentRef)
-    return NextResponse.json({ error: PAYMENT_REF_HINT }, { status: 400 });
   // Path B's poll key. Optional: an application without one simply falls back
   // to manual verification, so it never blocks the form.
   const junoRegId = isJoiner ? null : readJunoRegId(body?.junoRegId) || null;

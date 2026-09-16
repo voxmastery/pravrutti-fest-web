@@ -15,9 +15,7 @@ import {
   PHONE_INPUT_MAX,
   formatFee,
   isValidPhone,
-  PAYMENT_REF_HINT,
   JUNO_REGID_HINT,
-  readPaymentRef,
   phoneFieldValue,
 } from "@/lib/applications";
 import { MAX_TEAM_BIO, TEAM_CODE_LENGTH, isValidTeamCode, type TeamPreview } from "@/lib/teams";
@@ -228,11 +226,9 @@ export function RegistrationDialog({
       fail("Enter your college name.");
       return false;
     }
-    // Joiners are covered by their lead; everyone else has paid on Juno.
-    if (!joining && readPaymentRef(form.paymentRef) === "") {
-      fail(PAYMENT_REF_HINT);
-      return false;
-    }
+    // Payment details live on step 3, so they are not gated here — and neither
+    // is required: Path B auto-verifies from the Juno registration ID, and an
+    // application with neither reference simply waits for manual verification.
     return true;
   };
 
@@ -814,7 +810,7 @@ export function RegistrationDialog({
                     <p className="mt-1 text-[11px] text-white/40 leading-relaxed">{JUNO_REGID_HINT}</p>
                   </Field>
 
-                  <Field label="Juno transaction ID (required)">
+                  <Field label="Juno transaction ID (optional)">
                     <Input
                       className={inputCls}
                       value={form.paymentRef}
