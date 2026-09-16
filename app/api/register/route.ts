@@ -13,6 +13,7 @@ import {
   readJunoRegId,
 } from "@/lib/applications";
 import { Team, normalizeTeamCode, isValidTeamCode } from "@/lib/teams";
+import { cancelApplication } from "@/lib/payment-review";
 import { resolveEmail } from "@/lib/identity";
 import { resolveRole, roleForEmail } from "@/lib/roles";
 import { staffBlocksApplication, STAFF_CANNOT_APPLY } from "@/lib/staff-cockpit";
@@ -196,8 +197,14 @@ export async function POST(req: Request) {
     appliedAt: new Date().toISOString(),
   };
 
+  /* A cancelled application is a place they gave up, so applying again is
+     allowed and overwrites it. Any other existing record still collides — the
+     duplicate guard is what stops one person taking two places. */
+  const prior = (await readJsonByPath(applicationPath(evId, email))) as Application | null;
+  const replacingCancelled = prior?.status === "cancelled";
+
   try {
-    await putJson(applicationPath(evId, email), record, false);
+    await putJson(applicationPath(evId, email), record, replacingCancelled);
   } catch (e: any) {
     if (/exists|overwrite/i.test(String(e?.message)))
       return NextResponse.json({ error: "You've already applied for this event." }, { status: 409 });
@@ -239,5 +246,52 @@ export async function POST(req: Request) {
     capacity: capacityFor(evId),
     teamName: record.teamName,
     teamCode: record.teamCode ?? null,
+  });
+}
+
+
+/**
+ * DELETE /api/register — the applicant withdrawing their own application.
+ *
+ * Ownership has to be proved, because the record is addressed by email alone:
+ * a signed-in visitor is proved by their verified address, and a guest (who
+ * registered with an email we never verified) must quote the ticket ID from
+ * their own confirmation. Without that, knowing somebody's address would be
+ * enough to cancel their place.
+ */
+export async function DELETE(req: Request) {
+  let body: any;
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json({ error: "That request wasn't readable." }, { status: 400 });
+  }
+
+  const evId = String(body?.eventId ?? "").trim();
+  const verified = await resolveEmail();
+  const email = (verified ?? String(body?.email ?? "")).trim().toLowerCase();
+  if (!evId || !email)
+    return NextResponse.json({ error: "Missing event or applicant." }, { status: 400 });
+
+  const record = (await readJsonByPath(applicationPath(evId, email))) as Application | null;
+  if (!record) return NextResponse.json({ error: "No registration found." }, { status: 404 });
+
+  if (!verified) {
+    const ticketId = String(body?.ticketId ?? "").trim();
+    if (!ticketId || ticketId !== record.ticketId)
+      return NextResponse.json(
+        { error: "Sign in with the email you applied with, or enter your ticket reference to cancel." },
+        { status: 403 }
+      );
+  }
+
+  const outcome = await cancelApplication({ eventId: evId, email });
+  if (!outcome) return NextResponse.json({ error: "No registration found." }, { status: 404 });
+
+  return NextResponse.json({
+    ok: true,
+    status: outcome.application.status,
+    payment: outcome.application.payment,
+    cancelledAt: outcome.application.cancelledAt ?? null,
   });
 }

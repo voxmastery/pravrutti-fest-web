@@ -14,7 +14,7 @@
  * so every event is confirmed by the same desk process.
  */
 
-export type AppStatus = "pending" | "confirmed" | "declined";
+export type AppStatus = "pending" | "confirmed" | "declined" | "cancelled";
 export type PayStatus = "not_required" | "awaiting" | "paid" | "refunded";
 
 /** Team fee, paid once by the lead (or a solo applicant). Joiners do not pay. */
@@ -91,6 +91,9 @@ export type Application = {
   appliedAt: string;
   decidedAt?: string;
   refundedAt?: string;
+  /** When the applicant withdrew it themselves. Distinct from decidedAt, which
+      records an organiser's decision. */
+  cancelledAt?: string;
   /** Set once when an organiser scans this ticket. Never overwritten —
       a second scan reports the original time rather than replacing it. */
   checkedInAt?: string;
@@ -167,6 +170,10 @@ export const STATUS_COPY: Record<AppStatus, { label: string; blurb: string }> = 
     label: "Confirmed",
     blurb: "You're in. Show your QR at the registration desk.",
   },
+  cancelled: {
+    label: "Cancelled",
+    blurb: "You cancelled this registration, so no place is being held. You can apply again while registration is open.",
+  },
   declined: {
     label: "Not confirmed",
     blurb: "This event filled up. Your fee is refunded in full.",
@@ -181,6 +188,7 @@ export const EVENT_PAGE_STATUS: Record<AppStatus, string> = {
   pending: "Registration pending approval",
   confirmed: "You\u2019re going",
   declined: "Not confirmed \u00b7 fee refunded in full",
+  cancelled: "Registration cancelled",
 };
 
 /** Submitted and not turned down. Confirmed is a subset. */

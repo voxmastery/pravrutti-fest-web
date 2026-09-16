@@ -72,6 +72,7 @@ const STATUS_LINE: Record<AppStatus, { label: string; tone: string; Icon: typeof
   pending: { label: EVENT_PAGE_STATUS.pending, tone: "text-champagne-gold", Icon: Hourglass },
   confirmed: { label: EVENT_PAGE_STATUS.confirmed, tone: "text-success-soft", Icon: CheckCircle2 },
   declined: { label: EVENT_PAGE_STATUS.declined, tone: "text-pearl-white/45", Icon: RotateCcw },
+  cancelled: { label: EVENT_PAGE_STATUS.cancelled, tone: "text-pearl-white/45", Icon: RotateCcw },
 };
 
 /**

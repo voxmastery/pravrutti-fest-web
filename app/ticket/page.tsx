@@ -40,6 +40,11 @@ const TONE: Record<AppStatus, { chip: string; dot: string; icon: typeof Check }>
     dot: "bg-success border-success/40",
     icon: Check,
   },
+  cancelled: {
+    chip: "bg-white/[0.06] border-white/[0.12] text-white/50",
+    dot: "bg-white/25 border-white/10",
+    icon: RotateCcw,
+  },
   declined: {
     chip: "bg-white/[0.06] border-white/[0.12] text-white/50",
     dot: "bg-white/25 border-white/10",
@@ -290,7 +295,7 @@ export default function TicketPage() {
             <div className="absolute left-[5px] top-3 bottom-3 w-px bg-white/[0.08] pointer-events-none" />
           )}
 
-          {(["confirmed", "pending", "declined"] as AppStatus[]).map((status) => {
+          {(["confirmed", "pending", "cancelled", "declined"] as AppStatus[]).map((status) => {
             const group = apps?.filter((a) => a.status === status) ?? [];
             if (group.length === 0) return null;
             const tone = TONE[status];

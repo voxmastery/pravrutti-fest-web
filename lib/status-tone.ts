@@ -8,6 +8,7 @@ const APP: Record<AppStatus, ToneLabel> = {
   pending: { tone: "warning", label: "In review" },
   confirmed: { tone: "success", label: "Confirmed" },
   declined: { tone: "neutral", label: "Declined" },
+  cancelled: { tone: "neutral", label: "Cancelled" },
 };
 
 const PAY: Record<PayStatus, ToneLabel> = {

@@ -131,3 +131,38 @@ export async function resendConfirmation(args: { eventId: string; email: string 
 
   return persistWithConfirmation(path, record);
 }
+
+/**
+ * The applicant withdrawing their own application.
+ *
+ * Distinct from declineApplication, which is the organisers turning someone
+ * down: the place is freed either way, but the reason matters to the desk and
+ * to the person. The row is kept rather than deleted so a cancellation stays
+ * visible and a collected fee keeps its refund trail.
+ */
+export async function cancelApplication(args: { eventId: string; email: string }) {
+  const { path, record } = await load(args.eventId, args.email);
+  if (!record) return null;
+
+  // An organiser already closed this one; their decision and its refund trail
+  // outrank a late cancel.
+  if (record.status === "declined")
+    return { application: record, mail: null } satisfies ReviewOutcome;
+  // Idempotent: a second cancel must report the first one, not restamp it.
+  if (record.status === "cancelled")
+    return { application: record, mail: null } satisfies ReviewOutcome;
+
+  const at = new Date().toISOString();
+  // Only money that actually arrived can be refunded. "awaiting" was never
+  // collected, and a joiner's fee belongs to their lead.
+  const refunding = record.payment === "paid";
+  const next: Application = {
+    ...record,
+    status: "cancelled",
+    cancelledAt: at,
+    payment: refunding ? "refunded" : record.payment,
+    refundedAt: refunding ? at : record.refundedAt,
+  };
+  await putJson(path, next, true);
+  return { application: next, mail: null } satisfies ReviewOutcome;
+}
