@@ -153,9 +153,9 @@ describe("POST /api/register — only the team lead is charged", () => {
   };
 
   it("stores the payment ID a solo applicant typed", async () => {
-    const res = await post(application({ paymentRef: "4183 7712 9930" }));
+    const res = await post(application({ paymentRef: "418377129930" }));
     expect(res.status).toBe(200);
-    expect(store.get(KEY).paymentRef).toBe("4183 7712 9930");
+    expect(store.get(KEY).paymentRef).toBe("418377129930");
   });
 
   it("charges a solo applicant the team fee once, even with a legacy roster", async () => {

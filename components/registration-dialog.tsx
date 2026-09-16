@@ -15,6 +15,8 @@ import {
   PHONE_INPUT_MAX,
   formatFee,
   isValidPhone,
+  isValidPaymentRef,
+  PAYMENT_REF_HINT,
   phoneFieldValue,
 } from "@/lib/applications";
 import { MAX_TEAM_BIO, TEAM_CODE_LENGTH, isValidTeamCode, type TeamPreview } from "@/lib/teams";
@@ -138,6 +140,9 @@ export function RegistrationDialog({
   const [otherTeams, setOtherTeams] = useState<{ eventId: string; eventName: string; name: string; isLead: boolean }[]>([]);
   const [confirmDeleteTeam, setConfirmDeleteTeam] = useState(false);
   const [confirmCancel, setConfirmCancel] = useState(false);
+  /* Submitting is the point of no return for the money: the ₹200 is already
+     with the college, so this asks once before filing it. */
+  const [confirmSubmit, setConfirmSubmit] = useState(false);
   const errRef = useRef<HTMLParagraphElement>(null);
 
   useEffect(() => {
@@ -232,6 +237,7 @@ export function RegistrationDialog({
       setForm(emptyForm());
       setPayPhase("confirm");
       setConfirmCancel(false);
+      setConfirmSubmit(false);
       resetTeam();
     }, 200);
   };
@@ -268,6 +274,7 @@ export function RegistrationDialog({
      a payment that failed on the portal. */
   const restartRegistration = () => {
     setConfirmCancel(false);
+    setConfirmSubmit(false);
     setPayPhase("confirm");
     setForm((f) => ({ ...f, paymentRef: "", junoRegId: "" }));
     setError(null);
@@ -323,6 +330,12 @@ export function RegistrationDialog({
 
   const submit = async () => {
     if (!event || submitting) return;
+    // Charged applicants must quote a plausible receipt reference; joiners are
+    // covered by their lead and are never asked for one.
+    if (!joining && !isValidPaymentRef(form.paymentRef)) {
+      setConfirmSubmit(false);
+      return fail(PAYMENT_REF_HINT);
+    }
     setSubmitting(true);
     setError(null);
     try {
@@ -1016,6 +1029,36 @@ export function RegistrationDialog({
                           </div>
                         </div>
                       ) : (
+                        confirmSubmit ? (
+                          /* Last stop before the money is filed as paid: the
+                             ₹200 is already with the college, and cancelling
+                             afterwards does not bring it back. */
+                          <div className="rounded-xl border border-soft-gold/25 bg-soft-gold/[0.07] p-3.5 space-y-3">
+                            <p className="text-[13px] text-white/80 leading-relaxed">
+                              Submit with transaction ID{" "}
+                              <span className="text-white font-medium break-all">{form.paymentRef.trim()}</span>?
+                            </p>
+                            <p className="text-[12px] text-white/55 leading-relaxed">
+                              Check it matches your receipt — we verify it against the portal&apos;s
+                              statement. The {applicantFee} is already with the college, and cancelling
+                              after this does not refund it. (If the event fills up and you are not
+                              confirmed, the full fee is returned.)
+                            </p>
+                            <div className="flex gap-2">
+                              <Button
+                                variant="outline" onClick={() => setConfirmSubmit(false)}
+                                className={`${ghostBtn} flex-1`}>
+                                Go back
+                              </Button>
+                              <Button onClick={submit} disabled={submitting} className={`${primaryBtn} flex-1`}>
+                                {submitting ? (
+                                  <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Submitting…</>
+                                ) : (
+                                  "Yes, submit" )}
+                              </Button>
+                            </div>
+                          </div>
+                        ) : (
                         <div className="flex gap-2">
                           <Button
                             variant="outline"
@@ -1025,13 +1068,18 @@ export function RegistrationDialog({
                           >
                             Cancel
                           </Button>
-                          <Button onClick={submit} disabled={submitting} className={`${primaryBtn} flex-1`}>
-                            {submitting ? (
-                              <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Submitting…</>
-                            ) : (
-                              "Submit application" )}
+                          <Button
+                            onClick={() => {
+                              if (!isValidPaymentRef(form.paymentRef)) return fail(PAYMENT_REF_HINT);
+                              setError(null);
+                              setConfirmSubmit(true);
+                            }}
+                            disabled={submitting}
+                            className={`${primaryBtn} flex-1`}>
+                            Submit application
                           </Button>
                         </div>
+                        )
                       )}
                     </>
                   )}

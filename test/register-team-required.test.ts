@@ -38,6 +38,7 @@ const base = (over: Record<string, unknown> = {}) => ({
   phone: "9876543210",
   college: "Ramaiah Institute of Technology",
   eventId: TEAM_EVENT,
+  paymentRef: "JUNO-2026-0091",
   ...over,
 });
 const post = (b: Record<string, unknown>) =>

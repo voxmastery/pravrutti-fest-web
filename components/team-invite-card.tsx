@@ -97,20 +97,28 @@ export function TeamInviteCard({
             </p>
           </div>
         </div>
-        <div className="rounded-xl bg-midnight-navy border border-royal-wine px-3 py-3 flex items-center justify-between gap-3">
+        {/* The code gets its own full-width line. Sharing a row with the Copy
+            button left a 12-character code breaking across three lines on a
+            phone, which is unreadable and unusable for something meant to be
+            read aloud or typed by a teammate. */}
+        <div className="rounded-xl bg-midnight-navy border border-royal-wine px-3 py-3 space-y-2.5">
           <div className="min-w-0">
             <p className="text-[10px] uppercase tracking-widest text-pearl-white/40">Team code</p>
-            <p className="text-base tracking-[0.12em] text-pearl-white mt-0.5 break-all">{team.code}</p>
-            <p className="text-xs text-pearl-white/45 mt-1">
-              {team.memberCount}/{team.maxMembers} members
+            <p className="text-[15px] sm:text-base font-medium tracking-[0.1em] text-pearl-white mt-1 break-all leading-snug">
+              {team.code}
             </p>
           </div>
-          <Button
-            type="button" onClick={handleCopy}
-            className="h-9 rounded-xl border border-royal-wine bg-cosmic-purple text-pearl-white/80 hover:bg-deep-plum hover:text-pearl-white text-sm px-3 shrink-0 cursor-pointer inline-flex items-center gap-1.5" aria-label="Copy team code" >
-            {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-            {copied ? "Copied" : "Copy"}
-          </Button>
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-xs text-pearl-white/45 whitespace-nowrap">
+              {team.memberCount}/{team.maxMembers} members
+            </p>
+            <Button
+              type="button" onClick={handleCopy}
+              className="h-9 rounded-xl border border-royal-wine bg-cosmic-purple text-pearl-white/80 hover:bg-deep-plum hover:text-pearl-white text-sm px-3 shrink-0 cursor-pointer inline-flex items-center gap-1.5" aria-label="Copy team code" >
+              {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+              {copied ? "Copied" : "Copy"}
+            </Button>
+          </div>
         </div>
         {people.length > 0 && (
           <ul className="space-y-2" aria-label="Team members">

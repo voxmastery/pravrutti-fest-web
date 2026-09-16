@@ -34,7 +34,31 @@ export const PHONE_LENGTH = 10;
 
 /** Charged applicants must supply the transaction ID from their Juno receipt.
     Shown by the form and returned by the API, so both say the same thing. */
-export const PAYMENT_REF_HINT = "Enter the transaction ID from your Juno payment receipt.";
+export const PAYMENT_REF_HINT =
+  "Enter the transaction ID from your Juno receipt — at least 6 characters, and it must contain a digit.";
+
+/**
+ * Is this a plausible payment reference?
+ *
+ * It cannot be confirmed against Juno from here, so this only rejects what
+ * obviously is not a receipt: too short, no digit at all, characters a
+ * reference never contains, or one character repeated. That keeps "asdf",
+ * "------" and a stray keypress from being filed as proof of ₹200, while still
+ * accepting every real format — we do not control what Juno issues, so the bar
+ * is "could this be a reference", not "is this the right one". An organiser
+ * still matches it against the portal's statement.
+ */
+export function isValidPaymentRef(raw: unknown): boolean {
+  const ref = readPaymentRef(raw);
+  if (ref.length < 6 || ref.length > 80) return false;
+  // Letters, digits, and the separators receipts actually use.
+  if (!/^[A-Za-z0-9][A-Za-z0-9/_-]*$/.test(ref)) return false;
+  // Every transaction reference carries at least one digit.
+  if (!/\d/.test(ref)) return false;
+  // "000000", "aaaaaa" — a held key, not a reference.
+  if (/^(.)\1+$/.test(ref)) return false;
+  return true;
+}
 
 /** Shown next to the field and returned by the API, so both read the same. */
 export const PHONE_HINT = "Enter a 10-digit mobile number starting with 6-9.";
