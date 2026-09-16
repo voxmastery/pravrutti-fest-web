@@ -20,7 +20,6 @@ import {
 import { MAX_TEAM_BIO, TEAM_CODE_LENGTH, isValidTeamCode, type TeamPreview } from "@/lib/teams";
 import { Loader2, ArrowLeft, Pencil, Hourglass, ShieldCheck, RotateCcw, Check, Copy, Users } from "lucide-react";
 import { PALETTE } from "@/lib/palette";
-import { JunoPaymentHandoff } from "@/components/juno-payment-handoff";
 import { JUNO_PAYMENT_URL } from "@/lib/juno";
 import { ApplicationReviewCard } from "@/components/application-review-card";
 
@@ -204,6 +203,10 @@ export function RegistrationDialog({
     ? `${event.teamSize.min} people`
     : `${event.teamSize.min}\u2013${event.teamSize.max} people`;
   const hasTeam = Boolean(createdTeam) || joining;
+  /* What to put in the portal's "number of participants". The portal fixes this
+     at payment and it cannot be raised once teammates join later, so the max
+     team size is the only safe answer — the fee is per team regardless. */
+  const portalParticipants = event?.teamSize.max ?? 1;
   // Only nag once they have typed something — an empty field is not yet a mistake.
   const phoneDirtyInvalid = form.phone.length > 0 && !isValidPhone(form.phone);
 
@@ -928,19 +931,22 @@ export function RegistrationDialog({
                   {payPhase === "confirm" ? (
                     <>
                       {/* The portal cannot be prefilled (lib/juno.ts explains why),
-                          so the four values it asks for are handed over ready to
-                          copy before they go. */}
-                      <JunoPaymentHandoff
-                        fee={applicantFee}
-                        applicant={{
-                          name: form.name,
-                          phone: form.phone,
-                          email: form.email,
-                          /* A lead pays for the team and teammates join later, so
-                             the honest count now is whoever is on the roster. */
-                          heads: createdTeam?.memberCount ?? 1,
-                        }}
-                      />
+                          so the only thing worth saying here is the one value
+                          people get wrong: the participant count is fixed at
+                          payment and cannot be raised once teammates join. */}
+                      <div className="rounded-xl border border-soft-gold/20 bg-soft-gold/[0.05] p-3.5 space-y-1.5">
+                        <p className="text-[13px] text-white/75 leading-relaxed">
+                          The portal asks for your name, mobile, email and{" "}
+                          <span className="text-white font-medium">number of participants</span>.
+                        </p>
+                        <p className="text-[13px] text-white/60 leading-relaxed">
+                          Enter{" "}
+                          <span className="text-champagne-gold font-semibold">{portalParticipants}</span>{" "}
+                          for the participant count — that is the most {event.name} allows, and it cannot
+                          be raised later, so it leaves room for teammates to join. The fee is{" "}
+                          {applicantFee} for the team either way.
+                        </p>
+                      </div>
 
                       {errorBox}
 
