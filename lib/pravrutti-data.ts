@@ -1,3 +1,5 @@
+import { REGISTRATION_OPEN_OVERRIDE } from "@/lib/registration-override";
+
 /**
  * A coordinator as the public site knows them: a name, and nothing to dial.
  *
@@ -823,6 +825,25 @@ export const registrationOpen = (
   now: number = Date.now(),
   fest: { registrationCloses: string; registrationOpens: string | null } = FEST
 ) => registrationState(now, fest) === "open";
+
+/**
+ * The registration state the app should actually gate on.
+ *
+ * Identical to registrationState() everywhere real — but in the registration-open override
+ * (Vercel only, see lib/registration-override.ts) it reports "open" so the real dialog
+ * can be walked there. registrationState() itself stays pure and unchanged so
+ * its boundary tests keep testing the real rule; only the runtime gates use
+ * these. pravrutti.tech never sets the flag, so it is unaffected.
+ */
+export const effectiveRegistrationState = (
+  now?: number,
+  fest?: { registrationCloses: string; registrationOpens: string | null }
+): RegistrationState => (REGISTRATION_OPEN_OVERRIDE ? "open" : registrationState(now, fest));
+
+export const effectiveRegistrationOpen = (
+  now?: number,
+  fest?: { registrationCloses: string; registrationOpens: string | null }
+) => (REGISTRATION_OPEN_OVERRIDE ? true : registrationOpen(now, fest));
 
 const MONTHS_SHORT = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
 

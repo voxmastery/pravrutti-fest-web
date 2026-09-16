@@ -18,7 +18,7 @@ import {
  * Storage seam. Two backends, tried in this order:
  *
  *   1. dev filesystem  — local work needs no database
- *   2. MySQL           — production on Hostinger
+ *   2. MySQL           — production on Hostinger (also the Vercel test site)
  *
  * and nothing else: an unconfigured environment throws rather than pretending
  * a write succeeded, because a silently dropped registration is discovered at

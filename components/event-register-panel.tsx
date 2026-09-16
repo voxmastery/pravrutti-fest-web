@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { RegistrationDialog } from "@/components/registration-dialog";
 import { TeamInviteCard, useMyTeam } from "@/components/team-invite-card";
-import { Event, eventId, capacityFor, registrationState, type RegistrationState } from "@/lib/pravrutti-data";
+import { Event, eventId, capacityFor, effectiveRegistrationState, type RegistrationState } from "@/lib/pravrutti-data";
 import { FEE_PER_HEAD, isLiveApplication, type AppStatus } from "@/lib/applications";
 import { IndianRupee, Ticket, UserCheck } from "lucide-react";
 import { useDashboardRole } from "@/hooks/use-dashboard-role";
@@ -58,7 +58,7 @@ export function EventRegisterPanel({
   const closed = regState !== "open";
 
   useEffect(() => {
-    setRegState(registrationState());
+    setRegState(effectiveRegistrationState());
   }, []);
 
   const load = useCallback(() => {

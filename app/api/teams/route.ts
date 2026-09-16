@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { randomBytes } from "crypto";
-import { events, eventId, capacityFor, registrationOpen, registrationUnavailableMessage } from "@/lib/pravrutti-data";
+import { events, eventId, capacityFor, effectiveRegistrationOpen, registrationUnavailableMessage } from "@/lib/pravrutti-data";
 import {
   Application,
   PHONE_HINT,
@@ -154,7 +154,7 @@ function personApplication(args: {
 }
 
 async function createTeam(body: any) {
-  if (!registrationOpen()) return jsonError(registrationUnavailableMessage(), 409);
+  if (!effectiveRegistrationOpen()) return jsonError(registrationUnavailableMessage(), 409);
 
   const evId = String(body?.eventId ?? "").trim();
   const event = findEvent(evId);
@@ -247,7 +247,7 @@ async function createTeam(body: any) {
 }
 
 async function joinTeam(body: any) {
-  if (!registrationOpen()) return jsonError(registrationUnavailableMessage(), 409);
+  if (!effectiveRegistrationOpen()) return jsonError(registrationUnavailableMessage(), 409);
 
   const evId = String(body?.eventId ?? "").trim();
   const event = findEvent(evId);

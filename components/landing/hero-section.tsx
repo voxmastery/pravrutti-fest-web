@@ -11,7 +11,7 @@ import {
   FEST,
   formatINR,
   REGISTRATION_CLOSES_DISPLAY,
-  registrationState,
+  effectiveRegistrationState,
   ANNOUNCED_PRIZE_POOL,
 } from "@/lib/pravrutti-data";
 import { FEE_PER_HEAD } from "@/lib/applications";
@@ -83,7 +83,7 @@ export function HeroSection() {
   const tiltX = (mouse.y - 0.5) * -8;
   const tiltY = (mouse.x - 0.5) * 8;
 
-  const regState = registrationState();
+  const regState = effectiveRegistrationState();
   const isRegistrationOpen = regState === "open";
 
   return (

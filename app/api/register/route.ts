@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { events, eventId, capacityFor, registrationOpen, registrationUnavailableMessage } from "@/lib/pravrutti-data";
+import { events, eventId, capacityFor, effectiveRegistrationOpen, registrationUnavailableMessage } from "@/lib/pravrutti-data";
 import { newTicketId } from "@/lib/ticket-id";
 import {
   Application,
@@ -52,7 +52,7 @@ export async function GET(req: Request) {
     else if (r.status === "pending") pending[r.eventId] = (pending[r.eventId] ?? 0) + 1;
   }
 
-  const body: any = { confirmed, pending, open: registrationOpen() };
+  const body: any = { confirmed, pending, open: effectiveRegistrationOpen() };
 
   if (slug) {
     body.going = valid
@@ -129,7 +129,7 @@ export async function POST(req: Request) {
 
   const event = events.find((e) => eventId(e.name) === evId);
   if (!event) return NextResponse.json({ error: "That event doesn't exist." }, { status: 400 });
-  if (!registrationOpen())
+  if (!effectiveRegistrationOpen())
     return NextResponse.json({ error: registrationUnavailableMessage() }, { status: 409 });
   if (name.length < 2 || name.length > 80)
     return NextResponse.json({ error: "Enter your full name." }, { status: 400 });

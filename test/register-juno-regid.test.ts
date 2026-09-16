@@ -19,6 +19,7 @@ vi.mock("@/lib/identity", () => ({ resolveEmail: async () => null }));
 vi.mock("@/lib/pravrutti-data", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/lib/pravrutti-data")>()),
   registrationOpen: () => true,
+  effectiveRegistrationOpen: () => true,
 }));
 
 let POST: typeof import("@/app/api/register/route").POST;
