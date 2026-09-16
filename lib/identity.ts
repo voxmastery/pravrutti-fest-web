@@ -1,6 +1,7 @@
 import { clerkEnabled } from "@/lib/clerk-config";
 import { authOptions, googleAuthEnabled } from "@/lib/auth";
 import { devImpersonatedEmail, devEmailFromCookieHeader, isDev } from "@/lib/dev-identity";
+import { TEST_SITE } from "@/lib/test-site";
 
 /**
  * Returns the verified email of whoever is signed in, or null.
@@ -43,5 +44,13 @@ export async function resolveEmail(): Promise<string | null> {
   return null;
 }
 
-/** True when some sign-in mechanism is configured at all. */
-export const authRequired = () => clerkEnabled || googleAuthEnabled;
+/**
+ * True when some sign-in mechanism is configured at all.
+ *
+ * The Vercel test site is the exception: its identity provider reports auth as
+ * off so the flow is walkable as a guest, and if the server still demanded a
+ * session the two would contradict each other — "Sign in to create or join a
+ * team" on a site with no way to sign in, which blocks the 21 team-only events
+ * outright. Unset on Hostinger, so real registration still requires Google.
+ */
+export const authRequired = () => !TEST_SITE && (clerkEnabled || googleAuthEnabled);

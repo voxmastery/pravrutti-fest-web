@@ -15,13 +15,13 @@ import {
   PHONE_INPUT_MAX,
   formatFee,
   isValidPhone,
-  JUNO_REGID_HINT,
   phoneFieldValue,
 } from "@/lib/applications";
 import { MAX_TEAM_BIO, TEAM_CODE_LENGTH, isValidTeamCode, type TeamPreview } from "@/lib/teams";
 import { Loader2, ArrowLeft, Pencil, Hourglass, ShieldCheck, RotateCcw, Check, Copy, Users } from "lucide-react";
 import { PALETTE } from "@/lib/palette";
 import { JunoPaymentHandoff } from "@/components/juno-payment-handoff";
+import { JUNO_PAYMENT_URL } from "@/lib/juno";
 import { ApplicationReviewCard } from "@/components/application-review-card";
 
 const STORE_KEY = "pravrutti.guest";
@@ -131,6 +131,10 @@ export function RegistrationDialog({
   const [verifiedTeam, setVerifiedTeam] = useState<TeamPreview | null>(null);
   const [copied, setCopied] = useState(false);
   const [teamBusy, setTeamBusy] = useState(false);
+  /* The payment step is two screens: confirm-and-pay, then come back and quote
+     the reference. Splitting them keeps the second screen about one thing. */
+  const [payPhase, setPayPhase] = useState<"confirm" | "reference">("confirm");
+  const [confirmCancel, setConfirmCancel] = useState(false);
   const errRef = useRef<HTMLParagraphElement>(null);
 
   useEffect(() => {
@@ -207,8 +211,21 @@ export function RegistrationDialog({
       setError(null);
       setEditing(false);
       setForm(emptyForm());
+      setPayPhase("confirm");
+      setConfirmCancel(false);
       resetTeam();
     }, 200);
+  };
+
+  /* Cancelling at the payment screen: nothing has been submitted yet, so this
+     simply puts them back at the start to try again — the case it exists for is
+     a payment that failed on the portal. */
+  const restartRegistration = () => {
+    setConfirmCancel(false);
+    setPayPhase("confirm");
+    setForm((f) => ({ ...f, paymentRef: "", junoRegId: "" }));
+    setError(null);
+    setStep(1);
   };
 
   const fail = (msg: string) => {
@@ -744,6 +761,9 @@ export function RegistrationDialog({
                 </div>
               ) : (
                 <div className="space-y-3 animate-step">
+                  {/* The summary belongs to the confirm screen; the reference
+                      screen is deliberately about one thing. */}
+                  {payPhase === "confirm" && (
                   <div className={`${card} p-4 space-y-3`}>
                     <div className="flex items-baseline justify-between">
                       <span className="text-[13px] text-white/50">Entry fee</span>
@@ -800,72 +820,112 @@ export function RegistrationDialog({
                       ))}
                     </div>
                   </div>
-
-                  {/* The fee is paid on the college's Juno portal before applying;
-                      the transaction ID from that receipt is what the desk checks
-                      against the statement. Required for anyone who is charged —
-                      the API refuses the application without it.
-
-                      The handoff sits above the field because that is the order
-                      the applicant has to do it in: the ID does not exist until
-                      they have paid. */}
-                  <JunoPaymentHandoff
-                    fee={applicantFee}
-                    applicant={{
-                      name: form.name,
-                      phone: form.phone,
-                      email: form.email,
-                      /* A lead pays for the team, and teammates join with the
-                         code afterwards, so at this moment the honest count is
-                         whoever is on the roster — never fewer than the lead. */
-                      heads: createdTeam?.memberCount ?? 1,
-                    }}
-                  />
-
-                  {/* Path B's poll key. Juno shows "Successfully Registered with
-                      ID <id>" right after registering; that id is what we ask
-                      Juno about to auto-verify the payment. */}
-                  <Field label="Step 2 — Juno registration ID">
-                    <Input
-                      className={inputCls}
-                      value={form.junoRegId}
-                      onChange={set("junoRegId")}
-                      placeholder='The ID Juno shows: "Registered with ID …"' maxLength={40}
-                      aria-label="Juno registration ID" />
-                    <p className="mt-1 text-[11px] text-white/40 leading-relaxed">{JUNO_REGID_HINT}</p>
-                  </Field>
-
-                  <Field label="Juno transaction ID (optional)">
-                    <Input
-                      className={inputCls}
-                      value={form.paymentRef}
-                      onChange={set("paymentRef")}
-                      placeholder="From your Juno payment receipt" maxLength={80}
-                      aria-label="Juno transaction ID" />
-                  </Field>
-
-                  {!PAYMENTS_LIVE && (
-                    <p className="text-xs text-champagne-gold/80 border border-soft-gold/20 bg-soft-gold/[0.07] rounded-lg px-3 py-2.5 leading-relaxed">
-                      We verify your payment automatically from your registration ID — your ticket
-                      and QR are emailed to you once it clears, with nothing more to do. Keep the
-                      same name, number and email on both sides so we can match it.
-                    </p>
                   )}
 
-                  {errorBox}
+                  {payPhase === "confirm" ? (
+                    <>
+                      {/* The portal cannot be prefilled (lib/juno.ts explains why),
+                          so the four values it asks for are handed over ready to
+                          copy before they go. */}
+                      <JunoPaymentHandoff
+                        fee={applicantFee}
+                        applicant={{
+                          name: form.name,
+                          phone: form.phone,
+                          email: form.email,
+                          /* A lead pays for the team and teammates join later, so
+                             the honest count now is whoever is on the roster. */
+                          heads: createdTeam?.memberCount ?? 1,
+                        }}
+                      />
 
-                  <div className="flex gap-2">
-                    <Button variant="outline" onClick={() => { setError(null); setStep(2); }} className={`${ghostBtn} px-4`} aria-label="Back">
-                      <ArrowLeft className="w-4 h-4" />
-                    </Button>
-                    <Button onClick={submit} disabled={submitting} className={`${primaryBtn} flex-1`}>
-                      {submitting ? (
-                        <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Submitting…</>
-                      ) : !PAYMENTS_LIVE ? (
-                        "Submit application" ) : (
-                        `Pay ${applicantFee} and apply` )}
-                    </Button>
-                  </div>
+                      {errorBox}
+
+                      <div className="flex gap-2">
+                        <Button variant="outline" onClick={() => { setError(null); setStep(2); }} className={`${ghostBtn} px-4`} aria-label="Back">
+                          <ArrowLeft className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          onClick={() => {
+                            setError(null);
+                            window.open(JUNO_PAYMENT_URL, "_blank", "noopener,noreferrer");
+                            setPayPhase("reference");
+                          }}
+                          className={`${primaryBtn} flex-1`}
+                        >
+                          Proceed to payment
+                        </Button>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      {/* Back from the portal. One reference is enough — asking for
+                          a second number they also have to find helps nobody. */}
+                      <div className={`${card} p-4 space-y-3`}>
+                        <div>
+                          <p className="text-sm font-medium text-white">Paid? Enter your transaction ID</p>
+                          <p className="text-[13px] text-white/45 mt-0.5 leading-relaxed">
+                            It is on your Juno receipt. We check it against the portal&apos;s statement —
+                            your ticket and QR are emailed once it clears.
+                          </p>
+                        </div>
+                        <Field label="Juno transaction ID">
+                          <Input
+                            className={inputCls}
+                            value={form.paymentRef}
+                            onChange={set("paymentRef")}
+                            placeholder="From your Juno payment receipt" maxLength={80}
+                            aria-label="Juno transaction ID" />
+                        </Field>
+                        <button
+                          type="button"
+                          onClick={() => window.open(JUNO_PAYMENT_URL, "_blank", "noopener,noreferrer")}
+                          className="text-xs text-white/45 hover:text-white/80 underline underline-offset-2 cursor-pointer"
+                        >
+                          Reopen the payment portal
+                        </button>
+                      </div>
+
+                      {errorBox}
+
+                      {confirmCancel ? (
+                        <div className="rounded-xl border border-danger-strong/30 bg-danger-strong/[0.07] p-3.5 space-y-3">
+                          <p className="text-[13px] text-white/80 leading-relaxed">
+                            Cancel this registration? Nothing has been submitted and no place is held,
+                            so if the payment failed you can start again from the beginning.
+                          </p>
+                          <div className="flex gap-2">
+                            <Button variant="outline" onClick={() => setConfirmCancel(false)} className={`${ghostBtn} flex-1`}>
+                              Keep going
+                            </Button>
+                            <Button
+                              onClick={restartRegistration}
+                              className="flex-1 h-[38px] rounded-2xl bg-danger-strong/80 text-white hover:bg-danger-strong font-medium cursor-pointer"
+                            >
+                              Yes, cancel
+                            </Button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="flex gap-2">
+                          <Button
+                            variant="outline"
+                            onClick={() => setConfirmCancel(true)}
+                            className={`${ghostBtn} px-4`}
+                            aria-label="Cancel registration"
+                          >
+                            Cancel
+                          </Button>
+                          <Button onClick={submit} disabled={submitting} className={`${primaryBtn} flex-1`}>
+                            {submitting ? (
+                              <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Submitting…</>
+                            ) : (
+                              "Submit application" )}
+                          </Button>
+                        </div>
+                      )}
+                    </>
+                  )}
                 </div>
               )}
             </>

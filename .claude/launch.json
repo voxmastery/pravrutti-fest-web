@@ -4,7 +4,10 @@
     {
       "name": "fest-web",
       "runtimeExecutable": "bash",
-      "runtimeArgs": ["-c", "cd /home/voxmastery/Desktop/fest-web && npm run dev -- -p 3200"],
+      "runtimeArgs": [
+        "-c",
+        "cd /home/voxmastery/Desktop/fest-web && NEXT_PUBLIC_TEST_SITE=1 npm run dev -- -p 3200"
+      ],
       "port": 3200
     }
   ]
