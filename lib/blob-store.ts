@@ -13,12 +13,20 @@ import {
   sqlPutJson,
   SQL_URL_PREFIX,
 } from "@/lib/sql-store";
+import {
+  memEnabled,
+  memListAll,
+  memReadJson,
+  memPutJson,
+  MEM_URL_PREFIX,
+} from "@/lib/mem-store";
 
 /**
  * Storage seam. Two backends, tried in this order:
  *
  *   1. dev filesystem  — local work needs no database
- *   2. MySQL           — production on Hostinger (also the Vercel test site)
+ *   2. MySQL           — production on Hostinger
+ *   3. in-memory       — the Vercel test site only (no database there)
  *
  * and nothing else: an unconfigured environment throws rather than pretending
  * a write succeeded, because a silently dropped registration is discovered at
@@ -37,6 +45,7 @@ const noBackend = (): never => {
 export async function listAll(prefix: string) {
   if (useDevBlob()) return devListAll(prefix);
   if (sqlEnabled()) return sqlListAll(prefix);
+  if (memEnabled()) return memListAll(prefix);
   return noBackend();
 }
 
@@ -48,6 +57,7 @@ export async function listAll(prefix: string) {
 export async function readPrivate(url: string) {
   if (url.startsWith(DEV_URL_PREFIX)) return devReadJson(url.slice(DEV_URL_PREFIX.length));
   if (url.startsWith(SQL_URL_PREFIX)) return sqlReadJson(url.slice(SQL_URL_PREFIX.length));
+  if (url.startsWith(MEM_URL_PREFIX)) return memReadJson(url.slice(MEM_URL_PREFIX.length));
   return null;
 }
 
@@ -82,6 +92,7 @@ export function teamMemberPath(eventId: string, email: string) {
 export async function readJsonByPath(path: string) {
   if (useDevBlob()) return devReadJson(path);
   if (sqlEnabled()) return sqlReadJson(path);
+  if (memEnabled()) return memReadJson(path);
   return noBackend();
 }
 
@@ -95,6 +106,7 @@ export async function readJsonByPath(path: string) {
 export async function putJson(path: string, data: unknown, overwrite: boolean) {
   if (useDevBlob()) return devPutJson(path, data);
   if (sqlEnabled()) return sqlPutJson(path, data, overwrite);
+  if (memEnabled()) return memPutJson(path, data, overwrite);
   return noBackend();
 }
 

@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useSession, signIn, signOut } from "next-auth/react";
 import { IdentityContext } from "@/lib/identity-context";
 import { devImpersonatedEmailClient } from "@/lib/dev-identity";
+import { TEST_SITE } from "@/lib/test-site";
 
 /** Mounted when Clerk isn't configured. Google creds may or may not be set. */
 export function NextAuthIdentity({ children }: { children: React.ReactNode }) {
@@ -11,6 +12,13 @@ export function NextAuthIdentity({ children }: { children: React.ReactNode }) {
   const [authEnabled, setAuthEnabled] = useState<boolean | null>(null);
 
   useEffect(() => {
+    // The Vercel test site is walkable as a guest: with auth reported off, the
+    // dialog collects name + email itself instead of forcing a Google sign-in
+    // whose OAuth redirect isn't set up for that domain.
+    if (TEST_SITE) {
+      setAuthEnabled(false);
+      return;
+    }
     fetch("/api/config")
       .then((r) => r.json())
       .then((d) => setAuthEnabled(!!d.googleAuth))
