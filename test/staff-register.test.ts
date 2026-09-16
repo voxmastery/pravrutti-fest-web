@@ -41,7 +41,7 @@ const application = (over: Record<string, unknown> = {}) => ({
   email: "asha@example.com",
   phone: "9876543210",
   college: "Ramaiah Institute of Technology",
-  eventId: "robo-race",
+  eventId: "the-logic-circuit", // solo-allowed: this test is about staff, not the team rule
   paymentRef: "JUNO-TEST-0001",
   ...over,
 });

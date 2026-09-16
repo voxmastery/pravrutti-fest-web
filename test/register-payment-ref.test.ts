@@ -28,7 +28,7 @@ beforeAll(async () => {
   ({ POST } = await import("@/app/api/register/route"));
 });
 
-const EVENT = "robo-race";
+const EVENT = "the-logic-circuit"; // solo-allowed, so these tests exercise phone/ref rules, not the team rule
 const CODE = "ROBO123456";
 const base = (over: Record<string, unknown> = {}) => ({
   name: "Asha Rao",

@@ -176,6 +176,15 @@ export function RegistrationDialog({
   const applicantFee = formatFee(1);
   const teamCap = createdTeam?.maxMembers ?? verifiedTeam?.maxMembers ?? event?.teamSize.max ?? MAX_TEAM_SIZE;
   const joining = teamPane === "join" || teamPane === "verified";
+  /* 21 of 24 events are team-only. Both the copy and the Continue gate read
+     from the event itself so a new event needs no code change here. */
+  const soloAllowed = event?.teamSize.soloAllowed ?? true;
+  const teamRangeLabel = !event
+    ? "a team"
+    : event.teamSize.min === event.teamSize.max
+    ? `${event.teamSize.min} people`
+    : `${event.teamSize.min}\u2013${event.teamSize.max} people`;
+  const hasTeam = Boolean(createdTeam) || joining;
   // Only nag once they have typed something — an empty field is not yet a mistake.
   const phoneDirtyInvalid = form.phone.length > 0 && !isValidPhone(form.phone);
 
@@ -547,9 +556,18 @@ export function RegistrationDialog({
                           Join team
                         </Button>
                       </div>
-                      <p className="text-[13px] text-white/40 leading-relaxed">
-                        Solo is fine — continue without a team. ₹{FEE_PER_HEAD} online, same as a team lead.
-                      </p>
+                      {/* Most events are team-only; offering "solo is fine"
+                          there sends people into a 400 from the server. */}
+                      {soloAllowed ? (
+                        <p className="text-[13px] text-white/40 leading-relaxed">
+                          Solo is fine — continue without a team. ₹{FEE_PER_HEAD} online, same as a team lead.
+                        </p>
+                      ) : (
+                        <p className="text-[13px] text-champagne-gold/80 leading-relaxed">
+                          {event.name} is a team event — you need {teamRangeLabel} to enter. Create a team or
+                          join one with a code.
+                        </p>
+                      )}
                     </div>
                   )}
 
@@ -707,6 +725,13 @@ export function RegistrationDialog({
                       <Button
                         onClick={() => {
                           if (!detailsOk()) return;
+                          // Team-only event: the server refuses a solo entry,
+                          // so stop here rather than sending them to the
+                          // payment step and failing after they have paid.
+                          if (!soloAllowed && !hasTeam)
+                            return fail(
+                              `${event.name} is a team event — create a team or join one with a code before continuing.`
+                            );
                           setError(null);
                           setStep(3);
                         }}

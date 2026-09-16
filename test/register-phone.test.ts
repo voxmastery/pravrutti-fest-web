@@ -32,7 +32,7 @@ beforeAll(async () => {
   ({ POST } = await import("@/app/api/register/route"));
 });
 
-const EVENT = "robo-race";
+const EVENT = "the-logic-circuit"; // solo-allowed, so these tests exercise phone/ref rules, not the team rule
 const KEY = `app/${EVENT}/asha@example.com.json`;
 
 const application = (over: Record<string, unknown> = {}) => ({

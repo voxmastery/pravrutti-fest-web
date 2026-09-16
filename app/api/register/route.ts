@@ -139,6 +139,20 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: PHONE_HINT }, { status: 400 });
   if (college.length < 2 || college.length > 120)
     return NextResponse.json({ error: "Enter your college name." }, { status: 400 });
+  /* Most events are team-only. Admitting someone alone there books a place the
+     event cannot run — the minimum team size exists for a reason — so this is
+     enforced here and not left to the dialog to hide. */
+  if (!event.teamSize.soloAllowed && !team)
+    return NextResponse.json(
+      {
+        error: `${event.name} is a team event — create a team or join one with a code before applying. Teams are ${
+          event.teamSize.min === event.teamSize.max
+            ? `${event.teamSize.min} people`
+            : `${event.teamSize.min}\u2013${event.teamSize.max} people`
+        }.`,
+      },
+      { status: 400 }
+    );
   if (teamName.length > 80)
     return NextResponse.json({ error: "Team name is too long." }, { status: 400 });
   if (membersList.length > MAX_TEAM_SIZE - 1)
