@@ -16,6 +16,7 @@ import {
 } from "@/lib/applications";
 import { Team, normalizeTeamCode, isValidTeamCode } from "@/lib/teams";
 import { cancelApplication } from "@/lib/payment-review";
+import { sendReceivedEmail } from "@/lib/received-email";
 import { resolveEmail } from "@/lib/identity";
 import { resolveRole, roleForEmail } from "@/lib/roles";
 import { staffBlocksApplication, STAFF_CANNOT_APPLY } from "@/lib/staff-cockpit";
@@ -249,6 +250,29 @@ export async function POST(req: Request) {
       await putJson(teamMemberPath(evId, email), { code: team.code, eventId: evId, member: entry }, true);
     } catch (e: any) {
       console.error("team roster update failed", e);
+    }
+  }
+
+  /* Acknowledge the submission. Somebody has just paid ₹200 on a third-party
+     portal and pasted a reference into a form; silence after that reads like
+     the money went nowhere, and the expensive mistake it invites is paying a
+     second time. Deliberately after the record is saved and never able to undo
+     it: a mail outage must not cost someone their place, so the failure is
+     recorded on the record and the application still succeeds. */
+  const receipt = await sendReceivedEmail(record);
+  if (receipt.sent || receipt.error) {
+    try {
+      await putJson(
+        applicationPath(evId, email),
+        {
+          ...record,
+          receivedEmailAt: receipt.sent ? new Date().toISOString() : undefined,
+          receivedEmailError: receipt.sent ? null : receipt.error ?? "Mail send failed.",
+        },
+        true
+      );
+    } catch (e) {
+      console.error("received-email stamp failed", e);
     }
   }
 

@@ -138,6 +138,12 @@ export type Application = {
       what we ask Juno about to auto-verify the payment. Optional — an
       application without one falls back to manual verification. */
   junoRegId?: string | null;
+  /** When the "we have your application" acknowledgement went out, and why it
+      did not if it did not. Separate from the confirmation below: they answer
+      different questions ("did they hear from us at all" vs "do they have
+      their ticket"). */
+  receivedEmailAt?: string;
+  receivedEmailError?: string | null;
   /** When the confirmation email carrying the ticket QR last went out. */
   confirmationEmailAt?: string;
   /** Failure text from the last send attempt, so the desk can see why an
