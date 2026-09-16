@@ -470,21 +470,18 @@ export const events: Event[] = [
     teamSize: { min: 3, max: 4, soloAllowed: false },
     capacity: 160,
     capacityUnit: "teams",
-    duration: "12 hours",
+    duration: "12+3 hours",
     coordinators: {
       faculty: [],
       student: [
         { name: "Jeslene Iniya D" },
-        { name: "Sooraj Chackravarthy" },
+        { name: "Sooraj Chakravarthy S" },
         { name: "Niranjana Mahendran" },
-        { name: "Spandana J S" },
-        { name: "Gnaneshwari N" },
       ],
     },
-    /* Niranjana Mahendran has no Google address on record yet, so she is
-       listed publicly but cannot open the dashboard. Spandana and
-       Gnaneshwari reuse the addresses they sign in with for The Logic
-       Circuit and Discoverize. */
+    /* Three names only, as the coordinators asked. Spandana and Gnaneshwari
+       keep their dashboard access — they still run The Logic Circuit and
+       Discoverize — but are no longer listed as running this one. */
     dashboardEmails: [
       "jesleneiniya@gmail.com",
       "25etai@msruas.ac.in",

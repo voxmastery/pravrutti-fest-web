@@ -48,7 +48,6 @@ describe("coordinator phone entries match coordinator names", () => {
       "ELECTROXCAPE: Spoorthi K",
       "ELECTROXCAPE: Sanketh Rao",
       "ELECTROXCAPE: Prachi Joshi",
-      "Respawn: Niranjana Mahendran",
     ]);
   });
 });
