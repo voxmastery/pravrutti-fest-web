@@ -124,7 +124,7 @@ export function FooterSection() {
             </p>
             <p className="text-xs text-pearl-white/35 tracking-wider">
               In association with IEEE &amp; ISTE student chapters &middot; Website by{" "}
-              <span className="text-champagne-gold/60">Aman Tebriwal</span>
+              <span className="text-champagne-gold/60">Aman Tebriwal &amp; Ganesh S</span>
             </p>
           </div>
 
