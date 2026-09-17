@@ -476,7 +476,6 @@ export const events: Event[] = [
       student: [
         { name: "Jeslene Iniya D" },
         { name: "Sooraj Chakravarthy S" },
-        { name: "Niranjana Mahendran" },
       ],
     },
     /* Three names only, as the coordinators asked. Spandana and Gnaneshwari

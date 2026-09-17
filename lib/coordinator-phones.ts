@@ -59,7 +59,6 @@ const PHONES: Record<string, CoordinatorPhone[]> = {
   "respawn": [
     { name: "Jeslene Iniya D", phone: "8148817683" },
     { name: "Sooraj Chakravarthy S", phone: "63602 69253" },
-    { name: "Niranjana Mahendran", phone: "70229 39913" },
   ],
   "glide-x": [
     { name: "B S Mokshada", phone: "93538 24957" },
