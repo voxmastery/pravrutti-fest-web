@@ -11,6 +11,7 @@ import { DashboardShell, ListSkeleton, Notice } from "@/components/dashboard/she
 import { StatInline } from "@/components/dashboard/stat-tile";
 import { FilterGroup } from "@/components/dashboard/filter-group";
 import { AppStatusBadge } from "@/components/dashboard/status-badge";
+import { AccessPanel } from "@/components/dashboard/access-panel";
 import { AlertTriangle, Check, ChevronDown, ClipboardList } from "lucide-react";
 
 type Counts = { registered: number; confirmed: number; checkedIn: number; notArrived: number };
@@ -102,16 +103,16 @@ export default function DashboardPage() {
       </DashboardShell>
     );
 
-  /* Coordinator dashboards are switched off (lib/roles.ts), which reaches here
-     as a coordinator holding no events. Say so plainly — an empty roster would
-     read as their event having lost its applicants. */
+  /* Their dashboards are switched off for this event (an organiser's setting,
+     lib/access-control.ts), which reaches here as a coordinator holding no
+     events. Say so plainly — an empty roster would read as their event having
+     lost its applicants. */
   if (dash.role === "coordinator" && dash.events.length === 0)
     return (
       <DashboardShell title="Dashboard">
         <Notice title="Coordinator dashboards are switched off for now">
-          Your access is still in place — the organising team has paused these dashboards while
-          registration settles. Nothing is lost, and your event&apos;s roster will be here when
-          they turn it back on.
+          Your access is still in place — an organiser has paused these dashboards. Nothing is
+          lost, and your event&apos;s roster will be here when they turn it back on.
         </Notice>
       </DashboardShell>
     );
@@ -247,6 +248,12 @@ export default function DashboardPage() {
             ))}
           </TableBody>
         </Table>
+      </Card>
+
+      {/* Organiser-only, and enforced as such by /api/admin/access — this is
+          where organisers are granted and coordinator dashboards switched. */}
+      <Card className="mt-6 rounded-3xl border-royal-wine bg-cosmic-purple/30 p-6 shadow-none sm:p-8">
+        <AccessPanel />
       </Card>
     </DashboardShell>
   );

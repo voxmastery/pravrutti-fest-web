@@ -19,7 +19,7 @@ import {
   maxTeamSizeFor,
 } from "@/lib/teams";
 import { resolveEmail, authRequired } from "@/lib/identity";
-import { resolveRole, roleForEmail } from "@/lib/roles";
+import { resolveRole, resolveRoleFor } from "@/lib/roles";
 import { staffBlocksApplication, STAFF_CANNOT_APPLY } from "@/lib/staff-cockpit";
 import { newTicketId } from "@/lib/ticket-id";
 import {
@@ -167,7 +167,7 @@ async function createTeam(body: any) {
   if ("error" in who) return who.error;
   const email = who.email;
   const session = await resolveRole();
-  if (staffBlocksApplication(session.kind, roleForEmail(email).kind))
+  if (staffBlocksApplication(session.kind, (await resolveRoleFor(email)).kind))
     return jsonError(STAFF_CANNOT_APPLY, 403);
 
   const name = String(body?.name ?? "").trim();
@@ -260,7 +260,7 @@ async function joinTeam(body: any) {
   if ("error" in who) return who.error;
   const email = who.email;
   const session = await resolveRole();
-  if (staffBlocksApplication(session.kind, roleForEmail(email).kind))
+  if (staffBlocksApplication(session.kind, (await resolveRoleFor(email)).kind))
     return jsonError(STAFF_CANNOT_APPLY, 403);
 
   const code = normalizeTeamCode(String(body?.code ?? ""));

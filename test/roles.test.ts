@@ -1,6 +1,6 @@
 import { describe, it, expect, afterEach } from "vitest";
 import { events } from "@/lib/pravrutti-data";
-import { COORDINATOR_DASHBOARD_ENABLED, roleForEmail, canViewEvent } from "@/lib/roles";
+import { roleForEmail, canViewEvent } from "@/lib/roles";
 
 describe("Event.dashboardEmails", () => {
   /* This used to assert the field was absent "until the spreadsheet lands".
@@ -85,11 +85,10 @@ describe("roleForEmail", () => {
     expect(roleForEmail("voxmastery@gmail.com")).toEqual({ kind: "organiser" });
   });
 
-  /* While coordinator dashboards are switched off a coordinator is still
-     recognised as one but holds no events — see lib/roles.ts. These assert the
-     address-to-event mapping whenever it is on, so turning it back on cannot
-     quietly ship a broken roster. */
-  const expectedEvents = (ids: string[]) => (COORDINATOR_DASHBOARD_ENABLED ? ids : []);
+  /* roleForEmail is the pure rule — env plus the event roster. Whether each
+     dashboard is actually open is a stored setting applied by resolveRole(),
+     so this still asserts the full address-to-event mapping. */
+  const expectedEvents = (ids: string[]) => ids;
 
   it("falls through to coordinator when ORGANISER_EMAILS is empty and the address is only in dashboardEmails", () => {
     process.env.ORGANISER_EMAILS = "";

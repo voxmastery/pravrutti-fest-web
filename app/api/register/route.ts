@@ -18,7 +18,7 @@ import { Team, normalizeTeamCode, isValidTeamCode } from "@/lib/teams";
 import { cancelApplication } from "@/lib/payment-review";
 import { sendReceivedEmail } from "@/lib/received-email";
 import { resolveEmail } from "@/lib/identity";
-import { resolveRole, roleForEmail } from "@/lib/roles";
+import { resolveRole, resolveRoleFor } from "@/lib/roles";
 import { staffBlocksApplication, STAFF_CANNOT_APPLY } from "@/lib/staff-cockpit";
 import {
   listAll,
@@ -85,7 +85,7 @@ export async function POST(req: Request) {
   const verified = await resolveEmail();
   const email = (verified ?? String(body?.email ?? "")).trim().toLowerCase();
   const session = await resolveRole();
-  if (staffBlocksApplication(session.kind, roleForEmail(email).kind))
+  if (staffBlocksApplication(session.kind, (await resolveRoleFor(email)).kind))
     return NextResponse.json({ error: STAFF_CANNOT_APPLY }, { status: 403 });
   const phone = normalizePhone(body?.phone);
   const college = String(body?.college ?? "").trim();
