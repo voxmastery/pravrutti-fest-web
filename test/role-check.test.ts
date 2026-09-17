@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { roleForEmail } from "@/lib/roles";
+import { COORDINATOR_DASHBOARD_ENABLED, roleForEmail } from "@/lib/roles";
 
 describe("voxmastery@gmail.com via the real Google path", () => {
   beforeEach(() => { process.env.ORGANISER_EMAILS = "voxmastery@gmail.com"; });
@@ -13,7 +13,11 @@ describe("voxmastery@gmail.com via the real Google path", () => {
   it("a coordinator address resolves to their own event only", () => {
     const r = roleForEmail("arbharaath@gmail.com");
     expect(r.kind).toBe("coordinator");
-    if (r.kind === "coordinator") expect(r.eventIds).toContain("robo-race");
+    // Dashboards are off, so they are a coordinator holding nothing.
+    if (r.kind === "coordinator")
+      COORDINATOR_DASHBOARD_ENABLED
+        ? expect(r.eventIds).toContain("robo-race")
+        : expect(r.eventIds).toEqual([]);
   });
   it("an unknown address gets nothing", () => {
     expect(roleForEmail("stranger@example.com")).toEqual({ kind: "none" });

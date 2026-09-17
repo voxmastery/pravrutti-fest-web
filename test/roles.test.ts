@@ -1,6 +1,6 @@
 import { describe, it, expect, afterEach } from "vitest";
 import { events } from "@/lib/pravrutti-data";
-import { roleForEmail, canViewEvent } from "@/lib/roles";
+import { COORDINATOR_DASHBOARD_ENABLED, roleForEmail, canViewEvent } from "@/lib/roles";
 
 describe("Event.dashboardEmails", () => {
   /* This used to assert the field was absent "until the spreadsheet lands".
@@ -85,18 +85,24 @@ describe("roleForEmail", () => {
     expect(roleForEmail("voxmastery@gmail.com")).toEqual({ kind: "organiser" });
   });
 
+  /* While coordinator dashboards are switched off a coordinator is still
+     recognised as one but holds no events — see lib/roles.ts. These assert the
+     address-to-event mapping whenever it is on, so turning it back on cannot
+     quietly ship a broken roster. */
+  const expectedEvents = (ids: string[]) => (COORDINATOR_DASHBOARD_ENABLED ? ids : []);
+
   it("falls through to coordinator when ORGANISER_EMAILS is empty and the address is only in dashboardEmails", () => {
     process.env.ORGANISER_EMAILS = "";
     expect(roleForEmail("voxmastery@gmail.com")).toEqual({
       kind: "coordinator",
-      eventIds: ["chaos", "hacktivate"],
+      eventIds: expectedEvents(["chaos", "hacktivate"]),
     });
   });
 
   it("gives a per-event coordinator only the events they are listed on", () => {
     expect(roleForEmail("arbharaath@gmail.com")).toEqual({
       kind: "coordinator",
-      eventIds: ["robo-race", "kurukshetra-the-robo-war"],
+      eventIds: expectedEvents(["robo-race", "kurukshetra-the-robo-war"]),
     });
   });
 

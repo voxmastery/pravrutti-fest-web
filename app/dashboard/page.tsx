@@ -102,6 +102,20 @@ export default function DashboardPage() {
       </DashboardShell>
     );
 
+  /* Coordinator dashboards are switched off (lib/roles.ts), which reaches here
+     as a coordinator holding no events. Say so plainly — an empty roster would
+     read as their event having lost its applicants. */
+  if (dash.role === "coordinator" && dash.events.length === 0)
+    return (
+      <DashboardShell title="Dashboard">
+        <Notice title="Coordinator dashboards are switched off for now">
+          Your access is still in place — the organising team has paused these dashboards while
+          registration settles. Nothing is lost, and your event&apos;s roster will be here when
+          they turn it back on.
+        </Notice>
+      </DashboardShell>
+    );
+
   // ── Coordinator: their roster, no overview ──────────────────────────────
   // Pills come from /api/dashboard/me (`dash.events`), never the full catalog.
   if (dash.role === "coordinator") {
