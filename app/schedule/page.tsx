@@ -7,6 +7,7 @@ import Link from "next/link";
 import { Info, Clock, ArrowUpRight, Moon } from "lucide-react";
 import { FEST } from "@/lib/pravrutti-data";
 import { scheduleDays, longRunning, type TrackEntry } from "@/lib/schedule";
+import { ScheduleGrid } from "@/components/schedule-grid";
 
 /* Rendered from lib/schedule.ts rather than an image. The schedule that used to
    sit here WAS an image, and it kept showing the 2025 roster long after the
@@ -93,8 +94,14 @@ export default function SchedulePage() {
           </p>
         </div>
 
-        {/* Days */}
-        <div className="space-y-14">
+        {/* The coordinators' grid, in the site's colours. Five columns need the
+            width, so below `md` the same data stacks into cards underneath. */}
+        <div className="hidden md:block">
+          <ScheduleGrid />
+        </div>
+
+        {/* Days — the small-screen reading of the same schedule. */}
+        <div className="space-y-14 md:hidden">
           {scheduleDays.map((day) => (
             <section key={day.n} aria-labelledby={`day-${day.n}`}>
               <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1 mb-5">
