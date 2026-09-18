@@ -29,6 +29,12 @@ export interface Event {
       most events cap teams, not heads. */
   capacity?: number;
   capacityUnit: "teams" | "participants";
+  /** The field size in teams, where the coordinators stated one. Set this when
+      it cannot be derived from `capacity`: a head count that is not a whole
+      number of max-size teams (TRIATHLON's 210 is 70 threes, not 52.5 fours),
+      or an event whose cap was given in people. It wins over the derivation,
+      so the page never has to fall back to counting heads. */
+  maxTeams?: number;
   /** How long the event runs, e.g. "3 hours", "24 hours". */
   duration?: string;
   /** Entry restriction, where one exists (year, branch, team make-up). */
@@ -116,20 +122,32 @@ export function capacityInPeople(e: Event): number | null {
  * word "teams" therefore claimed 64 teams, four times the real field, so the
  * team count is derived here instead of trusting the unit as a label.
  *
- * Falls back to participants whenever teams would be a lie: a head count that
- * is not a whole number of teams (TRIATHLON's 210 is 52.5 teams, and rounding
- * would invent or destroy a place), or a solo event.
+ * Order: an explicit `maxTeams` wins, then the head count divided by the team
+ * size when that is whole. Falls back to participants only when teams would be
+ * a lie — a cap that is not a whole number of teams (rounding would invent or
+ * destroy a place), or a solo event.
  */
 export function capacityLabel(e: Event): string | null {
+  const teams = maxTeamsFor(e);
+  if (teams !== null) return `${teams} ${teams === 1 ? "team" : "teams"}`;
+  return e.capacity ? `${e.capacity} participants` : null;
+}
+
+/**
+ * The field size in teams, or null when the event is not counted that way.
+ *
+ * The same order capacityLabel uses, exposed so the live seat counter can
+ * count teams against it instead of heads. Null means "no honest team figure"
+ * — a solo-allowed event whose cap is in people, or a head count that is not a
+ * whole number of teams — and callers fall back to counting people.
+ */
+export function maxTeamsFor(e: Event): number | null {
+  if (e.maxTeams && e.maxTeams > 0) return e.maxTeams;
   const cap = e.capacity;
   if (!cap) return null;
-
   const perTeam = e.teamSize.max;
-  if (e.capacityUnit === "teams" && perTeam > 1 && cap % perTeam === 0) {
-    const teams = cap / perTeam;
-    return `${teams} ${teams === 1 ? "team" : "teams"}`;
-  }
-  return `${cap} participants`;
+  if (e.capacityUnit === "teams" && perTeam > 1 && cap % perTeam === 0) return cap / perTeam;
+  return null;
 }
 
 export function teamLabel(e: Event): string {
@@ -762,6 +780,9 @@ export const events: Event[] = [
     teamSize: { min: 3, max: 4, soloAllowed: false },
     capacity: 210,
     capacityUnit: "teams",
+    /* 210 is 70 teams of three, the only whole reading — dividing by the max of
+       four gives 52.5, which is why this used to fall back to counting heads. */
+    maxTeams: 70,
     duration: "3 hours",
     eligibility: "Teams must have 2–3 members. All members must be present for the full event. Team members cannot be changed once the event begins.",
     coordinators: {

@@ -58,3 +58,41 @@ describe("capacityLabel", () => {
     expect(capacityLabel(e)).toBe("16 teams");
   });
 });
+
+describe("capacityLabel — an explicit team cap", () => {
+  /* Derivation guesses; a stated figure does not. maxTeams exists for the caps
+     arithmetic cannot recover — TRIATHLON's 210 is 70 threes, and dividing by
+     the max of four gives 52.5, which used to fall back to counting heads. */
+  it("wins over the derivation", () => {
+    const e = make({ capacity: 210, capacityUnit: "teams", maxTeams: 70, teamSize: { min: 3, max: 4, soloAllowed: false } });
+    expect(capacityLabel(e)).toBe("70 teams");
+  });
+
+  it("wins even where the derivation would also work, so the stated number is what shows", () => {
+    expect(capacityLabel(make({ capacity: 80, capacityUnit: "teams", maxTeams: 25 }))).toBe("25 teams");
+  });
+
+  it("says team, singular, for a field of one", () => {
+    expect(capacityLabel(make({ capacity: 4, capacityUnit: "teams", maxTeams: 1 }))).toBe("1 team");
+  });
+
+  it("is ignored when zero or absent, rather than printing '0 teams'", () => {
+    expect(capacityLabel(make({ capacity: 80, capacityUnit: "teams", maxTeams: 0 }))).toBe("20 teams");
+  });
+
+  /* The events whose caps are stated in people and allow solo entry: a team
+     figure there would misstate the field, so they keep counting heads until
+     the coordinators give a real team cap. */
+  it("leaves solo-allowed, people-counted events showing participants", () => {
+    const solo = make({ capacity: 60, capacityUnit: "participants", teamSize: { min: 1, max: 4, soloAllowed: true } });
+    expect(capacityLabel(solo)).toBe("60 participants");
+  });
+
+  it("no event still falls back to participants except the two known ones", () => {
+    const onHeads = events
+      .filter((e) => (capacityLabel(e) ?? "").includes("participants"))
+      .map((e) => e.name)
+      .sort();
+    expect(onHeads).toEqual(["DENT - INNOVATE", "Discoverize (Research Paper Presentation)"]);
+  });
+});

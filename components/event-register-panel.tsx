@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { RegistrationDialog } from "@/components/registration-dialog";
 import { TeamInviteCard, useMyTeam } from "@/components/team-invite-card";
-import { Event, eventId, capacityFor, effectiveRegistrationState, type RegistrationState } from "@/lib/pravrutti-data";
+import { Event, eventId, capacityFor, maxTeamsFor, effectiveRegistrationState, type RegistrationState } from "@/lib/pravrutti-data";
 import { FEE_PER_HEAD, isLiveApplication, type AppStatus } from "@/lib/applications";
 import { IndianRupee, Ticket, UserCheck } from "lucide-react";
 import { useDashboardRole } from "@/hooks/use-dashboard-role";
@@ -48,6 +48,8 @@ export function EventRegisterPanel({
   const staff = isStaffRole(dash.role);
 
   const [count, setCount] = useState<number | null>(null);
+  /* Teams confirmed so far, for events whose field is stated in teams. */
+  const [teamCount, setTeamCount] = useState<number | null>(null);
   const [waiting, setWaiting] = useState(0);
   const [open, setOpen] = useState(false);
   /* Starts open and closes on mount rather than being read during render. This
@@ -67,9 +69,13 @@ export function EventRegisterPanel({
       .then((d) => {
         if (!d) return;
         setCount(d.confirmed?.[id] ?? 0);
+        setTeamCount(d.confirmedTeams?.[id] ?? 0);
         setWaiting(d.pending?.[id] ?? 0);
       })
-      .catch(() => setCount(null));
+      .catch(() => {
+        setCount(null);
+        setTeamCount(null);
+      });
   }, [id]);
 
   useEffect(load, [load]);
@@ -92,10 +98,19 @@ export function EventRegisterPanel({
     onRegisterOpenChange?.(v);
   };
 
-  const taken = count ?? 0;
-  const left = Math.max(cap - taken, 0);
-  const full = count !== null && left === 0;
-  const pct = Math.min((taken / cap) * 100, 100);
+  /* Count in teams wherever the event states its field that way — that is the
+     unit people register in. Events whose cap is in people (solo-allowed ones)
+     keep counting heads, because a team figure there would misstate the field. */
+  const maxTeams = maxTeamsFor(event);
+  const inTeams = maxTeams !== null;
+  const unit = inTeams ? "team" : "seat";
+
+  const ready = inTeams ? teamCount !== null : count !== null;
+  const total = inTeams ? maxTeams : cap;
+  const taken = (inTeams ? teamCount : count) ?? 0;
+  const left = Math.max(total - taken, 0);
+  const full = ready && left === 0;
+  const pct = Math.min((taken / Math.max(total, 1)) * 100, 100);
   const invite = mine ? <TeamInviteCard team={mine} level={level} /> : null;
 
   /* Confirmed viewers already have a ticket — the card's job (explain approval
@@ -139,14 +154,14 @@ export function EventRegisterPanel({
           <div className="space-y-2">
             <div className="flex items-baseline justify-between gap-3">
               <span className="font-display text-[10px] uppercase tracking-widest text-pearl-white/45">
-                Seats confirmed
+                {inTeams ? "Teams confirmed" : "Seats confirmed"}
               </span>
               <span className="font-display text-xs font-black text-champagne-gold tabular-nums">
-                {count === null ? "—" : `${taken} of ${cap}`}
+                {!ready ? "—" : `${taken} of ${total}`}
               </span>
             </div>
             <div className="h-2 rounded-full bg-midnight-navy border border-royal-wine overflow-hidden">
-              {count !== null && (
+              {ready && (
                 <div
                   className={`h-full animate-meter ${full ? "bg-soft-gold" : "bg-cyber-pink"}`}
                   style={{ width: `${Math.max(pct, 2)}%` }}
@@ -158,9 +173,9 @@ export function EventRegisterPanel({
                 {waiting} {waiting === 1 ? "application" : "applications"} in review
               </p>
             )}
-            {!full && count !== null && left <= 15 && (
+            {!full && ready && left <= 15 && (
               <p className="text-xs text-soft-gold animate-seat-blink">
-                Filling fast — {left} {left === 1 ? "seat" : "seats"} left to confirm
+                Filling fast — {left} {left === 1 ? unit : `${unit}s`} left to confirm
               </p>
             )}
           </div>

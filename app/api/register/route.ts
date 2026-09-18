@@ -36,7 +36,7 @@ export const dynamic = "force-dynamic";
 export { listAll, readPrivate };
 
 /**
- * GET /api/register            -> { confirmed, pending, open }
+ * GET /api/register            -> { confirmed, pending, confirmedTeams, pendingTeams, open }
  * GET /api/register?event=slug -> adds { going: [{ first, initials }] }
  *
  * Only first names and initials ever leave the server.
@@ -55,16 +55,46 @@ export async function GET(req: Request) {
     else if (r.status === "pending") pending[r.eventId] = (pending[r.eventId] ?? 0) + 1;
   }
 
-  const body: any = { confirmed, pending, open: effectiveRegistrationOpen() };
+  /* The same registrations counted as teams, for the events whose field is
+     stated in teams. There is one application per person, so a four-person
+     team is four records — counting rows would report four teams. Distinct
+     team codes, plus one for each entry with no team, is the real figure. */
+  const addTeam = (bucket: Record<string, Set<string>>, r: Application) => {
+    (bucket[r.eventId] ??= new Set()).add(r.teamCode ? `t:${r.teamCode}` : `s:${r.email}`);
+  };
+  const confirmedTeamSets: Record<string, Set<string>> = {};
+  const pendingTeamSets: Record<string, Set<string>> = {};
+  for (const r of valid) {
+    if (r.status === "confirmed") addTeam(confirmedTeamSets, r);
+    else if (r.status === "pending") addTeam(pendingTeamSets, r);
+  }
+  const countSets = (b: Record<string, Set<string>>) =>
+    Object.fromEntries(Object.entries(b).map(([k, v]) => [k, v.size]));
+
+  const body: any = {
+    confirmed,
+    pending,
+    confirmedTeams: countSets(confirmedTeamSets),
+    pendingTeams: countSets(pendingTeamSets),
+    open: effectiveRegistrationOpen(),
+  };
 
   if (slug) {
+    /* Defensive on both fields: one legacy row without an appliedAt, or with a
+       blank name, used to throw here and take the whole endpoint down with it —
+       and this endpoint drives the seat counter on every event page, so a
+       single bad record blanked all of them. */
     body.going = valid
       .filter((r) => r.eventId === slug && r.status === "confirmed")
-      .sort((a, b) => b.appliedAt.localeCompare(a.appliedAt))
+      .sort((a, b) => String(b.appliedAt ?? "").localeCompare(String(a.appliedAt ?? "")))
       .slice(0, 24)
       .map((r) => {
-        const parts = r.name.trim().split(/\s+/);
-        return { first: parts[0], initials: (parts[0][0] + (parts[1]?.[0] ?? "")).toUpperCase() };
+        const parts = String(r.name ?? "").trim().split(/\s+/).filter(Boolean);
+        const first = parts[0] ?? "Guest";
+        return {
+          first,
+          initials: ((first[0] ?? "?") + (parts[1]?.[0] ?? "")).toUpperCase(),
+        };
       });
   }
 
