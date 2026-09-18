@@ -614,7 +614,9 @@ export const events: Event[] = [
     description: "BRIDGE IT is a hands-on structural engineering challenge where participants design and construct a model bridge using limited materials. Teams must apply basic structural engineering concepts while focusing on load-carrying capacity, innovation, efficient material utilization, and technical presentation. The completed bridge will be tested under load to determine its structural performance.",
     fee: "Rs. 200/-",
     prizes: [5000, 3000, 2000],
-    teamSize: { min: 2, max: 4, soloAllowed: false },
+    /* A duo event: exactly two, not a range. teamLabel renders this as
+       "Teams of 2", and the register dialog + API refuse a third. */
+    teamSize: { min: 2, max: 2, soloAllowed: false },
     capacity: 80,
     capacityUnit: "teams",
     duration: "3 hours",
