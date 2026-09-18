@@ -27,6 +27,10 @@ export type ReviewResult = {
   payment: "not_required" | "awaiting" | "paid";
   teamName?: string | null;
   teamCode?: string | null;
+  /* False when they paid but could not reach their transaction ID. There is
+     then nothing to verify automatically against, and saying otherwise would
+     promise them a confirmation that cannot arrive. */
+  hasPaymentRef?: boolean;
 };
 
 const card = "rounded-xl border border-white/[0.08] bg-white/[0.05]";
@@ -52,6 +56,8 @@ function explainer(r: ReviewResult): string {
   const base =
     r.payment === "not_required"
       ? "Nothing to pay for this one — you're in the queue. Your ticket and QR are emailed once organisers approve."
+      : r.payment === "awaiting" && r.hasPaymentRef === false
+      ? "You're registered. Because you couldn't reach your transaction ID, an organiser matches this against the college's payment records by hand — keep your receipt in case they ask for it, and your ticket and QR are emailed once it clears."
       : r.payment === "awaiting"
       ? "We're verifying your payment automatically from your Juno registration ID. As soon as it clears, your ticket and QR are emailed to you — nothing more to do."
       : "Payment received. Your ticket and QR are emailed once your place is confirmed.";

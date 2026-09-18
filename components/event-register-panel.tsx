@@ -119,10 +119,9 @@ export function EventRegisterPanel({
   if (dash.ready && staff) return null;
   if (viewerReady && viewerStatus === "confirmed") return invite;
 
-  const registrationDisabled = true; // Temporarily disabled — registration coming soon
+  const registrationDisabled = true; // Registration is closed while the payment flow is fixed
   const showApply = !registrationDisabled && viewerReady && dash.ready && !live && !closed && !staff;
   const showClosed = viewerReady && !live && closed;
-  const showComingSoon = !registrationDisabled && viewerReady;
 
   return (
     <div className="space-y-3">

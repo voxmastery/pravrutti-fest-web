@@ -207,6 +207,23 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: `Teammate ${i + 1}: ${PHONE_HINT}` }, { status: 400 });
   }
 
+  /* Two states the old flow had no room for.
+
+     "intent" is recorded the moment someone leaves for the payment portal,
+     before they have anything to prove a payment with. Payment happens on the
+     college's site, in a tab we cannot get a callback from, so a registration
+     written only on their return is lost to anything that interrupts them —
+     the portal failing mid-payment, a closed tab, a lost receipt. Twenty-two
+     of thirty-one teams were lost exactly that way. The row goes in first, and
+     the reference fills it in later.
+
+     `refUnavailable` is the person who paid and genuinely cannot produce the
+     reference, which is the state the portal leaves people in when it fails
+     after charging them. Refusing their registration does not make the money
+     come back; it only hides them from the desk.  */
+  const stage = body?.stage === "intent" ? "intent" : "final";
+  const refUnavailable = body?.refUnavailable === true;
+
   const isFree = event.fee.toLowerCase().startsWith("free");
   const isJoiner = Boolean(team && team.createdByEmail !== email);
   const { payment, fee } = feeForApplicant({ eventFree: isFree, eventFee: event.fee, isJoiner });
@@ -218,7 +235,11 @@ export async function POST(req: Request) {
      required: a blank-but-present "asdf" is worse than nothing, because it
      looks like proof on the desk. Joiners are covered by their lead. */
   const paymentRef = isJoiner ? null : readPaymentRef(body?.paymentRef) || null;
-  if (payment === "awaiting" && !isValidPaymentRef(paymentRef))
+  /* A present-but-junk reference is still worse than none — it looks like
+     proof on the desk — so it is refused whatever the stage. */
+  if (paymentRef !== null && !isValidPaymentRef(paymentRef))
+    return NextResponse.json({ error: PAYMENT_REF_HINT }, { status: 400 });
+  if (paymentRef === null && payment === "awaiting" && stage === "final" && !refUnavailable)
     return NextResponse.json({ error: PAYMENT_REF_HINT }, { status: 400 });
   // Path B's poll key. Optional: an application without one simply falls back
   // to manual verification, so it never blocks the form.
@@ -228,7 +249,19 @@ export async function POST(req: Request) {
       ? null
       : JSON.stringify(membersList.map((m) => ({ name: m.name, phone: m.phone || null })));
 
-  const ticketId = newTicketId();
+  const prior = (await readJsonByPath(applicationPath(evId, email))) as Application | null;
+  /* An intent row is this same person mid-payment: what we wrote when they
+     left for the portal, still carrying no reference. Coming back completes
+     it rather than colliding with it, and keeps the ticket they were already
+     given so nothing they have seen changes underneath them. */
+  const completingIntent =
+    stage === "final" &&
+    prior?.status === "pending" &&
+    prior?.payment === "awaiting" &&
+    !prior?.paymentRef;
+
+  const ticketId = completingIntent && prior?.ticketId ? prior.ticketId : newTicketId();
+  const appliedAt = completingIntent && prior?.appliedAt ? prior.appliedAt : new Date().toISOString();
 
   const record: Application = {
     ticketId,
@@ -248,17 +281,16 @@ export async function POST(req: Request) {
     // Bounded (readPaymentRef) because it is shown verbatim on the desk.
     paymentRef,
     junoRegId,
-    appliedAt: new Date().toISOString(),
+    appliedAt,
   };
 
   /* A cancelled application is a place they gave up, so applying again is
      allowed and overwrites it. Any other existing record still collides — the
      duplicate guard is what stops one person taking two places. */
-  const prior = (await readJsonByPath(applicationPath(evId, email))) as Application | null;
   const replacingCancelled = prior?.status === "cancelled";
 
   try {
-    await putJson(applicationPath(evId, email), record, replacingCancelled);
+    await putJson(applicationPath(evId, email), record, replacingCancelled || completingIntent);
   } catch (e: any) {
     if (/exists|overwrite/i.test(String(e?.message)))
       return NextResponse.json({ error: "You've already applied for this event." }, { status: 409 });
@@ -286,6 +318,19 @@ export async function POST(req: Request) {
       console.error("team roster update failed", e);
     }
   }
+
+  /* No acknowledgement for an intent row. They have not finished registering
+     and have not necessarily paid — mail here would read as a confirmation of
+     both. The real submit sends it. */
+  if (stage === "intent")
+    return NextResponse.json({
+      ok: true,
+      stage: "intent",
+      ticketId,
+      payment: record.payment,
+      fee,
+      eventName: event.name,
+    });
 
   /* Acknowledge the submission. Somebody has just paid ₹200 on a third-party
      portal and pasted a reference into a form; silence after that reads like
@@ -323,6 +368,9 @@ export async function POST(req: Request) {
     capacity: capacityFor(evId),
     teamName: record.teamName,
     teamCode: record.teamCode ?? null,
+    /* Whether they gave us anything to verify against. Somebody who paid but
+       could not reach their reference must not be told we are checking one. */
+    hasPaymentRef: Boolean(record.paymentRef),
   });
 }
 

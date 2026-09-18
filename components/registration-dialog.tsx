@@ -53,6 +53,7 @@ type Result = {
   capacity: number;
   teamName?: string | null;
   teamCode?: string | null;
+  hasPaymentRef?: boolean;
 };
 
 function loadGuest(): Guest | null {
@@ -136,6 +137,10 @@ export function RegistrationDialog({
   /* The payment step is two screens: confirm-and-pay, then come back and quote
      the reference. Splitting them keeps the second screen about one thing. */
   const [payPhase, setPayPhase] = useState<"confirm" | "reference">("confirm");
+  const [startingPayment, setStartingPayment] = useState(false);
+  /* The college's portal has served a 404 to the same URL that worked minutes
+     later, and students hit it mid-payment. Checked before sending anyone. */
+  const [portalDown, setPortalDown] = useState(false);
   /* Teams this person already has for other events, so we can offer the name
      instead of making them retype it. */
   const [otherTeams, setOtherTeams] = useState<{ eventId: string; eventName: string; name: string; isLead: boolean }[]>([]);
@@ -329,11 +334,67 @@ export function RegistrationDialog({
     fireConfetti();
   };
 
-  const submit = async () => {
+  /* Recorded before they leave, not after they come back.
+
+     Payment happens on the college's portal in another tab and we get no
+     callback from it, so a registration written only on their return is lost
+     to anything that interrupts them — the portal failing mid-payment, a
+     closed tab, a lost receipt. The person then has no record here while their
+     money has already moved, which is how twenty-two teams were lost. The row
+     goes in first; the reference fills it in afterwards. */
+  const goToPortal = async (force: boolean) => {
+    if (!event || startingPayment) return;
+    setError(null);
+    setStartingPayment(true);
+
+    if (!force) {
+      const health = await fetch("/api/payment-portal", { cache: "no-store" })
+        .then((r) => r.json())
+        /* A failed check says nothing about the portal, so it is not treated
+           as bad news — it just lets them through. */
+        .catch(() => ({ ok: true }));
+      if (!health?.ok) {
+        setPortalDown(true);
+        setStartingPayment(false);
+        return;
+      }
+    }
+
+    try {
+      await fetch("/api/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          stage: "intent",
+          name: form.name,
+          email: form.email,
+          phone: form.phone,
+          college: form.college,
+          teamName: createdTeam?.name ?? "",
+          teamCode: createdTeam?.code ?? "",
+          eventId: eventId(event.name),
+        }),
+      });
+    } catch {
+      /* Best effort. Failing to record the attempt must not stop anyone
+         paying; it only costs us the safety net. */
+    }
+
+    setStartingPayment(false);
+    setPortalDown(false);
+    window.open(JUNO_PAYMENT_URL, "_blank", "noopener,noreferrer");
+    setPayPhase("reference");
+  };
+
+  const submit = async (opts?: { refUnavailable?: boolean }) => {
     if (!event || submitting) return;
+    const refUnavailable = opts?.refUnavailable === true;
     // Charged applicants must quote a plausible receipt reference; joiners are
     // covered by their lead and are never asked for one.
-    if (!joining && !isValidPaymentRef(form.paymentRef)) {
+    /* Somebody who paid and cannot reach their reference is registered
+       anyway. Refusing them does not bring the money back — it only hides
+       them from the desk, which is the failure we are actually fixing. */
+    if (!joining && !refUnavailable && !isValidPaymentRef(form.paymentRef)) {
       setConfirmSubmit(false);
       return fail(PAYMENT_REF_HINT);
     }
@@ -348,7 +409,8 @@ export function RegistrationDialog({
           email: form.email,
           phone: form.phone,
           college: form.college,
-          paymentRef: form.paymentRef,
+          paymentRef: refUnavailable ? "" : form.paymentRef,
+          refUnavailable,
           junoRegId: form.junoRegId,
           teamName: createdTeam?.name ?? "",
           teamCode: createdTeam?.code ?? "",
@@ -981,19 +1043,38 @@ export function RegistrationDialog({
 
                       {errorBox}
 
+                      {/* Better to say the portal is down than to open a tab
+                          that shows Not Found and leave them wondering whether
+                          they have been charged. Advisory, not a gate: the
+                          check runs from our server and can be wrong about
+                          what their phone sees. */}
+                      {portalDown && (
+                        <div className="rounded-lg border border-amber-400/30 bg-amber-400/[0.07] px-3 py-2.5 space-y-2">
+                          <p className="text-[12px] text-white/75 leading-relaxed">
+                            The college&apos;s payment portal isn&apos;t responding right now. It
+                            usually comes back within a few minutes — nothing has been charged, and
+                            your details here are saved.
+                          </p>
+                          <button
+                            type="button"
+                            onClick={() => goToPortal(true)}
+                            className="text-xs text-white/55 hover:text-white underline underline-offset-2 cursor-pointer"
+                          >
+                            Open it anyway
+                          </button>
+                        </div>
+                      )}
+
                       <div className="flex gap-2">
                         <Button variant="outline" onClick={() => { setError(null); setStep(2); }} className={`${ghostBtn} px-4`} aria-label="Back">
                           <ArrowLeft className="w-4 h-4" />
                         </Button>
                         <Button
-                          onClick={() => {
-                            setError(null);
-                            window.open(JUNO_PAYMENT_URL, "_blank", "noopener,noreferrer");
-                            setPayPhase("reference");
-                          }}
+                          onClick={() => goToPortal(false)}
+                          disabled={startingPayment}
                           className={`${primaryBtn} flex-1`}
                         >
-                          Proceed to payment
+                          {startingPayment ? "Checking the portal…" : "Proceed to payment"}
                         </Button>
                       </div>
                     </>
@@ -1023,6 +1104,20 @@ export function RegistrationDialog({
                           className="text-xs text-white/45 hover:text-white/80 underline underline-offset-2 cursor-pointer"
                         >
                           Reopen the payment portal
+                        </button>
+                        {/* The portal can fail after taking the money, which
+                            leaves somebody paid and with no reference to show
+                            for it. Refusing their registration does not bring
+                            the money back — it only keeps them off the desk
+                            list. They go through, and an organiser matches
+                            them against the college's sheet. */}
+                        <button
+                          type="button"
+                          onClick={() => submit({ refUnavailable: true })}
+                          disabled={submitting}
+                          className="block text-xs text-white/45 hover:text-white/80 underline underline-offset-2 cursor-pointer disabled:opacity-50"
+                        >
+                          I paid but can&apos;t find my transaction ID
                         </button>
                       </div>
 
@@ -1068,7 +1163,7 @@ export function RegistrationDialog({
                                 className={`${ghostBtn} flex-1`}>
                                 Go back
                               </Button>
-                              <Button onClick={submit} disabled={submitting} className={`${primaryBtn} flex-1`}>
+                              <Button onClick={() => submit()} disabled={submitting} className={`${primaryBtn} flex-1`}>
                                 {submitting ? (
                                   <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Submitting…</>
                                 ) : (
