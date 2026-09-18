@@ -24,6 +24,7 @@ import { Loader2, ArrowLeft, Pencil, Hourglass, ShieldCheck, RotateCcw, Check, C
 import { PALETTE } from "@/lib/palette";
 import { JUNO_PAYMENT_URL } from "@/lib/juno";
 import { ApplicationReviewCard } from "@/components/application-review-card";
+import { TeamRosterPanel } from "@/components/team-roster-panel";
 
 const STORE_KEY = "pravrutti.guest";
 
@@ -737,8 +738,25 @@ export function RegistrationDialog({
                         </Button>
                       </div>
                       <p className="text-[13px] text-white/50 leading-relaxed">
-                        Share this code so others can join this event’s team. It stays valid after you submit — teammates can join until the team is full. You pay ₹{FEE_PER_HEAD} for the team; they do not.
+                        Add your teammates below and we’ll email each of them an invite. The code
+                        still works if someone would rather join with it. You pay ₹{FEE_PER_HEAD}
+                        {" "}for the team; they do not.
                       </p>
+
+                      {/* The roster, and the button that grows it. Adding holds a
+                          place at once, so the lead never waits on acceptances. */}
+                      <TeamRosterPanel
+                        eventId={eventId(event.name)}
+                        team={createdTeam}
+                        leadEmail={form.email}
+                        leadName={form.name}
+                        leadCollege={form.college}
+                        onTeam={setCreatedTeam}
+                        cardCls={card}
+                        inputCls={inputCls}
+                        ghostBtn={ghostBtn}
+                        primaryBtn={primaryBtn}
+                      />
 
                       {/* Dissolving the team is the lead's call and is allowed at
                           any time; teammates keep their own applications and

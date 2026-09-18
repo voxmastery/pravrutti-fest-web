@@ -150,7 +150,9 @@ describe("POST /api/teams join after the lead has registered", () => {
     const body = await res.json();
     expect(body.team?.code).toBe(created.code);
     expect(body.team?.isFull).toBe(false);
-    expect(body.team?.members).toEqual([{ name: lead.name, email: lead.email }]);
+    expect(body.team?.members).toEqual([
+      { name: lead.name, email: lead.email, status: "joined" },
+    ]);
     expect(JSON.stringify(body)).not.toMatch(/9876543210/);
   });
 
@@ -169,8 +171,8 @@ describe("POST /api/teams join after the lead has registered", () => {
     if (!res) throw new Error("expected a response");
     const body = await res.json();
     expect(body.team?.members).toEqual([
-      { name: lead.name, email: lead.email },
-      { name: teammate.name, email: teammate.email },
+      { name: lead.name, email: lead.email, status: "joined" },
+      { name: teammate.name, email: teammate.email, status: "joined" },
     ]);
     expect(JSON.stringify(body.team.members)).not.toMatch(/phone/i);
     expect(JSON.stringify(body)).not.toMatch(/987654321/);

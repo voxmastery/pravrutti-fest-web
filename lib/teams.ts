@@ -12,7 +12,30 @@ export type TeamMember = {
   phone: string;
   college: string;
   joinedAt: string;
+  /** Set when the lead added this person rather than them redeeming a code.
+      They hold their place from that moment — the lead may register the team
+      without waiting on them — so this records how they arrived, not a pending
+      state that gates anything. */
+  invitedAt?: string;
+  /** Set when they followed their invite link. Until then they sit on the
+      roster as "Invited" with no application of their own, and so no ticket. */
+  acceptedAt?: string;
+  /** Single-use secret carried by their invite link. Cleared once spent, so a
+      forwarded link cannot be replayed after they have accepted. */
+  inviteToken?: string;
 };
+
+/** Where a member stands. "invited" has no ticket yet; "joined" does. */
+export type MemberStatus = "joined" | "invited";
+
+/** Someone who redeemed a code was never invited, so they are joined outright. */
+export function memberStatus(m: {
+  invitedAt?: string;
+  acceptedAt?: string;
+} | null | undefined): MemberStatus {
+  if (!m?.invitedAt) return "joined";
+  return m.acceptedAt ? "joined" : "invited";
+}
 
 export type Team = {
   code: string;
@@ -31,6 +54,9 @@ export type Team = {
 export type TeamPerson = {
   name: string;
   email: string;
+  /** Whether they have confirmed. Not PII, and the roster is unreadable
+      without it — "who still hasn't accepted" is the lead's whole job here. */
+  status: MemberStatus;
 };
 
 /** Public confirm-this-is-the-right-team payload. No member PII unless
@@ -51,6 +77,7 @@ export function rosterPeople(members: TeamMember[]): TeamPerson[] {
     .map((m) => ({
       name: String(m?.name ?? "").trim(),
       email: String(m?.email ?? "").trim().toLowerCase(),
+      status: memberStatus(m),
     }))
     .filter((p) => p.name.length >= 2 && p.email.includes("@"));
 }

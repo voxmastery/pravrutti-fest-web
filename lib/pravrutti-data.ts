@@ -383,19 +383,12 @@ export const events: Event[] = [
     eligibility: "ECE and related engineering students.",
     coordinators: {
       faculty: [],
-      student: [
-        { name: "Sachin R Shenoy" },
-        { name: "Megha H" },
-        { name: "K S Aashritha Reddy" },
-        { name: "Spoorthi K" },
-        { name: "Sanketh Rao" },
-        { name: "Prachi Joshi" },
-      ],
+      student: [{ name: "Sachin R Shenoy" }, { name: "Megha H" }],
     },
-    /* Only Sachin and Megha came through the coordinators' form, so the
-       other four are listed publicly but have no phone entry (no call
-       button) and no login. Add their numbers to coordinator-phones.ts and
-       their Google addresses here when they arrive. */
+    /* Two names, like every other event. The four who used to be listed here
+       (K S Aashritha Reddy, Spoorthi K, Sanketh Rao, Prachi Joshi) never came
+       through the coordinators' form, so they carried no phone and no call
+       button — six names of which four were dead ends for a participant. */
     dashboardEmails: ["23etec004041@msruas.ac.in", "23etec004029@msruas.ac.in"],
     /* Served from public/ so coordinators can hand over a replacement
        without anyone needing Drive permissions. */
@@ -581,8 +574,11 @@ export const events: Event[] = [
     capacity: 100,
     capacityUnit: "teams",
     duration: "2h 15m",
+    /* Two names, like every other event. Dr. Pallabi Mund (faculty) used to be
+       listed alongside these two, making three; no other event lists a faculty
+       coordinator publicly, so the students are the two kept here. */
     coordinators: {
-      faculty: [{ name: "Dr. Pallabi Mund" }],
+      faculty: [],
       student: [{ name: "Pranav Bansal" }, { name: "Siddharth Gupta" }],
     },
     club: "LEADS",

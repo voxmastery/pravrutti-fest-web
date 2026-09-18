@@ -89,6 +89,16 @@ export function teamMemberPath(eventId: string, email: string) {
   return `team-member/${eventId}/${emailScopedKey(eventId, email)}.json`;
 }
 
+/**
+ * An invite link's token, pointing at the event, team and email it was issued
+ * for. Keyed on the token alone so accepting costs a single read: the
+ * alternative is scanning every team-member record for a matching token, on a
+ * page any stranger can open from an email.
+ */
+export function invitePath(token: string) {
+  return `invite/${token}.json`;
+}
+
 export async function readJsonByPath(path: string) {
   if (useDevBlob()) return devReadJson(path);
   if (sqlEnabled()) return sqlReadJson(path);

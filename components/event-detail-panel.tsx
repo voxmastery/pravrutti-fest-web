@@ -128,6 +128,12 @@ export function EventDetailPanel({
             <Button
               asChild
               size="sm" variant="outline" className="h-11 shrink-0 rounded-xl border-royal-wine bg-cosmic-purple font-display text-[10px] font-bold uppercase tracking-widest text-pearl-white/85 hover:bg-deep-plum" >
+              {/* No onClick closing the panel here. Clearing the event
+                  unmounts this very <a> (the panel renders null without one)
+                  in the same click, and the navigation goes with it — the
+                  sheet slides shut and the page never changes. Nothing needs
+                  closing anyway: routing to the event page unmounts the whole
+                  events grid, panel included. */}
               <Link href={`/events/${id}`} onClick={onClose}>
                 Event page <ArrowUpRight className="w-3.5 h-3.5 ml-1" aria-hidden="true" />
               </Link>

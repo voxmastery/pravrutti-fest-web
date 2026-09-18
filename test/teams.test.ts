@@ -64,8 +64,8 @@ describe("toTeamPreview", () => {
     ];
     const preview = toTeamPreview(team(), two, 4, true);
     expect(preview.members).toEqual([
-      { name: "Asha Rao", email: "asha@example.com" },
-      { name: "Ravi Kumar", email: "ravi@example.com" },
+      { name: "Asha Rao", email: "asha@example.com", status: "joined" },
+      { name: "Ravi Kumar", email: "ravi@example.com", status: "joined" },
     ]);
     expect(JSON.stringify(preview)).not.toMatch(/987654321/);
     expect(JSON.stringify(preview)).not.toMatch(/college/i);
@@ -74,7 +74,9 @@ describe("toTeamPreview", () => {
 
 describe("rosterPeople", () => {
   it("drops phone and college and lowercases email", () => {
-    expect(rosterPeople([lead])).toEqual([{ name: "Asha Rao", email: "asha@example.com" }]);
+    expect(rosterPeople([lead])).toEqual([
+      { name: "Asha Rao", email: "asha@example.com", status: "joined" },
+    ]);
   });
 });
 

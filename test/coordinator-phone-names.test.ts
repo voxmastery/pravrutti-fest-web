@@ -43,11 +43,6 @@ describe("coordinator phone entries match coordinator names", () => {
         if (!phones.has(c.name)) noPhone.push(`${e.name}: ${c.name}`);
       }
     }
-    expect(noPhone).toEqual([
-      "ELECTROXCAPE: K S Aashritha Reddy",
-      "ELECTROXCAPE: Spoorthi K",
-      "ELECTROXCAPE: Sanketh Rao",
-      "ELECTROXCAPE: Prachi Joshi",
-    ]);
+    expect(noPhone).toEqual([]);
   });
 });

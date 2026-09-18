@@ -6,8 +6,21 @@ import {
   PHONE_HINT,
   feeForApplicant,
   isValidPhone,
+  isLiveApplication,
   normalizePhone,
 } from "@/lib/applications";
+import {
+  InvitePointer,
+  canAddMember,
+  invitedMember,
+  isValidInviteToken,
+  isValidMemberEmail,
+  newInviteToken,
+  normalizeMemberEmail,
+  readAddMember,
+  readInviteToken,
+} from "@/lib/invites";
+import { inviteUrl, sendInviteEmail } from "@/lib/invite-email";
 import {
   Team,
   TeamMember,
@@ -28,6 +41,7 @@ import {
   applicationPath,
   teamPath,
   teamMemberPath,
+  invitePath,
   readJsonByPath,
   putJson,
   listTeamMembers,
@@ -423,6 +437,199 @@ async function otherTeams(body: any) {
   }
 }
 
+/**
+ * The lead adding a teammate themselves.
+ *
+ * This is the path that replaced "send everyone the code and hope". The lead
+ * types a name, email and phone; that person lands on the roster immediately
+ * and an invite goes to their mailbox. Because the place is held from this
+ * moment, capacity is charged here and not at accept — otherwise a lead could
+ * invite twelve people for a team of four and let the race settle it.
+ */
+async function addMember(body: any) {
+  if (!effectiveRegistrationOpen()) return jsonError(registrationUnavailableMessage(), 409);
+
+  const evId = String(body?.eventId ?? "").trim();
+  const event = findEvent(evId);
+  if (!event) return jsonError("That event doesn't exist.", 400);
+
+  const who = await resolveApplicantEmail(String(body?.email ?? ""));
+  if ("error" in who) return who.error;
+
+  const code = normalizeTeamCode(String(body?.code ?? ""));
+  if (!isValidTeamCode(code)) return jsonError("Enter a valid team code.", 400);
+
+  const parsed = readAddMember({
+    name: body?.memberName,
+    email: body?.memberEmail,
+    phone: body?.memberPhone,
+  });
+  if ("error" in parsed) return jsonError(parsed.error, 400);
+  const { fields } = parsed;
+
+  try {
+    const team = await loadTeam(evId, code);
+    if (!team) return jsonError("No team found for that code.", 404);
+    if (team.createdByEmail !== who.email)
+      return jsonError("Only the team lead can add members.", 403);
+    if (fields.email === who.email)
+      return jsonError("You're already on this team as the lead.", 409);
+
+    const roster = await listTeamMembers(evId, code);
+    const decision = canAddMember({
+      roster,
+      maxMembers: maxTeamSizeFor(event),
+      email: fields.email,
+    });
+    if (!decision.ok) return jsonError(decision.message, 409);
+
+    /* Already spoken for elsewhere in this event. Both records are checked
+       because either alone lets somebody end up on two teams: an entrant who
+       registered solo has an application and no membership. */
+    const [priorMembership, priorApp] = await Promise.all([
+      readJsonByPath(teamMemberPath(evId, fields.email)) as Promise<{ code?: string } | null>,
+      readJsonByPath(applicationPath(evId, fields.email)),
+    ]);
+    const priorCode = normalizeTeamCode(priorMembership?.code ?? "");
+    if (priorCode && priorCode !== code)
+      return jsonError(`${fields.name} is already on another team for this event.`, 409);
+    if (priorApp) return jsonError(`${fields.name} has already registered for this event.`, 409);
+
+    const token = newInviteToken();
+    const member = invitedMember({ fields, college: body?.college ?? "", token });
+    const pointer: InvitePointer = {
+      token,
+      eventId: evId,
+      code,
+      email: fields.email,
+      createdAt: member.invitedAt!,
+    };
+
+    await putJson(invitePath(token), pointer, false);
+    await putJson(teamMemberPath(evId, fields.email), { code, eventId: evId, member }, true);
+
+    /* Best effort. A bounced invite must not undo a member the lead can already
+       see on the roster — they still have the link to hand over themselves. */
+    const mail = await sendInviteEmail({
+      to: fields.email,
+      memberName: fields.name,
+      leadName: String(body?.leadName ?? "").trim() || "Your team lead",
+      teamName: team.name,
+      eventName: event.name,
+      token,
+    });
+
+    const members = await listTeamMembers(evId, code);
+    return NextResponse.json(
+      {
+        team: toTeamPreview(team, members, maxTeamSizeFor(event), true),
+        inviteUrl: inviteUrl(token),
+        invited: { name: fields.name, email: fields.email },
+        emailSent: mail.sent,
+        emailError: mail.sent ? null : mail.error ?? null,
+      },
+      { headers: { "cache-control": "no-store" } },
+    );
+  } catch (e: any) {
+    if (/exists|overwrite/i.test(String(e?.message)))
+      return jsonError("That invite already exists. Refresh and try again.", 409);
+    return blobFailed(e, "team add member failed");
+  }
+}
+
+/**
+ * Taking someone off a roster — the lead removing them, or the member leaving.
+ *
+ * One function, because the effects are identical and only the permission
+ * differs. The store has no delete, so the membership is rewritten with an
+ * empty code: listTeamMembers matches on code, so the row stops counting
+ * everywhere at once rather than every reader needing to learn a new flag.
+ *
+ * The lead cannot leave their own team — that is deleting it, which has its own
+ * action and its own consequences for everyone else on the roster.
+ */
+async function removeFromTeam(body: any, mode: "leave" | "remove") {
+  const evId = String(body?.eventId ?? "").trim();
+  const event = findEvent(evId);
+  if (!event) return jsonError("That event doesn't exist.", 400);
+
+  const code = normalizeTeamCode(String(body?.code ?? ""));
+  if (!isValidTeamCode(code)) return jsonError("Enter a valid team code.", 400);
+
+  try {
+    const team = await loadTeam(evId, code);
+    if (!team) return jsonError("No team found for that code.", 404);
+
+    let target: string;
+    if (mode === "remove") {
+      const who = await resolveApplicantEmail(String(body?.email ?? ""));
+      if ("error" in who) return who.error;
+      if (team.createdByEmail !== who.email)
+        return jsonError("Only the team lead can remove members.", 403);
+      target = normalizeMemberEmail(body?.memberEmail);
+      if (!isValidMemberEmail(target)) return jsonError("Pick a member to remove.", 400);
+      if (target === team.createdByEmail)
+        return jsonError("You're the team lead. Delete the team instead.", 409);
+    } else {
+      /* Leaving proves itself one of two ways: signed in as that member, or
+         holding their invite token. The token is what lets someone leave from
+         the email alone, which is the point of a no-sign-in accept. */
+      const token = readInviteToken(body?.token);
+      if (isValidInviteToken(token)) {
+        const pointer = (await readJsonByPath(invitePath(token))) as InvitePointer | null;
+        if (!pointer || pointer.eventId !== evId || pointer.code !== code)
+          return jsonError("That link is no longer valid.", 404);
+        target = normalizeMemberEmail(pointer.email);
+      } else {
+        const who = await resolveApplicantEmail(String(body?.email ?? ""));
+        if ("error" in who) return who.error;
+        target = who.email;
+      }
+      if (target === team.createdByEmail)
+        return jsonError("You're the team lead. Delete the team instead.", 409);
+    }
+
+    const record = (await readJsonByPath(teamMemberPath(evId, target))) as
+      | { code?: string; member?: TeamMember }
+      | null;
+    if (!record || normalizeTeamCode(record.code ?? "") !== code)
+      return jsonError("They're not on this team.", 404);
+
+    const now = new Date().toISOString();
+    await putJson(
+      teamMemberPath(evId, target),
+      { code: "", eventId: evId, member: record.member, removedAt: now },
+      true,
+    );
+
+    /* Burn the invite link, so someone removed cannot walk back in through the
+       email still sitting in their inbox. */
+    const spent = record.member?.inviteToken;
+    if (spent && isValidInviteToken(spent)) {
+      const pointer = (await readJsonByPath(invitePath(spent))) as InvitePointer | null;
+      if (pointer) await putJson(invitePath(spent), { ...pointer, usedAt: now }, true);
+    }
+
+    /* If they had accepted, they own an application. It stops holding a place
+       the moment they stop being on the team. */
+    const app = (await readJsonByPath(applicationPath(evId, target))) as Application | null;
+    if (app && isLiveApplication(app.status))
+      await putJson(
+        applicationPath(evId, target),
+        { ...app, status: "cancelled", cancelledAt: now },
+        true,
+      );
+
+    const members = await listTeamMembers(evId, code);
+    return NextResponse.json(
+      { ok: true, team: toTeamPreview(team, members, maxTeamSizeFor(event), true) },
+      { headers: { "cache-control": "no-store" } },
+    );
+  } catch (e) {
+    return blobFailed(e, `team ${mode} failed`);
+  }
+}
+
 export async function GET(req: Request) {
   const url = new URL(req.url);
   const evId = String(url.searchParams.get("event") ?? url.searchParams.get("eventId") ?? "").trim();
@@ -450,6 +657,9 @@ export async function POST(req: Request) {
     return mineTeam(evId, String(body?.email ?? ""));
   }
   if (action === "join") return joinTeam(body);
+  if (action === "add_member") return addMember(body);
+  if (action === "remove_member") return removeFromTeam(body, "remove");
+  if (action === "leave") return removeFromTeam(body, "leave");
   if (action === "delete") return deleteTeam(body);
   if (action === "others") return otherTeams(body);
   if (action === "create") return createTeam(body);
