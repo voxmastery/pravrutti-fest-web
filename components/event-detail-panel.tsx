@@ -134,7 +134,7 @@ export function EventDetailPanel({
                   sheet slides shut and the page never changes. Nothing needs
                   closing anyway: routing to the event page unmounts the whole
                   events grid, panel included. */}
-              <Link href={`/events/${id}`} onClick={onClose}>
+              <Link href={`/events/${id}`}>
                 Event page <ArrowUpRight className="w-3.5 h-3.5 ml-1" aria-hidden="true" />
               </Link>
             </Button>
