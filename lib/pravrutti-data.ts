@@ -187,7 +187,7 @@ export const clubs: Club[] = [
   { name: "ComputeX", tagline: "Computer Science Club" },
   { name: "Aeronyx", tagline: "Aerospace Innovation" },
   { name: "TSS", tagline: "The Startup Society" },
-  { name: "LEADS", tagline: "Leadership Club" },
+  { name: "LEADS", tagline: "LEADS NextGen Centre" },
   { name: "AeSI", tagline: "Aeronautical Society of India" },
   { name: "ISTE", tagline: "Technical Education Chapter" },
   { name: "IMECHE", tagline: "Institution of Mechanical Engineers" },

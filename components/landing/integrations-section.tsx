@@ -31,7 +31,7 @@ const clubs = [
   { name: "ComputeX", cat: "Computer Sci", icon: Code },
   { name: "Aeronyx", cat: "Aerospace", icon: Rocket },
   { name: "TSS", cat: "The Startup Society", icon: Users },
-  { name: "LEADS", cat: "Leadership", icon: Crown },
+  { name: "LEADS", cat: "LEADS NextGen Centre", icon: Crown },
   { name: "AeSI", cat: "Aeronautical", icon: Plane },
   { name: "ISTE", cat: "Technical Ed", icon: BookOpen },
   { name: "IMECHE", cat: "Mechanical", icon: Cog },
