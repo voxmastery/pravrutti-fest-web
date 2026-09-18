@@ -81,6 +81,7 @@ export function EventMoreSheet({
               </button>
             </li>
           ))}
+          {event.brochureUrl ? (
           <li>
             <a
               href={event.brochureUrl}
@@ -91,6 +92,7 @@ export function EventMoreSheet({
               Download the rulebook
             </a>
           </li>
+          ) : null}
         </ul>
       </SheetContent>
     </Sheet>

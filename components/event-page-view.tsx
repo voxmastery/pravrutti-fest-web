@@ -232,12 +232,21 @@ export function EventPageView({ event, slug }: { event: Event; slug: string }) {
           </div>
 
           <div className="order-[13] lg:order-none min-w-0 space-y-3">
-            <a href={event.brochureUrl} download={`${event.name}_Rules.pdf`} className="block">
-              <Button
-                variant="outline" className="w-full h-12 rounded-xl border-royal-wine bg-cosmic-purple font-display text-xs font-bold uppercase tracking-widest text-champagne-gold hover:bg-deep-plum cursor-pointer" >
-                <Download className="w-4 h-4 mr-2" aria-hidden="true" /> Download the rulebook
-              </Button>
-            </a>
+            {/* No rulebook yet for this event — offering a button that goes
+                nowhere is worse than not offering one. */}
+            {event.brochureUrl ? (
+              <a href={event.brochureUrl} download={`${event.name}_Rules.pdf`} className="block">
+                <Button
+                  variant="outline" className="w-full h-12 rounded-xl border-royal-wine bg-cosmic-purple font-display text-xs font-bold uppercase tracking-widest text-champagne-gold hover:bg-deep-plum cursor-pointer" >
+                  <Download className="w-4 h-4 mr-2" aria-hidden="true" /> Download the rulebook
+                </Button>
+              </a>
+            ) : (
+              <p className="rounded-xl border border-royal-wine bg-cosmic-purple/50 px-4 py-3 text-xs text-pearl-white/50 leading-relaxed">
+                The rulebook for this event is still with its coordinators. Their numbers are above
+                if you need the rules before it lands here.
+              </p>
+            )}
             <p className="flex items-start gap-2 min-w-0 text-xs text-pearl-white/35">
               <Trophy className="w-3.5 h-3.5 shrink-0 text-soft-gold" aria-hidden="true" />
               <span className="min-w-0 break-words">{FEST.name} · {FEST.dates}</span>

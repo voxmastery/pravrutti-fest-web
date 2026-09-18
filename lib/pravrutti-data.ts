@@ -37,7 +37,11 @@ export interface Event {
     faculty: Coordinator[];
     student: Coordinator[];
   };
-  /** Rulebook PDF, usually a Google Drive link from the sheet. */
+  /** Rulebook PDF, usually a Google Drive link from the sheet. Empty string
+      when there is no participant-facing rulebook yet — every surface hides
+      its download button rather than offering a broken one. Never point this
+      at an internal document: it is public, and the clubs' proposal forms
+      carry personal phone numbers and budgets. */
   brochureUrl: string;
   /** The club running this event, matching a `name` in `clubs` below so its
       tagline can be looked up. Set only where the repo says so outright —
@@ -584,7 +588,12 @@ export const events: Event[] = [
       student: [{ name: "Ankush Chadichal" }, { name: "Abhilashree B Hosmani" }],
     },
     dashboardEmails: ["ankush.chadichal@gmail.com", "gowuri.kotabagi@gmail.com"],
-    brochureUrl: "https://drive.google.com/open?id=1CEDr_uGifU8BXsAPK3ZwU968vxwZtHA-",
+    /* Pulled: that Drive file is the club's "Event Proposal, Requirement Form
+       & Guidelines" — an internal document carrying three personal mobile
+       numbers, four personal email addresses and the event budget, served
+       publicly from the rulebook button. Restore only with a real
+       participant-facing rulebook from the Dent coordinators. */
+    brochureUrl: "",
   },
   {
     name: "PITCH AT MACH",

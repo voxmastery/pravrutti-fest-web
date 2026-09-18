@@ -112,12 +112,16 @@ export default function DownloadsPage() {
                 >
                   {event.fee}
                 </span>
-                <a href={event.brochureUrl} download={`${event.name}_Rules.pdf`}>
-                  <Button
-                    size="sm" className="rounded-xl border border-neon-purple text-pearl-white font-bold text-sm cursor-pointer h-11 px-4 arcade-btn hover:border-cyber-pink hover:text-white" >
-                    <Download className="w-3.5 h-3.5 mr-1 text-cyber-pink" /> ROM GUIDE
-                  </Button>
-                </a>
+                {event.brochureUrl ? (
+                  <a href={event.brochureUrl} download={`${event.name}_Rules.pdf`}>
+                    <Button
+                      size="sm" className="rounded-xl border border-neon-purple text-pearl-white font-bold text-sm cursor-pointer h-11 px-4 arcade-btn hover:border-cyber-pink hover:text-white" >
+                      <Download className="w-3.5 h-3.5 mr-1 text-cyber-pink" /> ROM GUIDE
+                    </Button>
+                  </a>
+                ) : (
+                  <span className="text-xs text-pearl-white/35">Rulebook to come</span>
+                )}
               </div>
             </div>
           ))}

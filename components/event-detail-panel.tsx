@@ -213,12 +213,14 @@ export function EventDetailPanel({
 
             <EventFormat rows={formatRows} level={3} />
 
-            <a href={event.brochureUrl} download={`${event.name}_Rules.pdf`} className="block">
-              <Button
-                variant="outline" className="w-full h-12 rounded-xl border-royal-wine bg-cosmic-purple font-display text-xs font-bold uppercase tracking-widest text-champagne-gold hover:bg-deep-plum" >
-                <Download className="w-4 h-4 mr-2" aria-hidden="true" /> Download the rulebook
-              </Button>
-            </a>
+            {event.brochureUrl ? (
+              <a href={event.brochureUrl} download={`${event.name}_Rules.pdf`} className="block">
+                <Button
+                  variant="outline" className="w-full h-12 rounded-xl border-royal-wine bg-cosmic-purple font-display text-xs font-bold uppercase tracking-widest text-champagne-gold hover:bg-deep-plum" >
+                  <Download className="w-4 h-4 mr-2" aria-hidden="true" /> Download the rulebook
+                </Button>
+              </a>
+            ) : null}
 
             <EventPresenter level={3} />
 
