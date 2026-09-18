@@ -13,6 +13,7 @@ import {
   isValidPaymentRef,
   PAYMENT_REF_HINT,
   readJunoRegId,
+  countsAsRegistered,
 } from "@/lib/applications";
 import { Team, normalizeTeamCode, isValidTeamCode } from "@/lib/teams";
 import { cancelApplication } from "@/lib/payment-review";
@@ -49,7 +50,10 @@ export async function GET(req: Request) {
   const pending: Record<string, number> = {};
   const records = await Promise.all(blobs.map((b) => readPrivate(b.url)));
 
-  const valid = records.filter(Boolean) as Application[];
+  /* Only registrations that actually hold a place — see countsAsRegistered.
+     An unpaid, withdrawn or declined attempt is an incomplete registration and
+     must not occupy a seat in any of these figures. */
+  const valid = (records.filter(Boolean) as Application[]).filter(countsAsRegistered);
   for (const r of valid) {
     if (r.status === "confirmed") confirmed[r.eventId] = (confirmed[r.eventId] ?? 0) + 1;
     else if (r.status === "pending") pending[r.eventId] = (pending[r.eventId] ?? 0) + 1;

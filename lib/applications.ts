@@ -221,6 +221,38 @@ export const EVENT_PAGE_STATUS: Record<AppStatus, string> = {
   cancelled: "Registration cancelled",
 };
 
+/**
+ * Does this application hold a place?
+ *
+ * Only a registration that is both live and paid for counts. Everything else is
+ * an incomplete attempt — somebody who started and never paid, withdrew, or was
+ * turned down — and counting those inflates every fill figure and can show an
+ * event full while real places sit empty.
+ *
+ * Paid means the fee is settled or was never owed: verified by an organiser, or
+ * a joiner and free entry that owes nothing. An unverified fee counts only when
+ * the applicant quoted a receipt reference — they have paid on the portal and
+ * are waiting on us, so their place is genuinely taken. A fee that went back
+ * (refunded) does not hold anything.
+ */
+export function countsAsRegistered(a: {
+  status?: AppStatus | string | null;
+  payment?: PayStatus | string | null;
+  paymentRef?: string | null;
+}): boolean {
+  if (a.status !== "pending" && a.status !== "confirmed") return false;
+  switch (a.payment) {
+    case "paid":
+    case "not_required":
+      return true;
+    case "awaiting":
+      return Boolean(a.paymentRef && String(a.paymentRef).trim());
+    default:
+      // "refunded", or anything unrecognised — not a held place.
+      return false;
+  }
+}
+
 /** Submitted and not turned down. Confirmed is a subset. */
 export function isLiveApplication(status: AppStatus | null | undefined): boolean {
   return status === "pending" || status === "confirmed";

@@ -4,6 +4,7 @@ import { listAll, readPrivate } from "@/lib/blob-store";
 import { events, eventId, capacityInPeople, FEST } from "@/lib/pravrutti-data";
 import { venueFor } from "@/lib/event-venues";
 import type { Application } from "@/lib/applications";
+import { countsAsRegistered } from "@/lib/applications";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -36,6 +37,10 @@ export async function GET() {
 
   for (const a of apps) {
     if (!a?.eventId) continue;
+    /* Cancelled, declined and unpaid attempts are not registrations. Counting
+       them inflated every fill figure and could show an event full while real
+       places sat empty. */
+    if (!countsAsRegistered(a)) continue;
     const t = byEvent.get(a.eventId) ?? { registered: 0, confirmed: 0, checkedIn: 0 };
     t.registered++;
     if (a.status === "confirmed") t.confirmed++;
