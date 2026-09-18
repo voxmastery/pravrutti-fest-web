@@ -36,7 +36,7 @@ const clubs = [
   { name: "ISTE", cat: "Technical Ed", icon: BookOpen },
   { name: "IMECHE", cat: "Mechanical", icon: Cog },
   { name: "IEEE", cat: "Global Chapter", icon: Globe },
-  { name: "Civil Club", cat: "Civil Eng", icon: Layers },
+  { name: "Ramaiah Civil Club", cat: "Civil Eng", icon: Layers },
   { name: "ASME", cat: "Mechanical", icon: Settings },
   { name: "Dental", cat: "Dental Sci", icon: Stethoscope },
   { name: "IIC", cat: "Institution Innovation Council", icon: Lightbulb },

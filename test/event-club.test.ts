@@ -36,9 +36,9 @@ describe("club attribution", () => {
     }
   });
 
-  it("credits the Civil Club with the event run from its own address", () => {
+  it("credits the Ramaiah Civil Club with the event run from its own address", () => {
     const e = events.find((ev) => ev.name === "BRIDGE IT");
     expect(e?.dashboardEmails?.some((m) => m.includes("civilclub"))).toBe(true);
-    expect(e?.club).toBe("Civil Club");
+    expect(e?.club).toBe("Ramaiah Civil Club");
   });
 });

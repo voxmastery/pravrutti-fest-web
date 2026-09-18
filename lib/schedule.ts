@@ -46,7 +46,7 @@ export const scheduleDays: ScheduleDay[] = [
         time: "11:00 AM – 2:00 PM",
         entries: [
           { track: 1, eventId: "ai-escape-room", label: "AI Escape Room", host: "AI Club" },
-          { track: 2, eventId: "bridge-it", label: "Bridge It", host: "Civil Club" },
+          { track: 2, eventId: "bridge-it", label: "Bridge It", host: "Ramaiah Civil Club" },
           { track: 3, eventId: "leads-innovation-challenge", label: "LEADS Innovation Challenge", host: "LEADS" },
           { track: 4, eventId: "triathlon", label: "Triathlon", host: "Cynergy" },
         ],
