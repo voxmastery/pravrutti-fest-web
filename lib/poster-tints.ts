@@ -19,7 +19,7 @@ export const POSTER_TINTS: Record<string, [number, number, number]> = {
   "medical-tech-innovate": [176, 137, 29],
   "micro-rc-plane": [106, 29, 75],
   "modelkraft": [195, 70, 113],
-  "pitch-pulse": [176, 92, 29],
+  "pitch-pulse": [102, 9, 67],
   "relay-hackathon": [194, 70, 171],
   "robo-climb": [106, 31, 89],
   "scrapyard-wars": [106, 31, 75],

@@ -795,10 +795,7 @@ export const events: Event[] = [
     description:
       "Got an idea that could solve a real-world problem? Pitch Pulse is the stage for it. Choose a problem that interests you, work up a solution, and bring it to life in a 7+3 pitch \u2014 seven minutes to present, then three minutes of questions from an expert jury. \u25cf Open innovation: teams pick their own problem statement. There is no shortlisting or elimination round beforehand \u2014 every registered team pitches on the day. \u25cf Official template: the presentation template reaches every registered team a week before the event, and every deck must use it. \u25cf Judged on problem statement and innovation, feasibility and market viability, real-world impact, pitch quality, and communication \u2014 weighted equally. The jury's decision is final. \u25cf Bring your own laptop, charger and extension board. Whether you are a builder, an entrepreneur, a creative thinker, or a fresher with nothing but an idea, this is somewhere to be heard.",
     fee: "Rs. 200/-",
-    /* The proposal puts the purse "as per Pravrutti rules" without naming a
-       figure, and an invented one on a public page is a promise nobody agreed
-       to. The prize block hides itself until these are filled in. */
-    prizes: [],
+    prizes: [7000, 5000, 3000],
     teamSize: { min: 1, max: 4, soloAllowed: true },
     capacity: 280,
     capacityUnit: "teams",
