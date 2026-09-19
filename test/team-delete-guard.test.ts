@@ -13,6 +13,7 @@ vi.mock("@/lib/blob-store", () => ({
   readPrivate: async () => null,
   listTeamMembers: async () => roster,
   applicationPath: (e: string, m: string) => `app/${e}/${m}.json`,
+  paymentRefPath: (ref: string) => "payment-ref/" + ref.trim().toLowerCase() + ".json",
   teamPath: (e: string, c: string) => `team/${e}/${c}.json`,
   teamMemberPath: (e: string, m: string) => `member/${e}/${m}.json`,
   invitePath: (t: string) => `invite/${t}.json`,

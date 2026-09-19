@@ -27,6 +27,7 @@ import {
   applicationPath,
   teamPath,
   listTeamMembers,
+  paymentRefPath,
   teamMemberPath,
   readJsonByPath,
   putJson,
@@ -249,6 +250,39 @@ export async function POST(req: Request) {
     membersList.length === 0
       ? null
       : JSON.stringify(membersList.map((m) => ({ name: m.name, phone: m.phone || null })));
+
+  /* One receipt, one entry.
+
+     A reference is the only evidence a payment happened, and nothing stopped
+     two people quoting the same one — a shared screenshot registered the
+     second of them for nothing, and one payment could be claimed across two
+     events. Claiming the reference here is what makes it single-use: the
+     write refuses to overwrite, so whoever gets there first holds it.
+
+     Best effort on anything other than a collision. A failure to record the
+     claim must not cost somebody who has genuinely paid their place. */
+  if (paymentRef) {
+    const refPath = paymentRefPath(paymentRef);
+    try {
+      await putJson(refPath, { eventId: evId, email, claimedAt: new Date().toISOString() }, false);
+    } catch (e: any) {
+      if (/exists|overwrite/i.test(String(e?.message))) {
+        const owner = (await readJsonByPath(refPath)) as { eventId?: string; email?: string } | null;
+        const mine =
+          owner?.email?.toLowerCase() === email && owner?.eventId === evId;
+        if (!mine)
+          return NextResponse.json(
+            {
+              error:
+                "That transaction ID is already recorded against another registration. Each payment covers one entry — check you have copied the right one from your receipt.",
+            },
+            { status: 409 },
+          );
+      } else {
+        console.error("payment ref claim failed", e);
+      }
+    }
+  }
 
   const prior = (await readJsonByPath(applicationPath(evId, email))) as Application | null;
   /* An intent row is this same person mid-payment: what we wrote when they

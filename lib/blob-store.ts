@@ -65,6 +65,18 @@ export function emailScopedKey(eventId: string, email: string) {
   return createHash("sha256").update(`${eventId}:${email.toLowerCase()}`).digest("hex").slice(0, 24);
 }
 
+/**
+ * Where a payment reference is claimed.
+ *
+ * Hashed rather than used directly: a reference may contain "/" and would
+ * otherwise carve a path. One key per reference is the point — the first
+ * registration to claim it wins, and a second is turned away.
+ */
+export function paymentRefPath(ref: string) {
+  const key = createHash("sha256").update(ref.trim().toLowerCase()).digest("hex").slice(0, 24);
+  return `payment-ref/${key}.json`;
+}
+
 export function applicationPath(eventId: string, email: string) {
   return `app/${eventId}/${emailScopedKey(eventId, email)}.json`;
 }

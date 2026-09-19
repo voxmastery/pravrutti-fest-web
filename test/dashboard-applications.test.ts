@@ -8,6 +8,7 @@ vi.mock("@/lib/blob-store", () => ({
   listAll: async () => apps.map((_, i) => ({ pathname: `p${i}`, url: `u${i}` })),
   readPrivate: async (url: string) => apps[Number(url.slice(1))],
   applicationPath: (evId: string, email: string) => `app/${evId}/${email}.json`,
+  paymentRefPath: (ref: string) => "payment-ref/" + ref.trim().toLowerCase() + ".json",
   readJsonByPath: async (p: string) => store.get(p) ?? null,
   putJson: async (p: string, data: unknown) => {
     store.set(p, data);

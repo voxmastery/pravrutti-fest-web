@@ -11,6 +11,7 @@ vi.mock("@/lib/blob-store", () => ({
     [...store.keys()].filter((k) => k.startsWith(prefix)).map((k) => ({ url: `mem:${k}` })),
   readPrivate: async (url: string) => store.get(url.replace(/^mem:/, "")) ?? null,
   applicationPath: (evId: string, email: string) => `app/${evId}/${email}.json`,
+  paymentRefPath: (ref: string) => "payment-ref/" + ref.trim().toLowerCase() + ".json",
   teamPath: (evId: string, code: string) => `team/${evId}/${code}.json`,
   teamMemberPath: (evId: string, email: string) => `team-member/${evId}/${email}.json`,
   readJsonByPath: async (p: string) => store.get(p) ?? null,

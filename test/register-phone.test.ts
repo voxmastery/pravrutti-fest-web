@@ -11,6 +11,7 @@ vi.mock("@/lib/blob-store", () => ({
   listAll: async () => [] as { url: string }[],
   readPrivate: async () => null,
   applicationPath: (evId: string, email: string) => `app/${evId}/${email}.json`,
+  paymentRefPath: (ref: string) => "payment-ref/" + ref.trim().toLowerCase() + ".json",
   teamPath: (evId: string, code: string) => `team/${evId}/${code}.json`,
   teamMemberPath: (evId: string, email: string) => `member/${evId}/${email}.json`,
   readJsonByPath: async (p: string) => store.get(p) ?? null,
@@ -133,7 +134,9 @@ describe("POST /api/register — ticket ids", () => {
   it("issues a unique PRV- id to each applicant", async () => {
     expect((await post(application())).status).toBe(200);
     expect((await post(application({ name: "Bina Rao", email: "bina@example.com" }))).status).toBe(200);
-    const ids = [...store.values()].map((r) => r.ticketId as string);
+    const ids = [...store.entries()]
+      .filter(([k]) => k.startsWith("app/"))
+      .map(([, r]) => r.ticketId as string);
     expect(ids).toHaveLength(2);
     expect(new Set(ids).size).toBe(2);
     for (const id of ids) expect(id).toMatch(/^PRV-[0-9A-F]{16}$/);
