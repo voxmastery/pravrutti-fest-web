@@ -27,6 +27,7 @@ export function EventRegisterPanel({
   onAccessRefresh,
   viewerStatus = null,
   viewerReady = true,
+  awaitingReference = false,
 }: {
   event: Event;
   level?: 2 | 3;
@@ -40,6 +41,11 @@ export function EventRegisterPanel({
   /** False until /api/events/coordinators has answered, so Request to Join
       cannot flash for someone who already applied. */
   viewerReady?: boolean;
+  /** They went to pay and never came back with a transaction ID. They already
+      have a registration, so Request to Join is rightly hidden — but the step
+      that takes the reference existed only in the tab they left, so without a
+      way back there is nowhere to finish. */
+  awaitingReference?: boolean;
 }) {
   const id = eventId(event.name);
   const cap = capacityFor(id);
@@ -98,6 +104,13 @@ export function EventRegisterPanel({
     onRegisterOpenChange?.(v);
   };
 
+  /* Opening to finish a payment rather than to start a registration. */
+  const [resuming, setResuming] = useState(false);
+  const openToFinish = () => {
+    setResuming(true);
+    setRegistering(true);
+  };
+
   /* Count in teams wherever the event states its field that way — that is the
      unit people register in. Events whose cap is in people (solo-allowed ones)
      keep counting heads, because a team figure there would misstate the field. */
@@ -121,6 +134,7 @@ export function EventRegisterPanel({
 
   const showApply = viewerReady && dash.ready && !live && !closed && !staff;
   const showClosed = viewerReady && !live && closed;
+  const showFinish = viewerReady && dash.ready && awaitingReference && !staff;
 
   return (
     <div className="space-y-3">
@@ -188,6 +202,21 @@ export function EventRegisterPanel({
               {full ? "Apply · join the queue" : "Request to join"}
             </Button>
           )}
+          {showFinish && (
+            <div className="space-y-2">
+              <Button
+                onClick={openToFinish}
+                className="w-full h-12 rounded-xl font-display text-xs font-black uppercase tracking-widest text-white arcade-btn-magenta border-cyber-pink cursor-pointer"
+              >
+                <Ticket className="w-4 h-4 mr-2" aria-hidden="true" />
+                Add your transaction ID
+              </Button>
+              <p className="text-xs text-pearl-white/50 leading-relaxed">
+                Your place is held. Once you have the transaction ID from your payment
+                receipt, add it here and the organisers can verify your payment.
+              </p>
+            </div>
+          )}
           {showClosed && (
             <Button
               disabled
@@ -210,7 +239,8 @@ export function EventRegisterPanel({
            submit flips showApply to false; gating here would unmount the
            success screen before they can read the queue position. */
         event={open ? event : null}
-        onClose={() => setRegistering(false)}
+        onClose={() => { setRegistering(false); setResuming(false); }}
+        resumeAtReference={resuming}
         onRegistered={handleRegistered}
         seatsLeft={left}
       />

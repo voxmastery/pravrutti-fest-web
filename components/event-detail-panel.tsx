@@ -187,6 +187,7 @@ export function EventDetailPanel({
               onRegisterOpenChange={setRegistering}
               onAccessRefresh={access.refresh}
               viewerStatus={access.status}
+              awaitingReference={access.awaitingReference}
               viewerReady={access.ready}
             />
 

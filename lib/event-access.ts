@@ -17,6 +17,11 @@ export type EventAccess = {
   /** This viewer's own application to this event, if they have one. Null for
       staff and for anyone who never applied. */
   status: AppStatus | null;
+  /** They left for the payment portal and have not come back with a reference.
+      The application exists, so the page must not offer to start another —
+      but it must offer the way to finish this one, or the tab they lost is
+      the only place that step ever existed. */
+  awaitingReference: boolean;
 };
 
 /**
@@ -34,18 +39,21 @@ export async function resolveEventAccess(slug: string): Promise<EventAccess> {
   /* Session only. Reading an email from the query string would let anyone
      unlock an event by naming a participant they know is registered. */
   const email = await resolveEmail();
-  if (!email) return { entitled: false, registered: false, reason: "signin", status: null };
+  if (!email)
+    return { entitled: false, registered: false, reason: "signin", status: null, awaitingReference: false };
 
   const role = await resolveRole();
   if (canViewEvent(role, slug)) {
-    return { entitled: true, registered: true, reason: "staff", status: null };
+    return { entitled: true, registered: true, reason: "staff", status: null, awaitingReference: false };
   }
 
   const record = (await readJsonByPath(applicationPath(slug, email))) as Application | null;
   const status = record?.status ?? null;
   const registered = isLiveApplication(status);
+  const awaitingReference =
+    status === "pending" && record?.payment === "awaiting" && !record?.paymentRef;
 
   return status === "confirmed"
-    ? { entitled: true, registered, reason: "approved", status }
-    : { entitled: false, registered, reason: "not-approved", status };
+    ? { entitled: true, registered, reason: "approved", status, awaitingReference }
+    : { entitled: false, registered, reason: "not-approved", status, awaitingReference };
 }

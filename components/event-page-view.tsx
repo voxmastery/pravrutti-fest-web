@@ -194,6 +194,7 @@ export function EventPageView({ event, slug }: { event: Event; slug: string }) {
             <EventRegisterPanel
               event={event}
               viewerStatus={access.status}
+              awaitingReference={access.awaitingReference}
               viewerReady={access.ready}
               onAccessRefresh={access.refresh}
             />

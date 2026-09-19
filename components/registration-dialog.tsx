@@ -112,11 +112,20 @@ export function RegistrationDialog({
   onClose,
   onRegistered,
   seatsLeft,
+  resumeAtReference = false,
 }: {
   event: Event | null;
   onClose: () => void;
   onRegistered: () => void;
   seatsLeft?: number;
+  /** Open straight on "enter your transaction ID".
+
+      Somebody who has been to the portal already has a registration, so the
+      form must not start them on a second one — and the step where the
+      reference is typed lived only in the tab they were told to leave. This
+      is how they get back to it, whether they lost that tab or simply found
+      the receipt later. */
+  resumeAtReference?: boolean;
 }) {
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [form, setForm] = useState<FormState>(emptyForm);
@@ -150,6 +159,12 @@ export function RegistrationDialog({
      with the college, so this asks once before filing it. */
   const [confirmSubmit, setConfirmSubmit] = useState(false);
   const errRef = useRef<HTMLParagraphElement>(null);
+
+  useEffect(() => {
+    if (!event || !resumeAtReference) return;
+    setStep(3);
+    setPayPhase("reference");
+  }, [event, resumeAtReference]);
 
   useEffect(() => {
     if (!event) return;
@@ -1038,6 +1053,16 @@ export function RegistrationDialog({
                           for the participant count — that is the most {event.name} allows, and it cannot
                           be raised later, so it leaves room for teammates to join. The fee is{" "}
                           {applicantFee} for the team either way.
+                        </p>
+                        {/* The portal opens in its own tab, and the transaction
+                            ID is typed back here. People closed this one and
+                            found nowhere to finish. Saying so up front costs a
+                            sentence; not saying it cost registrations. */}
+                        <p className="text-[13px] text-white/75 leading-relaxed pt-1">
+                          The portal opens in a new tab.{" "}
+                          <span className="text-white font-medium">Come back to this one afterwards</span>{" "}
+                          to enter your transaction ID. If you do lose it, reopen this event and
+                          pick up where you left off — your place is held either way.
                         </p>
                       </div>
 

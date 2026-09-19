@@ -21,6 +21,7 @@ type App = {
   status: AppStatus;
   payment: PayStatus;
   fee: string;
+  hasPaymentRef?: boolean;
   name: string;
   teamName?: string | null;
   teamCode?: string | null;
@@ -376,6 +377,27 @@ export default function TicketPage() {
                             {a.payment === "not_required" ? "No payment due" : a.payment === "awaiting" ? `${a.fee} · pay online` : a.payment === "paid" ? `${a.fee} paid` : `${a.fee} refunded`}
                             <span className="text-white/25"> · {a.ticketId}</span>
                           </p>
+
+                          {/* Paid, but nothing recorded to verify it against.
+                              They either lost the tab that asked for the
+                              transaction ID, or said they could not find it
+                              and have since. Either way this is where they
+                              come back to, so it has to lead somewhere. */}
+                          {a.status === "pending" &&
+                            a.payment === "awaiting" &&
+                            a.hasPaymentRef === false && (
+                              <a
+                                href={`/events/${a.eventId}`}
+                                className="block rounded-xl border border-soft-gold/30 bg-soft-gold/[0.07] px-3 py-2.5 text-[13px] text-white/75 leading-relaxed hover:border-soft-gold/50 transition-colors"
+                              >
+                                No transaction ID recorded for this one yet. Your place is held —{" "}
+                                <span className="text-champagne-gold font-medium underline underline-offset-2">
+                                  add it here
+                                </span>{" "}
+                                once you have it from your payment receipt, so the organisers can
+                                verify your payment.
+                              </a>
+                            )}
 
                           {a.teamCode && a.status !== "declined" && (
                             <TicketTeamBlock

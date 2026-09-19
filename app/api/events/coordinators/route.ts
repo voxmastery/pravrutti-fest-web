@@ -48,6 +48,7 @@ export async function GET(req: Request) {
       registered: access.registered,
       reason: access.reason,
       status: access.status,
+      awaitingReference: access.awaitingReference,
       contacts,
     }, NO_STORE);
   }
@@ -56,6 +57,7 @@ export async function GET(req: Request) {
     unlocked: true,
     registered: access.registered,
     status: access.status,
+    awaitingReference: access.awaitingReference,
     venue: venueFor(slug),
     contacts,
   }, NO_STORE);
