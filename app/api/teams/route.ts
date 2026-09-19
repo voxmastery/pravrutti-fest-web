@@ -225,7 +225,12 @@ async function createTeam(body: any) {
           restored: true,
         });
       }
-      return jsonError("You're already on a team for this event.", 409);
+      /* The membership points at a team that is no longer there — the lead
+         deleted it, and deleting does not reach the membership records it
+         leaves behind. Refusing here told them they were already on a team
+         that they had just removed themselves, with no way forward. A
+         reference to something gone is a tombstone like any other. */
+      tombstonedMembership = true;
     }
   } catch (e) {
     return blobFailed(e, "team create precheck failed");
@@ -410,6 +415,24 @@ async function deleteTeam(body: any) {
     if (!team) return jsonError("No team found for that code.", 404);
     if (team.createdByEmail !== who.email)
       return jsonError("Only the team lead can delete this team.", 403);
+
+    /* Deleting only tombstones the team. It does not reach the teammates, who
+       keep a live application pointing at something that no longer exists —
+       and that live application then blocks them from joining anywhere else.
+       Removing them one by one does reach them: it cancels each application
+       and frees them to go elsewhere. So the roster has to be empty first,
+       which is the same rule that stops a lead withdrawing from under a team. */
+    const roster = await listTeamMembers(evId, code);
+    const others = roster.filter(
+      (m: any) => String(m?.email ?? "").toLowerCase() !== who.email.toLowerCase(),
+    );
+    if (others.length > 0)
+      return jsonError(
+        `${team.name} still has ` +
+          (others.length === 1 ? "a teammate" : `${others.length} teammates`) +
+          " on it. Remove them first — deleting the team would leave them registered for a team that no longer exists.",
+        409,
+      );
 
     await putJson(teamPath(evId, code), { ...team, deletedAt: new Date().toISOString() }, true);
     return NextResponse.json({ ok: true }, { headers: { "cache-control": "no-store" } });
