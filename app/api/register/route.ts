@@ -26,6 +26,7 @@ import {
   readPrivate,
   applicationPath,
   teamPath,
+  listTeamMembers,
   teamMemberPath,
   readJsonByPath,
   putJson,
@@ -408,6 +409,32 @@ export async function DELETE(req: Request) {
         { error: "Sign in with the email you applied with, or enter your ticket reference to cancel." },
         { status: 403 }
       );
+  }
+
+  /* A lead cannot walk out from under their own team.
+
+     Teammates pay nothing — their entry is covered by the lead's fee — so a
+     lead withdrawing while they are still on the roster would leave a team
+     nobody is paying for, and nobody would be told. They take the team apart
+     first, which is an action that reaches each teammate, and then withdraw. */
+  if (record.teamCode) {
+    const team = (await readJsonByPath(teamPath(evId, record.teamCode))) as Team | null;
+    if (team && !team.deletedAt && String(team.createdByEmail).toLowerCase() === email) {
+      const roster = await listTeamMembers(evId, record.teamCode);
+      const others = roster.filter(
+        (m: any) => String(m?.email ?? "").toLowerCase() !== email,
+      );
+      if (others.length > 0)
+        return NextResponse.json(
+          {
+            error:
+              `You're the lead of ${team.name}, and ` +
+              (others.length === 1 ? "a teammate is" : `${others.length} teammates are`) +
+              " still on it. Their entry is covered by yours, so remove them or delete the team first.",
+          },
+          { status: 409 },
+        );
+    }
   }
 
   const outcome = await cancelApplication({ eventId: evId, email });
