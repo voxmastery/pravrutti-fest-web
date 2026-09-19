@@ -20,7 +20,7 @@ vi.mock("@/lib/roles", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/lib/roles")>()),
   resolveRole: async () => role.current,
 }));
-vi.mock("@/lib/identity", () => ({ resolveEmail: async () => "boss@pravrutti.test" }));
+vi.mock("@/lib/identity", () => ({ resolveEmail: async () => "boss@pravrutti.test", authRequired: () => false }));
 vi.mock("@/lib/mailer", () => ({ mailerConfigured: () => true }));
 vi.mock("@/lib/ticket-qr", () => ({ ticketQrDataUrl: async () => "data:image/png;base64,xx" }));
 vi.mock("@/lib/confirmation-email", () => ({

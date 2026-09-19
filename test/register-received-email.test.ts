@@ -20,7 +20,7 @@ vi.mock("@/lib/blob-store", () => ({
   readJsonByPath: async (p: string) => store.get(p) ?? null,
   putJson: async (p: string, data: unknown) => { store.set(p, data); },
 }));
-vi.mock("@/lib/identity", () => ({ resolveEmail: async () => null }));
+vi.mock("@/lib/identity", () => ({ resolveEmail: async () => null, authRequired: () => false }));
 vi.mock("@/lib/received-email", () => ({
   sendReceivedEmail: async (a: unknown) => {
     mail.calls.push(a);

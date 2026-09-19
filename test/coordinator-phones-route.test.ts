@@ -13,7 +13,7 @@ vi.mock("@/lib/blob-store", () => ({
 }));
 
 const who = vi.hoisted(() => ({ email: null as string | null, role: { kind: "none" } as any }));
-vi.mock("@/lib/identity", () => ({ resolveEmail: async () => who.email }));
+vi.mock("@/lib/identity", () => ({ resolveEmail: async () => who.email, authRequired: () => false }));
 vi.mock("@/lib/roles", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/lib/roles")>()),
   resolveRole: async () => who.role,

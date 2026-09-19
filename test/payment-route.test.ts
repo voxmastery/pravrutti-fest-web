@@ -14,7 +14,7 @@ vi.mock("@/lib/roles", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/lib/roles")>()),
   resolveRole: async () => role.current,
 }));
-vi.mock("@/lib/identity", () => ({ resolveEmail: async () => "boss@pravrutti.test" }));
+vi.mock("@/lib/identity", () => ({ resolveEmail: async () => "boss@pravrutti.test", authRequired: () => false }));
 
 let POST: typeof import("@/app/api/dashboard/payment/route").POST;
 beforeAll(async () => {

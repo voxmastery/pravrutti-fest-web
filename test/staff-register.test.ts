@@ -18,8 +18,7 @@ vi.mock("@/lib/blob-store", () => ({
 
 vi.mock("@/lib/identity", () => ({
   resolveEmail: async () =>
-    role.current.kind === "none" ? null : "boss@pravrutti.test",
-}));
+    role.current.kind === "none" ? null : "boss@pravrutti.test", authRequired: () => false }));
 
 vi.mock("@/lib/roles", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/lib/roles")>()),

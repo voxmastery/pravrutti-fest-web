@@ -23,7 +23,7 @@ vi.mock("@/lib/blob-store", () => ({
     store.set(p, data);
   },
 }));
-vi.mock("@/lib/identity", () => ({ resolveEmail: async () => null }));
+vi.mock("@/lib/identity", () => ({ resolveEmail: async () => null, authRequired: () => false }));
 vi.mock("@/lib/pravrutti-data", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/lib/pravrutti-data")>()),
   registrationOpen: () => true,

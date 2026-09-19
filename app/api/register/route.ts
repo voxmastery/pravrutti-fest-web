@@ -18,7 +18,7 @@ import {
 import { Team, normalizeTeamCode, isValidTeamCode } from "@/lib/teams";
 import { cancelApplication } from "@/lib/payment-review";
 import { sendReceivedEmail } from "@/lib/received-email";
-import { resolveEmail } from "@/lib/identity";
+import { resolveEmail, authRequired } from "@/lib/identity";
 import { resolveRole, resolveRoleFor } from "@/lib/roles";
 import { staffBlocksApplication, STAFF_CANNOT_APPLY } from "@/lib/staff-cockpit";
 import {
@@ -119,6 +119,18 @@ export async function POST(req: Request) {
   // When signed in, the Google-verified address wins — nobody applies as
   // someone else, and the ticket always lands on an inbox they control.
   const verified = await resolveEmail();
+  /* Where sign-in is configured, the address has to come from the session.
+     Taking it from the body let anyone file an application against somebody
+     else's email, and a filed application is what blocks that person from
+     registering themselves — so a stranger could quietly take their place.
+     The form already signs people in, so nothing legitimate travels this way.
+     Left open only where auth is off by configuration, which is the Vercel
+     test site and local work. */
+  if (authRequired() && !verified)
+    return NextResponse.json(
+      { error: "Sign in to register — your ticket is tied to your email." },
+      { status: 401 },
+    );
   const email = (verified ?? String(body?.email ?? "")).trim().toLowerCase();
   const session = await resolveRole();
   if (staffBlocksApplication(session.kind, (await resolveRoleFor(email)).kind))

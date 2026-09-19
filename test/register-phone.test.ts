@@ -18,7 +18,7 @@ vi.mock("@/lib/blob-store", () => ({
   putJson: async (p: string, data: unknown) => { store.set(p, data); },
 }));
 
-vi.mock("@/lib/identity", () => ({ resolveEmail: async () => null }));
+vi.mock("@/lib/identity", () => ({ resolveEmail: async () => null, authRequired: () => false }));
 
 // Registration closes on a fixed date, so leave it open rather than letting
 // these fail as 409s once that date passes.
