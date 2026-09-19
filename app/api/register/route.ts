@@ -132,6 +132,109 @@ export async function POST(req: Request) {
       { status: 401 },
     );
   const email = (verified ?? String(body?.email ?? "")).trim().toLowerCase();
+
+  /* Adding the transaction ID to a registration that already exists.
+
+     They registered when they left to pay, so their name, phone and college
+     were taken then. Re-submitting the whole form to attach one field asked
+     for those again from a screen that does not show them — the answer came
+     back "enter a 10-digit mobile number" with no field to put it in, and the
+     registration could not be completed at all. This updates the one thing
+     that is actually missing. */
+  if (body?.stage === "reference") {
+    const evId = String(body?.eventId ?? "").trim();
+    const event = events.find((e) => eventId(e.name) === evId);
+    if (!event) return NextResponse.json({ error: "That event doesn't exist." }, { status: 400 });
+    if (!email) return NextResponse.json({ error: "Sign in to add your transaction ID." }, { status: 401 });
+
+    const prior = (await readJsonByPath(applicationPath(evId, email))) as Application | null;
+    if (!prior)
+      return NextResponse.json(
+        { error: "We can't find a registration for you on this event." },
+        { status: 404 },
+      );
+    if (prior.status !== "pending" || prior.payment !== "awaiting")
+      return NextResponse.json(
+        { error: "There is nothing to add — this registration is not waiting on a payment." },
+        { status: 409 },
+      );
+
+    const refUnavailable = body?.refUnavailable === true;
+    const ref = readPaymentRef(body?.paymentRef) || null;
+    if (ref !== null && !isValidPaymentRef(ref))
+      return NextResponse.json({ error: PAYMENT_REF_HINT }, { status: 400 });
+    if (ref === null && !refUnavailable)
+      return NextResponse.json({ error: PAYMENT_REF_HINT }, { status: 400 });
+
+    /* One receipt, one entry — the same rule the first submit applies. */
+    if (ref) {
+      const refPath = paymentRefPath(ref);
+      try {
+        await putJson(refPath, { eventId: evId, email, claimedAt: new Date().toISOString() }, false);
+      } catch (e: any) {
+        if (/exists|overwrite/i.test(String(e?.message))) {
+          const owner = (await readJsonByPath(refPath)) as { eventId?: string; email?: string } | null;
+          const mine = owner?.email?.toLowerCase() === email && owner?.eventId === evId;
+          if (!mine)
+            return NextResponse.json(
+              {
+                error:
+                  "That transaction ID is already recorded against another registration. Each payment covers one entry — check you have copied the right one from your receipt.",
+              },
+              { status: 409 },
+            );
+        } else {
+          console.error("payment ref claim failed", e);
+        }
+      }
+    }
+
+    const updated: Application = { ...prior, paymentRef: ref };
+    try {
+      await putJson(applicationPath(evId, email), updated, true);
+    } catch (e) {
+      console.error("reference attach failed", e);
+      return NextResponse.json(
+        { error: "That didn't save. Try again in a moment." },
+        { status: 500 },
+      );
+    }
+
+    /* Acknowledge only if the first submit never managed to. */
+    if (!prior.receivedEmailAt) {
+      const receipt = await sendReceivedEmail(updated);
+      if (receipt.sent || receipt.error) {
+        try {
+          await putJson(
+            applicationPath(evId, email),
+            {
+              ...updated,
+              receivedEmailAt: receipt.sent ? new Date().toISOString() : undefined,
+              receivedEmailError: receipt.sent ? null : receipt.error ?? "Mail send failed.",
+            },
+            true,
+          );
+        } catch (e) {
+          console.error("received-email stamp failed", e);
+        }
+      }
+    }
+
+    return NextResponse.json({
+      ticketId: updated.ticketId,
+      status: updated.status,
+      payment: updated.payment,
+      fee: updated.fee,
+      eventName: updated.eventName,
+      name: updated.name,
+      queuePosition: (await listAll(`app/${evId}/`)).length,
+      capacity: capacityFor(evId),
+      teamName: updated.teamName ?? null,
+      teamCode: updated.teamCode ?? null,
+      hasPaymentRef: Boolean(updated.paymentRef),
+    });
+  }
+
   const session = await resolveRole();
   if (staffBlocksApplication(session.kind, (await resolveRoleFor(email)).kind))
     return NextResponse.json({ error: STAFF_CANNOT_APPLY }, { status: 403 });

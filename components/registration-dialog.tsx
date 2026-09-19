@@ -419,7 +419,19 @@ export function RegistrationDialog({
       const res = await fetch("/api/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+        /* Resuming attaches the reference to the registration they already
+           have. Sending the whole form would re-validate a name, phone and
+           college that this screen never collected, and refuse them over a
+           field they cannot see. */
+        body: JSON.stringify(
+          resumeAtReference
+            ? {
+                stage: "reference",
+                eventId: eventId(event.name),
+                paymentRef: refUnavailable ? "" : form.paymentRef,
+                refUnavailable,
+              }
+            : {
           name: form.name,
           email: form.email,
           phone: form.phone,
@@ -430,7 +442,8 @@ export function RegistrationDialog({
           teamName: createdTeam?.name ?? "",
           teamCode: createdTeam?.code ?? "",
           eventId: eventId(event.name),
-        }),
+              },
+        ),
       });
       const data = await res.json();
       if (!res.ok) {
