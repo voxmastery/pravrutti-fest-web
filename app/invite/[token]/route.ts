@@ -10,6 +10,7 @@ import {
   readInviteToken,
 } from "@/lib/invites";
 import { newTicketId } from "@/lib/ticket-id";
+import { siteOrigin } from "@/lib/mailer";
 import {
   applicationPath,
   invitePath,
@@ -36,8 +37,21 @@ export const dynamic = "force-dynamic";
  * the desk — their lead can still register the team without them.
  */
 
-function problem(req: Request, reason: string) {
-  return NextResponse.redirect(new URL(`/invite/problem?reason=${reason}`, req.url), 303);
+/**
+ * Where to send somebody, as an address their browser can actually reach.
+ *
+ * Not `req.url`. Behind the production server that reports the internal bind
+ * address, so every redirect from here pointed at https://0.0.0.0:3000 — an
+ * accepted invite was recorded and then dumped the person on a page that does
+ * not resolve, leaving them certain it had failed. The origin used for the
+ * link in the invitation email is the one that got them here, so it is the
+ * one that can take them onward. */
+function destination(path: string) {
+  return new URL(path, siteOrigin());
+}
+
+function problem(_req: Request, reason: string) {
+  return NextResponse.redirect(destination(`/invite/problem?reason=${reason}`), 303);
 }
 
 export async function GET(
@@ -65,10 +79,7 @@ export async function GET(
     const outcome = decideAccept({ pointer, member: onTeam, teamExists });
     if (!outcome.ok) return problem(req, outcome.reason);
 
-    const dest = new URL(
-      `/teams/${pointer.eventId}/${pointer.code}?t=${token}`,
-      req.url,
-    );
+    const dest = destination(`/teams/${pointer.eventId}/${pointer.code}?t=${token}`);
 
     if (outcome.alreadyAccepted) return NextResponse.redirect(dest, 303);
 
