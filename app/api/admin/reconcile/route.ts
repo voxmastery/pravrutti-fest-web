@@ -12,6 +12,7 @@ import { Application, feeForApplicant } from "@/lib/applications";
 import { Team, TeamMember, normalizeTeamCode, memberStatus } from "@/lib/teams";
 import { events, eventId as slugFor } from "@/lib/pravrutti-data";
 import { newTicketId } from "@/lib/ticket-id";
+import { cancelApplication } from "@/lib/payment-review";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -175,6 +176,33 @@ export async function POST(req: Request) {
     body = await req.json();
   } catch {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+  }
+
+  /* Undoing a restore.
+
+     A restored row is a guess — that a team with members around it belonged to
+     a lead who had paid. When that turns out to be wrong the row has to go,
+     and cancelling is the honest way to remove it: declining would stamp it
+     "refunded" and invent a repayment for money that never arrived.
+
+     This deliberately bypasses the guard that stops a lead withdrawing from
+     under their team. That guard protects teammates from a lead leaving
+     silently; an organiser removing a row they know to be wrong is the case it
+     was never meant to catch. */
+  if (body?.action === "cancel") {
+    const evId = String(body?.eventId ?? "").trim();
+    const email = String(body?.email ?? "").trim().toLowerCase();
+    if (!evId || !email)
+      return NextResponse.json({ error: "Missing eventId or email." }, { status: 400 });
+
+    const outcome = await cancelApplication({ eventId: evId, email });
+    if (!outcome) return NextResponse.json({ error: "No such application." }, { status: 404 });
+    return NextResponse.json({
+      ok: true,
+      status: outcome.application.status,
+      payment: outcome.application.payment,
+      refundedAt: outcome.application.refundedAt ?? null,
+    });
   }
 
   if (body?.action !== "restore_lead")
