@@ -118,6 +118,11 @@ export default function TicketPage() {
   const [qrFor, setQrFor] = useState<App | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [focusEvent, setFocusEvent] = useState<string | null>(null);
+  /* Withdrawing is offered only on a pending application. A confirmed one has
+     a ticket already, and the rest are closed. */
+  const [withdrawFor, setWithdrawFor] = useState<string | null>(null);
+  const [withdrawing, setWithdrawing] = useState(false);
+  const [withdrawError, setWithdrawError] = useState<string | null>(null);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -147,6 +152,30 @@ export default function TicketPage() {
     },
     []
   );
+
+  const withdraw = async (eventId: string) => {
+    setWithdrawing(true);
+    setWithdrawError(null);
+    try {
+      const res = await fetch("/api/register", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ eventId }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setWithdrawError(data.error ?? "Couldn't withdraw. Try again in a moment.");
+        setWithdrawing(false);
+        return;
+      }
+      setWithdrawFor(null);
+      setWithdrawing(false);
+      await lookup();
+    } catch {
+      setWithdrawError("Network dropped. Try again.");
+      setWithdrawing(false);
+    }
+  };
 
   // Signed in: load automatically, no typing required.
   useEffect(() => {
@@ -360,6 +389,52 @@ export default function TicketPage() {
                                 <CalendarPlus className="w-4 h-4 mr-1.5" /> Calendar
                               </Button>
                             </div>
+                          )}
+
+                          {a.status === "pending" && (
+                            withdrawFor === a.ticketId ? (
+                              <div className="rounded-xl border border-white/[0.12] bg-white/[0.04] p-3 space-y-2.5 mt-1">
+                                <p className="text-[13px] text-white/75 leading-relaxed">
+                                  Withdraw your registration for {a.eventName}? Your place goes
+                                  back to the event.
+                                </p>
+                                {/* The state this page shows is "not verified yet", which is
+                                    not the same as "not paid". Someone who has paid and
+                                    withdraws here loses the row their payment would have been
+                                    matched to, so they are sent to a person instead. */}
+                                {a.payment === "awaiting" && (
+                                  <p className="text-[13px] text-soft-gold/90 leading-relaxed">
+                                    If you have already paid, don&apos;t withdraw — your payment
+                                    may still be being verified. Message the organisers instead.
+                                  </p>
+                                )}
+                                {withdrawError && (
+                                  <p className="text-[13px] text-danger-strong">{withdrawError}</p>
+                                )}
+                                <div className="flex gap-2">
+                                  <Button
+                                    variant="outline"
+                                    onClick={() => { setWithdrawFor(null); setWithdrawError(null); }}
+                                    disabled={withdrawing}
+                                    className="h-[34px] rounded-2xl border border-white/[0.08] bg-white/[0.04] text-white/70 hover:bg-white/[0.08] hover:text-white font-medium text-sm px-4 cursor-pointer" >
+                                    Keep it
+                                  </Button>
+                                  <Button
+                                    onClick={() => withdraw(a.eventId)}
+                                    disabled={withdrawing}
+                                    className="h-[34px] rounded-2xl bg-danger-strong/80 text-white hover:bg-danger-strong font-medium text-sm px-4 cursor-pointer" >
+                                    {withdrawing ? <Loader2 className="w-4 h-4 animate-spin" /> : "Withdraw"}
+                                  </Button>
+                                </div>
+                              </div>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={() => { setWithdrawFor(a.ticketId); setWithdrawError(null); }}
+                                className="text-xs text-white/35 hover:text-white/70 underline underline-offset-2 cursor-pointer pt-1" >
+                                Withdraw this registration
+                              </button>
+                            )
                           )}
                         </div>
 
