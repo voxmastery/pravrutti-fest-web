@@ -69,6 +69,9 @@ export type TeamPreview = {
   maxMembers: number;
   isFull: boolean;
   members?: TeamPerson[];
+  /** Whether the person who asked leads this team. Only set where the viewer
+      is known — the team-by-code lookup has no viewer and omits it. */
+  isLead?: boolean;
 };
 
 /** Strip phones and college before anything leaves the teams API. */

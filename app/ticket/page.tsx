@@ -10,6 +10,7 @@ import { STATUS_COPY, AppStatus, PayStatus } from "@/lib/applications";
 import { downloadEventIcs } from "@/lib/event-calendar";
 import { EventPoster } from "@/components/event-poster";
 import { TeamInviteCard, useMyTeam } from "@/components/team-invite-card";
+import { TeamManage } from "@/components/team-manage";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Loader2, CalendarPlus, Hourglass, Check, RotateCcw, LogOut, MapPin, QrCode, ArrowLeft, Copy } from "lucide-react";
 
@@ -56,18 +57,28 @@ function TicketTeamBlock({
   eventId,
   fallbackCode,
   fallbackName,
+  viewerEmail,
 }: {
   eventId: string;
   fallbackCode: string;
   fallbackName?: string | null;
+  viewerEmail: string;
 }) {
-  const team = useMyTeam(eventId, true);
+  /* Bumped to re-read the roster after the lead removes somebody. */
+  const [pulse, setPulse] = useState(0);
+  const team = useMyTeam(eventId, true, pulse);
   const [copied, setCopied] = useState(false);
 
   if (team) {
     return (
       <div className="pt-1">
         <TeamInviteCard team={team} />
+        <TeamManage
+          eventId={eventId}
+          team={team}
+          viewerEmail={viewerEmail}
+          onChanged={() => setPulse((n) => n + 1)}
+        />
       </div>
     );
   }
@@ -371,6 +382,7 @@ export default function TicketPage() {
                               eventId={a.eventId}
                               fallbackCode={a.teamCode}
                               fallbackName={a.teamName}
+                              viewerEmail={me.email ?? ""}
                             />
                           )}
 

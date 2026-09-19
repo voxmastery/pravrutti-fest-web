@@ -130,7 +130,12 @@ async function mineTeam(evId: string, bodyEmail: string) {
     if (!team) return NextResponse.json({ team: null }, { headers: { "cache-control": "no-store" } });
     const members = await listTeamMembers(evId, code);
     return NextResponse.json(
-      { team: toTeamPreview(team, members, maxTeamSizeFor(event), true) },
+      {
+        team: {
+          ...toTeamPreview(team, members, maxTeamSizeFor(event), true),
+          isLead: String(team.createdByEmail).toLowerCase() === who.email.toLowerCase(),
+        },
+      },
       { headers: { "cache-control": "no-store" } }
     );
   } catch (e) {
