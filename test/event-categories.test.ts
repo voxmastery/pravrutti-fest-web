@@ -27,13 +27,18 @@ const TRACKS: Record<Event["category"], string[]> = {
     "ELECTROXCAPE",
   ],
   INNOVENTURE: ["Discoverize (Research Paper Presentation)", "DENT - INNOVATE", "PITCH AT MACH"],
-  IDEAFORGE: ["Campus Innovators 2.0", "Beyond the Blueprint 2.0", "LEADS Innovation Challenge"],
+  IDEAFORGE: [
+    "Campus Innovators 2.0",
+    "Beyond the Blueprint 2.0",
+    "LEADS Innovation Challenge",
+    "Pitch Pulse",
+  ],
 };
 
 const norm = (s: string) => s.trim().toLowerCase();
 
 describe("event tracks", () => {
-  it("covers all 24 events exactly once", () => {
+  it("covers every event exactly once", () => {
     const listed = Object.values(TRACKS).flat();
     expect(listed).toHaveLength(events.length);
     expect(new Set(listed.map(norm)).size).toBe(listed.length);
@@ -63,7 +68,7 @@ describe("event tracks", () => {
       TECHNOVERSE: 3,
       "CODE & CHAOS": 7,
       INNOVENTURE: 3,
-      IDEAFORGE: 3,
+      IDEAFORGE: 4,
     });
   });
 });

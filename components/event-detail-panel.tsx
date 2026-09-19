@@ -199,7 +199,7 @@ export function EventDetailPanel({
               <EventDescription description={event.description} className="text-sm text-pearl-white/80" />
             </section>
 
-            <section className="space-y-3">
+            <section className="space-y-3" hidden={event.prizes.length === 0}>
               <SectionLabel level={3}>Prizes</SectionLabel>
               {/* Some events award two places, some three — render exactly
                   as many as the event actually has. */}

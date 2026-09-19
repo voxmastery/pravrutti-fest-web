@@ -48,6 +48,10 @@ const PHONES: Record<string, CoordinatorPhone[]> = {
     { name: "Bhauthik V", phone: "9742385315" },
     { name: "Vimal Kanth", phone: "6361245327" },
   ],
+  "pitch-pulse": [
+    { name: "Kiran Kumar BM", phone: "9164644099" },
+    { name: "Jeslene Iniya D", phone: "8148817683" },
+  ],
   "campus-innovators-2-0": [
     { name: "Akshay", phone: "9686226622" },
     { name: "Nikhita", phone: "9380268311" },

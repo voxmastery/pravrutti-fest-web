@@ -788,6 +788,30 @@ export const events: Event[] = [
     dashboardEmails: ["amantebriwal104@gmail.com", "snehajangid027@gmail.com"],
     brochureUrl: "https://drive.google.com/open?id=1sSsvN1DOCowLaWqpeNWncriNXRJkmS8O",
   },
+  {
+    name: "Pitch Pulse",
+    category: "IDEAFORGE",
+    subCategory: "Startup & Project Pitching Challenge",
+    description:
+      "Got an idea that could solve a real-world problem? Pitch Pulse is the stage for it. Choose a problem that interests you, work up a solution, and bring it to life in a 7+3 pitch \u2014 seven minutes to present, then three minutes of questions from an expert jury. \u25cf Open innovation: teams pick their own problem statement. There is no shortlisting or elimination round beforehand \u2014 every registered team pitches on the day. \u25cf Official template: the presentation template reaches every registered team a week before the event, and every deck must use it. \u25cf Judged on problem statement and innovation, feasibility and market viability, real-world impact, pitch quality, and communication \u2014 weighted equally. The jury's decision is final. \u25cf Bring your own laptop, charger and extension board. Whether you are a builder, an entrepreneur, a creative thinker, or a fresher with nothing but an idea, this is somewhere to be heard.",
+    fee: "Rs. 200/-",
+    /* The proposal puts the purse "as per Pravrutti rules" without naming a
+       figure, and an invented one on a public page is a promise nobody agreed
+       to. The prize block hides itself until these are filled in. */
+    prizes: [],
+    teamSize: { min: 1, max: 4, soloAllowed: true },
+    capacity: 280,
+    capacityUnit: "teams",
+    duration: "3 hours",
+    eligibility: "Open to all UG and PG students. Cross-department and cross-year teams are welcome. Working professionals may not enter.",
+    coordinators: {
+      faculty: [{ name: "Kiran Kumar BM" }],
+      student: [{ name: "Jeslene Iniya D" }],
+    },
+    dashboardEmails: ["kirankumar.ee.et@msruas.ac.in", "25etcs002129@msruas.ac.in"],
+    brochureUrl: "",
+    club: "IIC",
+  },
 ];
 
 // ── Registration system ──────────────────────────────────────
@@ -932,14 +956,14 @@ export const CAMPUS_COORDS = (() => {
 /**
  * The organisation behind every event, for the "Presented by" block.
  *
- * The same for all 24 events, unlike Event.club: IIC is recorded as the fest's
+ * The same for every event, unlike Event.club: IIC is recorded as the fest's
  * main organiser in the `clubs` list above, and the university hosts it.
  */
 export const PRESENTER = {
   name: FEST.name,
   org: "Institution Innovation Council · Ramaiah University of Applied Sciences",
   blurb:
-    "The annual inter-college technical fest of Ramaiah University of Applied Sciences \u2014 24 events across engineering, research, code and enterprise, run by 16 student clubs.",
+    "The annual inter-college technical fest of Ramaiah University of Applied Sciences \u2014 25 events across engineering, research, code and enterprise, run by 16 student clubs.",
   email: contacts.email,
 };
 

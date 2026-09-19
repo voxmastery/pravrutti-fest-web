@@ -208,7 +208,10 @@ export function EventPageView({ event, slug }: { event: Event; slug: string }) {
             <EventDescription description={event.description} className="text-pearl-white/75" />
           </section>
 
-          <section className="order-11 lg:order-none min-w-0 space-y-3">
+          <section
+            className="order-11 lg:order-none min-w-0 space-y-3"
+            hidden={event.prizes.length === 0}
+          >
             <SectionLabel>Prizes</SectionLabel>
             {/* Prize count varies per event — render only what's awarded. */}
             <div className={`grid gap-3 ${event.prizes.length === 2 ? "grid-cols-2" : "grid-cols-3"}`}>

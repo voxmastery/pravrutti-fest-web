@@ -58,8 +58,7 @@ export const scheduleDays: ScheduleDay[] = [
           { track: 1, eventId: "pitch-at-mach", label: "Pitch at Mach", host: "AeSI" },
           { track: 2, eventId: "discoverize-research-paper-presentation", label: "Discoverize — Research Paper", host: "ISTE" },
           { track: 3, eventId: "dent-innovate", label: "Dent Innovate", host: "IIC" },
-          /* Not one of the 24 events on this site — no page to link to. */
-          { track: 4, label: "Pitch Pulse", host: "IIC", time: "2:00 PM – 8:00 PM" },
+          { track: 4, eventId: "pitch-pulse", label: "Pitch Pulse", host: "IIC", time: "2:00 PM – 8:00 PM" },
         ],
       },
       {
