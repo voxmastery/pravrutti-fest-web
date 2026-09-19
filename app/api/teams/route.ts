@@ -196,11 +196,24 @@ async function createTeam(body: any) {
   if (!isValidPhone(phone)) return jsonError(PHONE_HINT, 400);
   if (college.length < 2 || college.length > 120) return jsonError("Enter your college name.", 400);
 
+  /* Leaving or being removed tombstones the membership rather than deleting
+     it — the store has no delete — so the write further down is allowed to
+     replace that tombstone. Without this, anyone who had ever left a team
+     could never create one. */
+  let tombstonedMembership = false;
+
   try {
-    const existingApp = await readJsonByPath(applicationPath(evId, email));
-    if (existingApp) return jsonError("You've already applied for this event.", 409);
+    /* A cancelled application is a place they gave up, so it must not stand
+       in the way of taking another. Removing somebody from a team cancels
+       theirs, and treating that as a live duplicate locked them out of the
+       event completely: they could not join another team, create one, rejoin,
+       or be invited back. The register route has always read it this way. */
+    const existingApp = (await readJsonByPath(applicationPath(evId, email))) as Application | null;
+    if (existingApp && isLiveApplication(existingApp.status))
+      return jsonError("You've already applied for this event.", 409);
 
     const existingMembership = await readJsonByPath(teamMemberPath(evId, email));
+    tombstonedMembership = Boolean(existingMembership) && !existingMembership?.code;
     if (existingMembership?.code) {
       const code = normalizeTeamCode(existingMembership.code);
       const existing = await loadTeam(evId, code);
@@ -252,7 +265,7 @@ async function createTeam(body: any) {
   if (!team) return jsonError("Couldn't mint a unique team code. Try again.", 500);
 
   try {
-    await putJson(teamMemberPath(evId, email), { code: team.code, eventId: evId, member: lead }, false);
+    await putJson(teamMemberPath(evId, email), { code: team.code, eventId: evId, member: lead }, tombstonedMembership);
   } catch (e: any) {
     if (/exists|overwrite/i.test(String(e?.message)))
       return jsonError("You're already on a team for this event.", 409);
@@ -288,10 +301,13 @@ async function joinTeam(body: any) {
   if (college.length < 2 || college.length > 120) return jsonError("Enter your college name.", 400);
 
   let team: Team;
+  /* Their own cancelled row is the one thing the write below may replace. */
+  let replacingCancelled = false;
   try {
-    const existingApp = await readJsonByPath(applicationPath(evId, email));
-    if (existingApp)
+    const existingApp = (await readJsonByPath(applicationPath(evId, email))) as Application | null;
+    if (existingApp && isLiveApplication(existingApp.status))
       return jsonError("You've already applied for this event.", 409);
+    replacingCancelled = existingApp?.status === "cancelled";
 
     const existingMembership = await readJsonByPath(teamMemberPath(evId, email));
     const prior = normalizeTeamCode(existingMembership?.code ?? "");
@@ -333,7 +349,7 @@ async function joinTeam(body: any) {
 
   const record = personApplication({ event, evId, name, email, phone, college, team });
   try {
-    await putJson(applicationPath(evId, email), record, false);
+    await putJson(applicationPath(evId, email), record, replacingCancelled);
   } catch (e: any) {
     if (/exists|overwrite/i.test(String(e?.message)))
       return jsonError("You've already applied for this event.", 409);
@@ -493,7 +509,8 @@ async function addMember(body: any) {
     const priorCode = normalizeTeamCode(priorMembership?.code ?? "");
     if (priorCode && priorCode !== code)
       return jsonError(`${fields.name} is already on another team for this event.`, 409);
-    if (priorApp) return jsonError(`${fields.name} has already registered for this event.`, 409);
+    if (priorApp && isLiveApplication((priorApp as Application).status))
+      return jsonError(`${fields.name} has already registered for this event.`, 409);
 
     const token = newInviteToken();
     const member = invitedMember({ fields, college: body?.college ?? "", token });
