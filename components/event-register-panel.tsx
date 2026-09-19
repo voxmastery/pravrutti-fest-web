@@ -119,8 +119,7 @@ export function EventRegisterPanel({
   if (dash.ready && staff) return null;
   if (viewerReady && viewerStatus === "confirmed") return invite;
 
-  const registrationDisabled = true; // Registration is closed while the payment flow is fixed
-  const showApply = !registrationDisabled && viewerReady && dash.ready && !live && !closed && !staff;
+  const showApply = viewerReady && dash.ready && !live && !closed && !staff;
   const showClosed = viewerReady && !live && closed;
 
   return (
@@ -187,14 +186,6 @@ export function EventRegisterPanel({
               className="w-full h-12 rounded-xl font-display text-xs font-black uppercase tracking-widest text-white arcade-btn-magenta border-cyber-pink cursor-pointer" >
               <Ticket className="w-4 h-4 mr-2" aria-hidden="true" />
               {full ? "Apply · join the queue" : "Request to join"}
-            </Button>
-          )}
-          {registrationDisabled && viewerReady && (
-            <Button
-              disabled
-              className="w-full h-12 rounded-xl font-display text-xs font-black uppercase tracking-widest bg-champagne-gold/10 text-champagne-gold/80 border border-champagne-gold/30"
-            >
-              Registration opens soon
             </Button>
           )}
           {showClosed && (
