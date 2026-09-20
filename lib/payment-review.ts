@@ -1,5 +1,7 @@
 import type { Application } from "@/lib/applications";
-import { applicationPath, readJsonByPath, putJson } from "@/lib/blob-store";
+import { isLiveApplication } from "@/lib/applications";
+import { applicationPath, readJsonByPath, putJson, listAll, readPrivate } from "@/lib/blob-store";
+import { normalizeTeamCode } from "@/lib/teams";
 import { sendConfirmationEmail } from "@/lib/confirmation-email";
 import type { SendResult } from "@/lib/mailer";
 
@@ -77,6 +79,62 @@ export async function verifyPayment(args: { eventId: string; email: string; by: 
   }
 
   return persistWithConfirmation(path, verified);
+}
+
+/**
+ * Approving a whole team at once.
+ *
+ * The fee is ₹200 for the team and the lead pays it, so "has this team paid"
+ * is one question with one answer — and approving them one row at a time
+ * invites the half-approved team, where teammates wait on a decision that
+ * was already taken. Every live member is confirmed together; the money is
+ * recorded against the payer alone, because four "paid" stamps would put
+ * ₹800 in the books where ₹200 was taken.
+ *
+ * Members already confirmed and settled are returned untouched rather than
+ * re-confirmed: a second press must not put a second ticket in four inboxes.
+ */
+export async function verifyTeam(args: {
+  eventId: string;
+  code: string;
+  by: string;
+  paymentRef?: string | null;
+}) {
+  const code = normalizeTeamCode(args.code);
+  if (!code) return null;
+
+  /* Scoped to the one event: a team that moved keeps its code, and the rows
+     left behind at the old event are not this decision. */
+  const blobs = await listAll(`app/${args.eventId}/`);
+  const raw = (await Promise.all(blobs.map((b) => readPrivate(b.url)))) as (Application | null)[];
+  const members = raw
+    .filter((a): a is Application => !!a?.email)
+    .filter((a) => normalizeTeamCode(a.teamCode ?? "") === code && isLiveApplication(a.status))
+    .sort((a, b) => String(a.appliedAt).localeCompare(String(b.appliedAt)));
+  if (members.length === 0) return null;
+
+  const settled = (a: Application) => a.status === "confirmed" && a.payment !== "awaiting";
+
+  /* In parallel: each write is its own key, and four SMTP round-trips in
+     series is the difference between a click and a stall. */
+  const outcomes = await Promise.all(
+    members.map(async (m) => {
+      if (settled(m)) return { application: m, mail: null } satisfies ReviewOutcome;
+      return (await verifyPayment({
+        eventId: args.eventId,
+        email: m.email,
+        by: args.by,
+        /* A reference read off the statement belongs to whoever paid, and
+           joiners have nothing to attach it to. */
+        paymentRef: m.payment === "not_required" ? undefined : args.paymentRef,
+      }))!;
+    }),
+  );
+
+  return {
+    applications: outcomes.map((o) => o.application),
+    mails: outcomes.map((o) => o.mail),
+  };
 }
 
 /** Undo, because the common failure is a mis-click on the wrong row. */

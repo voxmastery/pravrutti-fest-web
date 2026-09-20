@@ -8,6 +8,7 @@ import { mailerConfigured } from "@/lib/mailer";
 import { ticketQrDataUrl } from "@/lib/ticket-qr";
 import {
   verifyPayment,
+  verifyTeam,
   unverifyPayment,
   declineApplication,
   setPaymentRef,
@@ -75,10 +76,17 @@ export async function GET(req: Request) {
   });
 }
 
-type Action = "verify_payment" | "unverify_payment" | "decline" | "set_payment_ref" | "resend_confirmation";
+type Action =
+  | "verify_payment"
+  | "verify_team"
+  | "unverify_payment"
+  | "decline"
+  | "set_payment_ref"
+  | "resend_confirmation";
 
 const ACTIONS: Action[] = [
   "verify_payment",
+  "verify_team",
   "unverify_payment",
   "decline",
   "set_payment_ref",
@@ -100,12 +108,23 @@ export async function POST(req: Request) {
   const evId = String(body?.eventId ?? "").trim();
   const email = String(body?.email ?? "").trim().toLowerCase();
   if (!ACTIONS.includes(action)) return fail("Unknown action.", 400);
-  if (!evId || !email) return fail("Missing event or applicant.", 400);
 
   const by = (await resolveEmail()) ?? "unknown";
   const rawRef = body?.paymentRef;
   const paymentRef =
     rawRef === undefined ? undefined : String(rawRef ?? "").trim().slice(0, 80) || null;
+
+  /* Addressed by team rather than by person: the fee is one payment for the
+     team, so the decision is one decision. */
+  if (action === "verify_team") {
+    const teamCode = String(body?.teamCode ?? "").trim();
+    if (!evId || !teamCode) return fail("Missing event or team.", 400);
+    const team = await verifyTeam({ eventId: evId, code: teamCode, by, paymentRef });
+    if (!team) return fail("No live registrations for that team.", 404);
+    return NextResponse.json({ ok: true, applications: team.applications, mails: team.mails });
+  }
+
+  if (!evId || !email) return fail("Missing event or applicant.", 400);
 
   const outcome =
     action === "verify_payment"

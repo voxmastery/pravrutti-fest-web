@@ -55,6 +55,24 @@ const STATUS_FILTERS: { id: StatusFilter; label: string }[] = [
 ];
 
 const key = (a: Application) => `${a.eventId}:${a.email}`;
+/** A team is a code on one event — the same code can exist on two events
+    after a team is moved, and those are not the same team. */
+const teamKey = (a: Application) => `${a.eventId}#${String(a.teamCode).toUpperCase()}`;
+
+type Group =
+  | { kind: "solo"; key: string; a: Application }
+  | {
+      kind: "team";
+      key: string;
+      eventId: string;
+      eventName: string;
+      code: string;
+      name: string;
+      /** Members matching the current filters. */
+      shown: Application[];
+      /** Everyone on the team, filters or not — what the decision covers. */
+      all: Application[];
+    };
 
 const when = (iso?: string | null) =>
   iso
@@ -119,6 +137,14 @@ export default function ApplicationsDeskPage() {
         : f
     );
 
+  /** A whole team changed in one action. */
+  const patchMany = (updated: Application[]) => {
+    const byKey = new Map(updated.map((u) => [key(u), u]));
+    setFeed((f) =>
+      f ? { ...f, applications: f.applications.map((a) => byKey.get(key(a)) ?? a) } : f
+    );
+  };
+
   const rows = useMemo(() => {
     if (!feed) return [];
     const q = query.trim().toLowerCase();
@@ -132,6 +158,58 @@ export default function ApplicationsDeskPage() {
         .some((v) => String(v).toLowerCase().includes(q));
     });
   }, [feed, query, event, status]);
+
+  /* Counted here rather than taken from the response: an action patches rows
+     in place, and tiles still quoting the numbers the server sent on page
+     load would contradict the list right under them. */
+  const totals = useMemo(() => {
+    const a = feed?.applications ?? [];
+    const count = (p: (x: Application) => boolean) => a.filter(p).length;
+    return {
+      all: a.length,
+      pending: count((x) => x.status === "pending"),
+      confirmed: count((x) => x.status === "confirmed"),
+      awaitingPayment: count((x) => x.payment === "awaiting"),
+      paid: count((x) => x.payment === "paid"),
+      emailed: count((x) => !!x.confirmationEmailAt),
+    };
+  }, [feed]);
+
+  /* Teammates belong together. The fee is one payment for the team, so a
+     flat list of names makes the desk reassemble by eye what registration
+     already knows — and approving row by row is how a team ends up half
+     approved. Solo entries stay as they are. */
+  const groups = useMemo<Group[]>(() => {
+    if (!feed) return [];
+    const roster = new Map<string, Application[]>();
+    for (const a of feed.applications) {
+      if (!a.teamCode) continue;
+      const k = teamKey(a);
+      roster.set(k, [...(roster.get(k) ?? []), a]);
+    }
+    const out: Group[] = [];
+    const seen = new Set<string>();
+    for (const a of rows) {
+      if (!a.teamCode) {
+        out.push({ kind: "solo", key: key(a), a });
+        continue;
+      }
+      const k = teamKey(a);
+      if (seen.has(k)) continue;
+      seen.add(k);
+      out.push({
+        kind: "team",
+        key: k,
+        eventId: a.eventId,
+        eventName: a.eventName,
+        code: a.teamCode,
+        name: a.teamName ?? a.teamCode,
+        shown: rows.filter((r) => r.teamCode && teamKey(r) === k),
+        all: roster.get(k) ?? [a],
+      });
+    }
+    return out;
+  }, [rows, feed]);
 
   const exportCsv = () => {
     const head = [
@@ -229,12 +307,12 @@ export default function ApplicationsDeskPage() {
       {feed && (
         <>
           <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-            <StatTile label="Applications" value={feed.totals.all} />
-            <StatTile label="In review" value={feed.totals.pending} />
-            <StatTile label="Payment due" value={feed.totals.awaitingPayment} />
-            <StatTile label="Paid" value={feed.totals.paid} />
-            <StatTile label="Confirmed" value={feed.totals.confirmed} />
-            <StatTile label="Tickets emailed" value={feed.totals.emailed} />
+            <StatTile label="Applications" value={totals.all} />
+            <StatTile label="In review" value={totals.pending} />
+            <StatTile label="Payment due" value={totals.awaitingPayment} />
+            <StatTile label="Paid" value={totals.paid} />
+            <StatTile label="Confirmed" value={totals.confirmed} />
+            <StatTile label="Tickets emailed" value={totals.emailed} />
           </div>
 
           <div className="mb-4 flex flex-wrap items-center gap-2">
@@ -276,16 +354,28 @@ export default function ApplicationsDeskPage() {
               <p className="p-8 text-center text-sm text-white/40">Nothing matches these filters.</p>
             ) : (
               <div className="divide-y divide-royal-wine/50">
-                {rows.map((a) => (
-                  <Row
-                    key={key(a)}
-                    a={a}
-                    open={open === key(a)}
-                    mailConfigured={feed.mailConfigured}
-                    onToggle={() => setOpen(open === key(a) ? null : key(a))}
-                    onChanged={patch}
-                  />
-                ))}
+                {groups.map((g) =>
+                  g.kind === "solo" ? (
+                    <Row
+                      key={g.key}
+                      a={g.a}
+                      open={open === g.key}
+                      mailConfigured={feed.mailConfigured}
+                      onToggle={() => setOpen(open === g.key ? null : g.key)}
+                      onChanged={patch}
+                    />
+                  ) : (
+                    <TeamBlock
+                      key={g.key}
+                      group={g}
+                      openKey={open}
+                      mailConfigured={feed.mailConfigured}
+                      onToggle={(k) => setOpen(open === k ? null : k)}
+                      onChanged={patch}
+                      onChangedMany={patchMany}
+                    />
+                  )
+                )}
               </div>
             )}
           </Card>
@@ -566,6 +656,132 @@ function Row({
           )}
         </div>
       )}
+    </div>
+  );
+}
+
+/**
+ * One team, and the decision that covers all of it.
+ *
+ * ₹200 buys a team a place, the lead pays it, and the teammates are on that
+ * one payment — so "confirm" is a judgement about the team. Approving the
+ * rows one at a time is how three people end up with tickets and the fourth
+ * waits on a decision nobody remembers not finishing.
+ */
+function TeamBlock({
+  group,
+  openKey,
+  mailConfigured,
+  onToggle,
+  onChanged,
+  onChangedMany,
+}: {
+  group: Extract<Group, { kind: "team" }>;
+  openKey: string | null;
+  mailConfigured: boolean;
+  onToggle: (k: string) => void;
+  onChanged: (next: Application) => void;
+  onChangedMany: (next: Application[]) => void;
+}) {
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [flash, setFlash] = useState<string | null>(null);
+
+  /* Withdrawn and declined members are on the roster's history, not in the
+     decision — and a team that moved events leaves cancelled rows behind. */
+  const live = group.all.filter((a) => a.status === "pending" || a.status === "confirmed");
+  const waiting = live.filter((a) => a.status === "pending");
+  const confirmed = live.filter((a) => a.status === "confirmed");
+  /* Whoever carries the fee. Teammates are "not_required" — covered by them. */
+  const payer = live.find((a) => a.payment !== "not_required") ?? null;
+  const hidden = live.length - group.shown.filter((a) => a.status !== "cancelled" && a.status !== "declined").length;
+
+  const confirmTeam = async () => {
+    setBusy(true);
+    setError(null);
+    setFlash(null);
+    try {
+      const res = await fetch("/api/dashboard/applications", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "verify_team", eventId: group.eventId, teamCode: group.code }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "That didn't go through.");
+      onChangedMany(data.applications ?? []);
+      const mails = (data.mails ?? []) as ({ sent?: boolean; skipped?: boolean; error?: string } | null)[];
+      const sent = mails.filter((m) => m?.sent).length;
+      const failed = mails.filter((m) => m?.error).length;
+      if (failed) setError(`Confirmed, but ${failed} ticket ${failed === 1 ? "email" : "emails"} failed to send.`);
+      else if (sent) setFlash(`Team confirmed — ${sent} ${sent === 1 ? "ticket" : "tickets"} emailed.`);
+      else setFlash("Team confirmed.");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "That didn't go through.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="bg-white/[0.015]">
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-2 border-l-2 border-cyber-pink/50 bg-white/[0.04] px-4 py-2.5">
+        <span className="min-w-0 flex-1">
+          <span className="block truncate text-sm font-semibold text-white">
+            {group.name}
+            <span className="ml-2 font-normal tracking-wider text-white/35">{group.code}</span>
+          </span>
+          <span className="block truncate text-xs text-white/40">
+            {group.eventName} · {live.length} {live.length === 1 ? "member" : "members"}
+            {waiting.length > 0 && ` · ${waiting.length} in review`}
+            {confirmed.length > 0 && ` · ${confirmed.length} confirmed`}
+            {payer && ` · ${payer.payment === "paid" ? "fee verified" : `${payer.fee} due`}`}
+          </span>
+        </span>
+
+        {waiting.length > 0 && (
+          <ConfirmAction
+            title={`Confirm ${group.name}?`}
+            description={
+              `All ${waiting.length} ${waiting.length === 1 ? "member" : "members"} still in review are confirmed together and each is emailed their ticket and QR.` +
+              (payer
+                ? payer.payment === "paid"
+                  ? " The fee is already marked verified."
+                  : ` ${payer.name}'s ${payer.fee} is marked paid — check it against the college's statement first.`
+                : "")
+            }
+            confirmLabel="Confirm team"
+            onConfirm={confirmTeam}
+          >
+            <Button size="sm" disabled={busy} className="h-8 rounded-lg bg-champagne-gold/90 px-3 text-xs font-semibold text-midnight-navy hover:bg-champagne-gold">
+              {busy ? <Loader2 className="animate-spin" /> : <Check />} Confirm team
+            </Button>
+          </ConfirmAction>
+        )}
+      </div>
+
+      {(error || flash) && (
+        <p className={`border-l-2 border-cyber-pink/50 px-4 py-2 text-xs ${error ? "text-danger-strong" : "text-white/55"}`}>
+          {error ?? flash}
+        </p>
+      )}
+
+      <div className="divide-y divide-royal-wine/40 border-l-2 border-cyber-pink/50">
+        {group.shown.map((a) => (
+          <Row
+            key={key(a)}
+            a={a}
+            open={openKey === key(a)}
+            mailConfigured={mailConfigured}
+            onToggle={() => onToggle(key(a))}
+            onChanged={onChanged}
+          />
+        ))}
+        {hidden > 0 && (
+          <p className="px-4 py-2 text-xs text-white/35">
+            {hidden} more on this team {hidden === 1 ? "is" : "are"} hidden by the current filters.
+          </p>
+        )}
+      </div>
     </div>
   );
 }
