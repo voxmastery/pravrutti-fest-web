@@ -24,6 +24,7 @@ import { Loader2, ArrowLeft, Pencil, Hourglass, ShieldCheck, RotateCcw, Check, C
 import { PALETTE } from "@/lib/palette";
 import { JUNO_PAYMENT_URL } from "@/lib/juno";
 import { portalOpening, openPortal, type PortalKind } from "@/lib/payment-window";
+import { afterYesPressed } from "@/lib/reference-nudge";
 import { ApplicationReviewCard } from "@/components/application-review-card";
 import { TeamRosterPanel } from "@/components/team-roster-panel";
 
@@ -174,6 +175,11 @@ export function RegistrationDialog({
      Juno, and an organiser matches the payment against the college's sheet
      either way. Offered to anyone who has it, never waited for. */
   const [showRefField, setShowRefField] = useState(false);
+  /* One firm ask for the reference before letting an empty answer through.
+     A gate is what lost the first twenty-two registrations, so this is a
+     nudge and never a wall — see lib/reference-nudge. */
+  const [nudgedForRef, setNudgedForRef] = useState(false);
+  const refInput = useRef<HTMLInputElement>(null);
   /* Teams this person already has for other events, so we can offer the name
      instead of making them retype it. */
   const [otherTeams, setOtherTeams] = useState<{ eventId: string; eventName: string; name: string; isLead: boolean }[]>([]);
@@ -388,6 +394,7 @@ export function RegistrationDialog({
     setPayPhase("confirm");
     setBackFromPortal(false);
     setPortalBlocked(false);
+    setNudgedForRef(false);
     setForm((f) => ({ ...f, paymentRef: "", junoRegId: "" }));
     setError(null);
     setStep(1);
@@ -1301,17 +1308,21 @@ export function RegistrationDialog({
                           <Button
                             type="button"
                             onClick={() => {
-                              /* Send the reference when they gave one, go
-                                 without when they did not — the answer to the
-                                 question is the same either way. But a typed
-                                 reference that cannot be one is told so, not
-                                 silently dropped on the floor. */
-                              const typed = form.paymentRef.trim();
-                              if (typed && !isValidPaymentRef(typed)) {
+                              const next = afterYesPressed(form.paymentRef, nudgedForRef, isValidPaymentRef);
+                              if (next.kind === "invalid") {
                                 fail(PAYMENT_REF_HINT);
                                 return;
                               }
-                              submit(typed ? undefined : { refUnavailable: true });
+                              /* Ask once, with the cursor already in the
+                                 field so having it costs a paste and nothing
+                                 else. The second tap goes through regardless. */
+                              if (next.kind === "nudge") {
+                                setNudgedForRef(true);
+                                setError(null);
+                                requestAnimationFrame(() => refInput.current?.focus());
+                                return;
+                              }
+                              submit(next.withReference ? undefined : { refUnavailable: true });
                             }}
                             disabled={submitting}
                             className={`${primaryBtn} flex-1`}
@@ -1335,6 +1346,28 @@ export function RegistrationDialog({
                           </Button>
                         </div>
 
+                        {/* The one ask. It clears itself the moment anything
+                            is typed, so the next tap simply submits — and the
+                            way out is one click, never a dead end. */}
+                        {nudgedForRef && !form.paymentRef.trim() && (
+                          <div className="rounded-lg border border-soft-gold/30 bg-soft-gold/[0.07] px-3 py-2.5 space-y-2">
+                            <p className="text-[12px] text-white/75 leading-relaxed">
+                              Do you have the{" "}
+                              <span className="text-white font-medium">Transaction Reference No</span>? It is the
+                              first row of JUNO&apos;s Online Payment Receipt. Paste it below and tap
+                              &ldquo;Yes, I&apos;ve paid&rdquo; again — your payment is confirmed sooner.
+                            </p>
+                            <button
+                              type="button"
+                              onClick={() => submit({ refUnavailable: true })}
+                              disabled={submitting}
+                              className="text-[12px] text-white/70 hover:text-white underline underline-offset-2 cursor-pointer"
+                            >
+                              I don&apos;t have it — continue anyway
+                            </button>
+                          </div>
+                        )}
+
                         {/* Offered, never required: it makes an organiser's
                             match against the statement quicker, and nothing
                             more. Always on screen, because a field behind a
@@ -1344,6 +1377,7 @@ export function RegistrationDialog({
                         <Field label="JUNO Transaction Reference No (optional)">
                           <Input
                             className={inputCls}
+                            ref={refInput}
                             value={form.paymentRef}
                             onChange={set("paymentRef")}
                             placeholder="First row of JUNO's Online Payment Receipt" maxLength={80}
