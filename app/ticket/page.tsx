@@ -6,7 +6,14 @@ import { Navigation } from "@/components/landing/navigation";
 import { FooterSection } from "@/components/landing/footer-section";
 import { Button } from "@/components/ui/button";
 import { FEST, events, eventId as slugify } from "@/lib/pravrutti-data";
-import { STATUS_COPY, AppStatus, PayStatus } from "@/lib/applications";
+import { STATUS_COPY, AppStatus, PayStatus, FEE_PER_HEAD } from "@/lib/applications";
+import {
+  isDiscoverize,
+  discoverizeState,
+  DISCOVERIZE_STATE_LABEL,
+  DISCOVERIZE_STATE_BLURB,
+  ABSTRACT_FORM_URL,
+} from "@/lib/discoverize";
 import { downloadEventIcs } from "@/lib/event-calendar";
 import { EventPoster } from "@/components/event-poster";
 import { TeamInviteCard, useMyTeam } from "@/components/team-invite-card";
@@ -23,6 +30,12 @@ type App = {
   fee: string;
   hasPaymentRef?: boolean;
   unanswered?: boolean;
+  round?: {
+    abstractSubmittedAt?: string;
+    abstractSource?: "form" | "organiser";
+    shortlistedAt?: string;
+    shortlistedBy?: string;
+  } | null;
   name: string;
   teamName?: string | null;
   teamCode?: string | null;
@@ -379,10 +392,17 @@ export default function TicketPage() {
                             <span className="text-white/25"> · {a.ticketId}</span>
                           </p>
 
+                          {/* Discoverize: free to enter, and what comes next
+                              depends on how far through its rounds the team is.
+                              Its own block, so no other ticket changes. */}
+                          {isDiscoverize(a.eventId) && a.status !== "cancelled" && (
+                            <DiscoverizeRow a={a} />
+                          )}
+
                           {/* Left for the portal and never said how it went —
                               the question they lost with the tab. This is where
                               they come back to, so it has to lead somewhere. */}
-                          {a.status === "pending" && a.payment === "awaiting" && a.unanswered && (
+                          {!isDiscoverize(a.eventId) && a.status === "pending" && a.payment === "awaiting" && a.unanswered && (
                             <a
                               href={`/events/${a.eventId}`}
                               className="block rounded-xl border border-soft-gold/30 bg-soft-gold/[0.07] px-3 py-2.5 text-[13px] text-white/75 leading-relaxed hover:border-soft-gold/50 transition-colors"
@@ -398,7 +418,8 @@ export default function TicketPage() {
                           {/* Answered without an ID. Registered; the ID is an
                               optional extra that speeds the organiser's check,
                               so it is offered quietly and never pressed for. */}
-                          {a.status === "pending" &&
+                          {!isDiscoverize(a.eventId) &&
+                            a.status === "pending" &&
                             a.payment === "awaiting" &&
                             !a.unanswered &&
                             a.hasPaymentRef === false && (
@@ -528,5 +549,49 @@ export default function TicketPage() {
 
       <FooterSection />
     </main>
+  );
+}
+
+/**
+ * Where a Discoverize team stands, and the one thing it can do next.
+ *
+ * The state is derived from the row rather than stored, so this cannot show a
+ * button the server would refuse: "Pay ₹200" appears only for a team the
+ * judges shortlisted, and the endpoint behind it checks the same rule again.
+ */
+function DiscoverizeRow({ a }: { a: App }) {
+  const state = discoverizeState({ status: a.status, payment: a.payment, round: a.round ?? undefined });
+  if (state === "closed") return null;
+
+  const tone =
+    state === "final_round_confirmed"
+      ? "border-emerald-400/30 bg-emerald-400/[0.07]"
+      : state === "payment_pending"
+        ? "border-soft-gold/30 bg-soft-gold/[0.07]"
+        : "border-white/[0.10] bg-white/[0.04]";
+
+  return (
+    <div className={`space-y-2.5 rounded-xl border px-3 py-2.5 ${tone}`}>
+      <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-champagne-gold">
+        {DISCOVERIZE_STATE_LABEL[state]}
+      </p>
+      <p className="text-[13px] leading-relaxed text-white/70">{DISCOVERIZE_STATE_BLURB[state]}</p>
+
+      {state === "registered" && (
+        <a href={ABSTRACT_FORM_URL} target="_blank" rel="noopener noreferrer" className="block">
+          <Button className="h-10 w-full rounded-xl bg-cyber-pink text-sm font-medium text-white hover:bg-electric-magenta">
+            Submit abstract
+          </Button>
+        </a>
+      )}
+
+      {state === "payment_pending" && (
+        <a href={`/events/${a.eventId}?finish=pay`} className="block">
+          <Button className="h-10 w-full rounded-xl bg-cyber-pink text-sm font-medium text-white hover:bg-electric-magenta">
+            Pay ₹{FEE_PER_HEAD}
+          </Button>
+        </a>
+      )}
+    </div>
   );
 }

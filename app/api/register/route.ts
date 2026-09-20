@@ -22,6 +22,7 @@ import { sendReceivedEmail } from "@/lib/received-email";
 import { resolveEmail, authRequired } from "@/lib/identity";
 import { resolveRole, resolveRoleFor } from "@/lib/roles";
 import { staffBlocksApplication, STAFF_CANNOT_APPLY } from "@/lib/staff-cockpit";
+import { isDiscoverize, mayPay } from "@/lib/discoverize";
 import {
   listAll,
   readPrivate,
@@ -158,6 +159,14 @@ export async function POST(req: Request) {
       return NextResponse.json(
         { error: "There is nothing to add — this registration is not waiting on a payment." },
         { status: 409 },
+      );
+    /* Discoverize charges only past the shortlist. The check above already
+       refuses an unshortlisted team (their payment is "not_required"), but
+       this says why, and keeps saying it if the fee ever arrives earlier. */
+    if (isDiscoverize(evId) && !mayPay(prior))
+      return NextResponse.json(
+        { error: "Only teams shortlisted for the presentation round pay the Rs. 200/- fee." },
+        { status: 403 },
       );
 
     const refUnavailable = body?.refUnavailable === true;

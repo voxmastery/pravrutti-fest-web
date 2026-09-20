@@ -31,6 +31,9 @@ export type ReviewResult = {
      then nothing to verify automatically against, and saying otherwise would
      promise them a confirmation that cannot arrive. */
   hasPaymentRef?: boolean;
+  /* Set for Discoverize, whose entry is free and whose next step is the
+      abstract rather than a payment. */
+  abstractUrl?: string | null;
 };
 
 const card = "rounded-xl border border-white/[0.08] bg-white/[0.05]";
@@ -46,13 +49,23 @@ const Row = ({ label, children }: { label: string; children: React.ReactNode }) 
   </div>
 );
 
-function statusLabel(payment: ReviewResult["payment"]): string {
+function statusLabel(payment: ReviewResult["payment"], abstractUrl?: string | null): string {
+  if (abstractUrl) return "Registered";
   if (payment === "awaiting") return "Verifying payment";
   if (payment === "paid") return "Payment received";
   return "Pending approval";
 }
 
 function explainer(r: ReviewResult): string {
+  /* Discoverize: nothing was charged and nothing is being verified. The one
+     thing standing between them and the presentation round is the abstract. */
+  if (r.abstractUrl) {
+    const team = r.teamCode ? " Share the team code — teammates can still join until the team is full." : "";
+    return (
+      "Your team is registered and there is nothing to pay. Submit your abstract to be considered for the presentation round — " +
+      "only shortlisted teams pay the Rs. 200/- fee, and you can come back to this from My tickets." + team
+    );
+  }
   const base =
     r.payment === "not_required"
       ? "Nothing to pay for this one — you're in the queue. Your ticket and QR are emailed once organisers approve."
@@ -90,7 +103,7 @@ export function ApplicationReviewCard({
 
       <div className={`${card} divide-y divide-white/[0.08]`}>
         <Row label="Status">
-          <span className="text-[13px] font-medium text-champagne-gold/90">{statusLabel(result.payment)}</span>
+          <span className="text-[13px] font-medium text-champagne-gold/90">{statusLabel(result.payment, result.abstractUrl)}</span>
         </Row>
         <Row label="Queue position">
           <span className="text-[13px] font-semibold text-white">
@@ -127,6 +140,15 @@ export function ApplicationReviewCard({
       </div>
 
       <p className="text-[13px] text-white/55 leading-relaxed text-center px-2">{explainer(result)}</p>
+
+      {/* The next step, right where they are looking. The same button waits
+          for them in My tickets, because nobody submits an abstract in the
+          thirty seconds after registering. */}
+      {result.abstractUrl && (
+        <a href={result.abstractUrl} target="_blank" rel="noopener noreferrer" className="block">
+          <Button className={primaryBtn}>Submit abstract</Button>
+        </a>
+      )}
 
       <div className="flex gap-2">
         <a href="/ticket" className="flex-1">

@@ -126,6 +126,20 @@ export type Application = {
   /** Set on the row left behind when an organiser moved this team to another
       event: the registration is cancelled here and live over there. */
   movedTo?: { eventId: string; code: string };
+  /** Events that run their own rounds before the fee record their progress
+      here — today only Discoverize (see lib/discoverize.ts), where entry is
+      free and the fee follows a shortlist. Unset everywhere else, so no other
+      event's behaviour depends on it. */
+  round?: {
+    /** When the Google Form actually received their abstract. */
+    abstractSubmittedAt?: string;
+    /** "form" for the Apps Script webhook, "organiser" for a hand-marked one. */
+    abstractSource?: "form" | "organiser";
+    /** When the judges put this team through to the presentation round. */
+    shortlistedAt?: string;
+    /** Who shortlisted them — a coordinator or an organiser, by email. */
+    shortlistedBy?: string;
+  };
   /** Set once when an organiser scans this ticket. Never overwritten —
       a second scan reports the original time rather than replacing it. */
   checkedInAt?: string;

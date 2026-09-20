@@ -66,6 +66,9 @@ export async function POST(req: Request) {
       /* Left for the portal and never said how it went — the row still carries
          its intent mark. */
       unanswered: r.stage === "intent",
+      /* Discoverize's rounds. Null for every other event, whose tickets read
+         exactly as they did before. */
+      round: r.round ?? null,
       name: r.name,
       teamName: r.teamName ?? null,
       teamCode: r.teamCode ?? null,

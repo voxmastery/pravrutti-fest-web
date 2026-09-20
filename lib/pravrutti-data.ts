@@ -405,7 +405,10 @@ export const events: Event[] = [
       "Step up, share your findings, and make an impact. " +
       "\u25cf Stage 1 (Abstract Submission) \u2014 participants submit an abstract of at most 300 words including Title, Objective, Methodology, Key Findings and Conclusion. " +
       "\u25cf Stage 2 (Presentation Round) \u2014 selected participants present their paper live: 7 minutes for the presentation (PPT, max 10\u201315 slides) and 3 minutes for Q&A.",
-    fee: "Rs. 200/-",
+    /* Entry is free and the fee follows the shortlist, so the string starts
+       with "Free" — which is what makes the register route treat it as a free
+       event (lib/discoverize.ts explains the whole flow). */
+    fee: "Free · Rs. 200/- only if shortlisted",
     prizes: [7000, 5000, 3000],
     teamSize: { min: 1, max: 4, soloAllowed: true },
     capacity: 60,

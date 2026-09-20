@@ -9,6 +9,7 @@ import { FEE_PER_HEAD, isLiveApplication, type AppStatus } from "@/lib/applicati
 import { IndianRupee, Ticket, UserCheck } from "lucide-react";
 import { useDashboardRole } from "@/hooks/use-dashboard-role";
 import { isStaffRole } from "@/lib/staff-cockpit";
+import { isDiscoverize } from "@/lib/discoverize";
 
 /**
  * The registration card, in Luma's shape: a labelled panel that states the
@@ -110,8 +111,8 @@ export function EventRegisterPanel({
 
   /* Opening to finish a payment rather than to start a registration: either
      to answer the question they never got, or to add the optional ID. */
-  const [resuming, setResuming] = useState<"answer" | "reference" | null>(null);
-  const openToFinish = (mode: "answer" | "reference") => {
+  const [resuming, setResuming] = useState<"answer" | "reference" | "pay" | null>(null);
+  const openToFinish = (mode: "answer" | "reference" | "pay") => {
     setResuming(mode);
     setRegistering(true);
   };
@@ -144,7 +145,13 @@ export function EventRegisterPanel({
      already answered "yes, I've paid" without an ID: that registration is
      complete, and the ID is a small optional extra, never pressed for. */
   const showAnswer = viewerReady && dash.ready && unanswered && !staff;
-  const showAddRef = viewerReady && dash.ready && awaitingReference && !unanswered && !staff;
+  /* Discoverize owes nothing until the judges put a team through, and then it
+     owes the whole fee — so "awaiting" there is a fee to pay, not a reference
+     to remember. */
+  const discoverize = isDiscoverize(id);
+  const showPayRound = viewerReady && dash.ready && discoverize && awaitingReference && !staff;
+  const showAddRef =
+    viewerReady && dash.ready && awaitingReference && !unanswered && !staff && !discoverize;
 
   /* A reminder email's button lands here with ?finish=reference. Open the
      screen it promised, once, the moment we know they are owed it. Read from
@@ -152,12 +159,13 @@ export function EventRegisterPanel({
      prerendered, and that hook would demand a Suspense boundary for it. */
   const deepLinked = useRef(false);
   useEffect(() => {
-    if (deepLinked.current || !(showAnswer || showAddRef)) return;
-    if (new URLSearchParams(window.location.search).get("finish") !== "reference") return;
+    if (deepLinked.current || !(showAnswer || showAddRef || showPayRound)) return;
+    const finish = new URLSearchParams(window.location.search).get("finish");
+    if (finish !== "reference" && finish !== "pay") return;
     deepLinked.current = true;
-    openToFinish(showAnswer ? "answer" : "reference");
+    openToFinish(finish === "pay" ? "pay" : showAnswer ? "answer" : "reference");
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [showAnswer, showAddRef]);
+  }, [showAnswer, showAddRef, showPayRound]);
 
   return (
     <div className="space-y-3">
@@ -240,6 +248,21 @@ export function EventRegisterPanel({
               </p>
             </div>
           )}
+          {showPayRound && (
+            <div className="space-y-2">
+              <Button
+                onClick={() => openToFinish("pay")}
+                className="w-full h-12 rounded-xl font-display text-xs font-black uppercase tracking-widest text-white arcade-btn-magenta border-cyber-pink cursor-pointer"
+              >
+                <IndianRupee className="w-4 h-4 mr-2" aria-hidden="true" />
+                Pay ₹{FEE_PER_HEAD}
+              </Button>
+              <p className="text-xs text-pearl-white/50 leading-relaxed">
+                Your team is shortlisted for the presentation round. The ₹{FEE_PER_HEAD} is for the
+                team, paid once by the lead — your place is held while you pay.
+              </p>
+            </div>
+          )}
           {showAddRef && (
             <button
               type="button"
@@ -272,8 +295,9 @@ export function EventRegisterPanel({
            success screen before they can read the queue position. */
         event={open ? event : null}
         onClose={() => { setRegistering(false); setResuming(null); }}
-        resumeAtReference={resuming !== null}
+        resumeAtReference={resuming === "answer" || resuming === "reference"}
         resumeWithReferenceField={resuming === "reference"}
+        resumeAtPayment={resuming === "pay"}
         onRegistered={handleRegistered}
         seatsLeft={left}
       />
