@@ -1,6 +1,7 @@
 import { listAll, readPrivate, putJson, applicationPath, reminderClaimPath } from "@/lib/blob-store";
 import type { Application } from "@/lib/applications";
 import { sendReferenceReminder } from "@/lib/reference-reminder-email";
+import { isDiscoverize } from "@/lib/discoverize";
 
 /**
  * One pass over every registration: who owes us a Transaction Reference No,
@@ -37,6 +38,11 @@ async function readAll<T>(prefix: string): Promise<T[]> {
 
 /** Pending, owes a payment, and has given us nothing to match it with. */
 export function owesReference(a: Application): boolean {
+  /* Discoverize's fee appears when the judges shortlist a team, which may be
+     minutes ago — and this mail says "you went to the college portal to pay",
+     which they have not. Their coordinators chase them from Discoverize's own
+     desk until this reminder has copy that fits. */
+  if (isDiscoverize(a.eventId)) return false;
   return a.status === "pending" && a.payment === "awaiting" && !a.paymentRef;
 }
 

@@ -129,6 +129,20 @@ describe("POST /api/admin/reference-reminders", () => {
     expect(sent).toHaveLength(1);
   });
 
+  /* Discoverize's fee lands the moment judges shortlist a team, and this
+     mail would tell them they had been to a portal they have not visited. */
+  it("never chases a Discoverize team", async () => {
+    store.set(`app/discoverize-research-paper-presentation/owes@example.com.json`, {
+      ticketId: "PRV-D", eventId: "discoverize-research-paper-presentation",
+      eventName: "Discoverize (Research Paper Presentation)", email: "owes@example.com",
+      name: "A Student", status: "pending", payment: "awaiting", paymentRef: null,
+      fee: "Rs. 200/-", appliedAt: "2026-09-19T09:00:00.000Z",
+      round: { shortlistedAt: "2026-09-20T09:00:00.000Z" },
+    });
+    await post();
+    expect(sent.map((m) => m.to)).not.toContain("owes@example.com");
+  });
+
   it("dryRun reports who would get one and sends nothing", async () => {
     row("owes@example.com");
     const body = await (await post({ dryRun: true })).json();
