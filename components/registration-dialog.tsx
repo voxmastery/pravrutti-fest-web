@@ -23,6 +23,7 @@ import { MAX_TEAM_BIO, TEAM_CODE_LENGTH, isValidTeamCode, type TeamPreview } fro
 import { Loader2, ArrowLeft, Pencil, Hourglass, ShieldCheck, RotateCcw, Check, Copy, Users } from "lucide-react";
 import { PALETTE } from "@/lib/palette";
 import { JUNO_PAYMENT_URL } from "@/lib/juno";
+import { portalOpening, openPortal, type PortalKind } from "@/lib/payment-window";
 import { ApplicationReviewCard } from "@/components/application-review-card";
 import { TeamRosterPanel } from "@/components/team-roster-panel";
 
@@ -113,6 +114,7 @@ export function RegistrationDialog({
   onRegistered,
   seatsLeft,
   resumeAtReference = false,
+  resumeWithReferenceField = false,
 }: {
   event: Event | null;
   onClose: () => void;
@@ -126,6 +128,8 @@ export function RegistrationDialog({
       is how they get back to it, whether they lost that tab or simply found
       the receipt later. */
   resumeAtReference?: boolean;
+  /** With resumeAtReference: they came to add the optional transaction ID. */
+  resumeWithReferenceField?: boolean;
 }) {
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [form, setForm] = useState<FormState>(emptyForm);
@@ -150,21 +154,75 @@ export function RegistrationDialog({
   /* The college's portal has served a 404 to the same URL that worked minutes
      later, and students hit it mid-payment. Checked before sending anyone. */
   const [portalDown, setPortalDown] = useState(false);
+  /* The portal opens in its own tab. We cannot see inside it — but a browser
+     will tell us when that tab closes, and when ours comes back to the front.
+     Either is the moment they have finished with it, and the moment to ask. */
+  const payWindow = useRef<Window | null>(null);
+  const [backFromPortal, setBackFromPortal] = useState(false);
+  /* How the portal was opened this time. A popup on a PC sits on top of this
+     page, so our window regaining focus means nothing there — only the popup
+     closing does. A tab on a phone is the reverse: we may never see it close,
+     and switching back to us is the signal. */
+  const [portalMode, setPortalMode] = useState<PortalKind>("tab");
+  /* window.open returned null — a popup blocker. The fallback is a real link,
+     which no blocker touches. */
+  const [portalBlocked, setPortalBlocked] = useState(false);
+  /* The row written when they left to pay. Kept so "cancel" can release it:
+     a guest proves ownership of a registration by quoting its ticket. */
+  const intentTicket = useRef<string | null>(null);
+  /* The transaction ID is evidence, not a gate: we cannot check it against
+     Juno, and an organiser matches the payment against the college's sheet
+     either way. Offered to anyone who has it, never waited for. */
+  const [showRefField, setShowRefField] = useState(false);
   /* Teams this person already has for other events, so we can offer the name
      instead of making them retype it. */
   const [otherTeams, setOtherTeams] = useState<{ eventId: string; eventName: string; name: string; isLead: boolean }[]>([]);
   const [confirmDeleteTeam, setConfirmDeleteTeam] = useState(false);
   const [confirmCancel, setConfirmCancel] = useState(false);
-  /* Submitting is the point of no return for the money: the ₹200 is already
-     with the college, so this asks once before filing it. */
-  const [confirmSubmit, setConfirmSubmit] = useState(false);
   const errRef = useRef<HTMLParagraphElement>(null);
+  /* The popup is still up: closing it is what flips backFromPortal, so this
+     is false the moment it is gone or was never allowed to open. */
+  const popupLive = portalMode === "popup" && !backFromPortal && !portalBlocked;
+
+  /* Watch for them coming back. Polling `closed` is the one thing a browser
+     lets us read about a window on another origin; the visibility change
+     catches the ones who switch tabs rather than close. */
+  useEffect(() => {
+    if (!event || payPhase !== "reference") return;
+    const back = () => setBackFromPortal(true);
+    const tick = window.setInterval(() => {
+      if (payWindow.current?.closed) {
+        back();
+        window.clearInterval(tick);
+      }
+    }, 1000);
+    /* A popup that is still open means they are mid-payment, however many
+       times they click back into this page. */
+    const returned = () => {
+      const popupOpen = portalMode === "popup" && payWindow.current && !payWindow.current.closed;
+      if (!popupOpen) back();
+    };
+    const onVisible = () => {
+      if (document.visibilityState === "visible") returned();
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    window.addEventListener("focus", returned);
+    return () => {
+      window.clearInterval(tick);
+      document.removeEventListener("visibilitychange", onVisible);
+      window.removeEventListener("focus", returned);
+    };
+  }, [event, payPhase, portalMode]);
 
   useEffect(() => {
     if (!event || !resumeAtReference) return;
     setStep(3);
     setPayPhase("reference");
-  }, [event, resumeAtReference]);
+    /* They are back by definition — there is no window to wait on. */
+    setBackFromPortal(true);
+    /* Opened to add the ID: show the field rather than the link to it. */
+    if (resumeWithReferenceField) setShowRefField(true);
+  }, [event, resumeAtReference, resumeWithReferenceField]);
 
   useEffect(() => {
     if (!event) return;
@@ -258,7 +316,6 @@ export function RegistrationDialog({
       setForm(emptyForm());
       setPayPhase("confirm");
       setConfirmCancel(false);
-      setConfirmSubmit(false);
       resetTeam();
     }, 200);
   };
@@ -290,13 +347,47 @@ export function RegistrationDialog({
     }
   };
 
-  /* Cancelling at the payment screen: nothing has been submitted yet, so this
-     simply puts them back at the start to try again — the case it exists for is
-     a payment that failed on the portal. */
+  /* Cancelling at the payment screen. The row written when they left to pay
+     is holding a place, so cancelling releases it — then puts them back at the
+     start to try again, which is the case this exists for: a payment that
+     failed on the portal. A lead with teammates still on the team is refused
+     by the server, and told so, exactly as on My tickets. */
+  const [cancelling, setCancelling] = useState(false);
+  const cancelHeldPlace = async () => {
+    if (!event || cancelling) return;
+    setCancelling(true);
+    try {
+      const res = await fetch("/api/register", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          eventId: eventId(event.name),
+          email: form.email,
+          ticketId: intentTicket.current ?? undefined,
+        }),
+      });
+      /* 404 is "nothing was held" — the portal check failed before the row
+         was written — and that is fine to restart from. */
+      if (!res.ok && res.status !== 404) {
+        const d = await res.json().catch(() => null);
+        setCancelling(false);
+        return fail(d?.error ?? "That didn't cancel. Try again in a moment.");
+      }
+    } catch {
+      /* Offline: still let them restart; an unreleased row is an organiser's
+         reconcile job, not a wall for the student. */
+    }
+    setCancelling(false);
+    intentTicket.current = null;
+    onRegistered?.();
+    restartRegistration();
+  };
+
   const restartRegistration = () => {
     setConfirmCancel(false);
-    setConfirmSubmit(false);
     setPayPhase("confirm");
+    setBackFromPortal(false);
+    setPortalBlocked(false);
     setForm((f) => ({ ...f, paymentRef: "", junoRegId: "" }));
     setError(null);
     setStep(1);
@@ -357,6 +448,32 @@ export function RegistrationDialog({
      closed tab, a lost receipt. The person then has no record here while their
      money has already moved, which is how twenty-two teams were lost. The row
      goes in first; the reference fills it in afterwards. */
+  /* A popup on a PC, a tab on a phone — see lib/payment-window. */
+  const launchPortal = () => {
+    const opening = portalOpening({
+      pointerFine: window.matchMedia("(pointer: fine)").matches,
+      availWidth: window.screen.availWidth,
+      availHeight: window.screen.availHeight,
+    });
+    const w = openPortal<Window>(JUNO_PAYMENT_URL, opening);
+    payWindow.current = w;
+    setPortalMode(opening.kind);
+    setPortalBlocked(w === null);
+    setBackFromPortal(false);
+  };
+
+  /* Reopening a live popup would send it back to the portal's first page
+     mid-payment. Bring it to the front instead; only a closed one is opened
+     again. */
+  const bringPortalBack = () => {
+    const w = payWindow.current;
+    if (w && !w.closed) {
+      w.focus();
+      return;
+    }
+    launchPortal();
+  };
+
   const goToPortal = async (force: boolean) => {
     if (!event || startingPayment) return;
     setError(null);
@@ -376,7 +493,7 @@ export function RegistrationDialog({
     }
 
     try {
-      await fetch("/api/register", {
+      const res = await fetch("/api/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -390,6 +507,8 @@ export function RegistrationDialog({
           eventId: eventId(event.name),
         }),
       });
+      const d = await res.json().catch(() => null);
+      if (res.ok && d?.ticketId) intentTicket.current = String(d.ticketId);
     } catch {
       /* Best effort. Failing to record the attempt must not stop anyone
          paying; it only costs us the safety net. */
@@ -397,7 +516,9 @@ export function RegistrationDialog({
 
     setStartingPayment(false);
     setPortalDown(false);
-    window.open(JUNO_PAYMENT_URL, "_blank", "noopener,noreferrer");
+    /* The checks above take a moment; if they take longer than the browser's
+       activation window, this open is blocked and the link fallback appears. */
+    launchPortal();
     setPayPhase("reference");
   };
 
@@ -410,7 +531,6 @@ export function RegistrationDialog({
        anyway. Refusing them does not bring the money back — it only hides
        them from the desk, which is the failure we are actually fixing. */
     if (!joining && !refUnavailable && !isValidPaymentRef(form.paymentRef)) {
-      setConfirmSubmit(false);
       return fail(PAYMENT_REF_HINT);
     }
     setSubmitting(true);
@@ -1074,9 +1194,28 @@ export function RegistrationDialog({
                         <p className="text-[13px] text-white/75 leading-relaxed pt-1">
                           The portal opens in a new tab.{" "}
                           <span className="text-white font-medium">Come back to this one afterwards</span>{" "}
-                          to enter your transaction ID. If you do lose it, reopen this event and
-                          pick up where you left off — your place is held either way.
+                          and tell us how it went. If you do lose it, reopen this event and pick up
+                          where you left off — your place is held either way.
                         </p>
+                        {/* The one thing to bring back, shown rather than
+                            described: students pasted their GPay/PhonePe
+                            transaction IDs, which an organiser cannot match
+                            against JUNO's statement. */}
+                        <p className="text-[13px] text-white/75 leading-relaxed pt-1">
+                          When the payment finishes, JUNO shows an{" "}
+                          <span className="text-white font-medium">Online Payment Receipt</span>. Copy the{" "}
+                          <span className="text-champagne-gold font-semibold">Transaction Reference No</span>{" "}
+                          from its first row — not your GPay, PhonePe or Paytm transaction ID — and paste it
+                          here when you are back. Optional, but it gets your payment confirmed sooner.
+                        </p>
+                        <img
+                          src="/images/juno-receipt-reference.webp"
+                          alt="JUNO's Online Payment Receipt, with the Transaction Reference No row on top highlighted"
+                          width={880}
+                          height={563}
+                          loading="lazy"
+                          className="w-full h-auto rounded-lg border border-white/10 mt-1"
+                        />
                       </div>
 
                       {errorBox}
@@ -1122,41 +1261,113 @@ export function RegistrationDialog({
                           a second number they also have to find helps nobody. */}
                       <div className={`${card} p-4 space-y-3`}>
                         <div>
-                          <p className="text-sm font-medium text-white">Paid? Enter your transaction ID</p>
+                          <p className="text-sm font-medium text-white">
+                            {backFromPortal
+                              ? "Did your payment go through?"
+                              : popupLive
+                                ? "Finish your payment in the window that opened"
+                                : "Finish your payment in the other tab"}
+                          </p>
                           <p className="text-[13px] text-white/45 mt-0.5 leading-relaxed">
-                            It is on your Juno receipt. We check it against the portal&apos;s statement —
-                            your ticket and QR are emailed once it clears.
+                            {backFromPortal
+                              ? "Tell us either way. We check every payment against the college's statement before your ticket is issued, so nothing rests on this answer alone."
+                              : popupLive
+                                ? "It is sitting on top of this page. Close it once you are done and we will ask how it went."
+                                : "The portal is open in a new tab. Come back here once you are done and we will ask how it went."}
                           </p>
                         </div>
-                        <Field label="Juno transaction ID">
+
+                        {portalBlocked && (
+                          <p className="rounded-lg border border-amber-400/30 bg-amber-400/[0.07] px-3 py-2.5 text-[12px] text-white/75 leading-relaxed">
+                            Your browser blocked the payment window.{" "}
+                            <a
+                              href={JUNO_PAYMENT_URL}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              onClick={() => { setPortalBlocked(false); setPortalMode("tab"); }}
+                              className="text-white underline underline-offset-2"
+                            >
+                              Open the portal
+                            </a>{" "}
+                            — it will open as a tab instead.
+                          </p>
+                        )}
+
+                        {/* Two plain answers, because the question has two
+                            answers. Waiting for somebody to find a transaction
+                            ID and paste it is what lost fourteen of the first
+                            thirty-two registrations. */}
+                        <div className="flex flex-col sm:flex-row gap-2">
+                          <Button
+                            type="button"
+                            onClick={() => {
+                              /* Send the reference when they gave one, go
+                                 without when they did not — the answer to the
+                                 question is the same either way. But a typed
+                                 reference that cannot be one is told so, not
+                                 silently dropped on the floor. */
+                              const typed = form.paymentRef.trim();
+                              if (typed && !isValidPaymentRef(typed)) {
+                                fail(PAYMENT_REF_HINT);
+                                return;
+                              }
+                              submit(typed ? undefined : { refUnavailable: true });
+                            }}
+                            disabled={submitting}
+                            className={`${primaryBtn} flex-1`}
+                          >
+                            {submitting ? (
+                              <>
+                                <Loader2 className="w-4 h-4 mr-2 animate-spin" /> Saving…
+                              </>
+                            ) : (
+                              "Yes, I've paid"
+                            )}
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={bringPortalBack}
+                            disabled={submitting}
+                            className={`${ghostBtn} flex-1 px-4`}
+                          >
+                            {popupLive ? "Bring the payment window back" : "Not yet — reopen the portal"}
+                          </Button>
+                        </div>
+
+                        {/* Offered, never required: it makes an organiser's
+                            match against the statement quicker, and nothing
+                            more. Always on screen, because a field behind a
+                            link is a field nobody fills. Named for the row on
+                            JUNO's receipt, because the IDs that came in were
+                            GPay's and PhonePe's. */}
+                        <Field label="JUNO Transaction Reference No (optional)">
                           <Input
                             className={inputCls}
                             value={form.paymentRef}
                             onChange={set("paymentRef")}
-                            placeholder="From your Juno payment receipt" maxLength={80}
-                            aria-label="Juno transaction ID" />
+                            placeholder="First row of JUNO's Online Payment Receipt" maxLength={80}
+                            aria-label="JUNO Transaction Reference No" />
                         </Field>
-                        <button
-                          type="button"
-                          onClick={() => window.open(JUNO_PAYMENT_URL, "_blank", "noopener,noreferrer")}
-                          className="text-xs text-white/45 hover:text-white/80 underline underline-offset-2 cursor-pointer"
-                        >
-                          Reopen the payment portal
-                        </button>
-                        {/* The portal can fail after taking the money, which
-                            leaves somebody paid and with no reference to show
-                            for it. Refusing their registration does not bring
-                            the money back — it only keeps them off the desk
-                            list. They go through, and an organiser matches
-                            them against the college's sheet. */}
-                        <button
-                          type="button"
-                          onClick={() => submit({ refUnavailable: true })}
-                          disabled={submitting}
-                          className="block text-xs text-white/45 hover:text-white/80 underline underline-offset-2 cursor-pointer disabled:opacity-50"
-                        >
-                          I paid but can&apos;t find my transaction ID
-                        </button>
+                        <p className="text-[12px] text-white/45 leading-relaxed -mt-1">
+                          Not your GPay, PhonePe or Paytm transaction ID.{" "}
+                          <button
+                            type="button"
+                            onClick={() => setShowRefField((v) => !v)}
+                            className="text-white/70 hover:text-white underline underline-offset-2 cursor-pointer"
+                          >
+                            {showRefField ? "Hide the example" : "See where it is on the receipt"}
+                          </button>
+                        </p>
+                        {showRefField && (
+                          <img
+                            src="/images/juno-receipt-reference.webp"
+                            alt="JUNO's Online Payment Receipt, with the Transaction Reference No row on top highlighted"
+                            width={880}
+                            height={563}
+                            className="w-full h-auto rounded-lg border border-white/10"
+                          />
+                        )}
                       </div>
 
                       {errorBox}
@@ -1164,73 +1375,42 @@ export function RegistrationDialog({
                       {confirmCancel ? (
                         <div className="rounded-xl border border-danger-strong/30 bg-danger-strong/[0.07] p-3.5 space-y-3">
                           <p className="text-[13px] text-white/80 leading-relaxed">
-                            Cancel this registration? Nothing has been submitted and no place is held,
-                            so if the payment failed you can start again from the beginning.
+                            Cancel this registration? It releases the place being held for you. If the
+                            payment failed on the portal, you can start again from the beginning — if it
+                            went through, choose &ldquo;Yes, I&apos;ve paid&rdquo; instead.
                           </p>
                           <div className="flex gap-2">
                             <Button variant="outline" onClick={() => setConfirmCancel(false)} className={`${ghostBtn} flex-1`}>
                               Keep going
                             </Button>
                             <Button
-                              onClick={restartRegistration}
+                              onClick={cancelHeldPlace}
+                              disabled={cancelling}
                               className="flex-1 h-[38px] rounded-2xl bg-danger-strong/80 text-white hover:bg-danger-strong font-medium cursor-pointer"
                             >
-                              Yes, cancel
+                              {cancelling ? "Cancelling…" : "Yes, cancel"}
                             </Button>
                           </div>
                         </div>
                       ) : (
-                        confirmSubmit ? (
-                          /* Last stop before the money is filed as paid: the
-                             ₹200 is already with the college, and cancelling
-                             afterwards does not bring it back. */
-                          <div className="rounded-xl border border-soft-gold/25 bg-soft-gold/[0.07] p-3.5 space-y-3">
-                            <p className="text-[13px] text-white/80 leading-relaxed">
-                              Submit with transaction ID{" "}
-                              <span className="text-white font-medium break-all">{form.paymentRef.trim()}</span>?
-                            </p>
-                            <p className="text-[12px] text-white/55 leading-relaxed">
-                              Check it matches your receipt — we verify it against the portal&apos;s
-                              statement. The {applicantFee} is already with the college, and cancelling
-                              after this does not refund it. (If the event fills up and you are not
-                              confirmed, the full fee is returned.)
-                            </p>
-                            <div className="flex gap-2">
-                              <Button
-                                variant="outline" onClick={() => setConfirmSubmit(false)}
-                                className={`${ghostBtn} flex-1`}>
-                                Go back
-                              </Button>
-                              <Button onClick={() => submit()} disabled={submitting} className={`${primaryBtn} flex-1`}>
-                                {submitting ? (
-                                  <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Submitting…</>
-                                ) : (
-                                  "Yes, submit" )}
-                              </Button>
-                            </div>
-                          </div>
-                        ) : (
-                        <div className="flex gap-2">
+                        <div className="space-y-2.5">
+                          {/* Said plainly rather than behind another
+                              confirmation step: the money has already moved,
+                              and one more "are you sure" does not change that. */}
+                          <p className="text-[12px] text-white/45 leading-relaxed">
+                            Your {applicantFee} is already with the college. We check every payment
+                            against their statement before a ticket is issued.
+                          </p>
                           <Button
                             variant="outline"
                             onClick={() => setConfirmCancel(true)}
+                            disabled={submitting}
                             className={`${ghostBtn} px-4`}
                             aria-label="Cancel registration"
                           >
                             Cancel
                           </Button>
-                          <Button
-                            onClick={() => {
-                              if (!isValidPaymentRef(form.paymentRef)) return fail(PAYMENT_REF_HINT);
-                              setError(null);
-                              setConfirmSubmit(true);
-                            }}
-                            disabled={submitting}
-                            className={`${primaryBtn} flex-1`}>
-                            Submit application
-                          </Button>
                         </div>
-                        )
                       )}
                     </>
                   )}

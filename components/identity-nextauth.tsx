@@ -48,7 +48,9 @@ export function NextAuthIdentity({ children }: { children: React.ReactNode }) {
         name: devAs ? `DEV ${devAs}` : session?.user?.name ?? null,
         email: devAs ?? session?.user?.email?.toLowerCase() ?? null,
         image: devAs ? null : session?.user?.image ?? null,
-        signIn: () => signIn("google", { callbackUrl: window.location.pathname }),
+        /* Path AND query: a reminder email lands on /events/x?finish=reference,
+           and dropping the query here would strand them on the event page. */
+        signIn: () => signIn("google", { callbackUrl: window.location.pathname + window.location.search }),
         signOut: () => signOut({ callbackUrl: "/" }),
       }}
     >

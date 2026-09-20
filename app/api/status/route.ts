@@ -63,6 +63,9 @@ export async function POST(req: Request) {
       /* Whether a transaction ID was ever recorded, not what it is: the page
          only needs to know whether to offer to take one. */
       hasPaymentRef: Boolean((r as Application & { paymentRef?: string }).paymentRef),
+      /* Left for the portal and never said how it went — the row still carries
+         its intent mark. */
+      unanswered: r.stage === "intent",
       name: r.name,
       teamName: r.teamName ?? null,
       teamCode: r.teamCode ?? null,

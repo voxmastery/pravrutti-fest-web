@@ -57,9 +57,9 @@ function explainer(r: ReviewResult): string {
     r.payment === "not_required"
       ? "Nothing to pay for this one — you're in the queue. Your ticket and QR are emailed once organisers approve."
       : r.payment === "awaiting" && r.hasPaymentRef === false
-      ? "You're registered. Because you couldn't reach your transaction ID, an organiser matches this against the college's payment records by hand — keep your receipt in case they ask for it, and your ticket and QR are emailed once it clears."
+      ? "You're registered. An organiser confirms your payment against the college's records — keep your receipt in case they ask for it, and your ticket and QR are emailed once it clears."
       : r.payment === "awaiting"
-      ? "We're verifying your payment automatically from your Juno registration ID. As soon as it clears, your ticket and QR are emailed to you — nothing more to do."
+      ? "We're checking your Transaction Reference No against the college's statement. As soon as it clears, your ticket and QR are emailed to you — nothing more to do."
       : "Payment received. Your ticket and QR are emailed once your place is confirmed.";
   const team = r.teamCode ? " Share the team code — teammates can still join until the team is full." : "";
   return base + team;

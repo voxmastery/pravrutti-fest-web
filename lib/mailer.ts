@@ -18,7 +18,10 @@ import nodemailer, { type Transporter } from "nodemailer";
 
 export type SendResult = { sent: boolean; skipped?: boolean; error?: string };
 
-type Attachment = { filename: string; base64: string };
+/** `cid` makes it an inline image: reference it from the HTML as
+    `<img src="cid:…">`. Gmail, Apple Mail and Outlook all honour that, where a
+    hosted image is at the mercy of a CDN that re-encodes PNGs into mush. */
+export type Attachment = { filename: string; base64: string; contentType?: string; cid?: string };
 
 export const smtpConfigured = () =>
   !!(process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS);
@@ -97,6 +100,8 @@ async function sendViaSmtp(mail: {
       attachments: mail.attachments?.map((a) => ({
         filename: a.filename,
         content: Buffer.from(a.base64, "base64"),
+        contentType: a.contentType,
+        cid: a.cid,
       })),
     });
     return { sent: true };
@@ -130,6 +135,8 @@ async function sendViaResend(mail: {
         attachments: mail.attachments?.map((a) => ({
           filename: a.filename,
           content: a.base64,
+          content_type: a.contentType,
+          content_id: a.cid,
         })),
       }),
     });

@@ -22,6 +22,10 @@ export type EventAccess = {
       but it must offer the way to finish this one, or the tab they lost is
       the only place that step ever existed. */
   awaitingReference: boolean;
+  /** They left for the portal and never said how it went. A subset of
+      awaitingReference: the rest answered "yes" without an ID, which is a
+      finished registration that merely lacks an optional extra. */
+  unanswered: boolean;
 };
 
 /**
@@ -40,11 +44,11 @@ export async function resolveEventAccess(slug: string): Promise<EventAccess> {
      unlock an event by naming a participant they know is registered. */
   const email = await resolveEmail();
   if (!email)
-    return { entitled: false, registered: false, reason: "signin", status: null, awaitingReference: false };
+    return { entitled: false, registered: false, reason: "signin", status: null, awaitingReference: false, unanswered: false };
 
   const role = await resolveRole();
   if (canViewEvent(role, slug)) {
-    return { entitled: true, registered: true, reason: "staff", status: null, awaitingReference: false };
+    return { entitled: true, registered: true, reason: "staff", status: null, awaitingReference: false, unanswered: false };
   }
 
   const record = (await readJsonByPath(applicationPath(slug, email))) as Application | null;
@@ -52,8 +56,9 @@ export async function resolveEventAccess(slug: string): Promise<EventAccess> {
   const registered = isLiveApplication(status);
   const awaitingReference =
     status === "pending" && record?.payment === "awaiting" && !record?.paymentRef;
+  const unanswered = awaitingReference && record?.stage === "intent";
 
   return status === "confirmed"
-    ? { entitled: true, registered, reason: "approved", status, awaitingReference }
-    : { entitled: false, registered, reason: "not-approved", status, awaitingReference };
+    ? { entitled: true, registered, reason: "approved", status, awaitingReference, unanswered }
+    : { entitled: false, registered, reason: "not-approved", status, awaitingReference, unanswered };
 }

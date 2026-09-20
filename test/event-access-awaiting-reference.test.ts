@@ -68,3 +68,28 @@ describe("whether somebody still owes us a transaction ID", () => {
     expect((await resolveEventAccess(EV)).awaitingReference).toBe(false);
   });
 });
+
+/* awaitingReference lumps two people together: the one who left for the
+   portal and never said how it went, and the one who answered "yes" without a
+   transaction ID. Only the first is owed a question; the second is registered
+   and merely lacks an optional extra. */
+describe("whether they ever said how the payment went", () => {
+  it("is unanswered while the row still carries its intent mark", async () => {
+    app({ paymentRef: null, stage: "intent" });
+    const a = await resolveEventAccess(EV);
+    expect(a.unanswered).toBe(true);
+    expect(a.awaitingReference).toBe(true);
+  });
+
+  it("is answered once the final submit replaced the intent row, even with no ID", async () => {
+    app({ paymentRef: null });
+    const a = await resolveEventAccess(EV);
+    expect(a.unanswered).toBe(false);
+    expect(a.awaitingReference).toBe(true);
+  });
+
+  it("is answered once a reference is on the row", async () => {
+    app({ paymentRef: "JUNO-2026-0091", stage: "intent" });
+    expect((await resolveEventAccess(EV)).unanswered).toBe(false);
+  });
+});

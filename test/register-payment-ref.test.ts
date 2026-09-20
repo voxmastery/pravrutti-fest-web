@@ -59,7 +59,7 @@ describe("POST /api/register — Juno transaction ID", () => {
   it("refuses a solo application without a transaction ID", async () => {
     const res = await post(base());
     expect(res.status).toBe(400);
-    expect((await res.json()).error).toMatch(/transaction ID/i);
+    expect((await res.json()).error).toMatch(/Transaction Reference No/i);
   });
 
   /* A present-but-junk reference is worse than none: it looks like proof on

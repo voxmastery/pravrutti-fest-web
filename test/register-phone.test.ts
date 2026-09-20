@@ -177,12 +177,12 @@ describe("POST /api/register — only the team lead is charged", () => {
   it("charges the team lead, not per teammate", async () => {
     store.set(`team/${EVENT}/${CODE}.json`, { ...teamRec, createdByEmail: "asha@example.com" });
     store.set(`member/${EVENT}/asha@example.com.json`, { code: CODE, eventId: EVENT });
-    const res = await post(application({ teamCode: CODE, paymentRef: "UTR123" }));
+    const res = await post(application({ teamCode: CODE, paymentRef: "UTR12345" }));
     expect(res.status).toBe(200);
     const rec = store.get(KEY);
     expect(rec.payment).toBe("awaiting");
     expect(rec.fee).toBe("Rs. 200/-");
-    expect(rec.paymentRef).toBe("UTR123");
+    expect(rec.paymentRef).toBe("UTR12345");
   });
 
   it("does not charge a teammate and ignores a paymentRef they send", async () => {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { RegistrationDialog } from "@/components/registration-dialog";
 import { TeamInviteCard, useMyTeam } from "@/components/team-invite-card";
@@ -28,6 +28,7 @@ export function EventRegisterPanel({
   viewerStatus = null,
   viewerReady = true,
   awaitingReference = false,
+  unanswered = false,
 }: {
   event: Event;
   level?: 2 | 3;
@@ -46,6 +47,9 @@ export function EventRegisterPanel({
       that takes the reference existed only in the tab they left, so without a
       way back there is nowhere to finish. */
   awaitingReference?: boolean;
+  /** They left for the portal and never said how it went. The page owes them
+      the question, not a demand for a transaction ID. */
+  unanswered?: boolean;
 }) {
   const id = eventId(event.name);
   const cap = capacityFor(id);
@@ -104,10 +108,11 @@ export function EventRegisterPanel({
     onRegisterOpenChange?.(v);
   };
 
-  /* Opening to finish a payment rather than to start a registration. */
-  const [resuming, setResuming] = useState(false);
-  const openToFinish = () => {
-    setResuming(true);
+  /* Opening to finish a payment rather than to start a registration: either
+     to answer the question they never got, or to add the optional ID. */
+  const [resuming, setResuming] = useState<"answer" | "reference" | null>(null);
+  const openToFinish = (mode: "answer" | "reference") => {
+    setResuming(mode);
     setRegistering(true);
   };
 
@@ -134,7 +139,25 @@ export function EventRegisterPanel({
 
   const showApply = viewerReady && dash.ready && !live && !closed && !staff;
   const showClosed = viewerReady && !live && closed;
-  const showFinish = viewerReady && dash.ready && awaitingReference && !staff;
+  /* Two different people are pending without a reference. One left for the
+     portal and never told us how it went — they get the question. The other
+     already answered "yes, I've paid" without an ID: that registration is
+     complete, and the ID is a small optional extra, never pressed for. */
+  const showAnswer = viewerReady && dash.ready && unanswered && !staff;
+  const showAddRef = viewerReady && dash.ready && awaitingReference && !unanswered && !staff;
+
+  /* A reminder email's button lands here with ?finish=reference. Open the
+     screen it promised, once, the moment we know they are owed it. Read from
+     the URL in an effect rather than useSearchParams: these pages are
+     prerendered, and that hook would demand a Suspense boundary for it. */
+  const deepLinked = useRef(false);
+  useEffect(() => {
+    if (deepLinked.current || !(showAnswer || showAddRef)) return;
+    if (new URLSearchParams(window.location.search).get("finish") !== "reference") return;
+    deepLinked.current = true;
+    openToFinish(showAnswer ? "answer" : "reference");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showAnswer, showAddRef]);
 
   return (
     <div className="space-y-3">
@@ -202,20 +225,29 @@ export function EventRegisterPanel({
               {full ? "Apply · join the queue" : "Request to join"}
             </Button>
           )}
-          {showFinish && (
+          {showAnswer && (
             <div className="space-y-2">
               <Button
-                onClick={openToFinish}
+                onClick={() => openToFinish("answer")}
                 className="w-full h-12 rounded-xl font-display text-xs font-black uppercase tracking-widest text-white arcade-btn-magenta border-cyber-pink cursor-pointer"
               >
                 <Ticket className="w-4 h-4 mr-2" aria-hidden="true" />
-                Add your transaction ID
+                Did your payment go through?
               </Button>
               <p className="text-xs text-pearl-white/50 leading-relaxed">
-                Your place is held. Once you have the transaction ID from your payment
-                receipt, add it here and the organisers can verify your payment.
+                You left for the payment portal and we haven&apos;t heard back. Your place
+                is held either way — just tell us how it went.
               </p>
             </div>
+          )}
+          {showAddRef && (
+            <button
+              type="button"
+              onClick={() => openToFinish("reference")}
+              className="block text-left text-xs text-pearl-white/45 hover:text-pearl-white/80 underline underline-offset-2 cursor-pointer"
+            >
+              Have your Juno transaction ID? Add it (optional)
+            </button>
           )}
           {showClosed && (
             <Button
@@ -239,8 +271,9 @@ export function EventRegisterPanel({
            submit flips showApply to false; gating here would unmount the
            success screen before they can read the queue position. */
         event={open ? event : null}
-        onClose={() => { setRegistering(false); setResuming(false); }}
-        resumeAtReference={resuming}
+        onClose={() => { setRegistering(false); setResuming(null); }}
+        resumeAtReference={resuming !== null}
+        resumeWithReferenceField={resuming === "reference"}
         onRegistered={handleRegistered}
         seatsLeft={left}
       />

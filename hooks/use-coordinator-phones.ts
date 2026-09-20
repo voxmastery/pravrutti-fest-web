@@ -20,15 +20,17 @@ export type CoordinatorPhones = {
   status: AppStatus | null;
   /** They went to pay and have not come back with a transaction ID. */
   awaitingReference: boolean;
+  /** They went to pay and never said how it went. */
+  unanswered: boolean;
 };
 
 const LOCKED: CoordinatorPhones = {
   ready: true, unlocked: false, registered: false, byName: {}, venue: null, status: null,
-  awaitingReference: false,
+  awaitingReference: false, unanswered: false,
 };
 const PENDING: CoordinatorPhones = {
   ready: false, unlocked: false, registered: false, byName: {}, venue: null, status: null,
-  awaitingReference: false,
+  awaitingReference: false, unanswered: false,
 };
 
 /**
@@ -75,6 +77,7 @@ export function useCoordinatorPhones(
         venue?: string | null;
         status?: AppStatus | null;
         awaitingReference?: boolean;
+        unanswered?: boolean;
         contacts?: { name: string; phone: string }[];
       }) => {
         if (cancelled) return;
@@ -91,6 +94,7 @@ export function useCoordinatorPhones(
           venue: d.venue ?? null,
           status: d.status ?? null,
           awaitingReference: d.awaitingReference === true,
+          unanswered: d.unanswered === true,
         });
       })
       // A failed lookup must read as "no number", never as an open door.

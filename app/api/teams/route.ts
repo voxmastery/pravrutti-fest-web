@@ -90,6 +90,29 @@ async function loadTeam(evId: string, code: string): Promise<Team | null> {
   return team;
 }
 
+/**
+ * The team this person is on, if it still exists.
+ *
+ * A membership record outlives its team: leaving tombstones it (code ""),
+ * and a lead deleting the team does not touch it at all, so it keeps
+ * pointing at something gone. Every "already on a team" check has to ask
+ * whether that team is alive, or the person is locked out of the event by
+ * a team they themselves dissolved.
+ */
+async function liveMembershipCode(evId: string, email: string): Promise<string | null> {
+  const membership = (await readJsonByPath(teamMemberPath(evId, email))) as { code?: string } | null;
+  const code = normalizeTeamCode(membership?.code ?? "");
+  if (!isValidTeamCode(code)) return null;
+  return (await loadTeam(evId, code)) ? code : null;
+}
+
+/** A live registration whose team the lead has since deleted. */
+async function teamGoneFor(evId: string, app: Application | null): Promise<boolean> {
+  const code = normalizeTeamCode(String(app?.teamCode ?? ""));
+  if (!isValidTeamCode(code)) return false;
+  return (await loadTeam(evId, code)) === null;
+}
+
 function blobFailed(e: unknown, label: string) {
   console.error(label, e);
   return jsonError("Couldn't reach team storage. Try again in a moment.", 500);
@@ -206,6 +229,10 @@ async function createTeam(body: any) {
      replace that tombstone. Without this, anyone who had ever left a team
      could never create one. */
   let tombstonedMembership = false;
+  /* Their registration, when it names a team they have since deleted. It
+     moves to the new team below rather than blocking it: a lead who dissolved
+     their team and made another has not registered twice. */
+  let repointApp: Application | null = null;
 
   try {
     /* A cancelled application is a place they gave up, so it must not stand
@@ -214,29 +241,26 @@ async function createTeam(body: any) {
        event completely: they could not join another team, create one, rejoin,
        or be invited back. The register route has always read it this way. */
     const existingApp = (await readJsonByPath(applicationPath(evId, email))) as Application | null;
-    if (existingApp && isLiveApplication(existingApp.status))
-      return jsonError("You've already applied for this event.", 409);
+    if (existingApp && isLiveApplication(existingApp.status)) {
+      if (!(await teamGoneFor(evId, existingApp)))
+        return jsonError("You've already applied for this event.", 409);
+      repointApp = existingApp;
+    }
 
     const existingMembership = await readJsonByPath(teamMemberPath(evId, email));
-    tombstonedMembership = Boolean(existingMembership) && !existingMembership?.code;
-    if (existingMembership?.code) {
-      const code = normalizeTeamCode(existingMembership.code);
-      const existing = await loadTeam(evId, code);
-      if (existing) {
-        const members = await listTeamMembers(evId, code);
-        return NextResponse.json({
-          ...toTeamPreview(existing, members, maxTeamSizeFor(event), true),
-          created: false,
-          restored: true,
-        });
-      }
-      /* The membership points at a team that is no longer there — the lead
-         deleted it, and deleting does not reach the membership records it
-         leaves behind. Refusing here told them they were already on a team
-         that they had just removed themselves, with no way forward. A
-         reference to something gone is a tombstone like any other. */
-      tombstonedMembership = true;
+    const liveCode = await liveMembershipCode(evId, email);
+    if (liveCode) {
+      const existing = (await loadTeam(evId, liveCode))!;
+      const members = await listTeamMembers(evId, liveCode);
+      return NextResponse.json({
+        ...toTeamPreview(existing, members, maxTeamSizeFor(event), true),
+        created: false,
+        restored: true,
+      });
     }
+    /* Any membership record with no live team behind it — left, removed, or
+       the team deleted — is a tombstone the write below may replace. */
+    tombstonedMembership = Boolean(existingMembership);
   } catch (e) {
     return blobFailed(e, "team create precheck failed");
   }
@@ -283,6 +307,20 @@ async function createTeam(body: any) {
     return jsonError("Your team didn't save. Try again in a moment.", 500);
   }
 
+  if (repointApp) {
+    try {
+      await putJson(
+        applicationPath(evId, email),
+        { ...repointApp, teamCode: team.code, teamName: team.name },
+        true,
+      );
+    } catch (e) {
+      /* The team exists and they lead it; a registration still naming the old
+         one is a mismatch an organiser can see, not a lost place. */
+      console.error("application re-point failed", e);
+    }
+  }
+
   return NextResponse.json({ ...toTeamPreview(team, [lead], maxTeamSizeFor(event), true), created: true });
 }
 
@@ -315,12 +353,20 @@ async function joinTeam(body: any) {
   let replacingCancelled = false;
   try {
     const existingApp = (await readJsonByPath(applicationPath(evId, email))) as Application | null;
-    if (existingApp && isLiveApplication(existingApp.status))
+    if (existingApp && isLiveApplication(existingApp.status)) {
+      /* A lead who deleted their team still holds the registration (and the
+         fee) for it. Joining somebody else's team under it would leave one
+         person paying twice over, so this one asks them to withdraw first. */
+      if (await teamGoneFor(evId, existingApp))
+        return jsonError(
+          "You're registered for this event as the lead of a team you deleted. Withdraw that registration from My tickets first, then join this team.",
+          409,
+        );
       return jsonError("You've already applied for this event.", 409);
+    }
     replacingCancelled = existingApp?.status === "cancelled";
 
-    const existingMembership = await readJsonByPath(teamMemberPath(evId, email));
-    const prior = normalizeTeamCode(existingMembership?.code ?? "");
+    const prior = await liveMembershipCode(evId, email);
     if (prior && prior !== code)
       return jsonError("You're already on a different team for this event.", 409);
 
@@ -530,11 +576,10 @@ async function addMember(body: any) {
     /* Already spoken for elsewhere in this event. Both records are checked
        because either alone lets somebody end up on two teams: an entrant who
        registered solo has an application and no membership. */
-    const [priorMembership, priorApp] = await Promise.all([
-      readJsonByPath(teamMemberPath(evId, fields.email)) as Promise<{ code?: string } | null>,
+    const [priorCode, priorApp] = await Promise.all([
+      liveMembershipCode(evId, fields.email),
       readJsonByPath(applicationPath(evId, fields.email)),
     ]);
-    const priorCode = normalizeTeamCode(priorMembership?.code ?? "");
     if (priorCode && priorCode !== code)
       return jsonError(`${fields.name} is already on another team for this event.`, 409);
     if (priorApp && isLiveApplication((priorApp as Application).status))

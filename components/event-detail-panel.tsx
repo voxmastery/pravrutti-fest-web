@@ -188,6 +188,7 @@ export function EventDetailPanel({
               onAccessRefresh={access.refresh}
               viewerStatus={access.status}
               awaitingReference={access.awaitingReference}
+              unanswered={access.unanswered}
               viewerReady={access.ready}
             />
 

@@ -115,3 +115,13 @@ describe("adding a transaction ID to a registration that already exists", () => 
     expect((await post({ stage: "reference", eventId: EV, paymentRef: "JUNO-2026-0091" })).status).toBe(401);
   });
 });
+
+describe("answering from the event page", () => {
+  it("clears the intent mark even when no ID is given", async () => {
+    midPayment({ stage: "intent" });
+    const res = await post({ stage: "reference", eventId: EV, refUnavailable: true });
+    expect(res.status).toBe(200);
+    expect(store.get(KEY).stage).toBeUndefined();
+    expect(store.get(KEY).paymentRef).toBeNull();
+  });
+});

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { runAfterResponse } from "@/lib/after-response";
 import { events, eventId, capacityFor, effectiveRegistrationOpen, registrationUnavailableMessage } from "@/lib/pravrutti-data";
 import { newTicketId } from "@/lib/ticket-id";
 import {
@@ -189,7 +190,8 @@ export async function POST(req: Request) {
       }
     }
 
-    const updated: Application = { ...prior, paymentRef: ref };
+    /* Answering — with a reference or without — is what closes the intent. */
+    const updated: Application = { ...prior, paymentRef: ref, stage: undefined };
     try {
       await putJson(applicationPath(evId, email), updated, true);
     } catch (e) {
@@ -201,9 +203,10 @@ export async function POST(req: Request) {
     }
 
     /* Acknowledge only if the first submit never managed to. */
-    if (!prior.receivedEmailAt) {
-      const receipt = await sendReceivedEmail(updated);
-      if (receipt.sent || receipt.error) {
+    if (!prior.receivedEmailAt)
+      await runAfterResponse(async () => {
+        const receipt = await sendReceivedEmail(updated);
+        if (!(receipt.sent || receipt.error)) return;
         try {
           await putJson(
             applicationPath(evId, email),
@@ -217,8 +220,7 @@ export async function POST(req: Request) {
         } catch (e) {
           console.error("received-email stamp failed", e);
         }
-      }
-    }
+      });
 
     return NextResponse.json({
       ticketId: updated.ticketId,
@@ -432,6 +434,9 @@ export async function POST(req: Request) {
     paymentRef,
     junoRegId,
     appliedAt,
+    /* Until they come back and answer, this row is a question, not a
+       registration. The event page asks it; the final write clears it. */
+    ...(stage === "intent" ? { stage: "intent" as const } : {}),
   };
 
   /* A cancelled application is a place they gave up, so applying again is
@@ -488,8 +493,14 @@ export async function POST(req: Request) {
      second time. Deliberately after the record is saved and never able to undo
      it: a mail outage must not cost someone their place, so the failure is
      recorded on the record and the application still succeeds. */
-  const receipt = await sendReceivedEmail(record);
-  if (receipt.sent || receipt.error) {
+  /* After the response, not inside it. The mail send is a round-trip to an
+     SMTP host we do not control, and it has held this request for seventeen
+     seconds — on a phone that reads as hung, and that is exactly when someone
+     closes the tab. The record is already saved; nothing about the reply
+     depends on whether the mail went. */
+  await runAfterResponse(async () => {
+    const receipt = await sendReceivedEmail(record);
+    if (!(receipt.sent || receipt.error)) return;
     try {
       await putJson(
         applicationPath(evId, email),
@@ -503,7 +514,7 @@ export async function POST(req: Request) {
     } catch (e) {
       console.error("received-email stamp failed", e);
     }
-  }
+  });
 
   const queue = (await listAll(`app/${evId}/`)).length;
 

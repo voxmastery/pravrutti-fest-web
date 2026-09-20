@@ -8,7 +8,7 @@ import { isValidPaymentRef } from "@/lib/applications";
 
 describe("isValidPaymentRef", () => {
   it("accepts the shapes a real receipt takes", () => {
-    for (const ok of ["JUNO-2026-0091", "TXN123456", "1234567890123", "ab12cd34", "PAY/2026/0091", "a1b2c3"])
+    for (const ok of ["JUNO-2026-0091", "TXN123456", "1234567890123", "ab12cd34", "PAY/2026/0091", "a1b2c3d4"])
       expect(isValidPaymentRef(ok), ok).toBe(true);
   });
 
@@ -17,10 +17,16 @@ describe("isValidPaymentRef", () => {
     expect(isValidPaymentRef("")).toBe(false);
   });
 
-  /* "asdf", "qwerty" — letters mashed into the box. Every real transaction
-     reference carries at least one digit. */
-  it("rejects text with no digit in it", () => {
-    for (const bad of ["asdfgh", "qwertyui", "PAIDONLINE"])
+  /* JUNO's Transaction Reference No is fifteen letters and digits in any mix,
+     so a genuine one can carry no digit at all. A digit rule here silently
+     threw those away — the check is now length and shape only. */
+  it("accepts JUNO's reference shapes, with or without a digit", () => {
+    for (const ok of ["JIDCWIOOPNUQEVB", "JIDCWIOOPNU1QEV", "GQDT-8CQWJK77MBF"])
+      expect(isValidPaymentRef(ok), ok).toBe(true);
+  });
+
+  it("still rejects something too short to be a reference", () => {
+    for (const bad of ["asdfgh", "PAID", "1234567"])
       expect(isValidPaymentRef(bad), bad).toBe(false);
   });
 

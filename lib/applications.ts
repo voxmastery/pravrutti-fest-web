@@ -35,7 +35,7 @@ export const PHONE_LENGTH = 10;
 /** Charged applicants must supply the transaction ID from their Juno receipt.
     Shown by the form and returned by the API, so both say the same thing. */
 export const PAYMENT_REF_HINT =
-  "Enter the transaction ID from your Juno receipt — at least 6 characters, and it must contain a digit.";
+  "Paste the Transaction Reference No from JUNO's Online Payment Receipt — it is at least 8 letters and digits.";
 
 /**
  * Is this a plausible payment reference?
@@ -50,12 +50,14 @@ export const PAYMENT_REF_HINT =
  */
 export function isValidPaymentRef(raw: unknown): boolean {
   const ref = readPaymentRef(raw);
-  if (ref.length < 6 || ref.length > 80) return false;
+  /* JUNO's Transaction Reference No is 15 characters, the gateway's 16, a UPI
+     reference 12 — eight is safely under all of them and above a keyboard mash. */
+  if (ref.length < 8 || ref.length > 80) return false;
   // Letters, digits, and the separators receipts actually use.
   if (!/^[A-Za-z0-9][A-Za-z0-9/_-]*$/.test(ref)) return false;
-  // Every transaction reference carries at least one digit.
-  if (!/\d/.test(ref)) return false;
-  // "000000", "aaaaaa" — a held key, not a reference.
+  /* No digit rule: JUNO's reference is letters and digits in any mix, and a
+     genuine one can have no digit at all. Requiring one threw those away. */
+  // "00000000", "aaaaaaaa" — a held key, not a reference.
   if (/^(.)\1+$/.test(ref)) return false;
   return true;
 }
@@ -113,6 +115,9 @@ export type Application = {
   /** JSON array of { name, phone }, or legacy comma-separated names. */
   members: string | null;
   appliedAt: string;
+  /** Set on the row written when they left for the payment portal; gone the
+      moment they answer how it went, with or without a transaction ID. */
+  stage?: "intent";
   decidedAt?: string;
   refundedAt?: string;
   /** When the applicant withdrew it themselves. Distinct from decidedAt, which
@@ -144,6 +149,10 @@ export type Application = {
       their ticket"). */
   receivedEmailAt?: string;
   receivedEmailError?: string | null;
+  /** Last "please add your Transaction Reference No" reminder, and how many
+      have gone — so a reminder run never nags. */
+  referenceReminderAt?: string;
+  referenceReminderCount?: number;
   /** When the confirmation email carrying the ticket QR last went out. */
   confirmationEmailAt?: string;
   /** Failure text from the last send attempt, so the desk can see why an

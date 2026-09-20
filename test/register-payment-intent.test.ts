@@ -120,3 +120,15 @@ describe("POST /api/register — paid but cannot produce the reference", () => {
     expect((await post(base({ refUnavailable: true, paymentRef: "aaaaaa" }))).status).toBe(400);
   });
 });
+
+/* The event page tells the two apart by this mark: a row that still carries
+   it is a question owed, a row without it is a registration. */
+describe("the intent mark", () => {
+  it("is on the row until they come back and answer, with or without an ID", async () => {
+    await post(base({ stage: "intent" }));
+    expect(store.get(KEY).stage).toBe("intent");
+    const res = await post(base({ refUnavailable: true }));
+    expect(res.status).toBe(200);
+    expect(store.get(KEY).stage).toBeUndefined();
+  });
+});
