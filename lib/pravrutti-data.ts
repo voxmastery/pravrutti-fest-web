@@ -399,12 +399,15 @@ export const events: Event[] = [
     category: "INNOVENTURE",
     subCategory: "Research, Present, Inspire & Innovate",
     description:
+      "THEME: Transdisciplinary Paradigms for Sustainable Societies \u2014 Science, Technology, and Business Leadership.\n\n" +
       "Showcase your research to a panel of experts! The ISTE Research Paper Presentation is a platform for students and researchers to present original work across disciplines. " +
       "Each participant will submit an abstract and, if shortlisted, present a detailed paper during the fest. Presentations are 7 minutes with a 3-minute Q&A. " +
       "Gain recognition, win cash prizes, and interact with academicians and professionals. Topics include AI/ML, Robotics, Energy, IoT, Biomedical Engineering, and more. " +
       "Step up, share your findings, and make an impact. " +
-      "\u25cf Stage 1 (Abstract Submission) \u2014 participants submit an abstract of at most 300 words including Title, Objective, Methodology, Key Findings and Conclusion. " +
-      "\u25cf Stage 2 (Presentation Round) \u2014 selected participants present their paper live: 7 minutes for the presentation (PPT, max 10\u201315 slides) and 3 minutes for Q&A.",
+      "\u25cf Stage 1 (Abstract Submission) \u2014 participants submit an abstract of at most 300 words, which MUST include Title, Objective, Methodology, Key Findings and Conclusion. Teams have a few days to submit it through the Google Form provided. " +
+      "\u25cf Stage 2 (Presentation Round) \u2014 selected participants present their paper live: 7 minutes for the presentation (PPT, 10 slides recommended) and 3 minutes for Q&A. Shortlisted teams present on 14 October, 2:00 PM to 5:00 PM, in front of the judges. " +
+      "\u25cf NOTE \u2014 only shortlisted teams pay Rs. 200/- through the website. Every team should NOT pay to take part. Only a team that has passed the screening round (Round 1) is asked for the Rs. 200/-, to present in front of the judges in the final round. " +
+      "\u25cf Presentation day \u2014 teams wait for their turn in the waiting room and are called to present in an isolated room when it is their turn.",
     /* Entry is free and the fee follows the shortlist, so the string starts
        with "Free" — which is what makes the register route treat it as a free
        event (lib/discoverize.ts explains the whole flow). */
@@ -414,6 +417,7 @@ export const events: Event[] = [
     capacity: 60,
     capacityUnit: "participants",
     duration: "3 hours",
+    eligibility: "Diploma, UG, PG and Ph.D. students",
     coordinators: {
       faculty: [],
       student: [{ name: "Aaliyah Aijaz Ali Khan" }, { name: "Gnaneshwari N" }],
