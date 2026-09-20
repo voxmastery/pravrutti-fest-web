@@ -48,6 +48,8 @@ export type Team = {
   /** Set when the lead deletes the team. The store has no delete operation, so
       a deleted team is tombstoned and every reader treats it as absent. */
   deletedAt?: string;
+  /** Where this team went when an organiser moved it to another event. */
+  movedTo?: { eventId: string; code: string };
 };
 
 /** Name + email only. Phones stay on the team-member blob. */

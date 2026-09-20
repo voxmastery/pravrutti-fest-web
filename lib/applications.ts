@@ -123,6 +123,9 @@ export type Application = {
   /** When the applicant withdrew it themselves. Distinct from decidedAt, which
       records an organiser's decision. */
   cancelledAt?: string;
+  /** Set on the row left behind when an organiser moved this team to another
+      event: the registration is cancelled here and live over there. */
+  movedTo?: { eventId: string; code: string };
   /** Set once when an organiser scans this ticket. Never overwritten —
       a second scan reports the original time rather than replacing it. */
   checkedInAt?: string;
