@@ -418,7 +418,10 @@ export const events: Event[] = [
       faculty: [],
       student: [{ name: "Aaliyah Aijaz Ali Khan" }, { name: "Gnaneshwari N" }],
     },
-    dashboardEmails: ["24etis411003@msruas.ac.in", "24etis411024@msruas.ac.in"],
+    /* The same two coordinators, on the addresses they actually sign in with.
+       Gnaneshwari keeps her college address on Respawn, so she holds the two
+       dashboards under two different Google accounts. */
+    dashboardEmails: ["aaliyahaijaz2006@gmail.com", "gnaneshwarign15@gmail.com"],
     /* Served from public/ so the coordinators can hand over a replacement
        without anyone needing Drive permissions. */
     brochureUrl: "/discoverize-rulebook.pdf",
