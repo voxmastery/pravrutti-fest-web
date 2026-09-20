@@ -178,6 +178,22 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
+  /* Discoverize went free after some teams had already registered under the
+     old paid flow, leaving them owing a ₹200 nobody should have asked for.
+     One-off and idempotent; the shortlisted and the already-paid are skipped
+     (lib/discoverize-review). Here rather than on Discoverize's own desk
+     because that desk needs a signed-in organiser and this needs the key. */
+  if (String(body?.action ?? "") === "discoverize_free") {
+    const { migrateToFreeEntry } = await import("@/lib/discoverize-review");
+    const out = await migrateToFreeEntry();
+    return NextResponse.json({
+      ok: true,
+      converted: out.converted,
+      looked: out.looked,
+      rows: out.applications.map((a) => ({ name: a.name, email: a.email, payment: a.payment, fee: a.fee })),
+    });
+  }
+
   /* Undoing a restore.
 
      A restored row is a guess — that a team with members around it belonged to
