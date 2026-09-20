@@ -683,7 +683,7 @@ function TeamBlock({
   onChanged: (next: Application) => void;
   onChangedMany: (next: Application[]) => void;
 }) {
-  const [busy, setBusy] = useState(false);
+  const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [flash, setFlash] = useState<string | null>(null);
 
@@ -696,19 +696,28 @@ function TeamBlock({
   const payer = live.find((a) => a.payment !== "not_required") ?? null;
   const hidden = live.length - group.shown.filter((a) => a.status !== "cancelled" && a.status !== "declined").length;
 
-  const confirmTeam = async () => {
-    setBusy(true);
+  const act = async (action: "verify_team" | "decline_team") => {
+    setBusy(action);
     setError(null);
     setFlash(null);
     try {
       const res = await fetch("/api/dashboard/applications", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "verify_team", eventId: group.eventId, teamCode: group.code }),
+        body: JSON.stringify({ action, eventId: group.eventId, teamCode: group.code }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "That didn't go through.");
-      onChangedMany(data.applications ?? []);
+      const changed = (data.applications ?? []) as Application[];
+      onChangedMany(changed);
+
+      if (action === "decline_team") {
+        const refunded = changed.filter((a) => a.payment === "refunded").length;
+        setFlash(
+          `Team declined${refunded ? ` — ${refunded} ${refunded === 1 ? "fee" : "fees"} marked for refund.` : "."}`
+        );
+        return;
+      }
       const mails = (data.mails ?? []) as ({ sent?: boolean; skipped?: boolean; error?: string } | null)[];
       const sent = mails.filter((m) => m?.sent).length;
       const failed = mails.filter((m) => m?.error).length;
@@ -718,7 +727,7 @@ function TeamBlock({
     } catch (e) {
       setError(e instanceof Error ? e.message : "That didn't go through.");
     } finally {
-      setBusy(false);
+      setBusy(null);
     }
   };
 
@@ -750,10 +759,40 @@ function TeamBlock({
                 : "")
             }
             confirmLabel="Confirm team"
-            onConfirm={confirmTeam}
+            onConfirm={() => act("verify_team")}
           >
-            <Button size="sm" disabled={busy} className="h-8 rounded-lg bg-champagne-gold/90 px-3 text-xs font-semibold text-midnight-navy hover:bg-champagne-gold">
-              {busy ? <Loader2 className="animate-spin" /> : <Check />} Confirm team
+            <Button size="sm" disabled={busy !== null} className="h-8 rounded-lg bg-champagne-gold/90 px-3 text-xs font-semibold text-midnight-navy hover:bg-champagne-gold">
+              {busy === "verify_team" ? <Loader2 className="animate-spin" /> : <Check />} Confirm team
+            </Button>
+          </ConfirmAction>
+        )}
+
+        {/* The other half of the decision. Declining the lead alone refunds
+            the only fee taken and leaves the teammates waiting on a place
+            nobody is paying for. */}
+        {live.length > 0 && (
+          <ConfirmAction
+            title={`Decline ${group.name}?`}
+            description={
+              `All ${live.length} ${live.length === 1 ? "member" : "members"} are declined together.` +
+              (payer && payer.payment !== "not_required" && payer.payment !== "refunded"
+                ? ` ${payer.name}'s ${payer.fee} is marked for refund — the refund itself is issued through the college.`
+                : "") +
+              (confirmed.length > 0
+                ? ` ${confirmed.length} already ${confirmed.length === 1 ? "holds a ticket" : "hold tickets"}, and ${confirmed.length === 1 ? "it stops being valid" : "they stop being valid"}.`
+                : "")
+            }
+            confirmLabel="Decline team"
+            destructive
+            onConfirm={() => act("decline_team")}
+          >
+            <Button
+              size="sm"
+              variant="subtle"
+              disabled={busy !== null}
+              className="h-8 rounded-lg px-3 text-xs font-semibold text-white/70 hover:text-white"
+            >
+              {busy === "decline_team" ? <Loader2 className="animate-spin" /> : <X />} Decline team
             </Button>
           </ConfirmAction>
         )}

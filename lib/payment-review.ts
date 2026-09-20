@@ -94,23 +94,26 @@ export async function verifyPayment(args: { eventId: string; email: string; by: 
  * Members already confirmed and settled are returned untouched rather than
  * re-confirmed: a second press must not put a second ticket in four inboxes.
  */
+async function liveTeamMembers(eventId: string, code: string) {
+  const normalized = normalizeTeamCode(code);
+  if (!normalized) return [];
+  /* Scoped to the one event: a team that moved keeps its code, and the rows
+     left behind at the old event are not this decision. */
+  const blobs = await listAll(`app/${eventId}/`);
+  const raw = (await Promise.all(blobs.map((b) => readPrivate(b.url)))) as (Application | null)[];
+  return raw
+    .filter((a): a is Application => !!a?.email)
+    .filter((a) => normalizeTeamCode(a.teamCode ?? "") === normalized && isLiveApplication(a.status))
+    .sort((a, b) => String(a.appliedAt).localeCompare(String(b.appliedAt)));
+}
+
 export async function verifyTeam(args: {
   eventId: string;
   code: string;
   by: string;
   paymentRef?: string | null;
 }) {
-  const code = normalizeTeamCode(args.code);
-  if (!code) return null;
-
-  /* Scoped to the one event: a team that moved keeps its code, and the rows
-     left behind at the old event are not this decision. */
-  const blobs = await listAll(`app/${args.eventId}/`);
-  const raw = (await Promise.all(blobs.map((b) => readPrivate(b.url)))) as (Application | null)[];
-  const members = raw
-    .filter((a): a is Application => !!a?.email)
-    .filter((a) => normalizeTeamCode(a.teamCode ?? "") === code && isLiveApplication(a.status))
-    .sort((a, b) => String(a.appliedAt).localeCompare(String(b.appliedAt)));
+  const members = await liveTeamMembers(args.eventId, args.code);
   if (members.length === 0) return null;
 
   const settled = (a: Application) => a.status === "confirmed" && a.payment !== "awaiting";
@@ -169,6 +172,28 @@ export async function declineApplication(args: { eventId: string; email: string 
   };
   await putJson(path, next, true);
   return { application: next, mail: null } satisfies ReviewOutcome;
+}
+
+/**
+ * Turning a whole team away.
+ *
+ * The other half of the team decision. Declining the lead alone refunds the
+ * only fee that was taken and leaves the teammates pending on a place nobody
+ * is paying for — so they go together. The refund is stamped on whoever
+ * actually paid; teammates were never charged, and three invented refunds
+ * would be three entries to explain at the desk.
+ */
+export async function declineTeam(args: { eventId: string; code: string }) {
+  const members = await liveTeamMembers(args.eventId, args.code);
+  if (members.length === 0) return null;
+
+  const outcomes = await Promise.all(
+    members.map((m) => declineApplication({ eventId: args.eventId, email: m.email })),
+  );
+  return {
+    applications: outcomes.flatMap((o) => (o ? [o.application] : [])),
+    mails: [],
+  };
 }
 
 export async function setPaymentRef(args: { eventId: string; email: string; paymentRef: string | null }) {

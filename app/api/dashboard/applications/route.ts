@@ -9,6 +9,7 @@ import { ticketQrDataUrl } from "@/lib/ticket-qr";
 import {
   verifyPayment,
   verifyTeam,
+  declineTeam,
   unverifyPayment,
   declineApplication,
   setPaymentRef,
@@ -79,6 +80,7 @@ export async function GET(req: Request) {
 type Action =
   | "verify_payment"
   | "verify_team"
+  | "decline_team"
   | "unverify_payment"
   | "decline"
   | "set_payment_ref"
@@ -87,6 +89,7 @@ type Action =
 const ACTIONS: Action[] = [
   "verify_payment",
   "verify_team",
+  "decline_team",
   "unverify_payment",
   "decline",
   "set_payment_ref",
@@ -116,10 +119,13 @@ export async function POST(req: Request) {
 
   /* Addressed by team rather than by person: the fee is one payment for the
      team, so the decision is one decision. */
-  if (action === "verify_team") {
+  if (action === "verify_team" || action === "decline_team") {
     const teamCode = String(body?.teamCode ?? "").trim();
     if (!evId || !teamCode) return fail("Missing event or team.", 400);
-    const team = await verifyTeam({ eventId: evId, code: teamCode, by, paymentRef });
+    const team =
+      action === "verify_team"
+        ? await verifyTeam({ eventId: evId, code: teamCode, by, paymentRef })
+        : await declineTeam({ eventId: evId, code: teamCode });
     if (!team) return fail("No live registrations for that team.", 404);
     return NextResponse.json({ ok: true, applications: team.applications, mails: team.mails });
   }

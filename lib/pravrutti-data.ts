@@ -565,7 +565,7 @@ export const events: Event[] = [
     name: "LEADS Innovation Challenge",
     category: "IDEAFORGE",
     subCategory: "Startup Simulation",
-    description: "LEADS Innovation Challenge is a 2-hour startup leadership simulation where teams build a venture from a problem card, defend it through a live mid-event crisis twist, and pitch the complete journey to an investor-style panel testing innovation, adaptability, branding instinct, and leadership, all under real time pressure.",
+    description: "LEADS Innovation Challenge is a non-technical entrepreneurship and leadership simulation run over two connected rounds and 100 marks. In Round 1 teams get a startup problem statement and have 50 minutes to build the venture around it — name, concept, logo, brand identity, positioning and target audience, all created during the event. Judges shortlist from there, and Round 2 hands each surviving team a crisis tied to its own startup: adapt the strategy, then pitch the whole journey to an investor-style panel for 8 minutes with 2 minutes of questions on feasibility, scalability, financial sustainability and how the crisis was handled. The startup you create in the first hour is the one you defend to the end. No prior startup experience is needed, nothing may be prepared in advance, and cross-disciplinary teams are encouraged.",
     fee: "Rs. 200/-",
     prizes: [5000, 3000, 2000],
     /* Rulebook: "Minimum Team Size: 2 Members". The sheet said 1 with solo
@@ -573,7 +573,10 @@ export const events: Event[] = [
     teamSize: { min: 2, max: 4, soloAllowed: false },
     capacity: 100,
     capacityUnit: "teams",
+    /* 135 minutes end to end in the rulebook's timeline, briefing and prize
+       distribution included. */
     duration: "2h 15m",
+    eligibility: "UG and PG students, all departments and years",
     /* Two names, like every other event. Dr. Pallabi Mund (faculty) used to be
        listed alongside these two, making three; no other event lists a faculty
        coordinator publicly, so the students are the two kept here. */
@@ -583,7 +586,10 @@ export const events: Event[] = [
     },
     club: "LEADS",
     dashboardEmails: ["pranavbansal310@gmail.com", "gsiddharth214@gmail.com"],
-    brochureUrl: "https://drive.google.com/open?id=1u5DF4HDP9whgfiCe5OwqOgzV-CXd3IPd",
+    /* Served from the site rather than Drive: the Drive copy is the older
+       rulebook, and a link students cannot open on a locked-down phone is a
+       rulebook they do not read. */
+    brochureUrl: "/leads-innovation-challenge-rules.pdf",
   },
   {
     name: "DENT - INNOVATE",
