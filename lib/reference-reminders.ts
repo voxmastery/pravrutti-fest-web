@@ -1,4 +1,4 @@
-import { listAll, readPrivate, putJson, applicationPath } from "@/lib/blob-store";
+import { listAll, readPrivate, putJson, applicationPath, reminderClaimPath } from "@/lib/blob-store";
 import type { Application } from "@/lib/applications";
 import { sendReferenceReminder } from "@/lib/reference-reminder-email";
 
@@ -58,8 +58,24 @@ export async function runReferenceReminders(opts: { dryRun?: boolean } = {}): Pr
   if (dryRun) return { sent: 0, skipped, failed: [], due: summary, dryRun: true };
 
   let sent = 0;
+  let claimedElsewhere = 0;
   const failed: ReminderRun["failed"] = [];
   for (const a of due) {
+    /* Claim before sending. pravrutti.tech runs as two processes, each with
+       its own scheduler, and on the first pass both read "not yet reminded"
+       and both sent. The claim is an INSERT IGNORE: the second one to try
+       finds it taken and moves on. */
+    const n = (a.referenceReminderCount ?? 0) + 1;
+    try {
+      await putJson(reminderClaimPath(a.eventId, a.email, n), { at: new Date().toISOString() }, false);
+    } catch (e: any) {
+      if (/exists|overwrite/i.test(String(e?.message))) {
+        claimedElsewhere += 1;
+        continue;
+      }
+      failed.push({ eventId: a.eventId, email: a.email, error: "Could not claim the reminder." });
+      continue;
+    }
     const r = await sendReferenceReminder(a);
     if (!r.sent) {
       failed.push({ eventId: a.eventId, email: a.email, error: r.error ?? "Mail send failed." });
@@ -77,5 +93,5 @@ export async function runReferenceReminders(opts: { dryRun?: boolean } = {}): Pr
       console.error("reminder stamp failed", a.eventId, a.email, e);
     }
   }
-  return { sent, skipped, failed, due: summary, dryRun: false };
+  return { sent, skipped: skipped + claimedElsewhere, failed, due: summary, dryRun: false };
 }

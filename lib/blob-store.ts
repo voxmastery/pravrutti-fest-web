@@ -77,6 +77,16 @@ export function paymentRefPath(ref: string) {
   return `payment-ref/${key}.json`;
 }
 
+/**
+ * One key per person per reminder number. Claimed with overwrite:false
+ * before a reminder is sent, so of the two Node processes Hostinger runs —
+ * each with its own scheduler — exactly one sends. The count on the row is
+ * the throttle; this is the lock.
+ */
+export function reminderClaimPath(eventId: string, email: string, n: number) {
+  return `reminder/${emailScopedKey(eventId, email)}/${n}.json`;
+}
+
 export function applicationPath(eventId: string, email: string) {
   return `app/${eventId}/${emailScopedKey(eventId, email)}.json`;
 }

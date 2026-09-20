@@ -13,7 +13,13 @@ vi.mock("@/lib/blob-store", () => ({
   readPrivate: async (url: string) => store.get(url.slice(4)) ?? null,
   readJsonByPath: async (p: string) => store.get(p) ?? null,
   applicationPath: (e: string, m: string) => `app/${e}/${m}.json`,
-  putJson: async (p: string, d: unknown) => { store.set(p, d); },
+  reminderClaimPath: (e: string, m: string, n: number) => `reminder/${e}/${m}/${n}.json`,
+  /* Faithful: a write without overwrite throws on an existing key — the
+     claim below depends on it. */
+  putJson: async (p: string, d: unknown, ow?: boolean) => {
+    if (store.has(p) && !ow) throw new Error("exists");
+    store.set(p, d);
+  },
 }));
 vi.mock("@/lib/mailer", () => ({
   siteOrigin: () => "https://pravrutti.tech",
@@ -100,6 +106,27 @@ describe("POST /api/admin/reference-reminders", () => {
     expect(sent.map((m) => m.to)).toEqual(["due@example.com"]);
     expect(body.sent).toBe(1);
     expect(body.skipped).toBe(2);
+  });
+
+  /* What actually happened on the first deploy: two processes, two
+     schedulers, eleven people mailed twice within a second. */
+  it("two passes running at the same time send each person exactly one mail", async () => {
+    for (let i = 0; i < 6; i++) row(`s${i}@example.com`);
+    const res = await Promise.all([post(), post()]);
+    const bodies = await Promise.all(res.map((r) => r.json()));
+    expect(bodies[0].sent + bodies[1].sent).toBe(6);
+    const per = new Map<string, number>();
+    for (const m of sent) per.set(m.to, (per.get(m.to) ?? 0) + 1);
+    expect([...per.values()].every((c) => c === 1)).toBe(true);
+    expect(per.size).toBe(6);
+  });
+
+  it("a manual run right after the scheduler's sends nothing twice", async () => {
+    row("owes@example.com");
+    await post();
+    const again = await (await post()).json();
+    expect(again.sent).toBe(0);
+    expect(sent).toHaveLength(1);
   });
 
   it("dryRun reports who would get one and sends nothing", async () => {
