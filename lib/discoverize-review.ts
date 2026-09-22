@@ -140,9 +140,20 @@ export async function setShortlisted(args: {
  */
 export async function migrateToFreeEntry() {
   const rows = await allLiveRows();
-  const stale = rows.filter((r) => r.payment === "awaiting" && !r.round?.shortlistedAt);
+  /* Anything still carrying a charge, or an older wording of the fee, from
+     before Discoverize went free. Money that actually arrived ("paid") is
+     left exactly as it is. */
+  const stale = rows.filter((r) => r.payment === "awaiting" || r.fee !== DISCOVERIZE_FREE_FEE);
   const applications = await Promise.all(
-    stale.map((r) => save({ ...r, payment: "not_required", fee: DISCOVERIZE_FREE_FEE })),
+    stale
+      .filter((r) => r.payment !== "paid" || r.fee !== DISCOVERIZE_FREE_FEE)
+      .map((r) =>
+        save({
+          ...r,
+          payment: r.payment === "paid" ? "paid" : "not_required",
+          fee: DISCOVERIZE_FREE_FEE,
+        }),
+      ),
   );
   return { applications, converted: applications.length, looked: rows.length };
 }

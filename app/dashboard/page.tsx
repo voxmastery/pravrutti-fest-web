@@ -12,7 +12,7 @@ import { StatInline } from "@/components/dashboard/stat-tile";
 import { FilterGroup } from "@/components/dashboard/filter-group";
 import { AppStatusBadge } from "@/components/dashboard/status-badge";
 import { AccessPanel } from "@/components/dashboard/access-panel";
-import { AlertTriangle, Check, ChevronDown, ClipboardList, Star } from "lucide-react";
+import { AlertTriangle, Check, ChevronDown, ClipboardList, FileSpreadsheet, Star } from "lucide-react";
 
 type Counts = { registered: number; confirmed: number; checkedIn: number; notArrived: number };
 /** Contact fields arrive only for organisers — see the event route. */
@@ -226,6 +226,21 @@ export default function DashboardPage() {
           </span>
         </span>
         <ClipboardList className="h-5 w-5 shrink-0 text-cyber-pink" />
+      </Link>
+
+      {/* Seventy payments read by eye against seventy rows is where the desk
+          actually loses its evenings. */}
+      <Link
+        href="/dashboard/approve"
+        className="mb-6 flex items-center justify-between gap-4 rounded-2xl border border-royal-wine bg-cosmic-purple/60 px-5 py-4 transition-colors hover:border-cyber-pink/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyber-pink"
+      >
+        <span>
+          <span className="block font-semibold text-champagne-gold">Approve from the payment report</span>
+          <span className="block text-sm text-white/45">
+            Upload the college&apos;s sheet, see who it pays for, confirm them in one go
+          </span>
+        </span>
+        <FileSpreadsheet className="h-5 w-5 shrink-0 text-cyber-pink" />
       </Link>
 
       {/* Discoverize screens abstracts before it charges anybody, so its
