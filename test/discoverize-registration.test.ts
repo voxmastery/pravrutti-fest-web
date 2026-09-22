@@ -91,15 +91,14 @@ describe("the fee gate", () => {
     expect(res.status).toBeGreaterThanOrEqual(400);
   });
 
-  /* Shortlisting is what puts the fee on the row, and only then does the
-     existing reference machinery apply. */
-  it("takes the reference once the team is shortlisted and owes the fee", async () => {
+  /* Discoverize is free even past the shortlist, so there is no stage at
+     which a reference is taken for it. */
+  it("refuses one even from a shortlisted team", async () => {
     registered({
-      payment: "awaiting", fee: "Rs. 200/-",
       round: { abstractSubmittedAt: "x", shortlistedAt: "y", shortlistedBy: "coord@example.com" },
     });
     const res = await post({ stage: "reference", eventId: EV, email: ME, paymentRef: "JIDCWIOOPNU1QEV" });
-    expect(res.status).toBe(200);
-    expect(store.get(KEY).paymentRef).toBe("JIDCWIOOPNU1QEV");
+    expect(res.status).toBeGreaterThanOrEqual(400);
+    expect(store.get(KEY).paymentRef).toBeNull();
   });
 });

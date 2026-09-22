@@ -22,15 +22,19 @@ export type CoordinatorPhones = {
   awaitingReference: boolean;
   /** They went to pay and never said how it went. */
   unanswered: boolean;
+  /** Discoverize's rounds for this viewer; null everywhere else. */
+  round: { abstractSubmittedAt?: string; abstractSource?: "form" | "organiser"; shortlistedAt?: string; shortlistedBy?: string } | null;
+  /** This viewer's own payment state. */
+  payment: "not_required" | "awaiting" | "paid" | "refunded" | null;
 };
 
 const LOCKED: CoordinatorPhones = {
   ready: true, unlocked: false, registered: false, byName: {}, venue: null, status: null,
-  awaitingReference: false, unanswered: false,
+  awaitingReference: false, unanswered: false, round: null, payment: null,
 };
 const PENDING: CoordinatorPhones = {
   ready: false, unlocked: false, registered: false, byName: {}, venue: null, status: null,
-  awaitingReference: false, unanswered: false,
+  awaitingReference: false, unanswered: false, round: null, payment: null,
 };
 
 /**
@@ -78,6 +82,8 @@ export function useCoordinatorPhones(
         status?: AppStatus | null;
         awaitingReference?: boolean;
         unanswered?: boolean;
+        round?: CoordinatorPhones["round"];
+        payment?: CoordinatorPhones["payment"];
         contacts?: { name: string; phone: string }[];
       }) => {
         if (cancelled) return;
@@ -95,6 +101,8 @@ export function useCoordinatorPhones(
           status: d.status ?? null,
           awaitingReference: d.awaitingReference === true,
           unanswered: d.unanswered === true,
+          round: d.round ?? null,
+          payment: d.payment ?? null,
         });
       })
       // A failed lookup must read as "no number", never as an open door.

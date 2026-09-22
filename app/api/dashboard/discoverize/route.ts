@@ -73,7 +73,6 @@ export async function POST(req: Request) {
   if (action === "shortlist" || action === "unshortlist") {
     const out = await setShortlisted({ code, email, by: who.by, shortlisted: action === "shortlist" });
     if (!out) return fail("No live registration for that team.", 404);
-    if ("error" in out && out.error) return fail(out.error, 409);
     return NextResponse.json({ ok: true, applications: out.applications, payer: out.payer });
   }
 

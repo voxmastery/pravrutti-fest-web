@@ -1,7 +1,7 @@
 import type { Application } from "@/lib/applications";
 import { isLiveApplication } from "@/lib/applications";
 import { listAll, readPrivate, readJsonByPath, putJson, applicationPath, teamPath } from "@/lib/blob-store";
-import { DISCOVERIZE_EVENT_ID, DISCOVERIZE_FREE_FEE, DISCOVERIZE_ROUND_FEE } from "@/lib/discoverize";
+import { DISCOVERIZE_EVENT_ID, DISCOVERIZE_FREE_FEE } from "@/lib/discoverize";
 import type { Team } from "@/lib/teams";
 
 /**
@@ -91,15 +91,13 @@ export async function markAbstractSubmitted(args: {
 }
 
 /**
- * The judges' decision, and the fee that follows it.
+ * The judges' decision.
  *
- * Shortlisting is what makes the ₹200 real: it lands on the payer's row as
- * "awaiting", which is the same state every other event's lead sits in before
- * an organiser verifies the money — so the existing reference field, the
- * reminders and the verification desk all work on it unchanged.
- *
- * There is no cap here. How many teams go through is the judges' call, and a
- * number in the code would be a second opinion nobody asked for.
+ * Nothing about money: Discoverize is free at every stage, so being put
+ * through to the presentation round changes what a team's ticket says and
+ * nothing else. There is no cap either — how many teams go through is the
+ * judges' call, and a number in the code would be a second opinion nobody
+ * asked for.
  */
 export async function setShortlisted(args: {
   code?: string | null;
@@ -111,13 +109,9 @@ export async function setShortlisted(args: {
   if (!rows) return null;
   const payer = await payerOf(rows);
 
-  if (!args.shortlisted && payer.payment === "paid")
-    return { error: "That team has already paid for the final round. Decline it instead if they are out." };
-
   const at = new Date().toISOString();
   const applications = await Promise.all(
     rows.map((r) => {
-      const isPayer = r.email.toLowerCase() === payer.email.toLowerCase();
       const round = { ...r.round };
       if (args.shortlisted) {
         round.shortlistedAt = round.shortlistedAt ?? at;
@@ -126,14 +120,9 @@ export async function setShortlisted(args: {
         delete round.shortlistedAt;
         delete round.shortlistedBy;
       }
-      const next: Application = {
-        ...r,
-        round: Object.keys(round).length ? round : undefined,
-        /* Only the payer's row carries money, and only while they owe it. */
-        payment: isPayer ? (args.shortlisted ? "awaiting" : "not_required") : r.payment,
-        fee: isPayer ? (args.shortlisted ? DISCOVERIZE_ROUND_FEE : DISCOVERIZE_FREE_FEE) : r.fee,
-      };
-      return save(next);
+      /* No money changes hands here — the entry was free and the final round
+         is free too, so the row keeps the fee and payment it already had. */
+      return save({ ...r, round: Object.keys(round).length ? round : undefined });
     }),
   );
   return { applications, payer: payer.email };

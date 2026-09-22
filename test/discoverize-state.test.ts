@@ -42,14 +42,13 @@ describe("discoverizeState", () => {
 });
 
 describe("what a team is allowed to do", () => {
-  /* The gate the payment endpoints enforce: a team that was never shortlisted
-     cannot reach the fee, however it arrives at the URL. */
-  it("lets only a shortlisted, unpaid team pay", () => {
-    expect(mayPay(app({ round: { shortlistedAt: "y" }, payment: "awaiting" }))).toBe(true);
+  /* Discoverize is free at every stage, so the payment endpoints refuse
+     everybody — including a team the judges have put through. */
+  it("lets nobody pay, shortlisted or not", () => {
     expect(mayPay(app())).toBe(false);
     expect(mayPay(app({ round: { abstractSubmittedAt: "x" } }))).toBe(false);
-    expect(mayPay(app({ round: { shortlistedAt: "y" }, payment: "paid" }))).toBe(false);
-    expect(mayPay(app({ status: "cancelled", round: { shortlistedAt: "y" }, payment: "awaiting" }))).toBe(false);
+    expect(mayPay(app({ round: { shortlistedAt: "y" } }))).toBe(false);
+    expect(mayPay(app({ round: { shortlistedAt: "y" }, payment: "awaiting" }))).toBe(false);
   });
 
   it("asks for the abstract once, and stops asking after it arrives", () => {

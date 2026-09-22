@@ -117,16 +117,17 @@ describe("POST /api/dashboard/discoverize (shortlisting)", () => {
     const res = await desk({ action: "shortlist", code: CODE });
     expect(res.status).toBe(200);
     expect(read(LEAD).round.shortlistedBy).toBe("coord@example.com");
-    expect(read(LEAD).payment).toBe("awaiting");
+    /* Free event: going through asks nobody for money. */
+    expect(read(LEAD).payment).toBe("not_required");
     expect(read(MATE).payment).toBe("not_required");
   });
 
-  it("lets an organiser un-shortlist, which takes the fee back off", async () => {
+  it("lets an organiser un-shortlist, which clears the mark", async () => {
     role.value = { kind: "organiser" }; role.email = "org@example.com";
     await desk({ action: "shortlist", code: CODE });
     const res = await desk({ action: "unshortlist", code: CODE });
     expect(res.status).toBe(200);
-    expect(read(LEAD).payment).toBe("not_required");
+    expect(read(LEAD).round?.shortlistedAt).toBeUndefined();
   });
 
   it("marks an abstract by hand when the form route has not been wired", async () => {

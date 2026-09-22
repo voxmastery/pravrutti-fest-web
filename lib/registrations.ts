@@ -46,7 +46,7 @@ export const STATUS_META: Record<RegistrationStatus, StatusMeta> = {
   in_process: {
     label: "Registration in process",
     detail:
-      "We have received your registration. Once your payment has been confirmed, you will receive an email confirmation at the address you registered with. This usually takes 24–48 hours — you do not need to register again.",
+      "We have received your registration. Once your payment has been confirmed, you will receive an email confirmation at the address you registered with. This usually takes 3–4 days — you do not need to register again.",
     tone: "pending",
   },
   confirmed: {

@@ -117,7 +117,6 @@ export function RegistrationDialog({
   seatsLeft,
   resumeAtReference = false,
   resumeWithReferenceField = false,
-  resumeAtPayment = false,
 }: {
   event: Event | null;
   onClose: () => void;
@@ -133,10 +132,6 @@ export function RegistrationDialog({
   resumeAtReference?: boolean;
   /** With resumeAtReference: they came to add the optional transaction ID. */
   resumeWithReferenceField?: boolean;
-  /** A Discoverize team the judges shortlisted, opening the dialog to pay the
-      team's Rs. 200/-. They are already registered, so this pays an existing
-      entry rather than creating one. */
-  resumeAtPayment?: boolean;
 }) {
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [form, setForm] = useState<FormState>(emptyForm);
@@ -227,17 +222,14 @@ export function RegistrationDialog({
   }, [event, payPhase, portalMode]);
 
   useEffect(() => {
-    if (!event || !(resumeAtReference || resumeAtPayment)) return;
+    if (!event || !resumeAtReference) return;
     setStep(3);
-    /* Paying starts at the portal hand-off; adding a reference starts after
-       it, because that visit to the portal has already happened. */
-    setPayPhase(resumeAtPayment ? "confirm" : "reference");
-    if (resumeAtPayment) return;
+    setPayPhase("reference");
     /* They are back by definition — there is no window to wait on. */
     setBackFromPortal(true);
     /* Opened to add the ID: show the field rather than the link to it. */
     if (resumeWithReferenceField) setShowRefField(true);
-  }, [event, resumeAtReference, resumeAtPayment, resumeWithReferenceField]);
+  }, [event, resumeAtReference, resumeWithReferenceField]);
 
   useEffect(() => {
     if (!event) return;
@@ -293,10 +285,7 @@ export function RegistrationDialog({
   /* Discoverize enters free and pays only past the shortlist, so this dialog
      never sends one of its teams to the portal — see lib/discoverize.ts. */
   const discoverize = event ? isDiscoverize(eventId(event.name)) : false;
-  /* Opened to pay rather than to register: the portal hand-off is shown, and
-     the submit attaches to the registration they already have. */
-  const mayPayNow = resumeAtPayment;
-  const payingExisting = resumeAtReference || resumeAtPayment;
+
   const applicantFee = discoverize ? "Free" : formatFee(1);
   const teamCap = createdTeam?.maxMembers ?? verifiedTeam?.maxMembers ?? event?.teamSize.max ?? MAX_TEAM_SIZE;
   const joining = teamPane === "join" || teamPane === "verified";
@@ -499,9 +488,9 @@ export function RegistrationDialog({
 
   const goToPortal = async (force: boolean) => {
     if (!event || startingPayment) return;
-    /* Nothing reaches this for Discoverize — the confirm screen has no
-       "Proceed to payment" — but a free entry must never be able to. */
-    if (discoverize && !mayPayNow) return;
+    /* Discoverize is free at every stage, so it never hands anybody to the
+       portal — its confirm screen has no "Proceed to payment" at all. */
+    if (discoverize) return;
     setError(null);
     setStartingPayment(true);
 
@@ -558,8 +547,7 @@ export function RegistrationDialog({
        them from the desk, which is the failure we are actually fixing. */
     /* Nothing was charged, so there is no receipt to quote: a free entry
        (Discoverize before its shortlist) is never asked for a reference. */
-    const owesFee = !discoverize || resumeAtPayment;
-    if (owesFee && !joining && !refUnavailable && !isValidPaymentRef(form.paymentRef)) {
+    if (!discoverize && !joining && !refUnavailable && !isValidPaymentRef(form.paymentRef)) {
       return fail(PAYMENT_REF_HINT);
     }
     setSubmitting(true);
@@ -573,7 +561,7 @@ export function RegistrationDialog({
            college that this screen never collected, and refuse them over a
            field they cannot see. */
         body: JSON.stringify(
-          payingExisting
+          resumeAtReference
             ? {
                 stage: "reference",
                 eventId: eventId(event.name),
@@ -1209,7 +1197,7 @@ export function RegistrationDialog({
                   </div>
                   )}
 
-                  {payPhase === "confirm" && discoverize && !resumeAtPayment ? (
+                  {payPhase === "confirm" && discoverize ? (
                     <>
                       {/* Free to enter, so there is nothing to hand off to the
                           portal — just the one thing teams get wrong about this

@@ -31,7 +31,7 @@ const FLOW = [
   {
     icon: Clock,
     title: "We verify your payment",
-    body: "Your registration sits at “in process” while the committee verifies the payment against our records. This usually takes 24–48 hours.",
+    body: "Your registration sits at “in process” while the committee verifies the payment against our records. This usually takes 3–4 days.",
   },
   {
     icon: Mail,
@@ -216,7 +216,7 @@ export default function TicketsPage() {
 
           <div className="px-6 py-5 border-t border-royal-wine bg-midnight-navy/60">
             <p className="text-base text-pearl-white/70 leading-relaxed">
-              Haven&apos;t received your confirmation email 48 hours after paying? Check your
+              Haven&apos;t received your confirmation email 4 days after paying? Check your
               spam folder first, then{" "}
               <Link href="/contact" className="font-bold text-champagne-gold underline hover:text-white">
                 contact the organising helpdesk

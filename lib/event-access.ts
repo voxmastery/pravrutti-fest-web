@@ -26,6 +26,12 @@ export type EventAccess = {
       awaitingReference: the rest answered "yes" without an ID, which is a
       finished registration that merely lacks an optional extra. */
   unanswered: boolean;
+  /** Discoverize's rounds, for the viewer's own registration. Null for every
+      other event — their panels read exactly as they did. */
+  round: Application["round"] | null;
+  /** This viewer's own payment state, so Discoverize's panel can tell a free
+      entry from a shortlisted team that owes the team fee. */
+  payment: Application["payment"] | null;
 };
 
 /**
@@ -44,11 +50,11 @@ export async function resolveEventAccess(slug: string): Promise<EventAccess> {
      unlock an event by naming a participant they know is registered. */
   const email = await resolveEmail();
   if (!email)
-    return { entitled: false, registered: false, reason: "signin", status: null, awaitingReference: false, unanswered: false };
+    return { entitled: false, registered: false, reason: "signin", status: null, awaitingReference: false, unanswered: false, round: null, payment: null };
 
   const role = await resolveRole();
   if (canViewEvent(role, slug)) {
-    return { entitled: true, registered: true, reason: "staff", status: null, awaitingReference: false, unanswered: false };
+    return { entitled: true, registered: true, reason: "staff", status: null, awaitingReference: false, unanswered: false, round: null, payment: null };
   }
 
   const record = (await readJsonByPath(applicationPath(slug, email))) as Application | null;
@@ -59,6 +65,6 @@ export async function resolveEventAccess(slug: string): Promise<EventAccess> {
   const unanswered = awaitingReference && record?.stage === "intent";
 
   return status === "confirmed"
-    ? { entitled: true, registered, reason: "approved", status, awaitingReference, unanswered }
-    : { entitled: false, registered, reason: "not-approved", status, awaitingReference, unanswered };
+    ? { entitled: true, registered, reason: "approved", status, awaitingReference, unanswered, round: record?.round ?? null, payment: record?.payment ?? null }
+    : { entitled: false, registered, reason: "not-approved", status, awaitingReference, unanswered, round: record?.round ?? null, payment: record?.payment ?? null };
 }

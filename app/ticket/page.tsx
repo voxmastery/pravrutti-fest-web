@@ -585,13 +585,6 @@ function DiscoverizeRow({ a }: { a: App }) {
         </a>
       )}
 
-      {state === "payment_pending" && (
-        <a href={`/events/${a.eventId}?finish=pay`} className="block">
-          <Button className="h-10 w-full rounded-xl bg-cyber-pink text-sm font-medium text-white hover:bg-electric-magenta">
-            Pay ₹{FEE_PER_HEAD}
-          </Button>
-        </a>
-      )}
     </div>
   );
 }

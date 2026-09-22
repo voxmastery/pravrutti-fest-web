@@ -74,39 +74,41 @@ describe("markAbstractSubmitted", () => {
 });
 
 describe("setShortlisted", () => {
-  it("puts the whole team through and the fee on the lead alone", async () => {
+  it("puts the whole team through and charges nobody", async () => {
     const out = await lib.setShortlisted({ code: CODE, by: "coordinator@example.com", shortlisted: true });
     expect(out!.applications).toHaveLength(2);
     expect(read(LEAD).round.shortlistedAt).toBeTruthy();
     expect(read(LEAD).round.shortlistedBy).toBe("coordinator@example.com");
-    expect(read(LEAD).payment).toBe("awaiting");
-    expect(read(LEAD).fee).toBe("Rs. 200/-");
-    /* The ₹200 is the team's, once. */
     expect(read(MATE).round.shortlistedAt).toBeTruthy();
-    expect(read(MATE).payment).toBe("not_required");
+    /* Free at every stage: being put through costs the team nothing. */
+    for (const e of [LEAD, MATE]) {
+      expect(read(e).payment, e).toBe("not_required");
+      expect(read(e).fee, e).toMatch(/^Free/);
+    }
   });
 
-  it("shortlists a solo entry against its own row", async () => {
+  it("shortlists a solo entry against its own row, still free", async () => {
     await lib.setShortlisted({ email: SOLO, by: "c@example.com", shortlisted: true });
-    expect(read(SOLO).payment).toBe("awaiting");
-    expect(read(SOLO).fee).toBe("Rs. 200/-");
+    expect(read(SOLO).round.shortlistedAt).toBeTruthy();
+    expect(read(SOLO).payment).toBe("not_required");
   });
 
-  it("takes the fee back off when a team is un-shortlisted", async () => {
+  it("clears the mark when a team is un-shortlisted", async () => {
     await lib.setShortlisted({ code: CODE, by: "c@example.com", shortlisted: true });
     await lib.setShortlisted({ code: CODE, by: "c@example.com", shortlisted: false });
     expect(read(LEAD).round?.shortlistedAt).toBeUndefined();
+    expect(read(MATE).round?.shortlistedAt).toBeUndefined();
     expect(read(LEAD).payment).toBe("not_required");
-    expect(read(LEAD).fee).toMatch(/^Free/);
   });
 
-  /* Money that has arrived is not unwound by a mis-click on the list. */
-  it("refuses to un-shortlist a team that has already paid", async () => {
+  /* A row left "paid" from before Discoverize went free is money that did
+     arrive; shortlisting must not quietly rewrite it either way. */
+  it("leaves a legacy paid row's money alone", async () => {
+    store.set(`app/${EV}/${LEAD}.json`, { ...read(LEAD), payment: "paid", fee: "Rs. 200/-" });
     await lib.setShortlisted({ code: CODE, by: "c@example.com", shortlisted: true });
-    store.set(`app/${EV}/${LEAD}.json`, { ...read(LEAD), payment: "paid" });
-    const out = await lib.setShortlisted({ code: CODE, by: "c@example.com", shortlisted: false });
-    expect(out).toMatchObject({ error: expect.stringMatching(/already paid/i) });
     expect(read(LEAD).payment).toBe("paid");
+    expect(read(LEAD).fee).toBe("Rs. 200/-");
+    expect(read(LEAD).round.shortlistedAt).toBeTruthy();
   });
 
   it("leaves other teams and other events alone", async () => {

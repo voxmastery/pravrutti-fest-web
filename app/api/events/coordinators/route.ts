@@ -50,6 +50,8 @@ export async function GET(req: Request) {
       status: access.status,
       awaitingReference: access.awaitingReference,
       unanswered: access.unanswered,
+      round: access.round,
+      payment: access.payment,
       contacts,
     }, NO_STORE);
   }
@@ -60,6 +62,8 @@ export async function GET(req: Request) {
     status: access.status,
     awaitingReference: access.awaitingReference,
     unanswered: access.unanswered,
+    round: access.round,
+    payment: access.payment,
     venue: venueFor(slug),
     contacts,
   }, NO_STORE);
