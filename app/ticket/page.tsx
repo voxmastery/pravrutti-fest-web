@@ -73,11 +73,18 @@ function TicketTeamBlock({
   fallbackCode,
   fallbackName,
   viewerEmail,
+  viewerName,
+  live,
 }: {
   eventId: string;
   fallbackCode: string;
   fallbackName?: string | null;
   viewerEmail: string;
+  /** Named in the invite email when the lead adds somebody from here. */
+  viewerName: string;
+  /** Whether this registration still holds a place. A withdrawn or declined
+      entry has no team left to add anybody to. */
+  live: boolean;
 }) {
   /* Bumped to re-read the roster after the lead removes somebody. */
   const [pulse, setPulse] = useState(0);
@@ -92,6 +99,8 @@ function TicketTeamBlock({
           eventId={eventId}
           team={team}
           viewerEmail={viewerEmail}
+          leadName={viewerName}
+          canAdd={live}
           onChanged={() => setPulse((n) => n + 1)}
         />
       </div>
@@ -437,6 +446,8 @@ export default function TicketPage() {
                               fallbackCode={a.teamCode}
                               fallbackName={a.teamName}
                               viewerEmail={me.email ?? ""}
+                              viewerName={a.name}
+                              live={a.status === "pending" || a.status === "confirmed"}
                             />
                           )}
 

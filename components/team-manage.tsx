@@ -2,8 +2,9 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { TeamAddMember, type Invited } from "@/components/team-add-member";
 import type { TeamPreview } from "@/lib/teams";
-import { Loader2, Trash2 } from "lucide-react";
+import { Check, Copy, Loader2, Trash2 } from "lucide-react";
 
 /**
  * The lead's controls for a team they already registered.
@@ -17,23 +18,53 @@ import { Loader2, Trash2 } from "lucide-react";
  * Removing somebody cancels their application and frees them to join another
  * team, which is why it is offered plainly rather than buried: it is the one
  * action that gets a teammate unstuck.
+ *
+ * Adding somebody sits outside the disclosure, not in it. A lead with a place
+ * still free needs it far more often than they need to remove anyone, and
+ * while it was only in the registration dialog — unreachable once they had
+ * submitted — reading the code out was the only way to grow a registered team.
  */
 export function TeamManage({
   eventId,
   team,
   viewerEmail,
+  leadName,
+  canAdd,
   onChanged,
 }: {
   eventId: string;
   team: TeamPreview;
   /** The lead themselves — their own row is not removable here. */
   viewerEmail: string;
+  /** Named in the invite email. The server falls back to their registration. */
+  leadName?: string;
+  /** False where the registration itself is over — withdrawn, or not confirmed
+      — so there is no team left to add anybody to. */
+  canAdd: boolean;
   onChanged: () => void;
 }) {
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  /** A member was added but the invite email did not go — not a failure, but
+      the lead has to hand the link over themselves, so it cannot be silent. */
+  const [mailWarning, setMailWarning] = useState<string | null>(null);
+  /** Invite links minted this session, so a bounced email is not a dead end. */
+  const [links, setLinks] = useState<Record<string, string>>({});
+  const [copied, setCopied] = useState<string | null>(null);
+
+  async function copyLink(email: string) {
+    const url = links[email];
+    if (!url) return;
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopied(email);
+      window.setTimeout(() => setCopied((c) => (c === email ? null : c)), 1600);
+    } catch {
+      setError("Couldn't copy. Select the link and copy it manually.");
+    }
+  }
 
   const roster = team.members ?? [];
   /* The lead's own row is not removable — leaving is withdrawing, which is a
@@ -68,19 +99,90 @@ export function TeamManage({
 
   if (!team.isLead) return null;
 
+  /* Registration closed nationally, or this registration is no longer live:
+     an invite would be refused, so the button is not offered. */
+  const inviting = canAdd && team.canInvite !== false;
+
+  const addBlock = inviting ? (
+    <TeamAddMember
+      eventId={eventId}
+      code={team.code}
+      leadEmail={viewerEmail}
+      leadName={leadName}
+      full={team.isFull}
+      maxMembers={team.maxMembers}
+      onAdded={(_team, invite: Invited) => {
+        if (invite.url) setLinks((l) => ({ ...l, [invite.email]: invite.url }));
+        setMailWarning(
+          invite.emailSent
+            ? null
+            : `We couldn't email ${invite.name}. Copy their invite link below and send it yourself.`,
+        );
+        onChanged();
+      }}
+      cardCls="rounded-xl border border-white/[0.1] bg-white/[0.03]"
+      inputCls="h-10 rounded-xl border border-white/[0.12] bg-white/[0.04] text-sm text-white placeholder:text-white/30"
+      ghostBtn="h-10 rounded-xl border border-white/[0.1] bg-white/[0.04] text-white/70 hover:bg-white/[0.08] hover:text-white font-medium text-sm cursor-pointer"
+      primaryBtn="h-10 rounded-xl bg-cyber-pink text-white hover:bg-electric-magenta font-medium text-sm cursor-pointer"
+    />
+  ) : null;
+
+  const warningBlock = mailWarning ? (
+    <p className="rounded-lg border border-amber-400/30 bg-amber-400/[0.07] px-3 py-2 text-[12px] text-white/75 leading-relaxed">
+      {mailWarning}
+    </p>
+  ) : null;
+
+  /* Links for people added just now, wherever the panel happens to be. */
+  const freshLinks = Object.keys(links);
+  const linkBlock = freshLinks.length ? (
+    <ul className="space-y-1">
+      {freshLinks.map((email) => (
+        <li key={email}>
+          <button
+            type="button"
+            onClick={() => copyLink(email)}
+            className="inline-flex items-center gap-1.5 text-[11px] text-white/45 hover:text-white/80 transition-colors cursor-pointer"
+          >
+            {copied === email ? (
+              <Check className="w-3 h-3" aria-hidden="true" />
+            ) : (
+              <Copy className="w-3 h-3" aria-hidden="true" />
+            )}
+            {copied === email ? "Invite link copied" : `Copy ${email}'s invite link`}
+          </button>
+        </li>
+      ))}
+    </ul>
+  ) : null;
+
   if (!open)
     return (
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        className="mt-2 text-xs text-white/35 hover:text-white/70 underline underline-offset-2 cursor-pointer"
-      >
-        Manage team
-      </button>
+      <div className="mt-2 space-y-2">
+        {addBlock}
+        {warningBlock}
+        {error && (
+          <p className="rounded-lg border border-danger-strong/30 bg-danger-strong/[0.07] px-3 py-2 text-[12px] text-white/80">
+            {error}
+          </p>
+        )}
+        {linkBlock}
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          className="text-xs text-white/35 hover:text-white/70 underline underline-offset-2 cursor-pointer"
+        >
+          Manage team
+        </button>
+      </div>
     );
 
   return (
-    <div className="mt-2 rounded-xl border border-white/[0.1] bg-white/[0.03] p-3 space-y-2.5">
+    <div className="mt-2 space-y-2">
+      {addBlock}
+      {warningBlock}
+      {linkBlock}
+      <div className="rounded-xl border border-white/[0.1] bg-white/[0.03] p-3 space-y-2.5">
       <div className="flex items-center justify-between gap-3">
         <p className="text-[11px] uppercase tracking-wider text-white/40">Manage {team.name}</p>
         <button
@@ -170,6 +272,7 @@ export function TeamManage({
           Delete this team
         </button>
       )}
+      </div>
     </div>
   );
 }

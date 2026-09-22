@@ -2,10 +2,9 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { PHONE_INPUT_MAX, phoneFieldValue } from "@/lib/applications";
+import { TeamAddMember } from "@/components/team-add-member";
 import type { TeamPreview } from "@/lib/teams";
-import { Check, Copy, Loader2, Trash2, UserPlus } from "lucide-react";
+import { Check, Copy, Loader2, Trash2 } from "lucide-react";
 
 /**
  * The lead's roster: who is on the team, and the button that adds the next one.
@@ -41,10 +40,8 @@ export function TeamRosterPanel({
   ghostBtn: string;
   primaryBtn: string;
 }) {
-  const [adding, setAdding] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [draft, setDraft] = useState({ name: "", email: "", phone: "" });
   /** Invite links minted this session, so each new invite can be copied. */
   const [links, setLinks] = useState<Record<string, string>>({});
   const [copiedFor, setCopiedFor] = useState<string | null>(null);
@@ -62,38 +59,6 @@ export function TeamRosterPanel({
     });
     const data = await res.json().catch(() => ({}));
     return { ok: res.ok, data } as const;
-  }
-
-  async function addMember() {
-    setBusy(true);
-    setError(null);
-    setMailWarning(null);
-    const { ok, data } = await post({
-      action: "add_member",
-      eventId,
-      code: team.code,
-      email: leadEmail,
-      leadName,
-      college: leadCollege,
-      memberName: draft.name,
-      memberEmail: draft.email,
-      memberPhone: draft.phone,
-    });
-    if (!ok) {
-      setError(data?.error ?? "Couldn't add them. Try again in a moment.");
-      setBusy(false);
-      return;
-    }
-    if (data?.team) onTeam(data.team);
-    if (data?.inviteUrl && data?.invited?.email)
-      setLinks((l) => ({ ...l, [String(data.invited.email)]: String(data.inviteUrl) }));
-    if (data?.emailSent === false)
-      setMailWarning(
-        `We couldn't email ${draft.name}. Copy their invite link below and send it yourself.`,
-      );
-    setDraft({ name: "", email: "", phone: "" });
-    setAdding(false);
-    setBusy(false);
   }
 
   async function removeMember(email: string) {
@@ -226,77 +191,28 @@ export function TeamRosterPanel({
         </p>
       ) : null}
 
-      {adding ? (
-        <div className={`${cardCls} p-3 space-y-2.5`}>
-          <Input
-            className={inputCls}
-            value={draft.name}
-            onChange={(e) => setDraft((d) => ({ ...d, name: e.target.value }))}
-            placeholder="Full name"
-            aria-label="Teammate's full name"
-          />
-          <Input
-            className={inputCls}
-            type="email"
-            value={draft.email}
-            onChange={(e) => setDraft((d) => ({ ...d, email: e.target.value }))}
-            placeholder="Email"
-            autoCapitalize="off"
-            autoCorrect="off"
-            spellCheck={false}
-            aria-label="Teammate's email"
-          />
-          <Input
-            className={inputCls}
-            inputMode="numeric"
-            value={draft.phone}
-            onChange={(e) => setDraft((d) => ({ ...d, phone: phoneFieldValue(e.target.value) }))}
-            placeholder="10-digit mobile"
-            maxLength={PHONE_INPUT_MAX}
-            aria-label="Teammate's mobile number"
-          />
-          <p className="text-[11px] text-white/40 leading-relaxed">
-            We'll email them an invite. They hold their place straight away — you
-            don't have to wait for them to accept.
-          </p>
-          <div className="flex gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => {
-                setAdding(false);
-                setError(null);
-              }}
-              className={`${ghostBtn} px-4`}
-            >
-              Cancel
-            </Button>
-            <Button type="button" onClick={addMember} disabled={busy} className={`${primaryBtn} flex-1`}>
-              {busy ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" /> Adding…
-                </>
-              ) : (
-                "Add member"
-              )}
-            </Button>
-          </div>
-        </div>
-      ) : (
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() => {
-            setError(null);
-            setAdding(true);
-          }}
-          disabled={full}
-          className={`${ghostBtn} w-full`}
-        >
-          <UserPlus className="w-4 h-4 mr-2" aria-hidden="true" />
-          {full ? `Team is full (${team.maxMembers})` : "Add a member"}
-        </Button>
-      )}
+      <TeamAddMember
+        eventId={eventId}
+        code={team.code}
+        leadEmail={leadEmail}
+        leadName={leadName}
+        leadCollege={leadCollege}
+        full={full}
+        maxMembers={team.maxMembers}
+        onAdded={(next, invite) => {
+          if (next) onTeam(next);
+          if (invite.url) setLinks((l) => ({ ...l, [invite.email]: invite.url }));
+          setMailWarning(
+            invite.emailSent
+              ? null
+              : `We couldn't email ${invite.name}. Copy their invite link below and send it yourself.`,
+          );
+        }}
+        cardCls={cardCls}
+        inputCls={inputCls}
+        ghostBtn={ghostBtn}
+        primaryBtn={primaryBtn}
+      />
     </div>
   );
 }

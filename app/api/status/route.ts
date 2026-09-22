@@ -32,7 +32,12 @@ export async function POST(req: Request) {
     } catch {
       return NextResponse.json({ error: "That request wasn't readable." }, { status: 400 });
     }
-    email = String(body?.email ?? "").trim().toLowerCase();
+    /* Whoever is signed in, if anyone is. The test site signs people in as a
+       guest and the page posts no email at all, trusting the session the way
+       it does in production — so asking for an address it was never going to
+       send turned My Tickets into an error message there. */
+    const signedIn = await resolveEmail();
+    email = (signedIn ?? String(body?.email ?? "")).trim().toLowerCase();
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email))
       return NextResponse.json({ error: "Enter the email you applied with." }, { status: 400 });
   }

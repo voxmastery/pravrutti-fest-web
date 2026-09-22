@@ -10,6 +10,7 @@ import {
   readInviteToken,
 } from "@/lib/invites";
 import { newTicketId } from "@/lib/ticket-id";
+import { sendConfirmationEmail } from "@/lib/confirmation-email";
 import { siteOrigin } from "@/lib/mailer";
 import {
   applicationPath,
@@ -52,6 +53,20 @@ function destination(path: string) {
 
 function problem(_req: Request, reason: string) {
   return NextResponse.redirect(destination(`/invite/problem?reason=${reason}`), 303);
+}
+
+/**
+ * Has this team already been approved?
+ *
+ * Asked of the lead's own registration, because that is the row the fee and
+ * the decision both sit on. No registration at all means the lead invited
+ * before submitting, which is the ordinary case and not a confirmation.
+ */
+async function leadIsConfirmed(evId: string, team: Team): Promise<boolean> {
+  const lead = String(team.createdByEmail ?? "").trim().toLowerCase();
+  if (!lead) return false;
+  const app = (await readJsonByPath(applicationPath(evId, lead))) as Application | null;
+  return app?.status === "confirmed";
 }
 
 export async function GET(
@@ -106,11 +121,17 @@ export async function GET(
           eventFee: event.fee,
           isJoiner: true,
         });
+        /* A team that has already been approved brings its newest member in
+           with it. The decision was taken about the team — the fee is the
+           lead's one ₹200 and a later member adds nothing to it — so leaving
+           them "in review" would hand them a ticket that never moves, waiting
+           on an organiser who has already decided. */
+        const confirmed = team ? await leadIsConfirmed(pointer.eventId, team) : false;
         const app: Application = {
           ticketId: newTicketId(),
           eventId: pointer.eventId,
           eventName: event.name,
-          status: "pending",
+          status: confirmed ? "confirmed" : "pending",
           payment,
           fee,
           name: member.name,
@@ -121,8 +142,19 @@ export async function GET(
           teamCode: pointer.code,
           members: null,
           appliedAt: now,
+          ...(confirmed ? { decidedAt: now } : {}),
         };
         await putJson(applicationPath(pointer.eventId, pointer.email), app, false);
+
+        /* Best effort, like every other ticket mail: a confirmed place is
+           already recorded, and losing the email must not lose the place. */
+        if (confirmed) {
+          try {
+            await sendConfirmationEmail(app);
+          } catch (e) {
+            console.error("invite accept: confirmation email failed", e);
+          }
+        }
       }
     }
 

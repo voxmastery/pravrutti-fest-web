@@ -157,6 +157,7 @@ async function mineTeam(evId: string, bodyEmail: string) {
         team: {
           ...toTeamPreview(team, members, maxTeamSizeFor(event), true),
           isLead: String(team.createdByEmail).toLowerCase() === who.email.toLowerCase(),
+          canInvite: effectiveRegistrationOpen(),
         },
       },
       { headers: { "cache-control": "no-store" } }
@@ -585,8 +586,17 @@ async function addMember(body: any) {
     if (priorApp && isLiveApplication((priorApp as Application).status))
       return jsonError(`${fields.name} has already registered for this event.`, 409);
 
+    /* The lead's own registration carries their name and college. The
+       registration dialog has both to hand; My Tickets has neither, and the
+       member inherits the college — so it is read from the row the lead
+       already filled in rather than asked for a second time. */
+    const leadRow = (await readJsonByPath(applicationPath(evId, who.email))) as Application | null;
+    const college = String(body?.college ?? "").trim() || String(leadRow?.college ?? "");
+    const leadName =
+      String(body?.leadName ?? "").trim() || String(leadRow?.name ?? "").trim() || "Your team lead";
+
     const token = newInviteToken();
-    const member = invitedMember({ fields, college: body?.college ?? "", token });
+    const member = invitedMember({ fields, college, token });
     const pointer: InvitePointer = {
       token,
       eventId: evId,
@@ -603,7 +613,7 @@ async function addMember(body: any) {
     const mail = await sendInviteEmail({
       to: fields.email,
       memberName: fields.name,
-      leadName: String(body?.leadName ?? "").trim() || "Your team lead",
+      leadName,
       teamName: team.name,
       eventName: event.name,
       token,
