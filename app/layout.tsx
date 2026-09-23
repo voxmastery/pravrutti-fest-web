@@ -1,7 +1,6 @@
 import React from "react"
 import type { Metadata } from 'next'
 import { Orbitron, Rajdhani } from 'next/font/google'
-import { Analytics } from '@vercel/analytics/next'
 import { AuthProvider } from "@/components/session-provider"
 import './globals.css'
 
@@ -41,7 +40,6 @@ export default function RootLayout({
         antialiased text-pearl-white
       `}>
         <AuthProvider>{children}</AuthProvider>
-        <Analytics />
       </body>
     </html>
   )
