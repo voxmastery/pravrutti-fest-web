@@ -809,7 +809,7 @@ export const events: Event[] = [
     category: "IDEAFORGE",
     subCategory: "Startup & Project Pitching Challenge",
     description:
-      "Got an idea that could solve a real-world problem? Pitch Pulse is the stage for it. Choose a problem that interests you, work up a solution, and bring it to life in a 7+3 pitch \u2014 seven minutes to present, then three minutes of questions from an expert jury. \u25cf Open innovation: teams pick their own problem statement. There is no shortlisting or elimination round beforehand \u2014 every registered team pitches on the day. \u25cf Official template: the presentation template reaches every registered team a week before the event, and every deck must use it. \u25cf Judged on problem statement and innovation, feasibility and market viability, real-world impact, pitch quality, and communication \u2014 weighted equally. The jury's decision is final. \u25cf Bring your own laptop, charger and extension board. Whether you are a builder, an entrepreneur, a creative thinker, or a fresher with nothing but an idea, this is somewhere to be heard.",
+      "Got an idea that could solve a real-world problem? Pitch Pulse is the stage for it. Choose a problem that interests you, work up a solution, and bring it to life in a 7+3 pitch \u2014 seven minutes to present, then three minutes of questions from an expert jury. \u25cf Open innovation: teams pick their own problem statement. There is no shortlisting or elimination round beforehand \u2014 every approved team pitches on the day. \u25cf Official template: the presentation template reaches every registered team a week before the event. Use it without altering its core structure, and bring your deck on a USB flash drive or pendrive. \u25cf Judged holistically by an expert jury on overall pitch performance, innovation, and the potential of the project. The jury's decision is final and binding. \u25cf Bring your own laptop, charger and extension cord. \u25cf Plagiarism, misrepresentation or misconduct means immediate disqualification. Whether you are a builder, an entrepreneur, a creative thinker, or a fresher with nothing but an idea, this is somewhere to be heard.",
     fee: "Rs. 200/-",
     prizes: [7000, 5000, 3000],
     teamSize: { min: 1, max: 4, soloAllowed: true },
@@ -822,7 +822,7 @@ export const events: Event[] = [
       student: [{ name: "Jeslene Iniya D" }],
     },
     dashboardEmails: ["kirankumar.ee.et@msruas.ac.in", "25etcs002129@msruas.ac.in"],
-    brochureUrl: "",
+    brochureUrl: "/pitch-pulse-rules.pdf",
     club: "IIC",
   },
 ];
