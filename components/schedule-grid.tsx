@@ -47,7 +47,7 @@ function Cell({
       </span>
       {entry.host && <span className="block text-[11px] text-pearl-white/45 mt-0.5">{entry.host}</span>}
       {spans && (
-        <span className="block text-[11px] text-champagne-gold/80 mt-1 tabular-nums">{entry.time}</span>
+        <span className="block text-[12px] text-champagne-gold/85 mt-1 tabular-nums">{entry.time}</span>
       )}
     </>
   );
@@ -111,7 +111,7 @@ export function ScheduleGrid() {
             <tr key={l.eventId}>
               <th
                 scope="row"
-                className="border border-royal-wine/60 bg-deep-plum/60 px-3 py-3 text-left font-display text-[11px] font-bold tracking-wider text-pearl-white/70"
+                className="border border-royal-wine/60 bg-deep-plum/60 px-3 py-3 text-left font-display text-[13px] font-bold tracking-wide text-pearl-white/80 whitespace-nowrap"
               >
                 {l.date}
               </th>
@@ -128,7 +128,7 @@ export function ScheduleGrid() {
               </td>
               <td
                 colSpan={3}
-                className="border border-royal-wine/60 bg-cosmic-purple/40 px-3 py-3 text-[12px] text-champagne-gold/85 tabular-nums align-top"
+                className="border border-royal-wine/60 bg-cosmic-purple/40 px-3 py-3 text-[13px] text-champagne-gold/85 tabular-nums align-top"
               >
                 {l.time}
               </td>
@@ -138,7 +138,7 @@ export function ScheduleGrid() {
             <tr key={w.date}>
               <th
                 scope="row"
-                className="border border-royal-wine/60 bg-deep-plum/60 px-3 py-3 text-left font-display text-[11px] font-bold tracking-wider text-pearl-white/70"
+                className="border border-royal-wine/60 bg-deep-plum/60 px-3 py-3 text-left font-display text-[13px] font-bold tracking-wide text-pearl-white/80 whitespace-nowrap"
               >
                 {w.date}
               </th>
@@ -151,7 +151,7 @@ export function ScheduleGrid() {
                     <li key={session.person} className="flex flex-wrap items-baseline gap-x-2.5 gap-y-0.5">
                       <span className="font-display text-[13px] font-bold text-pearl-white">{session.person}</span>
                       <span className="text-[12px] text-pearl-white/55">{session.expertise}</span>
-                      <span className="text-[11px] text-champagne-gold/85 tabular-nums">{session.time}</span>
+                      <span className="text-[12px] text-champagne-gold/85 tabular-nums whitespace-nowrap">{session.time}</span>
                     </li>
                   ))}
                 </ul>
@@ -166,7 +166,7 @@ export function ScheduleGrid() {
             <tr>
               <th
                 scope="col"
-                className="w-[148px] border border-royal-wine/60 bg-champagne-gold/15 px-3 py-2.5 font-display text-[11px] font-black uppercase tracking-[0.14em] text-champagne-gold"
+                className="w-[188px] border border-royal-wine/60 bg-champagne-gold/15 px-3 py-2.5 font-display text-[11px] font-black uppercase tracking-[0.14em] text-champagne-gold"
               >
                 {day.date}
               </th>
@@ -186,7 +186,7 @@ export function ScheduleGrid() {
                 <tr key={i}>
                   <th
                     scope="row"
-                    className="border border-royal-wine/60 bg-deep-plum/60 px-3 py-3 text-left font-display text-[11px] font-bold tracking-wider text-pearl-white/70 tabular-nums"
+                    className="border border-royal-wine/60 bg-deep-plum/60 px-3 py-3 text-left font-display text-[13px] font-bold tracking-wide text-pearl-white/80 tabular-nums whitespace-nowrap"
                   >
                     {block.time}
                   </th>
@@ -201,7 +201,7 @@ export function ScheduleGrid() {
                 <tr key={i}>
                   <th
                     scope="row"
-                    className="border border-royal-wine/60 bg-deep-plum/60 px-3 py-3 text-left font-display text-[11px] font-bold tracking-wider text-pearl-white/70 tabular-nums"
+                    className="border border-royal-wine/60 bg-deep-plum/60 px-3 py-3 text-left font-display text-[13px] font-bold tracking-wide text-pearl-white/80 tabular-nums whitespace-nowrap"
                   >
                     {block.time}
                   </th>

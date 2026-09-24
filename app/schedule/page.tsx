@@ -33,7 +33,7 @@ function EntryCard({ entry, blockTime }: { entry: TrackEntry; blockTime: string 
       {entry.host && <p className="mt-1 text-[12px] text-pearl-white/45">{entry.host}</p>}
       {/* Only when it outruns its block — a merged cell in the sheet. */}
       {spans && (
-        <p className="mt-2 inline-flex items-center gap-1.5 text-[11px] text-champagne-gold/80">
+        <p className="mt-2 inline-flex items-center gap-1.5 text-[12px] text-champagne-gold/85 tabular-nums">
           <Clock className="w-3 h-3" /> {entry.time}
         </p>
       )}
@@ -144,7 +144,7 @@ export default function SchedulePage() {
                   </div>
                   <p className="mt-2 font-display text-sm font-bold tracking-wide text-pearl-white">{l.label}</p>
                   <p className="mt-1 text-[12px] text-pearl-white/45">{l.host}</p>
-                  <p className="mt-2 text-[11px] text-champagne-gold/80 tabular-nums">{l.time}</p>
+                  <p className="mt-2 text-[12px] text-champagne-gold/85 tabular-nums">{l.time}</p>
                 </Link>
               ))}
               {workshops.map((w) => (
@@ -160,7 +160,7 @@ export default function SchedulePage() {
                       <li key={session.person}>
                         <p className="font-display text-sm font-bold tracking-wide text-pearl-white">{session.person}</p>
                         <p className="mt-0.5 text-[12px] text-pearl-white/55 leading-relaxed">{session.expertise}</p>
-                        <p className="mt-1 inline-flex items-center gap-1.5 text-[11px] text-champagne-gold/85 tabular-nums">
+                        <p className="mt-1 inline-flex items-center gap-1.5 text-[12px] text-champagne-gold/85 tabular-nums">
                           <Clock className="w-3 h-3" /> {session.time}
                         </p>
                       </li>
@@ -197,7 +197,7 @@ export default function SchedulePage() {
                     </div>
                   ) : (
                     <div key={i} className="rounded-2xl border border-royal-wine bg-cosmic-purple/30 p-4 md:p-5">
-                      <p className="inline-flex items-center gap-2 font-display text-[12px] font-bold tracking-[0.16em] uppercase text-pearl-white/60 mb-3">
+                      <p className="inline-flex items-center gap-2 font-display text-[13px] font-bold tracking-[0.14em] uppercase text-pearl-white/70 mb-3">
                         <Clock className="w-3.5 h-3.5 text-cyber-pink" />
                         <span className="tabular-nums">{block.time}</span>
                       </p>
