@@ -98,20 +98,44 @@ await h.ready;
 
 const out = await h.call("hosting_deployJsApplication", { domain: DOMAIN, archivePath: ARCHIVE, removeArchive: true });
 const uuid = out.match(/"uuid":"([^"]+)"/)?.[1];
-console.log("build:", uuid ?? out.slice(0, 200));
 
+/**
+ * No uuid means the archive never landed.
+ *
+ * This used to log the error and carry on. The poll below then read "the
+ * most recent deployment", which was the PREVIOUS one sitting at completed,
+ * so the script purged the cache, checked the old build's chunks, and exited
+ * zero. A deploy that uploaded nothing reported success — which is worse than
+ * failing, because nobody goes looking. Seen for real on 2026-09-24, when a
+ * GitHub runner could not reach the upload endpoint.
+ */
+if (!uuid) {
+  console.error("deploy failed — the archive did not upload:");
+  console.error(out.slice(0, 500));
+  h.close();
+  process.exit(1);
+}
+console.log("build:", uuid);
+
+/* Watch THIS build, not whatever is newest. Polling the top of the list
+   cannot tell our deployment from the one before it. */
 let state = "pending";
 for (let i = 0; i < 20 && state !== "completed" && state !== "failed"; i++) {
   await new Promise((r) => setTimeout(r, 20000));
-  const t = await h.call("hosting_listJsDeployments", { domain: DOMAIN, perPage: 1 });
-  try { state = JSON.parse(t).deployments.data[0].state; } catch { /* keep polling */ }
+  const t = await h.call("hosting_listJsDeployments", { domain: DOMAIN, perPage: 5 });
+  try {
+    const mine = JSON.parse(t).deployments.data.find((d) => d.uuid === uuid);
+    if (mine) state = mine.state;
+  } catch { /* keep polling */ }
   process.stdout.write(`  ${state}\r`);
 }
 console.log("\nbuild state:", state);
 
-if (state === "failed") {
-  console.error(await h.call("hosting_getNodeJSBuildLogsV1", { username: USERNAME, domain: DOMAIN, uuid }));
-  h.close(); process.exit(1);
+if (state !== "completed") {
+  console.error(`deploy did not complete (state: ${state}) — not purging the cache.`);
+  if (state === "failed") console.error(await h.call("hosting_getNodeJSBuildLogsV1", { username: USERNAME, domain: DOMAIN, uuid }));
+  h.close();
+  process.exit(1);
 }
 
 console.log("cache:", await h.call("hosting_clearWebsiteCacheV1", { username: USERNAME, domain: DOMAIN }));
