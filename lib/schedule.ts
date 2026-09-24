@@ -187,6 +187,64 @@ export const longRunning: { date: string; time: string; eventId: string; label: 
 ];
 
 /**
+ * Minutes past midnight for the sheet's own way of writing a time.
+ *
+ * The rest of this file deliberately never parses a time — a human reads the
+ * string and that is enough. Drawing the grid is the one thing that genuinely
+ * needs to compare two of them, so the parsing lives here and nowhere else,
+ * and returns NaN rather than guessing at anything it does not recognise.
+ */
+function minutes(t: string): number {
+  const m = /^(\d{1,2}):(\d{2})\s*(AM|PM)$/i.exec(t.trim());
+  if (!m) return NaN;
+  const h = Number(m[1]) % 12;
+  return (h + (m[3].toUpperCase() === "PM" ? 12 : 0)) * 60 + Number(m[2]);
+}
+
+/** The two halves of "2:00 PM – 5:00 PM". En dash, as the sheet writes it. */
+function endOf(range: string): number {
+  return minutes(range.split("\u2013")[1] ?? "");
+}
+function startOf(range: string): number {
+  return minutes(range.split("\u2013")[0] ?? "");
+}
+
+/**
+ * How many rows a cell should occupy.
+ *
+ * An event that outruns its block used to print its longer time and leave the
+ * row beneath it empty, which reads as "nothing is on then" — the opposite of
+ * what is true. Pitch Pulse runs till 8 and the 5 PM row sat blank under it.
+ *
+ * Derived from the times rather than written down a second time, so a span
+ * and the hours it claims cannot drift apart. It stops at anything that is
+ * not a track row: a ceremony or a workshop is a full-width band of its own,
+ * and a cell reaching across one would shove it sideways.
+ */
+export function entryRowSpan(day: ScheduleDay, blockIndex: number, track: TrackEntry["track"]): number {
+  const block = day.blocks[blockIndex];
+  if (block?.kind !== "tracks") return 1;
+  const entry = block.entries.find((e) => e.track === track);
+  if (!entry?.time) return 1;
+
+  const runsUntil = endOf(entry.time);
+  if (Number.isNaN(runsUntil)) return 1;
+
+  let span = 1;
+  for (let i = blockIndex + 1; i < day.blocks.length; i++) {
+    const next = day.blocks[i];
+    if (next.kind !== "tracks") break;
+    const nextStart = startOf(next.time);
+    if (Number.isNaN(nextStart) || nextStart >= runsUntil) break;
+    /* Somebody else already has this column in that row; the sheet cannot
+       mean both, so the span stops rather than swallowing them. */
+    if (next.entries.some((e) => e.track === track)) break;
+    span += 1;
+  }
+  return span;
+}
+
+/**
  * Beds for people travelling in.
  *
  * On the schedule page because that is where someone works out whether they

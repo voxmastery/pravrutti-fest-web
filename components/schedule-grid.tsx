@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { scheduleDays, longRunning, type TrackEntry } from "@/lib/schedule";
+import { scheduleDays, longRunning, entryRowSpan, type ScheduleDay, type TrackEntry } from "@/lib/schedule";
 
 /**
  * The coordinators' sheet, rebuilt in the site's own colours.
@@ -18,7 +18,24 @@ import { scheduleDays, longRunning, type TrackEntry } from "@/lib/schedule";
 
 const TRACKS = [1, 2, 3, 4] as const;
 
-function Cell({ entry, blockTime }: { entry: TrackEntry | undefined; blockTime: string }) {
+/** True when some earlier row's cell spans down into this one. */
+function coveredFromAbove(day: ScheduleDay, blockIndex: number, track: TrackEntry["track"]): boolean {
+  for (let i = 0; i < blockIndex; i++) {
+    if (day.blocks[i].kind !== "tracks") continue;
+    if (i + entryRowSpan(day, i, track) > blockIndex) return true;
+  }
+  return false;
+}
+
+function Cell({
+  entry,
+  blockTime,
+  rowSpan = 1,
+}: {
+  entry: TrackEntry | undefined;
+  blockTime: string;
+  rowSpan?: number;
+}) {
   if (!entry)
     return <td className="border border-royal-wine/60 bg-midnight-navy/40 px-3 py-3" />;
 
@@ -36,7 +53,10 @@ function Cell({ entry, blockTime }: { entry: TrackEntry | undefined; blockTime: 
   );
 
   return (
-    <td className="border border-royal-wine/60 bg-cosmic-purple/40 px-3 py-3 align-top">
+    <td
+      rowSpan={rowSpan > 1 ? rowSpan : undefined}
+      className="border border-royal-wine/60 bg-cosmic-purple/40 px-3 py-3 align-top"
+    >
       {entry.eventId ? (
         <Link
           href={`/events/${entry.eventId}`}
@@ -170,13 +190,19 @@ export function ScheduleGrid() {
                   >
                     {block.time}
                   </th>
-                  {TRACKS.map((t) => (
-                    <Cell
-                      key={t}
-                      entry={block.entries.find((e) => e.track === t)}
-                      blockTime={block.time}
-                    />
-                  ))}
+                  {TRACKS.map((t) =>
+                    /* A cell reaching down from an earlier row already owns
+                       this column here. Emitting an empty <td> under it would
+                       push the whole row one column to the right. */
+                    coveredFromAbove(day, i, t) ? null : (
+                      <Cell
+                        key={t}
+                        entry={block.entries.find((e) => e.track === t)}
+                        blockTime={block.time}
+                        rowSpan={entryRowSpan(day, i, t)}
+                      />
+                    ),
+                  )}
                 </tr>
               )
             )}

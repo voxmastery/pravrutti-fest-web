@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { scheduleDays, longRunning, scheduledEventIds, workshopSessions, accommodation } from "@/lib/schedule";
+import { scheduleDays, longRunning, scheduledEventIds, workshopSessions, accommodation, entryRowSpan } from "@/lib/schedule";
 import { events, eventId } from "@/lib/pravrutti-data";
 
 /* The schedule on this page used to be an image, and it went on showing the
@@ -121,5 +121,73 @@ describe("accommodation", () => {
   it("is offered, at the rate the committee set", () => {
     expect(accommodation.offered).toBe(true);
     expect(accommodation.ratePerHeadPerDay).toBe(450);
+  });
+});
+
+/* A cell that outruns its block should occupy the rows beneath it, not print
+   a time and leave a hole — the hole reads as "nothing is on", which is the
+   opposite of the truth. The span is derived from the times rather than
+   written down twice, so the two can never disagree. */
+describe("row spans", () => {
+  const day = (n: 1 | 2 | 3) => scheduleDays.find((d) => d.n === n)!;
+
+  it("gives a normal entry a span of one", () => {
+    expect(entryRowSpan(day(1), 1, 1)).toBe(1); // AI Escape Room, 11-2
+  });
+
+  it("carries Pitch Pulse down into the 5 PM row", () => {
+    const blocks = day(1).blocks;
+    const i = blocks.findIndex((b) => b.kind === "tracks" && b.time === "2:00 PM – 5:00 PM");
+    expect(entryRowSpan(day(1), i, 4)).toBe(2);
+  });
+
+  it("carries Hammer and Kurukshetra down too", () => {
+    const d2 = day(2).blocks.findIndex((b) => b.kind === "tracks" && b.time === "9:00 AM – 12:00 PM");
+    expect(entryRowSpan(day(2), d2, 4)).toBe(2);
+    const d3 = day(3).blocks.findIndex((b) => b.kind === "tracks" && b.time === "9:00 AM – 12:00 PM");
+    expect(entryRowSpan(day(3), d3, 4)).toBe(2);
+  });
+
+  /* The row it grows into must be empty, or two events would claim one cell. */
+  it("never swallows a cell another event is using", () => {
+    for (const d of scheduleDays) {
+      const tracks = d.blocks.map((b, i) => [b, i] as const).filter(([b]) => b.kind === "tracks");
+      for (const [block, i] of tracks) {
+        if (block.kind !== "tracks") continue;
+        for (const e of block.entries) {
+          const span = entryRowSpan(d, i, e.track);
+          for (let k = 1; k < span; k++) {
+            const below = d.blocks[i + k];
+            expect(below?.kind).toBe("tracks");
+            if (below?.kind === "tracks")
+              expect(below.entries.find((x) => x.track === e.track)).toBeUndefined();
+          }
+        }
+      }
+    }
+  });
+
+  /* A workshop or a ceremony is a full-width row of its own; a span must stop
+     at it rather than reach across and shove it sideways. */
+  it("stops at a banner or a workshop row", () => {
+    for (const d of scheduleDays) {
+      for (let i = 0; i < d.blocks.length; i++) {
+        const b = d.blocks[i];
+        if (b.kind !== "tracks") continue;
+        for (const e of b.entries) {
+          const span = entryRowSpan(d, i, e.track);
+          for (let k = 1; k < span; k++) expect(d.blocks[i + k].kind).toBe("tracks");
+        }
+      }
+    }
+  });
+
+  it("agrees with what the cell prints", () => {
+    const blocks = day(1).blocks;
+    const i = blocks.findIndex((b) => b.kind === "tracks" && b.time === "2:00 PM – 5:00 PM");
+    const b = blocks[i];
+    if (b.kind !== "tracks") throw new Error("expected tracks");
+    expect(b.entries.find((e) => e.track === 4)!.time).toBe("2:00 PM – 8:00 PM");
+    expect(entryRowSpan(day(1), i, 4)).toBe(2);
   });
 });
