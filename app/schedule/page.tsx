@@ -6,7 +6,7 @@ import { FooterSection } from "@/components/landing/footer-section";
 import Link from "next/link";
 import { Info, Clock, ArrowUpRight, Moon, BedDouble, GraduationCap } from "lucide-react";
 import { FEST } from "@/lib/pravrutti-data";
-import { scheduleDays, longRunning, accommodation, type TrackEntry } from "@/lib/schedule";
+import { scheduleDays, longRunning, workshops, accommodation, type TrackEntry } from "@/lib/schedule";
 import { ScheduleGrid } from "@/components/schedule-grid";
 
 /* Rendered from lib/schedule.ts rather than an image. The schedule that used to
@@ -147,6 +147,27 @@ export default function SchedulePage() {
                   <p className="mt-2 text-[11px] text-champagne-gold/80 tabular-nums">{l.time}</p>
                 </Link>
               ))}
+              {workshops.map((w) => (
+                <div
+                  key={w.date}
+                  className="rounded-xl border border-cyber-pink/35 bg-cyber-pink/[0.07] px-4 py-3.5 sm:col-span-2"
+                >
+                  <p className="inline-flex items-center gap-1.5 font-display text-[10px] font-black uppercase tracking-[0.18em] text-cyber-pink">
+                    <GraduationCap className="w-3 h-3" /> Workshops · {w.club} · {w.date}
+                  </p>
+                  <ul className="mt-2.5 space-y-2.5">
+                    {w.sessions.map((session) => (
+                      <li key={session.person}>
+                        <p className="font-display text-sm font-bold tracking-wide text-pearl-white">{session.person}</p>
+                        <p className="mt-0.5 text-[12px] text-pearl-white/55 leading-relaxed">{session.expertise}</p>
+                        <p className="mt-1 inline-flex items-center gap-1.5 text-[11px] text-champagne-gold/85 tabular-nums">
+                          <Clock className="w-3 h-3" /> {session.time}
+                        </p>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
             </div>
           </section>
 
@@ -164,27 +185,7 @@ export default function SchedulePage() {
 
               <div className="space-y-4">
                 {day.blocks.map((block, i) =>
-                  block.kind === "workshop" ? (
-                    <div
-                      key={i}
-                      className="rounded-2xl border border-cyber-pink/35 bg-cyber-pink/[0.07] px-4 py-4 cyber-box"
-                    >
-                      <p className="inline-flex items-center gap-2 font-display text-[11px] font-black uppercase tracking-[0.18em] text-cyber-pink">
-                        <GraduationCap className="w-3.5 h-3.5" /> Workshops · {block.club}
-                      </p>
-                      <ul className="mt-3 space-y-3">
-                        {block.sessions.map((w) => (
-                          <li key={w.person}>
-                            <p className="font-display text-sm font-bold tracking-wide text-pearl-white">{w.person}</p>
-                            <p className="mt-0.5 text-[12px] text-pearl-white/55 leading-relaxed">{w.expertise}</p>
-                            <p className="mt-1 inline-flex items-center gap-1.5 text-[11px] text-champagne-gold/85 tabular-nums">
-                              <Clock className="w-3 h-3" /> {w.time}
-                            </p>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  ) : block.kind === "banner" ? (
+                  block.kind === "banner" ? (
                     <div
                       key={i}
                       className="rounded-2xl border border-champagne-gold/30 bg-champagne-gold/[0.07] px-5 py-4 flex flex-wrap items-center justify-between gap-2 cyber-box"

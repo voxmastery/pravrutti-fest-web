@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { scheduleDays, longRunning, entryRowSpan, type ScheduleDay, type TrackEntry } from "@/lib/schedule";
+import { scheduleDays, longRunning, workshops, entryRowSpan, type ScheduleDay, type TrackEntry } from "@/lib/schedule";
 
 /**
  * The coordinators' sheet, rebuilt in the site's own colours.
@@ -134,6 +134,30 @@ export function ScheduleGrid() {
               </td>
             </tr>
           ))}
+          {workshops.map((w) => (
+            <tr key={w.date}>
+              <th
+                scope="row"
+                className="border border-royal-wine/60 bg-deep-plum/60 px-3 py-3 text-left font-display text-[11px] font-bold tracking-wider text-pearl-white/70"
+              >
+                {w.date}
+              </th>
+              <td colSpan={4} className="border border-royal-wine/60 bg-cosmic-purple/40 px-3 py-3 align-top">
+                <span className="block font-display text-[11px] font-black uppercase tracking-[0.18em] text-cyber-pink">
+                  Workshops · {w.club}
+                </span>
+                <ul className="mt-2 space-y-1.5">
+                  {w.sessions.map((session) => (
+                    <li key={session.person} className="flex flex-wrap items-baseline gap-x-2.5 gap-y-0.5">
+                      <span className="font-display text-[13px] font-bold text-pearl-white">{session.person}</span>
+                      <span className="text-[12px] text-pearl-white/55">{session.expertise}</span>
+                      <span className="text-[11px] text-champagne-gold/85 tabular-nums">{session.time}</span>
+                    </li>
+                  ))}
+                </ul>
+              </td>
+            </tr>
+          ))}
         </tbody>
 
         {scheduleDays.map((day) => (
@@ -158,32 +182,7 @@ export function ScheduleGrid() {
             </tr>
 
             {day.blocks.map((block, i) =>
-              block.kind === "workshop" ? (
-                /* One merged cell across the tracks: a workshop is not a fifth
-                   arena competing with them, it runs alongside all four. */
-                <tr key={i}>
-                  <th
-                    scope="row"
-                    className="border border-royal-wine/60 bg-deep-plum/60 px-3 py-3 text-left font-display text-[11px] font-bold tracking-wider text-pearl-white/70 tabular-nums"
-                  >
-                    {block.time}
-                  </th>
-                  <td colSpan={4} className="border border-cyber-pink/35 bg-cyber-pink/[0.09] px-3 py-3 align-top">
-                    <span className="block font-display text-[11px] font-black uppercase tracking-[0.18em] text-cyber-pink">
-                      Workshops · {block.club}
-                    </span>
-                    <ul className="mt-2 space-y-1.5">
-                      {block.sessions.map((w) => (
-                        <li key={w.person} className="flex flex-wrap items-baseline gap-x-2.5 gap-y-0.5">
-                          <span className="font-display text-[13px] font-bold text-pearl-white">{w.person}</span>
-                          <span className="text-[12px] text-pearl-white/55">{w.expertise}</span>
-                          <span className="text-[11px] text-champagne-gold/85 tabular-nums">{w.time}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </td>
-                </tr>
-              ) : block.kind === "banner" ? (
+              block.kind === "banner" ? (
                 <tr key={i}>
                   <th
                     scope="row"

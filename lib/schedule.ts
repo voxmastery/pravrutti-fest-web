@@ -35,11 +35,7 @@ export type WorkshopSession = {
 
 export type ScheduleBlock =
   | { kind: "banner"; time: string; label: string }
-  | { kind: "tracks"; time: string; entries: TrackEntry[] }
-  /* Runs across the tracks rather than in one, so it is drawn as a single
-     merged row — a workshop is not a fifth arena, it is a parallel strand
-     anyone can walk into. */
-  | { kind: "workshop"; time: string; club: string; sessions: WorkshopSession[] };
+  | { kind: "tracks"; time: string; entries: TrackEntry[] };
 
 export type ScheduleDay = {
   n: 1 | 2 | 3;
@@ -61,23 +57,6 @@ export const scheduleDays: ScheduleDay[] = [
           { track: 2, eventId: "bridge-it", label: "Bridge It", host: "Ramaiah Civil Club" },
           { track: 3, eventId: "leads-innovation-challenge", label: "LEADS Innovation Challenge", host: "LEADS" },
           { track: 4, eventId: "triathlon", label: "Triathlon", host: "Cynergy" },
-        ],
-      },
-      {
-        kind: "workshop",
-        time: "11:00 AM – 1:00 PM",
-        club: "Vidyut Sphura",
-        sessions: [
-          {
-            time: "11:00 AM – 12:00 PM",
-            person: "Ms. Harita Balan",
-            expertise: "Automotive Embedded Systems & Cybersecurity",
-          },
-          {
-            time: "12:00 PM – 1:00 PM",
-            person: "Mrs. Rachana K",
-            expertise: "ADAS and Autonomous Driving Technologies",
-          },
         ],
       },
       {
@@ -123,18 +102,6 @@ export const scheduleDays: ScheduleDay[] = [
           { track: 3, eventId: "zero-hour", label: "Zero Hour", host: "Cynergy" },
         ],
       },
-      {
-        kind: "workshop",
-        time: "11:00 AM – 1:00 PM",
-        club: "Vidyut Sphura",
-        sessions: [
-          {
-            time: "11:00 AM – 1:00 PM",
-            person: "Dr. Sanjeev K Nayak",
-            expertise: "EV Technologies",
-          },
-        ],
-      },
       { kind: "banner", time: "3:00 PM – 7:00 PM", label: "Under25" },
     ],
   },
@@ -161,6 +128,46 @@ export const scheduleDays: ScheduleDay[] = [
         ],
       },
       { kind: "banner", time: "3:00 PM – 5:00 PM", label: "Valedictory Ceremony" },
+    ],
+  },
+];
+
+/**
+ * Vidyut Sphura's workshops.
+ *
+ * They started life as a merged band inside each day, which put them between
+ * two track rows and had people reading them as a slot that blocked the
+ * events either side. They are not: they run in parallel and anyone can walk
+ * into one. Listing them beside the other things that run alongside the
+ * tracks says that plainly, and the coordinators asked for exactly that
+ * after the first version confused people.
+ */
+export const workshops: { date: string; club: string; sessions: WorkshopSession[] }[] = [
+  {
+    date: "14 October",
+    club: "Vidyut Sphura",
+    sessions: [
+      {
+        time: "11:00 AM – 12:00 PM",
+        person: "Ms. Harita Balan",
+        expertise: "Automotive Embedded Systems & Cybersecurity",
+      },
+      {
+        time: "12:00 PM – 1:00 PM",
+        person: "Mrs. Rachana K",
+        expertise: "ADAS and Autonomous Driving Technologies",
+      },
+    ],
+  },
+  {
+    date: "15 October",
+    club: "Vidyut Sphura",
+    sessions: [
+      {
+        time: "11:00 AM – 1:00 PM",
+        person: "Dr. Sanjeev K Nayak",
+        expertise: "EV Technologies",
+      },
     ],
   },
 ];
@@ -257,13 +264,9 @@ export const accommodation = {
   currency: "\u20b9",
 } as const;
 
-/** Every workshop session, for cross-checking and for a flat listing. */
+/** Every workshop session, flat, for listing and for cross-checking. */
 export function workshopSessions(): { date: string; club: string; session: WorkshopSession }[] {
-  return scheduleDays.flatMap((d) =>
-    d.blocks
-      .filter((b): b is Extract<ScheduleBlock, { kind: "workshop" }> => b.kind === "workshop")
-      .flatMap((b) => b.sessions.map((session) => ({ date: d.date, club: b.club, session }))),
-  );
+  return workshops.flatMap((w) => w.sessions.map((session) => ({ date: w.date, club: w.club, session })));
 }
 
 /** Every event slug the timetable places, for cross-checking against the roster. */

@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { scheduleDays, longRunning, scheduledEventIds, workshopSessions, accommodation, entryRowSpan } from "@/lib/schedule";
+import { scheduleDays, longRunning, scheduledEventIds, workshopSessions, workshops, accommodation, entryRowSpan } from "@/lib/schedule";
 import { events, eventId } from "@/lib/pravrutti-data";
 
 /* The schedule on this page used to be an image, and it went on showing the
@@ -36,10 +36,7 @@ describe("schedule", () => {
       for (const block of day.blocks) {
         expect(block.time.length).toBeGreaterThan(0);
         if (block.kind === "banner") expect(block.label.length).toBeGreaterThan(0);
-        else if (block.kind === "workshop") {
-          expect(block.club.length).toBeGreaterThan(0);
-          expect(block.sessions.length).toBeGreaterThan(0);
-        } else
+        else
           for (const e of block.entries) {
             expect(e.label.length).toBeGreaterThan(0);
             expect(e.track).toBeGreaterThanOrEqual(1);
@@ -81,7 +78,7 @@ describe("workshops", () => {
   });
 
   it("puts the two automotive sessions back to back on day one", () => {
-    const day1 = all.filter((w) => w.date === "14 October 2026");
+    const day1 = all.filter((w) => w.date === "14 October");
     expect(day1.map((w) => w.session.time)).toEqual([
       "11:00 AM – 12:00 PM",
       "12:00 PM – 1:00 PM",
@@ -91,7 +88,7 @@ describe("workshops", () => {
   });
 
   it("puts the EV session on day two", () => {
-    const day2 = all.filter((w) => w.date === "15 October 2026");
+    const day2 = all.filter((w) => w.date === "15 October");
     expect(day2).toHaveLength(1);
     expect(day2[0].session).toMatchObject({
       person: "Dr. Sanjeev K Nayak",
@@ -104,12 +101,13 @@ describe("workshops", () => {
     for (const w of all) expect(w.club).toBe("Vidyut Sphura");
   });
 
-  /* A workshop is not a fifth arena — it must never claim a track, or the
-     grid would draw it competing with an event for the same cell. */
-  it("never occupies a track", () => {
+  /* They sit beside the tracks, not inside a day. Putting them back into a
+     day is what confused people the first time: a band between two track
+     rows reads as a slot that blocks the events either side of it. */
+  it("lives beside the tracks, not inside a day", () => {
     for (const day of scheduleDays)
-      for (const b of day.blocks)
-        if (b.kind === "workshop") expect(b).not.toHaveProperty("entries");
+      for (const b of day.blocks) expect(["banner", "tracks"]).toContain(b.kind);
+    expect(workshops.length).toBeGreaterThan(0);
   });
 
   it("does not disturb the event roster", () => {
@@ -167,9 +165,9 @@ describe("row spans", () => {
     }
   });
 
-  /* A workshop or a ceremony is a full-width row of its own; a span must stop
-     at it rather than reach across and shove it sideways. */
-  it("stops at a banner or a workshop row", () => {
+  /* A ceremony is a full-width row of its own; a span must stop at it rather
+     than reach across and shove it sideways. */
+  it("stops at a banner row", () => {
     for (const d of scheduleDays) {
       for (let i = 0; i < d.blocks.length; i++) {
         const b = d.blocks[i];
