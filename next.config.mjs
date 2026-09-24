@@ -1,5 +1,29 @@
+import { createHash } from "node:crypto"
+import { readdirSync, readFileSync } from "node:fs"
+
+/**
+ * A short content hash per poster, appended to its URL as `?v=`.
+ *
+ * Posters keep one filename for life, and Hostinger serves /public with no
+ * Cache-Control, so a phone that saw the old art keeps it on a heuristic
+ * cache long after a new file is deployed. Hashing the bytes means a replaced
+ * poster gets a new URL and is fetched fresh, while an unchanged one keeps
+ * its URL and stays cached. Computed from the files, so build and start agree.
+ */
+const posterVersions = Object.fromEntries(
+  readdirSync(new URL("./public/posters/", import.meta.url))
+    .filter((f) => /\.(webp|png)$/.test(f))
+    .map((f) => [
+      f,
+      createHash("sha1").update(readFileSync(new URL(`./public/posters/${f}`, import.meta.url))).digest("hex").slice(0, 8),
+    ])
+)
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  env: {
+    NEXT_PUBLIC_POSTER_VERSIONS: JSON.stringify(posterVersions),
+  },
   typescript: {
     ignoreBuildErrors: true,
   },

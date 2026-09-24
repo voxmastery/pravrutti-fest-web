@@ -15,6 +15,15 @@ import { COVER_GRADIENTS } from "@/lib/event-covers";
  * gracefully to step 3 via onError rather than render a broken image, and
  * that can only be detected in the browser.
  */
+/* Filename -> content hash, from next.config.mjs. Busts a phone's cached copy
+   when a poster file is replaced under the same name. */
+const POSTER_VERSIONS: Record<string, string> = JSON.parse(process.env.NEXT_PUBLIC_POSTER_VERSIONS || "{}");
+
+function versioned(src: string) {
+  const v = POSTER_VERSIONS[src.split("/").pop() ?? ""];
+  return v ? `${src}?v=${v}` : src;
+}
+
 export function EventPoster({
   event,
   name,
@@ -28,7 +37,7 @@ export function EventPoster({
       stays lazy — the listing would otherwise fetch every poster at once. */
   priority?: boolean;
 }) {
-  const src = event?.poster ?? `/posters/${slugify(name)}.webp`;
+  const src = versioned(event?.poster ?? `/posters/${slugify(name)}.webp`);
   const [failed, setFailed] = useState(false);
 
   if (!failed) {
