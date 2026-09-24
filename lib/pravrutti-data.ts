@@ -785,18 +785,18 @@ export const events: Event[] = [
   {
     name: "TRIATHLON",
     category: "CODE & CHAOS",
-    subCategory: "Quiz. Build. Breach.",
-    description: "Triathlon is a three-round technical event run as one connected game. Teams of 2–3 compete across a coding and computer-science quiz, a PC-building challenge, and a capture-the-flag puzzle hunt. Unlike a normal multi-round event, the rounds are linked: what a team earns in one round becomes a resource it spends in the next, so consistency across all three rounds decides the winner. There is no elimination — every team plays all three rounds and the scores are added up. The three rounds are: ● Round 1 – Coding & CS Quiz (25 min): a timed quiz on programming and computer-science fundamentals, including 'predict the output' and 'find the bug' questions and one question where AI-written code has a hidden mistake. The top 4 teams then play a live buzzer round. The Round 1 score sets each team's budget for Round 2. ● Round 2 – PC Build Fix & Adapt (60 min): teams are given a faulty PC parts list on PCPartPicker and must find and fix the mistakes. Midway through, the requirements change (budget or use-case) and teams must rework the build, then briefly justify their choices. The Round 2 score converts into hint points for Round 3. ● Round 3 – CTF Puzzle Hunt (50 min): a jeopardy-style set of cybersecurity puzzles — hidden messages, simple ciphers, web and forensics challenges, and one clue hidden on a poster in the CSE block. Each team gets team-specific flags so answers cannot be shared, a live scoreboard is projected, and teams can spend the hint points earned in Round 2. The team with the highest combined score across all three rounds wins. The tie-breaker is the time taken in Round 3.",
+    subCategory: "Code. Crack. Conquer.",
+    description: "Three rounds. One connected technical challenge. Every round shapes the next, with scores turning into hints and discoveries giving you an advantage as you progress. There are no eliminations — all three rounds count, and every point, hint and discovery can change the outcome. ● Round 1 – ByteLock (Coding & CS Quiz): test your programming, logic and computer-science skills in a fast-paced quiz designed to challenge how quickly you can think and spot what others miss. Your Round 1 score earns Hint Tokens for Round 2. ● Round 2 – Debug Mode (Application Bug Hunt): step into a deliberately broken application and uncover what lies beneath. Find hidden bugs, identify unexpected behaviour and earn points for every valid discovery, with bonus points for finding something beyond the expected. Your Round 2 performance earns Hint Points for Round 3. ● Round 3 – Root Access (CTF Puzzle Hunt): put everything to the test in the final hunt. Solve technical puzzles, uncover hidden clues, chase flags and spend your Hint Points strategically as you race against the clock.",
     fee: "Rs. 200/-",
     prizes: [7000, 5000, 3000],
-    teamSize: { min: 3, max: 4, soloAllowed: false },
+    teamSize: { min: 2, max: 4, soloAllowed: false },
     capacity: 210,
     capacityUnit: "teams",
     /* 210 is 70 teams of three, the only whole reading — dividing by the max of
        four gives 52.5, which is why this used to fall back to counting heads. */
     maxTeams: 70,
     duration: "3 hours",
-    eligibility: "Teams must have 2–3 members. All members must be present for the full event. Team members cannot be changed once the event begins.",
+    eligibility: "Teams must have 2–4 members. All members must be present for the full event. Team members cannot be changed once the event begins.",
     coordinators: {
       faculty: [],
       student: [{ name: "Aman Tebriwal" }, { name: "Sneha" }],

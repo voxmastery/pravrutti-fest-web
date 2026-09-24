@@ -28,6 +28,6 @@ export const POSTER_TINTS: Record<string, [number, number, number]> = {
   "synth-vision-arena": [195, 70, 94],
   "technomaze": [195, 70, 102],
   "the-quantum-quest": [72, 27, 44],
-  "triathlon": [195, 72, 101],
+  "triathlon": [194, 128, 23],
   "wind-rush": [106, 29, 62],
 };
