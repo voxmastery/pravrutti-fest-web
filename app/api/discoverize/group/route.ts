@@ -1,11 +1,9 @@
 import { NextResponse } from "next/server";
-import QRCode from "qrcode";
 import { applicationPath, readJsonByPath } from "@/lib/blob-store";
 import { isLiveApplication, type Application } from "@/lib/applications";
 import { DISCOVERIZE_EVENT_ID } from "@/lib/discoverize";
-import { DISCOVERIZE_WHATSAPP_URL } from "@/lib/discoverize-group";
+import { DISCOVERIZE_WHATSAPP_QR, DISCOVERIZE_WHATSAPP_URL } from "@/lib/discoverize-group";
 import { resolveEmail } from "@/lib/identity";
-import { PALETTE } from "@/lib/palette";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -24,8 +22,9 @@ export const dynamic = "force-dynamic";
  * registration at all, withdrawn, declined — all refused. Registered for
  * Discoverize *and* other events is still a Discoverize team, and gets it.
  *
- * The QR is drawn here from the same string rather than served as a file, so
- * there is no image sitting in public/ for someone to find by guessing a name.
+ * The QR is the coordinators' own image, sent inline rather than served from
+ * public/ — a file there is reachable by anyone who guesses its name, and a
+ * photograph of the QR joins the group exactly as well as the link does.
  */
 const deny = (error: string, status: number) =>
   NextResponse.json({ error }, { status, headers: { "cache-control": "no-store" } });
@@ -43,14 +42,8 @@ export async function GET() {
   if (!app || !isLiveApplication(app.status))
     return deny("This is for teams registered for Discoverize.", 403);
 
-  const qr = await QRCode.toDataURL(DISCOVERIZE_WHATSAPP_URL, {
-    margin: 1,
-    width: 320,
-    color: { dark: PALETTE.midnightNavy, light: PALETTE.pearlWhite },
-  });
-
   return NextResponse.json(
-    { url: DISCOVERIZE_WHATSAPP_URL, qr },
+    { url: DISCOVERIZE_WHATSAPP_URL, qr: DISCOVERIZE_WHATSAPP_QR },
     /* Per-person, so no shared cache may ever hold it. */
     { headers: { "cache-control": "private, no-store" } },
   );
