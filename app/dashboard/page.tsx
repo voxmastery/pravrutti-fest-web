@@ -93,6 +93,19 @@ export default function DashboardPage() {
       </DashboardShell>
     );
 
+  if (dash.role === "none" && dash.faculty)
+    return (
+      <DashboardShell title="Dashboard">
+        <Notice title="You have faculty access">
+          Every event&apos;s teams and participants are on the{" "}
+          <Link href="/faculty" className="text-cyber-pink hover:underline">
+            faculty board
+          </Link>
+          .
+        </Notice>
+      </DashboardShell>
+    );
+
   if (dash.role === "none")
     return (
       <DashboardShell title="Dashboard">

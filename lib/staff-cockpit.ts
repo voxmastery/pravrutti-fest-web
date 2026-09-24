@@ -32,6 +32,7 @@ export function isStaffAllowedPath(pathname: string): boolean {
   if (p.startsWith("/api")) return true;
   if (p.startsWith("/dashboard")) return true;
   if (p.startsWith("/admin")) return true;
+  if (p === "/faculty" || p.startsWith("/faculty/")) return true;
   if (p === "/ticket" || p.startsWith("/ticket/")) return true;
   if (p === "/tickets" || p.startsWith("/tickets/")) return true;
   if (p === "/sso-callback" || p.startsWith("/sso-callback/")) return true;

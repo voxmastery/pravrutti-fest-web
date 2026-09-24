@@ -62,3 +62,28 @@ export function canViewEvent(role: Role, evId: string): boolean {
   if (role.kind === "coordinator") return role.eventIds.includes(evId);
   return false;
 }
+
+/** FACULTY_EMAILS, for faculty who must not depend on the stored record. */
+export function envFacultyEmails(): string[] {
+  return (process.env.FACULTY_EMAILS ?? "")
+    .split(",")
+    .map(norm)
+    .filter(Boolean);
+}
+
+/**
+ * Whether the session may read the faculty board (every event's teams, with
+ * contact details). Read-only by construction: it is not a Role, so no write
+ * route's check can ever be satisfied by it.
+ */
+export async function resolveFacultyAccess(): Promise<{ email: string | null; allowed: boolean }> {
+  const [{ resolveEmail }, { loadAccess }, { applyAccess, canViewFacultyBoard }] = await Promise.all([
+    import("@/lib/identity"),
+    import("@/lib/access-store"),
+    import("@/lib/access-control"),
+  ]);
+  const email = await resolveEmail();
+  const access = await loadAccess();
+  const role = applyAccess(roleForEmail(email), email, access);
+  return { email, allowed: canViewFacultyBoard(role, email, access, envFacultyEmails()) };
+}

@@ -27,6 +27,10 @@ export type AccessConfig = {
   coordinatorsEnabled: boolean;
   /** Event ids switched off individually, applied when the master is on. */
   coordinatorsDisabledEventIds: string[];
+  /** Faculty who may READ every event's teams and participants on /faculty.
+      Deliberately not a Role: it grants no write anywhere, so no existing
+      route's permission check has to learn about it. */
+  faculty: OrganiserGrant[];
 };
 
 /**
@@ -37,6 +41,7 @@ export const DEFAULT_ACCESS: AccessConfig = {
   organisers: [],
   coordinatorsEnabled: false,
   coordinatorsDisabledEventIds: [],
+  faculty: [],
 };
 
 export const normEmail = (s: unknown) => String(s ?? "").trim().toLowerCase();
@@ -50,20 +55,42 @@ export function isValidEmail(raw: unknown): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email);
 }
 
+function readGrants(raw: unknown): OrganiserGrant[] {
+  return Array.isArray(raw)
+    ? raw
+        .filter((g): g is OrganiserGrant => !!g && isValidEmail((g as OrganiserGrant).email))
+        .map((g) => ({ email: normEmail(g.email), addedBy: String(g.addedBy ?? ""), addedAt: String(g.addedAt ?? "") }))
+    : [];
+}
+
 /** Tolerates a half-written or older record rather than throwing on it. */
 export function readAccess(raw: unknown): AccessConfig {
   const r = (raw ?? {}) as Partial<AccessConfig>;
   return {
-    organisers: Array.isArray(r.organisers)
-      ? r.organisers
-          .filter((g): g is OrganiserGrant => !!g && isValidEmail((g as OrganiserGrant).email))
-          .map((g) => ({ email: normEmail(g.email), addedBy: String(g.addedBy ?? ""), addedAt: String(g.addedAt ?? "") }))
-      : [],
+    organisers: readGrants(r.organisers),
     coordinatorsEnabled: r.coordinatorsEnabled === true,
     coordinatorsDisabledEventIds: Array.isArray(r.coordinatorsDisabledEventIds)
       ? r.coordinatorsDisabledEventIds.map((s) => String(s)).filter(Boolean)
       : [],
+    faculty: readGrants(r.faculty),
   };
+}
+
+/**
+ * May this address read the faculty board? Organisers can, since they already
+ * see everything; faculty are the stored grants plus FACULTY_EMAILS. Pure: the
+ * caller passes the resolved role and the env list.
+ */
+export function canViewFacultyBoard(
+  role: Role,
+  email: string | null,
+  access: AccessConfig,
+  envFaculty: string[] = []
+): boolean {
+  if (role.kind === "organiser") return true;
+  const who = normEmail(email);
+  if (!who) return false;
+  return envFaculty.map(normEmail).includes(who) || access.faculty.some((g) => g.email === who);
 }
 
 /** Is this event's coordinator dashboard on, given the config? */
@@ -94,7 +121,9 @@ export type AccessAction =
   | { type: "add_organiser"; email: string }
   | { type: "remove_organiser"; email: string }
   | { type: "set_coordinators"; enabled: boolean }
-  | { type: "set_event_coordinator"; eventId: string; enabled: boolean };
+  | { type: "set_event_coordinator"; eventId: string; enabled: boolean }
+  | { type: "add_faculty"; email: string }
+  | { type: "remove_faculty"; email: string };
 
 export type ActionResult = { access: AccessConfig } | { error: string };
 
@@ -138,6 +167,23 @@ export function applyAction(access: AccessConfig, action: AccessAction, by: stri
           coordinatorsDisabledEventIds: action.enabled ? without : [...without, evId],
         },
       };
+    }
+    case "add_faculty": {
+      const email = normEmail(action.email);
+      if (!isValidEmail(email)) return { error: "Enter a valid email address." };
+      if (access.faculty.some((g) => g.email === email)) return { error: "That address already has faculty access." };
+      return {
+        access: {
+          ...access,
+          faculty: [...access.faculty, { email, addedBy: normEmail(by), addedAt: new Date().toISOString() }],
+        },
+      };
+    }
+    case "remove_faculty": {
+      const email = normEmail(action.email);
+      if (!access.faculty.some((g) => g.email === email))
+        return { error: "That address was granted outside the dashboard and cannot be removed here." };
+      return { access: { ...access, faculty: access.faculty.filter((g) => g.email !== email) } };
     }
     default:
       return { error: "Unknown action." };

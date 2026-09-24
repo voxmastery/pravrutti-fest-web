@@ -15,7 +15,7 @@ import type { AccessConfig } from "@/lib/access-control";
  */
 
 type EventRow = { eventId: string; name: string; coordinators: number };
-type Payload = { access: AccessConfig; permanentOrganisers: string[]; events: EventRow[] };
+type Payload = { access: AccessConfig; permanentOrganisers: string[]; permanentFaculty?: string[]; events: EventRow[] };
 
 const card = "rounded-xl border border-royal-wine bg-cosmic-purple/40";
 
@@ -25,6 +25,7 @@ export function AccessPanel() {
   const [error, setError] = useState<string | null>(null);
   const [note, setNote] = useState<string | null>(null);
   const [email, setEmail] = useState("");
+  const [facultyEmail, setFacultyEmail] = useState("");
 
   useEffect(() => {
     fetch("/api/admin/access")
@@ -65,6 +66,8 @@ export function AccessPanel() {
     );
 
   const { access, permanentOrganisers, events } = data;
+  const permanentFaculty = data.permanentFaculty ?? [];
+  const faculty = access.faculty ?? [];
   const disabled = new Set(access.coordinatorsDisabledEventIds);
 
   return (
@@ -147,6 +150,74 @@ export function AccessPanel() {
           ))}
           {permanentOrganisers.length === 0 && access.organisers.length === 0 && (
             <li className="text-[13px] text-pearl-white/40">No organisers listed.</li>
+          )}
+        </ul>
+      </div>
+
+      {/* Faculty */}
+      <div className={`${card} p-4 space-y-3`}>
+        <div>
+          <p className="font-display text-[12px] font-bold uppercase tracking-[0.16em] text-pearl-white/60">
+            Faculty (view only)
+          </p>
+          <p className="text-[12px] text-pearl-white/45 mt-0.5">
+            They can open /faculty and see every event&apos;s teams and participants, with college, email and
+            phone. They cannot change anything.
+          </p>
+        </div>
+
+        <div className="flex flex-col sm:flex-row gap-2">
+          <input
+            type="email"
+            value={facultyEmail}
+            onChange={(e) => setFacultyEmail(e.target.value)}
+            placeholder="faculty@msruas.ac.in"
+            aria-label="New faculty email"
+            className="flex-1 h-10 rounded-lg border border-transparent bg-white/[0.08] px-3 text-sm text-pearl-white placeholder:text-pearl-white/25 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cyber-pink/70"
+          />
+          <button
+            type="button"
+            disabled={busy || !facultyEmail.trim()}
+            onClick={() =>
+              act(
+                { type: "add_faculty", email: facultyEmail },
+                `${facultyEmail.trim().toLowerCase()} can now view the faculty board.`
+              ).then(() => setFacultyEmail(""))
+            }
+            className="h-10 px-4 rounded-lg bg-cyber-pink text-white text-sm font-medium inline-flex items-center justify-center gap-2 hover:bg-electric-magenta disabled:opacity-50 cursor-pointer"
+          >
+            <UserPlus className="w-4 h-4" /> Add
+          </button>
+        </div>
+
+        <ul className="space-y-1.5">
+          {permanentFaculty.map((e) => (
+            <li key={e} className="flex items-center justify-between gap-3 rounded-lg bg-white/[0.04] px-3 py-2">
+              <span className="text-[13px] text-pearl-white truncate">{e}</span>
+              <span className="inline-flex items-center gap-1.5 shrink-0 text-[11px] text-champagne-gold/80">
+                <ShieldCheck className="w-3.5 h-3.5" /> Permanent
+              </span>
+            </li>
+          ))}
+          {faculty.map((g) => (
+            <li key={g.email} className="flex items-center justify-between gap-3 rounded-lg bg-white/[0.04] px-3 py-2">
+              <span className="min-w-0">
+                <span className="block text-[13px] text-pearl-white truncate">{g.email}</span>
+                <span className="block text-[11px] text-pearl-white/40 truncate">added by {g.addedBy || "unknown"}</span>
+              </span>
+              <button
+                type="button"
+                disabled={busy}
+                onClick={() => act({ type: "remove_faculty", email: g.email }, `${g.email} no longer has faculty access.`)}
+                className="shrink-0 rounded-lg p-2 text-pearl-white/40 hover:text-danger hover:bg-danger-strong/10 disabled:opacity-50 cursor-pointer"
+                aria-label={`Remove ${g.email}`}
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            </li>
+          ))}
+          {permanentFaculty.length === 0 && faculty.length === 0 && (
+            <li className="text-[13px] text-pearl-white/40">No faculty added yet.</li>
           )}
         </ul>
       </div>

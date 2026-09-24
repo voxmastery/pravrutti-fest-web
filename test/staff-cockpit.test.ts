@@ -45,6 +45,7 @@ describe("staffCockpitRedirect", () => {
     "/dashboard/scan",
     "/admin",
     "/admin/scan",
+    "/faculty",
     "/ticket",
     "/tickets",
     "/sso-callback",

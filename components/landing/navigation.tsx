@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Menu, X, Ticket, LogIn, LogOut, LayoutDashboard, ScanLine } from "lucide-react";
+import { Menu, X, Ticket, LogIn, LogOut, LayoutDashboard, ScanLine, Users } from "lucide-react";
 import { useIdentity } from "@/lib/identity-context";
 import { useDashboardRole, dashboardLabel } from "@/hooks/use-dashboard-role";
 import { isDev, setDevLogin } from "@/lib/dev-identity";
@@ -175,6 +175,13 @@ export function Navigation() {
                       </Link>
                     </DropdownMenuItem>
                   )}
+                  {dash.ready && dash.faculty && (
+                    <DropdownMenuItem className="focus:bg-neon-purple/30 focus:text-champagne-gold rounded-lg cursor-pointer">
+                      <Link href="/faculty" className="flex items-center gap-2 w-full text-xs tracking-wider py-1.5">
+                        <Users className="w-4 h-4 text-cyber-pink" /> Faculty board
+                      </Link>
+                    </DropdownMenuItem>
+                  )}
                   {staff && (
                     <DropdownMenuItem className="focus:bg-neon-purple/30 focus:text-champagne-gold rounded-lg cursor-pointer">
                       <Link href="/dashboard/scan" className="flex items-center gap-2 w-full text-xs tracking-wider py-1.5">
@@ -279,6 +286,13 @@ export function Navigation() {
                       href="/dashboard" onClick={() => setIsMobileMenuOpen(false)}
                       className="flex items-center justify-center gap-2 w-full rounded-xl font-display text-base py-4 font-black tracking-wider text-midnight-navy bg-cyber-pink active:bg-electric-magenta" >
                       <LayoutDashboard className="w-4 h-4" /> {dashboardLabel(dash).toUpperCase()}
+                    </Link>
+                  )}
+                  {dash.ready && dash.faculty && (
+                    <Link
+                      href="/faculty" onClick={() => setIsMobileMenuOpen(false)}
+                      className="flex items-center justify-center gap-2 w-full rounded-xl font-display text-base py-4 font-black tracking-wider text-champagne-gold border border-royal-wine active:bg-neon-purple/25" >
+                      <Users className="w-4 h-4" /> FACULTY BOARD
                     </Link>
                   )}
                   {staff && (

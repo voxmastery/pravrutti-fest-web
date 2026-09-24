@@ -5,6 +5,7 @@ const role = vi.hoisted(() => ({ current: { kind: "organiser" } as any }));
 vi.mock("@/lib/roles", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/lib/roles")>()),
   resolveRole: async () => role.current,
+  resolveFacultyAccess: async () => ({ email: null, allowed: false }),
 }));
 
 vi.mock("@/lib/blob-store", () => ({
@@ -49,7 +50,7 @@ describe("GET /api/dashboard/me", () => {
   it("returns no events for a roleless account", async () => {
     role.current = { kind: "none" };
     const body = await (await meGET()).json();
-    expect(body).toEqual({ role: "none", events: [] });
+    expect(body).toEqual({ role: "none", faculty: false, events: [] });
   });
 });
 

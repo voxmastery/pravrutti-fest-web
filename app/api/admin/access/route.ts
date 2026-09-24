@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { resolveRole } from "@/lib/roles";
+import { resolveRole, envFacultyEmails } from "@/lib/roles";
 import { resolveEmail } from "@/lib/identity";
 import { loadAccess, saveAccess } from "@/lib/access-store";
 import { applyAction, type AccessAction } from "@/lib/access-control";
@@ -42,6 +42,8 @@ export async function GET() {
       /* Listed so the dashboard can show them greyed out rather than offering a
          Remove that would fail — they are the lockout guard. */
       permanentOrganisers: envOrganisers(),
+      /* FACULTY_EMAILS: shown without a Remove, same as env organisers. */
+      permanentFaculty: envFacultyEmails(),
       events: events.map((e) => ({
         eventId: eventId(e.name),
         name: e.name,

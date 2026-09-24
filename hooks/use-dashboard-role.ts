@@ -10,11 +10,13 @@ export type DashboardRole = {
   role: "organiser" | "coordinator" | "none";
   /** Every event for an organiser; just their own for a coordinator. */
   events: DashboardEvent[];
+  /** Whether the read-only faculty board (/faculty) is open to them. */
+  faculty: boolean;
   /** False until the answer is back — don't flash a link then remove it. */
   ready: boolean;
 };
 
-const NONE: DashboardRole = { role: "none", events: [], ready: false };
+const NONE: DashboardRole = { role: "none", events: [], faculty: false, ready: false };
 
 /**
  * Whether the signed-in person has a dashboard, and which events it covers.
@@ -33,20 +35,20 @@ export function useDashboardRole(): DashboardRole {
 
     // Signed out is a definite answer, not a pending one.
     if (!me.signedIn) {
-      setState({ role: "none", events: [], ready: true });
+      setState({ role: "none", events: [], faculty: false, ready: true });
       return;
     }
 
     let cancelled = false;
     fetch("/api/dashboard/me")
-      .then((r) => (r.ok ? r.json() : { role: "none", events: [] }))
+      .then((r) => (r.ok ? r.json() : { role: "none", events: [], faculty: false }))
       .then((d) => {
         if (cancelled) return;
-        setState({ role: d.role ?? "none", events: d.events ?? [], ready: true });
+        setState({ role: d.role ?? "none", events: d.events ?? [], faculty: d.faculty === true, ready: true });
       })
       .catch(() => {
         // A failed lookup must not grant access it couldn't confirm.
-        if (!cancelled) setState({ role: "none", events: [], ready: true });
+        if (!cancelled) setState({ role: "none", events: [], faculty: false, ready: true });
       });
 
     return () => {
