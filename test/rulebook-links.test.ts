@@ -28,7 +28,7 @@ describe("rulebook links", () => {
      quietly vanishing — is a deliberate edit rather than a surprise. */
   it("lists the events still waiting on a rulebook", () => {
     const missing = events.filter((e) => !e.brochureUrl).map((e) => eventId(e.name));
-    expect(missing).toEqual(["dent-innovate"]);
+    expect(missing).toEqual([]);
   });
 
   it("gives every self-hosted rulebook a .pdf path", () => {
