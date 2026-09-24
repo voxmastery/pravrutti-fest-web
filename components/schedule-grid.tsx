@@ -59,6 +59,47 @@ export function ScheduleGrid() {
           3-Day Tech Fest Schedule
         </caption>
 
+        {/* First, not last: these run through the whole fest, so somebody reading
+            the day below needs to already know they are on. */}
+        <tbody>
+          <tr>
+            <th
+              scope="col"
+              colSpan={5}
+              className="border border-royal-wine/60 bg-royal-wine/70 px-3 py-2.5 text-left font-display text-[11px] font-black uppercase tracking-[0.16em] text-pearl-white"
+            >
+              Runs alongside
+            </th>
+          </tr>
+          {longRunning.map((l) => (
+            <tr key={l.eventId}>
+              <th
+                scope="row"
+                className="border border-royal-wine/60 bg-deep-plum/60 px-3 py-3 text-left font-display text-[11px] font-bold tracking-wider text-pearl-white/70"
+              >
+                {l.date}
+              </th>
+              <td className="border border-royal-wine/60 bg-cosmic-purple/40 px-3 py-3 align-top">
+                <Link
+                  href={`/events/${l.eventId}`}
+                  className="block -m-3 p-3 rounded-sm hover:bg-cosmic-purple/90 hover:ring-1 hover:ring-cyber-pink/60 transition-colors"
+                >
+                  <span className="block font-display text-[13px] font-bold tracking-wide text-pearl-white">
+                    {l.label}
+                  </span>
+                  <span className="block text-[11px] text-pearl-white/45 mt-0.5">{l.host}</span>
+                </Link>
+              </td>
+              <td
+                colSpan={3}
+                className="border border-royal-wine/60 bg-cosmic-purple/40 px-3 py-3 text-[12px] text-champagne-gold/85 tabular-nums align-top"
+              >
+                {l.time}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+
         {scheduleDays.map((day) => (
           <tbody key={day.n}>
             {/* Day header — the sheet's cyan time cell + maroon track cells. */}
@@ -81,7 +122,32 @@ export function ScheduleGrid() {
             </tr>
 
             {day.blocks.map((block, i) =>
-              block.kind === "banner" ? (
+              block.kind === "workshop" ? (
+                /* One merged cell across the tracks: a workshop is not a fifth
+                   arena competing with them, it runs alongside all four. */
+                <tr key={i}>
+                  <th
+                    scope="row"
+                    className="border border-royal-wine/60 bg-deep-plum/60 px-3 py-3 text-left font-display text-[11px] font-bold tracking-wider text-pearl-white/70 tabular-nums"
+                  >
+                    {block.time}
+                  </th>
+                  <td colSpan={4} className="border border-cyber-pink/35 bg-cyber-pink/[0.09] px-3 py-3 align-top">
+                    <span className="block font-display text-[11px] font-black uppercase tracking-[0.18em] text-cyber-pink">
+                      Workshops · {block.club}
+                    </span>
+                    <ul className="mt-2 space-y-1.5">
+                      {block.sessions.map((w) => (
+                        <li key={w.person} className="flex flex-wrap items-baseline gap-x-2.5 gap-y-0.5">
+                          <span className="font-display text-[13px] font-bold text-pearl-white">{w.person}</span>
+                          <span className="text-[12px] text-pearl-white/55">{w.expertise}</span>
+                          <span className="text-[11px] text-champagne-gold/85 tabular-nums">{w.time}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </td>
+                </tr>
+              ) : block.kind === "banner" ? (
                 <tr key={i}>
                   <th
                     scope="row"
@@ -122,45 +188,6 @@ export function ScheduleGrid() {
           </tbody>
         ))}
 
-        {/* The sheet's trailing rows: the events that run across a day. */}
-        <tbody>
-          <tr>
-            <th
-              scope="col"
-              colSpan={5}
-              className="border border-royal-wine/60 bg-royal-wine/70 px-3 py-2.5 text-left font-display text-[11px] font-black uppercase tracking-[0.16em] text-pearl-white"
-            >
-              Runs alongside
-            </th>
-          </tr>
-          {longRunning.map((l) => (
-            <tr key={l.eventId}>
-              <th
-                scope="row"
-                className="border border-royal-wine/60 bg-deep-plum/60 px-3 py-3 text-left font-display text-[11px] font-bold tracking-wider text-pearl-white/70"
-              >
-                {l.date}
-              </th>
-              <td className="border border-royal-wine/60 bg-cosmic-purple/40 px-3 py-3 align-top">
-                <Link
-                  href={`/events/${l.eventId}`}
-                  className="block -m-3 p-3 rounded-sm hover:bg-cosmic-purple/90 hover:ring-1 hover:ring-cyber-pink/60 transition-colors"
-                >
-                  <span className="block font-display text-[13px] font-bold tracking-wide text-pearl-white">
-                    {l.label}
-                  </span>
-                  <span className="block text-[11px] text-pearl-white/45 mt-0.5">{l.host}</span>
-                </Link>
-              </td>
-              <td
-                colSpan={3}
-                className="border border-royal-wine/60 bg-cosmic-purple/40 px-3 py-3 text-[12px] text-champagne-gold/85 tabular-nums align-top"
-              >
-                {l.time}
-              </td>
-            </tr>
-          ))}
-        </tbody>
       </table>
     </div>
   );

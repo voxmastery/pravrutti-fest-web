@@ -25,9 +25,21 @@ export type TrackEntry = {
   time?: string;
 };
 
+/** One talk inside a workshop strand. */
+export type WorkshopSession = {
+  time: string;
+  person: string;
+  /** What they work on — the reason to turn up. */
+  expertise: string;
+};
+
 export type ScheduleBlock =
   | { kind: "banner"; time: string; label: string }
-  | { kind: "tracks"; time: string; entries: TrackEntry[] };
+  | { kind: "tracks"; time: string; entries: TrackEntry[] }
+  /* Runs across the tracks rather than in one, so it is drawn as a single
+     merged row — a workshop is not a fifth arena, it is a parallel strand
+     anyone can walk into. */
+  | { kind: "workshop"; time: string; club: string; sessions: WorkshopSession[] };
 
 export type ScheduleDay = {
   n: 1 | 2 | 3;
@@ -49,6 +61,23 @@ export const scheduleDays: ScheduleDay[] = [
           { track: 2, eventId: "bridge-it", label: "Bridge It", host: "Ramaiah Civil Club" },
           { track: 3, eventId: "leads-innovation-challenge", label: "LEADS Innovation Challenge", host: "LEADS" },
           { track: 4, eventId: "triathlon", label: "Triathlon", host: "Cynergy" },
+        ],
+      },
+      {
+        kind: "workshop",
+        time: "11:00 AM – 1:00 PM",
+        club: "Vidyut Sphura",
+        sessions: [
+          {
+            time: "11:00 AM – 12:00 PM",
+            person: "Ms. Harita Balan",
+            expertise: "Automotive Embedded Systems & Cybersecurity",
+          },
+          {
+            time: "12:00 PM – 1:00 PM",
+            person: "Mrs. Rachana K",
+            expertise: "ADAS and Autonomous Driving Technologies",
+          },
         ],
       },
       {
@@ -92,6 +121,18 @@ export const scheduleDays: ScheduleDay[] = [
           { track: 1, eventId: "terraform-the-system-awakens", label: "Terraform", host: "AI Club" },
           { track: 2, eventId: "beyond-the-blueprint-2-0", label: "Beyond the Blueprint", host: "TSS" },
           { track: 3, eventId: "zero-hour", label: "Zero Hour", host: "Cynergy" },
+        ],
+      },
+      {
+        kind: "workshop",
+        time: "11:00 AM – 1:00 PM",
+        club: "Vidyut Sphura",
+        sessions: [
+          {
+            time: "11:00 AM – 1:00 PM",
+            person: "Dr. Sanjeev K Nayak",
+            expertise: "EV Technologies",
+          },
         ],
       },
       { kind: "banner", time: "3:00 PM – 7:00 PM", label: "Under25" },
@@ -144,6 +185,28 @@ export const longRunning: { date: string; time: string; eventId: string; label: 
     host: "IEEE",
   },
 ];
+
+/**
+ * Beds for people travelling in.
+ *
+ * On the schedule page because that is where someone works out whether they
+ * can get home after a 7:30 PM finish, which is the moment the question
+ * actually arises.
+ */
+export const accommodation = {
+  offered: true,
+  ratePerHeadPerDay: 450,
+  currency: "\u20b9",
+} as const;
+
+/** Every workshop session, for cross-checking and for a flat listing. */
+export function workshopSessions(): { date: string; club: string; session: WorkshopSession }[] {
+  return scheduleDays.flatMap((d) =>
+    d.blocks
+      .filter((b): b is Extract<ScheduleBlock, { kind: "workshop" }> => b.kind === "workshop")
+      .flatMap((b) => b.sessions.map((session) => ({ date: d.date, club: b.club, session }))),
+  );
+}
 
 /** Every event slug the timetable places, for cross-checking against the roster. */
 export function scheduledEventIds(): string[] {
