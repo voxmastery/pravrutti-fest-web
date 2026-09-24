@@ -612,7 +612,7 @@ export const events: Event[] = [
     capacity: 50,
     capacityUnit: "participants",
     duration: "3 hours",
-    eligibility: "Phd students only",
+    eligibility: "Open to postgraduate students.",
     coordinators: {
       faculty: [],
       student: [{ name: "Ankush Chadichal" }, { name: "Abhilashree B Hosmani" }],

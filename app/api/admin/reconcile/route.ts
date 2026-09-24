@@ -194,6 +194,52 @@ export async function POST(req: Request) {
     });
   }
 
+  /**
+   * Confirming a team the payment report cannot see.
+   *
+   * The desk already does this from a signed-in session, and that is where it
+   * belongs: `paymentVerifiedBy` exists precisely because a decision about
+   * money needs a name against it, and a key shared by the committee supplies
+   * none. This exists for the one case the desk cannot reach — the report
+   * matches on email, so a student who pays from their college address and
+   * registers from a personal one is invisible to every button on it. They
+   * are found by phone, by hand, and then there is nothing to press.
+   *
+   * The guarantee the session gave for free is kept by making it explicit:
+   * the caller must name the organiser who decided, and an unnamed
+   * confirmation is refused rather than written. verifyTeam does the rest —
+   * the whole roster together, the money against the payer alone, and a
+   * ticket to each of them.
+   */
+  if (String(body?.action ?? "") === "verify_team") {
+    const evId = String(body?.eventId ?? "").trim();
+    const code = normalizeTeamCode(String(body?.code ?? ""));
+    const by = String(body?.by ?? "").trim().toLowerCase();
+    const rawRef = body?.paymentRef;
+    const paymentRef = rawRef === undefined ? undefined : String(rawRef ?? "").trim() || null;
+
+    if (!evId || !code)
+      return NextResponse.json({ error: "Missing eventId or code." }, { status: 400 });
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(by))
+      return NextResponse.json(
+        { error: "Say who decided: pass the organiser's email as `by`. The shared key names nobody." },
+        { status: 400 },
+      );
+
+    const { verifyTeam } = await import("@/lib/payment-review");
+    const out = await verifyTeam({ eventId: evId, code, by, paymentRef });
+    if (!out) return NextResponse.json({ error: "No live registrations for that team." }, { status: 404 });
+
+    return NextResponse.json({
+      ok: true,
+      confirmed: out.applications.map((a) => ({
+        name: a.name, email: a.email, status: a.status, payment: a.payment,
+        paymentRef: a.paymentRef ?? null, verifiedBy: a.paymentVerifiedBy ?? null,
+      })),
+      mailed: out.mails.filter((m) => m?.sent).length,
+    });
+  }
+
   /* Undoing a restore.
 
      A restored row is a guess — that a team with members around it belonged to
