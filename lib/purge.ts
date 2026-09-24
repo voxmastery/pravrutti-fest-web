@@ -40,13 +40,16 @@ import type { Team, TeamMember } from "@/lib/teams";
 
 export type PurgeKind = "registration" | "team" | "team-membership" | "payment-ref" | "invite" | "gate" | "reminder";
 
-export type PurgeItem = { path: string; kind: PurgeKind; email: string; label: string };
+export type PurgeItem = { path: string; kind: PurgeKind; email: string; label: string; eventId?: string };
 
 export type PurgePlan = {
   emails: string[];
   items: PurgeItem[];
   /** Why the run is refused. Empty means it may go ahead. */
   blockers: string[];
+  /** The (address, event) pairs behind each blocker — a lead whose team has
+      real members. withoutBlocked() drops everything of theirs in that event. */
+  blocked: { email: string; eventId: string }[];
   /** Addresses with nothing stored against them — usually a typo. */
   notFound: string[];
 };
@@ -66,6 +69,7 @@ export async function planPurge(emailsIn: string[]): Promise<PurgePlan> {
   const purging = new Set(emails);
   const items: PurgeItem[] = [];
   const blockers: string[] = [];
+  const blocked: { email: string; eventId: string }[] = [];
   const add = (item: PurgeItem) => {
     if (!items.some((i) => i.path === item.path)) items.push(item);
   };
@@ -79,24 +83,24 @@ export async function planPurge(emailsIn: string[]): Promise<PurgePlan> {
 
       const app = (await readJsonByPath(applicationPath(ev, email))) as Application | null;
       if (app) {
-        add({ path: applicationPath(ev, email), kind: "registration", email, label: `${evName}: registration (${app.status})` });
+        add({ path: applicationPath(ev, email), kind: "registration", email, eventId: ev, label: `${evName}: registration (${app.status})` });
         if (app.paymentRef) {
           const refPath = paymentRefPath(app.paymentRef);
           const owner = (await readJsonByPath(refPath)) as { email?: string; eventId?: string } | null;
           if (owner && norm(owner.email ?? "") === email)
-            add({ path: refPath, kind: "payment-ref", email, label: `${evName}: transaction ID claim` });
+            add({ path: refPath, kind: "payment-ref", email, eventId: ev, label: `${evName}: transaction ID claim` });
         }
       }
 
       const rec = (await readJsonByPath(teamMemberPath(ev, email))) as { member?: TeamMember } | null;
       if (rec) {
-        add({ path: teamMemberPath(ev, email), kind: "team-membership", email, label: `${evName}: team membership` });
+        add({ path: teamMemberPath(ev, email), kind: "team-membership", email, eventId: ev, label: `${evName}: team membership` });
         if (rec.member?.inviteToken)
-          add({ path: invitePath(rec.member.inviteToken), kind: "invite", email, label: `${evName}: pending invite` });
+          add({ path: invitePath(rec.member.inviteToken), kind: "invite", email, eventId: ev, label: `${evName}: pending invite` });
       }
 
       for (const r of await listAll(`reminder/${emailScopedKey(ev, email)}/`))
-        add({ path: storePath(r.url), kind: "reminder", email, label: `${evName}: reminder record` });
+        add({ path: storePath(r.url), kind: "reminder", email, eventId: ev, label: `${evName}: reminder record` });
     }
 
     if (await readJsonByPath(gatePath(email)))
@@ -112,6 +116,7 @@ export async function planPurge(emailsIn: string[]): Promise<PurgePlan> {
       .map((m) => norm(m.email))
       .filter((e) => e && !purging.has(e));
     if (others.length && !team.deletedAt && !team.movedTo) {
+      blocked.push({ email: norm(team.createdByEmail), eventId: team.eventId });
       blockers.push(
         `${evName}: team "${team.name}" is led by ${norm(team.createdByEmail)} but also has ${others.join(", ")}. ` +
           `Add ${others.length === 1 ? "that address" : "those addresses"} to the list if they are test accounts too, or leave this lead in place.`
@@ -122,7 +127,18 @@ export async function planPurge(emailsIn: string[]): Promise<PurgePlan> {
   }
 
   const found = new Set(items.map((i) => i.email));
-  return { emails, items, blockers, notFound: emails.filter((e) => !found.has(e)) };
+  return { emails, items, blockers, blocked, notFound: emails.filter((e) => !found.has(e)) };
+}
+
+/**
+ * The plan minus anything that would strand a real person: for each blocked
+ * lead, every record of theirs in that event stays. Used by the unattended
+ * cleanup, which has nobody to ask and so removes what is safe and leaves the
+ * rest for a human.
+ */
+export function withoutBlocked(plan: PurgePlan): PurgePlan {
+  const isBlocked = (i: PurgeItem) => plan.blocked.some((b) => b.email === i.email && b.eventId === i.eventId);
+  return { ...plan, items: plan.items.filter((i) => !isBlocked(i)), blockers: [], blocked: [] };
 }
 
 /** Deletes a plan's records after saving a copy of each. Returns the log path. */

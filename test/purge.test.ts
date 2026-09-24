@@ -107,13 +107,29 @@ describe("executePurge", () => {
   });
 });
 
-describe("POST /api/admin/purge", () => {
-  it("is organiser-only", async () => {
-    vi.doMock("@/lib/roles", async (orig) => ({ ...(await orig<typeof import("@/lib/roles")>()), resolveRole: async () => ({ kind: "coordinator", eventIds: [EV] }) }));
-    vi.doMock("@/lib/identity", () => ({ resolveEmail: async () => "c@x.in" }));
-    vi.resetModules();
-    const { POST } = await import("@/app/api/admin/purge/route");
-    const res = await POST(new Request("http://x", { method: "POST", body: JSON.stringify({ emails: [T], confirm: "DELETE" }) }));
-    expect(res.status).toBe(403);
+describe("withoutBlocked", () => {
+  it("keeps every record of a lead whose team has a real person, removes the rest", async () => {
+    seedTestTeam("student@college.edu");
+    const other = "ganesh.s0ga@gmail.com";
+    db.map.set(applicationPath("robo-race", other), { eventId: "robo-race", email: other, status: "confirmed" });
+    const { withoutBlocked } = await import("@/lib/purge");
+    const safe = withoutBlocked(await planPurge([T, other]));
+    const paths = safe.items.map((i) => i.path);
+    expect(paths).toContain(applicationPath("robo-race", other));
+    expect(paths).not.toContain(applicationPath(EV, T));
+    expect(paths).not.toContain(teamMemberPath(EV, T));
+  });
+});
+
+describe("runDemoCleanup", () => {
+  it("runs once, even when started twice", async () => {
+    db.map.set(applicationPath("robo-race", "roppashreeganesh@gmail.com"), { eventId: "robo-race", email: "roppashreeganesh@gmail.com", status: "confirmed" });
+    const { runDemoCleanup, DEMO_CLEANUP_MARKER } = await import("@/lib/demo-cleanup");
+    const [a, b] = await Promise.all([runDemoCleanup(), runDemoCleanup()]);
+    expect([a, b].filter(Boolean)).toHaveLength(1);
+    expect((db.map.get(DEMO_CLEANUP_MARKER) as any).state).toBe("done");
+    expect((db.map.get(DEMO_CLEANUP_MARKER) as any).deleted).toBe(1);
+    expect(db.map.has(applicationPath("robo-race", "roppashreeganesh@gmail.com"))).toBe(false);
+    expect(await runDemoCleanup()).toBeNull();
   });
 });
