@@ -1,0 +1,56 @@
+name: Deploy to Hostinger
+
+# Every push to main goes live, and nothing else does. Pull requests get the
+# checks without the deploy, so a branch can be proved before it is merged.
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+# A second push while the first is still deploying would race it onto the
+# server and could leave the older build live. Queue instead of cancelling:
+# a deploy that has already started must finish, or Hostinger is left
+# half-updated.
+concurrency:
+  group: deploy-pravrutti
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      # The gates. A red test never reaches students: the deploy step below
+      # only runs if these pass.
+      - name: Typecheck
+        run: npx tsc --noEmit
+
+      - name: Tests
+        run: npx vitest run
+
+      - name: Build
+        run: npm run build
+
+      # Only from main, and never from a pull request — a fork's PR must not
+      # be able to reach the production server or read the token.
+      - name: Deploy and purge the CDN
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+        env:
+          HOSTINGER_API_TOKEN: ${{ secrets.HOSTINGER_API_TOKEN }}
+        run: |
+          if [ -z "$HOSTINGER_API_TOKEN" ]; then
+            echo "::error::HOSTINGER_API_TOKEN is not set. Add it under Settings → Secrets and variables → Actions."
+            exit 1
+          fi
+          node scripts/deploy-hostinger.mjs

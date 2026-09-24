@@ -21,10 +21,44 @@ const ARCHIVE = "/tmp/pravrutti-src.tar.gz";
    from 26 MB to 128 MB. Nothing imports it. */
 const EXCLUDE = /^images\/|^public\/images\/video\.mp4$/;
 
+/**
+ * How the Hostinger MCP server is started, and where its token comes from.
+ *
+ * On a laptop the whole server definition — command, args and token — is
+ * already sitting in ~/.claude.json, so there is nothing to configure. CI has
+ * no such file and no business reading one, so HOSTINGER_API_TOKEN in the
+ * environment is enough on its own: the command is the published package and
+ * the token is the only part that varies.
+ *
+ * The environment wins where both exist, which is what lets a run be pointed
+ * at a different account without editing anything.
+ */
+function hostingerServer(server) {
+  const fromEnv = process.env.HOSTINGER_API_TOKEN;
+  let srv = null;
+  try {
+    const cfg = JSON.parse(fs.readFileSync(os.homedir() + "/.claude.json", "utf8"));
+    srv = cfg.mcpServers?.[server] ?? null;
+  } catch {
+    /* No Claude config here — CI, or a fresh checkout. The token alone will do. */
+  }
+  if (fromEnv) {
+    return {
+      command: srv?.command ?? "npx",
+      args: srv?.args ?? ["--package=hostinger-api-mcp@latest", `${server}-mcp`],
+      env: { ...(srv?.env ?? {}), HOSTINGER_API_TOKEN: fromEnv },
+    };
+  }
+  if (!srv) {
+    throw new Error(
+      `No Hostinger credentials. Set HOSTINGER_API_TOKEN, or configure the "${server}" MCP server in ~/.claude.json.`,
+    );
+  }
+  return srv;
+}
+
 function mcp(server) {
-  const cfg = JSON.parse(fs.readFileSync(os.homedir() + "/.claude.json", "utf8"));
-  const srv = cfg.mcpServers[server];
-  if (!srv) throw new Error(`MCP server ${server} is not configured`);
+  const srv = hostingerServer(server);
   const child = spawn(srv.command, srv.args, { env: { ...process.env, ...srv.env }, stdio: ["pipe", "pipe", "pipe"] });
   let buf = ""; const waiting = new Map();
   child.stdout.on("data", (d) => {
