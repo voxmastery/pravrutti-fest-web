@@ -33,3 +33,7 @@ export async function memPutJson(pathname: string, data: unknown, overwrite: boo
   if (!overwrite && store.has(pathname)) throw new Error("exists");
   store.set(pathname, data);
 }
+
+export async function memDeleteJson(pathname: string) {
+  store.delete(pathname);
+}

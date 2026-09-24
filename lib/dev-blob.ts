@@ -68,3 +68,7 @@ export async function devPutJson(pathname: string, data: unknown) {
   await fs.writeFile(file, JSON.stringify(data, null, 2), "utf8");
   return { pathname, url: `${DEV_URL_PREFIX}${pathname}` };
 }
+
+export async function devDeleteJson(pathname: string) {
+  await fs.rm(safeJoin(pathname), { force: true });
+}

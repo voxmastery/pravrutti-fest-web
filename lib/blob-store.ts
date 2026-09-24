@@ -4,6 +4,7 @@ import {
   devListAll,
   devReadJson,
   devPutJson,
+  devDeleteJson,
   DEV_URL_PREFIX,
 } from "@/lib/dev-blob";
 import {
@@ -11,6 +12,7 @@ import {
   sqlListAll,
   sqlReadJson,
   sqlPutJson,
+  sqlDeleteJson,
   SQL_URL_PREFIX,
 } from "@/lib/sql-store";
 import {
@@ -18,6 +20,7 @@ import {
   memListAll,
   memReadJson,
   memPutJson,
+  memDeleteJson,
   MEM_URL_PREFIX,
 } from "@/lib/mem-store";
 
@@ -139,6 +142,19 @@ export async function putJson(path: string, data: unknown, overwrite: boolean) {
   if (useDevBlob()) return devPutJson(path, data);
   if (sqlEnabled()) return sqlPutJson(path, data, overwrite);
   if (memEnabled()) return memPutJson(path, data, overwrite);
+  return noBackend();
+}
+
+/**
+ * Permanently removes one record. The store had no delete on purpose — nothing
+ * in the registration flow should ever lose data — so this has exactly one
+ * caller: the organiser's test-data removal, which saves a copy of every
+ * record before deleting it (lib/purge.ts).
+ */
+export async function deleteJson(path: string) {
+  if (useDevBlob()) return devDeleteJson(path);
+  if (sqlEnabled()) return sqlDeleteJson(path);
+  if (memEnabled()) return memDeleteJson(path);
   return noBackend();
 }
 

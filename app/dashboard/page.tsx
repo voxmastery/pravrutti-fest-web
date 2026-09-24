@@ -12,6 +12,7 @@ import { StatInline } from "@/components/dashboard/stat-tile";
 import { FilterGroup } from "@/components/dashboard/filter-group";
 import { AppStatusBadge } from "@/components/dashboard/status-badge";
 import { AccessPanel } from "@/components/dashboard/access-panel";
+import { PurgePanel } from "@/components/dashboard/purge-panel";
 import { AlertTriangle, Check, ChevronDown, ClipboardList, FileSpreadsheet, Star } from "lucide-react";
 
 type Counts = { registered: number; confirmed: number; checkedIn: number; notArrived: number };
@@ -297,6 +298,11 @@ export default function DashboardPage() {
           where organisers are granted and coordinator dashboards switched. */}
       <Card className="mt-6 rounded-3xl border-royal-wine bg-cosmic-purple/30 p-6 shadow-none sm:p-8">
         <AccessPanel />
+      </Card>
+
+      {/* Organiser-only, enforced by /api/admin/purge. */}
+      <Card className="mt-6 rounded-3xl border-royal-wine bg-cosmic-purple/30 p-6 shadow-none sm:p-8">
+        <PurgePanel />
       </Card>
     </DashboardShell>
   );

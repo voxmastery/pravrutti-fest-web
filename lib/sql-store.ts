@@ -103,3 +103,9 @@ export async function sqlPutJson(path: string, data: unknown, overwrite: boolean
     throw new Error(`A record already exists at ${path}`);
   }
 }
+
+/** Removes one record. Used only by the organiser's test-data removal, which
+    keeps a copy of everything it deletes (see lib/purge.ts). */
+export async function sqlDeleteJson(path: string) {
+  await getPool().execute(`DELETE FROM \`${TABLE}\` WHERE path = ?`, [path]);
+}
