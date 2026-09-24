@@ -52,20 +52,36 @@ function Cell({
     </>
   );
 
+  /* A merged cell is taller than its text. Sitting that text against the top
+     edge leaves a gap underneath that reads as a second, empty cell — the
+     very hole the span was added to close — so it is centred in the box it
+     actually occupies, the way the sheet's own merged cells are.
+
+     The padding moves off the cell and onto the inner box so that box can be
+     the full height of the cell: otherwise the link is only as tall as its
+     words, and the bottom third of a merged cell looks clickable and is not. */
+  const fill = `flex h-full flex-col px-3 py-3 ${rowSpan > 1 ? "justify-center" : "justify-start"}`;
+
   return (
     <td
       rowSpan={rowSpan > 1 ? rowSpan : undefined}
-      className="border border-royal-wine/60 bg-cosmic-purple/40 px-3 py-3 align-top"
+      /* h-px is the long-standing trick that gives a table cell a definite
+         height for its child to resolve `h-full` against; the cell still
+         grows to its real size, and without it the link is only as tall as
+         its words. */
+      className={`border border-royal-wine/60 bg-cosmic-purple/40 p-0 h-px ${
+        rowSpan > 1 ? "align-middle" : "align-top"
+      }`}
     >
       {entry.eventId ? (
         <Link
           href={`/events/${entry.eventId}`}
-          className="block -m-3 p-3 rounded-sm hover:bg-cosmic-purple/90 hover:ring-1 hover:ring-cyber-pink/60 transition-colors"
+          className={`${fill} rounded-sm hover:bg-cosmic-purple/90 hover:ring-1 hover:ring-inset hover:ring-cyber-pink/60 transition-colors`}
         >
           {body}
         </Link>
       ) : (
-        body
+        <div className={fill}>{body}</div>
       )}
     </td>
   );
