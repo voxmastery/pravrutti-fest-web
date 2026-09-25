@@ -262,6 +262,13 @@ export const accommodation = {
   offered: true,
   ratePerHeadPerDay: 450,
   currency: "\u20b9",
+  /* Beds are arranged by a person, not a form: whoever is coming from out of
+     town has to reach one of these two to book one. Named here rather than
+     left in a WhatsApp group so the page can answer the question it raises. */
+  contacts: [
+    { name: "Rathan Raj", phone: "6363548034" },
+    { name: "Shreya", phone: "9606466675" },
+  ],
 } as const;
 
 /** Every workshop session, flat, for listing and for cross-checking. */

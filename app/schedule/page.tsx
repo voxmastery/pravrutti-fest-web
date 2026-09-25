@@ -111,6 +111,27 @@ export default function SchedulePage() {
               </span>
             </p>
           </div>
+          {/* A bed is booked by ringing somebody, so the numbers dial. Most of
+              the people who need one are reading this on the phone they would
+              call from. */}
+          <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-champagne-gold/20 pt-3">
+            <span className="font-display text-[11px] font-bold uppercase tracking-[0.16em] text-pearl-white/45">
+              To book
+            </span>
+            {accommodation.contacts.map((c) => (
+              <a
+                key={c.phone}
+                href={`tel:${c.phone}`}
+                /* py/-my keeps the row looking the same while giving the
+                   number a finger-sized target: this is dialled from a phone. */
+                className="inline-flex items-baseline gap-2 py-2.5 -my-1.5 text-[13px] text-pearl-white/80 hover:text-champagne-gold transition-colors"
+                aria-label={`Call ${c.name} about accommodation on ${c.phone}`}
+              >
+                <span className="font-semibold">{c.name}</span>
+                <span className="tabular-nums text-champagne-gold/90">{c.phone}</span>
+              </a>
+            ))}
+          </div>
         </div>
 
         {/* The coordinators' grid, in the site's colours. Five columns need the

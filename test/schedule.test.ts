@@ -120,6 +120,14 @@ describe("accommodation", () => {
     expect(accommodation.offered).toBe(true);
     expect(accommodation.ratePerHeadPerDay).toBe(450);
   });
+
+  /* A rate with nobody to ring is half an answer — somebody reading this is
+     deciding whether they can come at all. */
+  it("says who to call to book one", () => {
+    expect(accommodation.contacts).toHaveLength(2);
+    expect(accommodation.contacts.map((c) => c.name)).toEqual(["Rathan Raj", "Shreya"]);
+    for (const c of accommodation.contacts) expect(c.phone).toMatch(/^[6-9]\d{9}$/);
+  });
 });
 
 /* A cell that outruns its block should occupy the rows beneath it, not print
