@@ -1,8 +1,9 @@
 import { describe, it, expect, afterEach } from "vitest";
-import { events } from "@/lib/pravrutti-data";
+import { events, eventId } from "@/lib/pravrutti-data";
+import { deskEmailsFor } from "@/lib/dashboard-access";
 import { roleForEmail, canViewEvent } from "@/lib/roles";
 
-describe("Event.dashboardEmails", () => {
+describe("desk access (lib/dashboard-access)", () => {
   /* This used to assert the field was absent "until the spreadsheet lands".
      It has landed, so the invariant inverts: an event with no dashboard
      emails is an event whose coordinators cannot see their own roster. */
@@ -16,7 +17,7 @@ describe("Event.dashboardEmails", () => {
 
   it("is populated for every event except those awaiting new addresses", () => {
     const missing = events
-      .filter((e) => (e.dashboardEmails ?? []).length === 0)
+      .filter((e) => deskEmailsFor(eventId(e.name)).length === 0)
       .map((e) => e.name);
     expect(missing).toEqual(AWAITING_ADDRESSES);
   });
@@ -29,7 +30,7 @@ describe("Event.dashboardEmails", () => {
 
   it("stores addresses lowercased, so role lookup matches", () => {
     const notLower = events
-      .flatMap((e) => e.dashboardEmails ?? [])
+      .flatMap((e) => deskEmailsFor(eventId(e.name)))
       .filter((a) => a !== a.toLowerCase());
     expect(notLower).toEqual([]);
   });
@@ -40,7 +41,7 @@ describe("Event.dashboardEmails", () => {
      [^@\s]+, which happily accepts both. */
   it("gives each event at least one reachable address", () => {
     const bad = events
-      .flatMap((e) => (e.dashboardEmails ?? []).map((a) => [e.name, a] as const))
+      .flatMap((e) => deskEmailsFor(eventId(e.name)).map((a) => [e.name, a] as const))
       .filter(([, a]) => !/^[^@\s,;|]+@[^@\s,;|]+\.[^@\s,;|]{2,}$/.test(a));
     expect(bad).toEqual([]);
   });
@@ -48,7 +49,7 @@ describe("Event.dashboardEmails", () => {
   it("does not grant roppashreeganesh@gmail.com every event", () => {
     const granted = events
       .filter((e) =>
-        (e.dashboardEmails ?? []).some(
+        deskEmailsFor(eventId(e.name)).some(
           (a) => a.trim().toLowerCase() === "roppashreeganesh@gmail.com"
         )
       )
