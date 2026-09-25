@@ -169,32 +169,56 @@ export interface Club {
   tagline: string;
 }
 
+/**
+ * Sponsors, in the order they are shown.
+ *
+ * `logo` is empty where we have not been sent the mark. Every path in here
+ * used to point at a file that was never shipped, so the section quietly drew
+ * a category icon for all five and nobody noticed the paths had rotted — a
+ * sponsor who sends their logo and does not see it on the page is the kind of
+ * thing you hear about afterwards. An empty string says "no mark yet" and the
+ * card stands in an icon; a path that is set must resolve, which
+ * test/sponsor-logos.test.ts enforces against the filesystem.
+ *
+ * To add one: drop the file in public/sponsors/ (webp — Hostinger's CDN
+ * re-encodes PNG and JPEG into mush) and set the path here.
+ */
 export const sponsors: Sponsor[] = [
   {
     name: "RUAS Incubator (RTBI)",
-    logo: "/RTBI.png",
+    logo: "",
     website: "https://ruas-incubator.com/"
   },
   {
     name: "KASSIA",
-    logo: "/KASSIA_Logo-removebg-preview.png",
+    logo: "",
     website: "https://kassia.org.in/"
   },
   {
     name: "Jamboree",
-    logo: "/Logo - 9458x2128 .png",
+    logo: "",
     website: "https://www.jamboreeindia.com"
   },
   {
     name: "GeeksforGeeks",
-    logo: "/gfglogo-removebg-preview copy.jpeg",
+    logo: "",
     website: "https://www.geeksforgeeks.org/"
   },
   {
+    name: "PCB Cupid",
+    logo: "",
+    website: "https://pcbcupid.com/"
+  },
+  {
+    name: "IEEE Smart Cities",
+    logo: "",
+    website: "https://smartcities.ieee.org/"
+  },
+  {
     name: "Unstop",
-    logo: "/unnamed-2.jpg",
+    logo: "",
     website: "https://unstop.com/"
-  }
+  },
 ];
 
 export const clubs: Club[] = [

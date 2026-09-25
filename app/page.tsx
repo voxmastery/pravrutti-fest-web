@@ -6,9 +6,7 @@ import { Navigation } from "@/components/landing/navigation";
 import { HeroSection } from "@/components/landing/hero-section";
 import { HowItWorksSection } from "@/components/landing/how-it-works-section";
 import { IntegrationsSection } from "@/components/landing/integrations-section";
-// Hidden until sponsors are confirmed — restore this import and the
-// <SponsorsSection /> below together.
-// import { SponsorsSection } from "@/components/landing/sponsors-section";
+import { SponsorsSection } from "@/components/landing/sponsors-section";
 import { FooterSection } from "@/components/landing/footer-section";
 import { useGlobalScrollReveal } from "@/hooks/use-animations";
 import { useIdentity } from "@/lib/identity-context";
@@ -47,7 +45,7 @@ export default function Home() {
         {/* Sponsors are hidden until the partner list is confirmed. When it
             is, restore this and the import above; sponsors sit above clubs so
             partners who fund the fest get the higher slot. */}
-        {/* <SponsorsSection /> */}
+        <SponsorsSection />
         <IntegrationsSection />
         <FooterSection />
       </main>
