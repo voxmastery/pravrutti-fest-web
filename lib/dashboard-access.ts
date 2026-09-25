@@ -32,7 +32,7 @@ export const DESK_ACCESS: Record<string, string[]> = {
   "leads-innovation-challenge": ["pranavbansal310@gmail.com", "gsiddharth214@gmail.com"],
   "dent-innovate": ["ankush.chadichal@gmail.com", "gowuri.kotabagi@gmail.com"],
   "pitch-at-mach": ["23etas012004@msruas.ac.in", "23etas012002@msruas.ac.in"],
-  "bridge-it": ["ramaiahcivilclub@gmail.com", "kadaganchirajeshwaariv@gmail.com"],
+  "bridge-it": ["ramaiahcivilclub@gmail.com", "abhilashnm429@gmail.com"],
   "chaos": ["voxmastery@gmail.com", "shravanth.polisetty@gmail.com"],
   "hacktivate": ["voxmastery@gmail.com", "shravanth.polisetty@gmail.com"],
   "ai-escape-room": ["mynaamadhu30@gmail.com", "anushkanagabhyru05@gmail.com"],
