@@ -388,7 +388,10 @@ export const events: Event[] = [
        (K S Aashritha Reddy, Spoorthi K, Sanketh Rao, Prachi Joshi) never came
        through the coordinators' form, so they carried no phone and no call
        button — six names of which four were dead ends for a participant. */
-    dashboardEmails: ["23etec004041@msruas.ac.in", "23etec004029@msruas.ac.in"],
+    /* Their college addresses could not sign in — those accounts are not
+       Google-backed, so the desk was unreachable to the people running the
+       event. Swapped for the addresses the coordinators gave us. */
+    dashboardEmails: ["meghahemanna@gmail.com", "sachinmowgli@gmail.com"],
     /* Served from public/ so coordinators can hand over a replacement
        without anyone needing Drive permissions. */
     brochureUrl: "/electroxcape-rules.pdf",

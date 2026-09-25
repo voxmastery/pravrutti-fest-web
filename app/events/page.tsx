@@ -7,14 +7,12 @@ import Link from "next/link";
 import { events, Event, FEST, clubFor, eventId, eventWhen, formatINR, prizePool, teamLabel } from "@/lib/pravrutti-data";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { EventDetailPanel } from "@/components/event-detail-panel";
 import { EventPoster } from "@/components/event-poster";
 import { Search, Info, Users, ShieldAlert, MapPin, Mail, Trophy } from "lucide-react";
 
 export default function EventsPage() {
   const [isVisible, setIsVisible] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [activeCategory, setActiveCategory] = useState<Event["category"] | null>(null);
 
   useEffect(() => {
@@ -170,21 +168,15 @@ export default function EventsPage() {
                         const club = clubFor(event);
 
                         return (
-                          /* A real link, so Cmd-click, middle-click and "open
-                             in new tab" all reach the full event page. On a
-                             phone a tap follows the link. On desktop a plain
-                             left click still opens the slide-over. */
+                          /* Straight to the event page, on every device.
+                             A desktop click used to open a slide-over instead,
+                             and its "Request to join" led nowhere — people
+                             pressed it and landed back on this list with no
+                             registration started. One destination, one
+                             registration flow, nothing to keep in step. */
                           <Link
                             key={event.name}
                             href={`/events/${slug}`}
-                            onClick={(e) => {
-                              if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
-                              /* Phones go straight to the event page. The slide-over
-                                 is the desktop fast path only (Tailwind lg = 1024). */
-                              if (!window.matchMedia("(min-width: 1024px)").matches) return;
-                              e.preventDefault();
-                              setSelectedEvent(event);
-                            }}
                             className="group min-w-0 rounded-2xl border border-white/[0.08] bg-white/[0.04] hover:bg-white/[0.07] hover:border-white/[0.16] transition-colors overflow-hidden flex flex-col focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyber-pink" >
                             {/* Cover leads the card. Square to match the poster
                                 artwork and the detail panel — a 4:3 box was
@@ -251,7 +243,6 @@ export default function EventsPage() {
       </div>
 
       {/* Luma-style detail panel */}
-      <EventDetailPanel event={selectedEvent} onClose={() => setSelectedEvent(null)} />
 
       <FooterSection />
     </main>
