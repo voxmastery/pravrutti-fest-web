@@ -12,12 +12,12 @@ import {
    hero quoting the old one. */
 
 describe("REGISTRATION_CLOSES_DISPLAY", () => {
-  /* The committee has announced no closing date, so there is no date to show.
-     The helper must render nothing rather than an "Invalid Date" — the hero
-     reads this string straight out. */
-  it("is empty while no deadline is announced", () => {
-    expect(FEST.registrationCloses).toBeNull();
-    expect(REGISTRATION_CLOSES_DISPLAY).toBe("");
+  /* The deadline is 5 October, 11:59 PM IST — 18:29:59Z. Read in UTC that is
+     still the 5th, but the helper must shift to IST first so a later edit to a
+     time after 18:30Z cannot show the wrong day. */
+  it("shows the announced deadline as an IST date", () => {
+    expect(FEST.registrationCloses).toBe("2026-10-05T18:29:59.000Z");
+    expect(REGISTRATION_CLOSES_DISPLAY).toBe("05 OCT 2026");
   });
 
   it("never renders a broken date", () => {
