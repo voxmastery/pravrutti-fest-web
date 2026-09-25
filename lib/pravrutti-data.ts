@@ -174,7 +174,7 @@ export interface Club {
  *
  * `logo` is empty where we have not been sent the mark. Every path in here
  * used to point at a file that was never shipped, so the section quietly drew
- * a category icon for all five and nobody noticed the paths had rotted — a
+ * a category icon for every one and nobody noticed the paths had rotted — a
  * sponsor who sends their logo and does not see it on the page is the kind of
  * thing you hear about afterwards. An empty string says "no mark yet" and the
  * card stands in an icon; a path that is set must resolve, which
@@ -185,26 +185,6 @@ export interface Club {
  */
 export const sponsors: Sponsor[] = [
   {
-    name: "RUAS Incubator (RTBI)",
-    logo: "",
-    website: "https://ruas-incubator.com/"
-  },
-  {
-    name: "KASSIA",
-    logo: "",
-    website: "https://kassia.org.in/"
-  },
-  {
-    name: "Jamboree",
-    logo: "",
-    website: "https://www.jamboreeindia.com"
-  },
-  {
-    name: "GeeksforGeeks",
-    logo: "",
-    website: "https://www.geeksforgeeks.org/"
-  },
-  {
     name: "PCB Cupid",
     logo: "",
     website: "https://pcbcupid.com/"
@@ -213,11 +193,6 @@ export const sponsors: Sponsor[] = [
     name: "IEEE Smart Cities",
     logo: "",
     website: "https://smartcities.ieee.org/"
-  },
-  {
-    name: "Unstop",
-    logo: "",
-    website: "https://unstop.com/"
   },
 ];
 

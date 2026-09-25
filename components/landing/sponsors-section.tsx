@@ -2,18 +2,13 @@
 
 import { useEffect, useRef, useState } from "react";
 import { sponsors } from "@/lib/pravrutti-data";
-import { ShieldCheck, GraduationCap, Code, Rocket, Landmark, CircuitBoard, Building2, ArrowUpRight } from "lucide-react";
+import { Rocket, CircuitBoard, Building2, ArrowUpRight } from "lucide-react";
 import { useScrollReveal } from "@/hooks/use-animations";
 
 /* One line each. The old copy ran to ~90 characters, which wrapped to six
    lines of mono text inside a 220px column — sponsor credits are scanned, not
    read, so each is now a single clause that fits on two lines at any width. */
 const sponsorMeta: Record<string, { icon: typeof Rocket; desc: string }> = {
-  "RUAS Incubator (RTBI)": { icon: Rocket, desc: "Ramaiah's startup incubator" },
-  KASSIA: { icon: Landmark, desc: "Karnataka Small Scale Industries Association" },
-  Jamboree: { icon: GraduationCap, desc: "Global education and admissions" },
-  GeeksforGeeks: { icon: Code, desc: "Coding prep, courses and CS resources" },
-  Unstop: { icon: ShieldCheck, desc: "Competitions and campus hiring" },
   "PCB Cupid": { icon: CircuitBoard, desc: "Modular electronics and dev boards for makers" },
   "IEEE Smart Cities": { icon: Building2, desc: "IEEE's global smart-city technology initiative" },
 };
@@ -100,12 +95,12 @@ export function SponsorsSection() {
           </h2>
         </div>
 
-        {/* flex-wrap rather than a 5-column grid: five cards in five columns
-            gave each 220px, and the trailing row of a 3-col grid hangs left.
-            This centres the last two. */}
+        {/* Two sponsors: two cards side by side, centred, capped so they do not
+            stretch into thin bars on a wide screen. flex-wrap still centres a
+            short last row if more are added. */}
         <div className="flex flex-wrap justify-center gap-4">
           {sponsors.map((s, i) => (
-            <div key={s.name} className="w-full sm:w-[calc(50%-8px)] lg:w-[calc(33.333%-11px)]">
+            <div key={s.name} className="w-full sm:w-[calc(50%-8px)] sm:max-w-[440px]">
               <SponsorCard sponsor={s} index={i} />
             </div>
           ))}
