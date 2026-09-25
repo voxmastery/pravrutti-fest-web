@@ -4,9 +4,9 @@ import { useState, useEffect } from "react";
 import { Navigation } from "@/components/landing/navigation";
 import { FooterSection } from "@/components/landing/footer-section";
 import Link from "next/link";
-import { Info, Clock, ArrowUpRight, Moon } from "lucide-react";
+import { Info, Clock, ArrowUpRight, Moon, BedDouble, GraduationCap } from "lucide-react";
 import { FEST } from "@/lib/pravrutti-data";
-import { scheduleDays, longRunning, type TrackEntry } from "@/lib/schedule";
+import { scheduleDays, longRunning, workshops, accommodation, type TrackEntry } from "@/lib/schedule";
 import { ScheduleGrid } from "@/components/schedule-grid";
 
 /* Rendered from lib/schedule.ts rather than an image. The schedule that used to
@@ -33,7 +33,7 @@ function EntryCard({ entry, blockTime }: { entry: TrackEntry; blockTime: string 
       {entry.host && <p className="mt-1 text-[12px] text-pearl-white/45">{entry.host}</p>}
       {/* Only when it outruns its block — a merged cell in the sheet. */}
       {spans && (
-        <p className="mt-2 inline-flex items-center gap-1.5 text-[11px] text-champagne-gold/80">
+        <p className="mt-2 inline-flex items-center gap-1.5 text-[12px] text-champagne-gold/85 tabular-nums">
           <Clock className="w-3 h-3" /> {entry.time}
         </p>
       )}
@@ -94,6 +94,46 @@ export default function SchedulePage() {
           </p>
         </div>
 
+        {/* Beds. Highlighted because it answers the question that decides
+            whether somebody from out of town can come at all, and it is easy
+            to miss in a wall of timings. */}
+        <div className="mb-10 rounded-2xl border border-champagne-gold/45 bg-champagne-gold/[0.10] px-5 py-4 cyber-box">
+          <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2">
+            <p className="inline-flex items-center gap-2.5 font-display text-sm font-black uppercase tracking-[0.16em] text-champagne-gold">
+              <BedDouble className="w-4 h-4 shrink-0" aria-hidden="true" />
+              Accommodation will be provided
+            </p>
+            <p className="font-display text-base font-black tracking-wide text-pearl-white tabular-nums">
+              {accommodation.currency}
+              {accommodation.ratePerHeadPerDay}
+              <span className="ml-1.5 text-[12px] font-bold uppercase tracking-[0.14em] text-pearl-white/55">
+                per head, per day
+              </span>
+            </p>
+          </div>
+          {/* A bed is booked by ringing somebody, so the numbers dial. Most of
+              the people who need one are reading this on the phone they would
+              call from. */}
+          <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-champagne-gold/20 pt-3">
+            <span className="font-display text-[11px] font-bold uppercase tracking-[0.16em] text-pearl-white/45">
+              To book
+            </span>
+            {accommodation.contacts.map((c) => (
+              <a
+                key={c.phone}
+                href={`tel:${c.phone}`}
+                /* py/-my keeps the row looking the same while giving the
+                   number a finger-sized target: this is dialled from a phone. */
+                className="inline-flex items-baseline gap-2 py-2.5 -my-1.5 text-[13px] text-pearl-white/80 hover:text-champagne-gold transition-colors"
+                aria-label={`Call ${c.name} about accommodation on ${c.phone}`}
+              >
+                <span className="font-semibold">{c.name}</span>
+                <span className="tabular-nums text-champagne-gold/90">{c.phone}</span>
+              </a>
+            ))}
+          </div>
+        </div>
+
         {/* The coordinators' grid, in the site's colours. Five columns need the
             width, so below `md` the same data stacks into cards underneath. */}
         <div className="hidden md:block">
@@ -102,6 +142,56 @@ export default function SchedulePage() {
 
         {/* Days — the small-screen reading of the same schedule. */}
         <div className="space-y-14 md:hidden">
+          {/* Runs alongside the tracks */}
+          <section aria-labelledby="alongside">
+            <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1 mb-5">
+              <h2 id="alongside" className="font-display text-2xl md:text-3xl font-black tracking-wide text-champagne-gold">
+                RUNS ALONGSIDE
+              </h2>
+              <span className="h-px flex-1 min-w-8 bg-royal-wine" />
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2">
+              {longRunning.map((l) => (
+                <Link
+                  key={l.eventId}
+                  href={`/events/${l.eventId}`}
+                  className="group rounded-xl border border-royal-wine bg-cosmic-purple/50 px-4 py-3.5 hover:border-cyber-pink/70 hover:bg-cosmic-purple/80 transition-colors"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <span className="inline-flex items-center gap-1.5 font-display text-[10px] font-black uppercase tracking-[0.18em] text-cyber-pink/80">
+                      <Moon className="w-3 h-3" /> {l.date}
+                    </span>
+                    <ArrowUpRight className="w-3.5 h-3.5 text-pearl-white/25 group-hover:text-champagne-gold transition-colors shrink-0" />
+                  </div>
+                  <p className="mt-2 font-display text-sm font-bold tracking-wide text-pearl-white">{l.label}</p>
+                  <p className="mt-1 text-[12px] text-pearl-white/45">{l.host}</p>
+                  <p className="mt-2 text-[12px] text-champagne-gold/85 tabular-nums">{l.time}</p>
+                </Link>
+              ))}
+              {workshops.map((w) => (
+                <div
+                  key={w.date}
+                  className="rounded-xl border border-cyber-pink/35 bg-cyber-pink/[0.07] px-4 py-3.5 sm:col-span-2"
+                >
+                  <p className="inline-flex items-center gap-1.5 font-display text-[10px] font-black uppercase tracking-[0.18em] text-cyber-pink">
+                    <GraduationCap className="w-3 h-3" /> Workshops · {w.club} · {w.date}
+                  </p>
+                  <ul className="mt-2.5 space-y-2.5">
+                    {w.sessions.map((session) => (
+                      <li key={session.person}>
+                        <p className="font-display text-sm font-bold tracking-wide text-pearl-white">{session.person}</p>
+                        <p className="mt-0.5 text-[12px] text-pearl-white/55 leading-relaxed">{session.expertise}</p>
+                        <p className="mt-1 inline-flex items-center gap-1.5 text-[12px] text-champagne-gold/85 tabular-nums">
+                          <Clock className="w-3 h-3" /> {session.time}
+                        </p>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
+          </section>
+
           {scheduleDays.map((day) => (
             <section key={day.n} aria-labelledby={`day-${day.n}`}>
               <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1 mb-5">
@@ -128,7 +218,7 @@ export default function SchedulePage() {
                     </div>
                   ) : (
                     <div key={i} className="rounded-2xl border border-royal-wine bg-cosmic-purple/30 p-4 md:p-5">
-                      <p className="inline-flex items-center gap-2 font-display text-[12px] font-bold tracking-[0.16em] uppercase text-pearl-white/60 mb-3">
+                      <p className="inline-flex items-center gap-2 font-display text-[13px] font-bold tracking-[0.14em] uppercase text-pearl-white/70 mb-3">
                         <Clock className="w-3.5 h-3.5 text-cyber-pink" />
                         <span className="tabular-nums">{block.time}</span>
                       </p>
@@ -146,34 +236,6 @@ export default function SchedulePage() {
             </section>
           ))}
 
-          {/* Runs alongside the tracks */}
-          <section aria-labelledby="alongside">
-            <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1 mb-5">
-              <h2 id="alongside" className="font-display text-2xl md:text-3xl font-black tracking-wide text-champagne-gold">
-                RUNS ALONGSIDE
-              </h2>
-              <span className="h-px flex-1 min-w-8 bg-royal-wine" />
-            </div>
-            <div className="grid gap-3 sm:grid-cols-2">
-              {longRunning.map((l) => (
-                <Link
-                  key={l.eventId}
-                  href={`/events/${l.eventId}`}
-                  className="group rounded-xl border border-royal-wine bg-cosmic-purple/50 px-4 py-3.5 hover:border-cyber-pink/70 hover:bg-cosmic-purple/80 transition-colors"
-                >
-                  <div className="flex items-start justify-between gap-2">
-                    <span className="inline-flex items-center gap-1.5 font-display text-[10px] font-black uppercase tracking-[0.18em] text-cyber-pink/80">
-                      <Moon className="w-3 h-3" /> {l.date}
-                    </span>
-                    <ArrowUpRight className="w-3.5 h-3.5 text-pearl-white/25 group-hover:text-champagne-gold transition-colors shrink-0" />
-                  </div>
-                  <p className="mt-2 font-display text-sm font-bold tracking-wide text-pearl-white">{l.label}</p>
-                  <p className="mt-1 text-[12px] text-pearl-white/45">{l.host}</p>
-                  <p className="mt-2 text-[11px] text-champagne-gold/80 tabular-nums">{l.time}</p>
-                </Link>
-              ))}
-            </div>
-          </section>
         </div>
 
         <div className="mt-14 text-center">

@@ -169,32 +169,56 @@ export interface Club {
   tagline: string;
 }
 
+/**
+ * Sponsors, in the order they are shown.
+ *
+ * `logo` is empty where we have not been sent the mark. Every path in here
+ * used to point at a file that was never shipped, so the section quietly drew
+ * a category icon for all five and nobody noticed the paths had rotted — a
+ * sponsor who sends their logo and does not see it on the page is the kind of
+ * thing you hear about afterwards. An empty string says "no mark yet" and the
+ * card stands in an icon; a path that is set must resolve, which
+ * test/sponsor-logos.test.ts enforces against the filesystem.
+ *
+ * To add one: drop the file in public/sponsors/ (webp — Hostinger's CDN
+ * re-encodes PNG and JPEG into mush) and set the path here.
+ */
 export const sponsors: Sponsor[] = [
   {
     name: "RUAS Incubator (RTBI)",
-    logo: "/RTBI.png",
+    logo: "",
     website: "https://ruas-incubator.com/"
   },
   {
     name: "KASSIA",
-    logo: "/KASSIA_Logo-removebg-preview.png",
+    logo: "",
     website: "https://kassia.org.in/"
   },
   {
     name: "Jamboree",
-    logo: "/Logo - 9458x2128 .png",
+    logo: "",
     website: "https://www.jamboreeindia.com"
   },
   {
     name: "GeeksforGeeks",
-    logo: "/gfglogo-removebg-preview copy.jpeg",
+    logo: "",
     website: "https://www.geeksforgeeks.org/"
   },
   {
+    name: "PCB Cupid",
+    logo: "",
+    website: "https://pcbcupid.com/"
+  },
+  {
+    name: "IEEE Smart Cities",
+    logo: "",
+    website: "https://smartcities.ieee.org/"
+  },
+  {
     name: "Unstop",
-    logo: "/unnamed-2.jpg",
+    logo: "",
     website: "https://unstop.com/"
-  }
+  },
 ];
 
 export const clubs: Club[] = [
@@ -240,7 +264,7 @@ export const faqs = [
   },
   {
     question: "What is the last date for registration?",
-    answer: "The deadline for registrations for all the events would be 04th of October 2026 , 11:59 PM IST."
+    answer: "The last date to register for all events is 5th October 2026, 11:59 PM IST."
   },
   {
     question: "Can I participate in multiple events?",
@@ -555,7 +579,7 @@ export const events: Event[] = [
     name: "RC-X",
     category: "MACHINA",
     subCategory: "Technical Event",
-    description: "RC–X puts your aircraft design, building and piloting skills to the test. Form a team of 3–4, build your aircraft, take to the skies and prove that you can stay in control when precision matters most. Before the challenge begins, every aircraft must clear a mandatory technical inspection to ensure it meets the event’s technical and safety requirements. Teams that pass move on to the qualification round where they must demonstrate stable flight, maneuverability and control over their plane by demonstrating a safe landing. The real challenge begins in the final round. Teams must complete two full loops around the designated field, navigate two obstacles, and accurately drop a 20 g payload into the target zone. So test your build, sharpen your flying and take on the course.",
+    description: "RC–X puts your aircraft design, building and piloting skills to the test. Form a team of 3–4, build your aircraft, take to the skies and prove that you can stay in control when precision matters most. Before the challenge begins, every aircraft must clear a mandatory technical inspection to ensure it meets the event’s technical and safety requirements. Teams that pass move on to the qualification round where they must demonstrate stable flight, maneuverability and control over their plane by demonstrating a safe landing. The real challenge begins in the final round. Teams must complete two full loops around the designated field, navigate two obstacles, and accurately drop a 20 g payload into the target zone. ● Build constraints worth knowing before you start: electric propulsion only, no more than two motors, and no VTOL — IC engines and gearboxes are out, and an aircraft that breaks any of these does not clear inspection. The rulebook has the full set, including the 650 mm wingspan, the 1:1 thrust-to-weight limit and the battery caps. So test your build, sharpen your flying and take on the course.",
     fee: "Rs. 200/-",
     prizes: [10000, 7000, 5000],
     teamSize: { min: 3, max: 4, soloAllowed: false },
@@ -857,10 +881,10 @@ export const FEST = {
   // IST (UTC+5:30) converted to UTC for calendar invites
   startUtc: "20261014T033000Z", // 09:00 IST, 14 Oct
   endUtc: "20261016T123000Z",   // 18:00 IST, 16 Oct
-  /** ISO instant registration closes, or null for no announced deadline — the
-      committee has not set one, so registration simply stays open. Set it to an
-      instant to reinstate a cut-off; nothing else needs changing. */
-  registrationCloses: null as string | null,
+  /** ISO instant registration closes, or null for no announced deadline.
+      5 October 2026, 11:59:59 PM IST. After it the site stops taking
+      applications on its own; nothing else needs changing. */
+  registrationCloses: "2026-10-05T18:29:59.000Z" as string | null,
   /** ISO instant registration opens. null until the committee announces it,
       which the site renders as "Opening soon" and refuses applications. */
   registrationOpens: "2026-09-16T00:00:00.000Z" as string | null,

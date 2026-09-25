@@ -9,6 +9,7 @@ import { FEE_PER_HEAD, isLiveApplication, type AppStatus } from "@/lib/applicati
 import { IndianRupee, Ticket, UserCheck } from "lucide-react";
 import { useDashboardRole } from "@/hooks/use-dashboard-role";
 import { isStaffRole } from "@/lib/staff-cockpit";
+import { DiscoverizeGroupCard } from "@/components/discoverize-group-card";
 import {
   isDiscoverize,
   discoverizeState,
@@ -274,6 +275,11 @@ export function EventRegisterPanel({
               </p>
             </div>
           )}
+          {/* Registered for Discoverize, at any stage of its rounds. The card
+              asks the server whether this viewer may have the invite and
+              draws nothing if the answer is no, so it is safe to place
+              wherever a registered team can see it. */}
+          {discoverize && live && <DiscoverizeGroupCard compact />}
           {discoverize && live && roundState === "registered" && (
             <div className="space-y-2">
               <a href={ABSTRACT_FORM_URL} target="_blank" rel="noopener noreferrer" className="block">

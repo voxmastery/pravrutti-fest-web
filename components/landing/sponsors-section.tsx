@@ -1,7 +1,8 @@
 "use client";
 
+import { useEffect, useRef, useState } from "react";
 import { sponsors } from "@/lib/pravrutti-data";
-import { ShieldCheck, GraduationCap, Code, Rocket, Landmark, ArrowUpRight } from "lucide-react";
+import { ShieldCheck, GraduationCap, Code, Rocket, Landmark, CircuitBoard, Building2, ArrowUpRight } from "lucide-react";
 import { useScrollReveal } from "@/hooks/use-animations";
 
 /* One line each. The old copy ran to ~90 characters, which wrapped to six
@@ -13,11 +14,25 @@ const sponsorMeta: Record<string, { icon: typeof Rocket; desc: string }> = {
   Jamboree: { icon: GraduationCap, desc: "Global education and admissions" },
   GeeksforGeeks: { icon: Code, desc: "Coding prep, courses and CS resources" },
   Unstop: { icon: ShieldCheck, desc: "Competitions and campus hiring" },
+  "PCB Cupid": { icon: CircuitBoard, desc: "Modular electronics and dev boards for makers" },
+  "IEEE Smart Cities": { icon: Building2, desc: "IEEE's global smart-city technology initiative" },
 };
 
 function SponsorCard({ sponsor, index }: { sponsor: (typeof sponsors)[0]; index: number }) {
   const meta = sponsorMeta[sponsor.name] ?? { icon: Rocket, desc: "" };
   const Icon = meta.icon;
+  const [broken, setBroken] = useState(false);
+  const img = useRef<HTMLImageElement>(null);
+
+  /* onError alone is not enough. The markup is server-rendered, so a missing
+     file 404s while the page is still HTML and the handler is attached only
+     at hydration — by which point the error has already been and gone. This
+     asks the element directly once it exists: complete with no intrinsic
+     width is a load that failed. */
+  useEffect(() => {
+    const el = img.current;
+    if (el && el.complete && el.naturalWidth === 0) setBroken(true);
+  }, []);
 
   return (
     <a
@@ -30,8 +45,23 @@ function SponsorCard({ sponsor, index }: { sponsor: (typeof sponsors)[0]; index:
          taller than the others — consistent sizing within a tier is what
          stops a sponsor wall reading as ragged. */
       className="reveal-up group flex h-full items-start gap-4 rounded-2xl border border-royal-wine bg-cosmic-purple/40 p-5 transition-colors hover:border-cyber-pink/50 hover:bg-cosmic-purple/70 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyber-pink" >
-      <span className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-neon-purple/20 transition-colors group-hover:bg-cyber-pink/20">
-        <Icon className="h-5 w-5 text-champagne-gold transition-colors group-hover:text-cyber-pink" />
+      {/* The real mark when we have been given one, the category icon when we
+          have not. Several sponsors point at logo files that were never
+          shipped, and a broken image is worse than a clean glyph — so a file
+          that fails to load falls back rather than leaving a torn box. */}
+      <span className="grid h-12 w-12 shrink-0 place-items-center overflow-hidden rounded-xl bg-neon-purple/20 transition-colors group-hover:bg-cyber-pink/20">
+        {sponsor.logo && !broken ? (
+          /* eslint-disable-next-line @next/next/no-img-element */
+          <img
+            ref={img}
+            src={sponsor.logo}
+            alt=""
+            onError={() => setBroken(true)}
+            className="h-full w-full object-contain p-1.5"
+          />
+        ) : (
+          <Icon className="h-5 w-5 text-champagne-gold transition-colors group-hover:text-cyber-pink" />
+        )}
       </span>
 
       <span className="min-w-0 flex-1">

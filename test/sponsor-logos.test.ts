@@ -1,0 +1,29 @@
+import { describe, it, expect } from "vitest";
+import { existsSync } from "node:fs";
+import { sponsors } from "@/lib/pravrutti-data";
+
+/**
+ * A logo path with no file behind it.
+ *
+ * Every sponsor in this list pointed at an image that was never shipped —
+ * which is why the section drew generic icons and why nobody noticed the
+ * paths had rotted. The component falls back rather than showing a torn box,
+ * but a silent fallback hides the real problem: a sponsor who sent us their
+ * mark and does not see it on the page.
+ *
+ * So the paths are checked against the filesystem. A logo either resolves or
+ * is left empty on purpose; what it may not be is a promise of an image that
+ * does not exist.
+ */
+describe("sponsor logos", () => {
+  for (const s of sponsors) {
+    it(`${s.name}: logo path resolves, or is deliberately empty`, () => {
+      if (!s.logo) return; // no mark supplied yet — the icon stands in
+      expect(existsSync(`public${s.logo}`), `missing file: public${s.logo}`).toBe(true);
+    });
+  }
+
+  it("gives every sponsor a working website", () => {
+    for (const s of sponsors) expect(s.website).toMatch(/^https:\/\/\S+$/);
+  });
+});

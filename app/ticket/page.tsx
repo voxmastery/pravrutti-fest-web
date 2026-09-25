@@ -17,6 +17,7 @@ import {
 import { downloadEventIcs } from "@/lib/event-calendar";
 import { EventPoster } from "@/components/event-poster";
 import { TeamInviteCard, useMyTeam } from "@/components/team-invite-card";
+import { DiscoverizeGroupCard } from "@/components/discoverize-group-card";
 import { TeamManage } from "@/components/team-manage";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Loader2, CalendarPlus, Hourglass, Check, RotateCcw, LogOut, MapPin, QrCode, ArrowLeft, Copy } from "lucide-react";
@@ -596,6 +597,10 @@ function DiscoverizeRow({ a }: { a: App }) {
         </a>
       )}
 
+      {/* At every stage, not just the first — a team that has submitted or
+          been shortlisted needs the group more, not less. `closed` already
+          returned above, and the server refuses a withdrawn team anyway. */}
+      <DiscoverizeGroupCard compact />
     </div>
   );
 }
