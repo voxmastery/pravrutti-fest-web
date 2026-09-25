@@ -61,7 +61,6 @@ export interface Event {
   poster?: string;
   /** Google emails allowed to view this event's dashboard. Lowercase.
       Populated from the collection spreadsheet; empty until it returns. */
-  dashboardEmails?: string[];
   /** Fest day this runs on, 1-3. Enables date grouping once known. */
   day?: 1 | 2 | 3;
   /** Start time, e.g. "10:00 AM". */
@@ -305,7 +304,6 @@ export const events: Event[] = [
       faculty: [],
       student: [{ name: "A R BHARAATH" }, { name: "JOSHIKA S" }],
     },
-    dashboardEmails: ["arbharaath@gmail.com", "joshika2505@gmail.com"],
     brochureUrl: "https://drive.google.com/open?id=1XFa3H41-N8zeFVjLJ3atgOAIAiE4I9Kh",
   },
   {
@@ -323,7 +321,6 @@ export const events: Event[] = [
       faculty: [],
       student: [{ name: "SHASHANK" }, { name: "JOSHIKA S" }],
     },
-    dashboardEmails: ["shashankrpatil077@gmail.com", "joshika2505@gmail.com"],
     brochureUrl: "https://drive.google.com/open?id=13buhy5x71UbpF4pzXDKqMsMUFXBDg9VS",
   },
   {
@@ -341,7 +338,6 @@ export const events: Event[] = [
       faculty: [],
       student: [{ name: "A R BHARAATH" }, { name: "RATHAN" }],
     },
-    dashboardEmails: ["arbharaath@gmail.com", "rathannraj1@gmail.com"],
     brochureUrl: "https://drive.google.com/open?id=1vLwTFYfBYOhMs8thP1fuYEZoph7zpDzK",
   },
   {
@@ -359,7 +355,6 @@ export const events: Event[] = [
       faculty: [],
       student: [{ name: "Sambal Agarwal" }, { name: "Radhe S," }],
     },
-    dashboardEmails: ["sambalagarwal@gmail.com", "radheofficial11@gmail.com"],
     brochureUrl: "https://drive.google.com/open?id=1gsVbyHl7gd1QLAmE2iVsHKvngdUQQZSw",
   },
   {
@@ -388,7 +383,6 @@ export const events: Event[] = [
        (K S Aashritha Reddy, Spoorthi K, Sanketh Rao, Prachi Joshi) never came
        through the coordinators' form, so they carried no phone and no call
        button — six names of which four were dead ends for a participant. */
-    dashboardEmails: ["23etec004041@msruas.ac.in", "23etec004029@msruas.ac.in"],
     /* Served from public/ so coordinators can hand over a replacement
        without anyone needing Drive permissions. */
     brochureUrl: "/electroxcape-rules.pdf",
@@ -421,10 +415,6 @@ export const events: Event[] = [
       faculty: [],
       student: [{ name: "Aaliyah Aijaz Ali Khan" }, { name: "Gnaneshwari N" }],
     },
-    /* The same two coordinators, on the addresses they actually sign in with.
-       Gnaneshwari keeps her college address on Respawn, so she holds the two
-       dashboards under two different Google accounts. */
-    dashboardEmails: ["aaliyahaijaz2006@gmail.com", "gnaneshwarign15@gmail.com"],
     /* Served from public/ so the coordinators can hand over a replacement
        without anyone needing Drive permissions. */
     brochureUrl: "/discoverize-rulebook.pdf",
@@ -444,7 +434,6 @@ export const events: Event[] = [
       faculty: [],
       student: [{ name: "Bhauthik V" }, { name: "Vimal Kanth" }],
     },
-    dashboardEmails: ["bhauthikfirefly@gmail.com", "vimalkanth411@gmail.com"],
     brochureUrl: "https://drive.google.com/open?id=1Nww0T18stoR2-cxuD5qIa2sd1S38WcBo",
   },
   {
@@ -462,7 +451,6 @@ export const events: Event[] = [
       faculty: [],
       student: [{ name: "Akshay" }, { name: "Nikhita" }],
     },
-    dashboardEmails: ["akshayworkofficial01@gmail.com", "nikhita.n0601@gmail.com"],
     brochureUrl: "https://drive.google.com/open?id=1nn121x9xhfh1-sBKjEvltB1T4UdWJQIi",
   },
   {
@@ -480,7 +468,6 @@ export const events: Event[] = [
       faculty: [],
       student: [{ name: "Akshy P M" }, { name: "Nikhita" }],
     },
-    dashboardEmails: ["akshayworkofficial01@gmail.com", "nikhita.n0601@gmail.com"],
     brochureUrl: "https://drive.google.com/open?id=1nn121x9xhfh1-sBKjEvltB1T4UdWJQIi",
   },
   {
@@ -502,15 +489,6 @@ export const events: Event[] = [
         { name: "Sooraj Chakravarthy S" },
       ],
     },
-    /* Three names only, as the coordinators asked. Spandana and Gnaneshwari
-       keep their dashboard access — they still run The Logic Circuit and
-       Discoverize — but are no longer listed as running this one. */
-    dashboardEmails: [
-      "jesleneiniya@gmail.com",
-      "25etai@msruas.ac.in",
-      "25etmc412021@msruas.ac.in",
-      "24etis411024@msruas.ac.in",
-    ],
     /* Served from public/ so coordinators can hand over a replacement
        without anyone needing Drive permissions. */
     brochureUrl: "/respawn-rules.pdf",
@@ -529,7 +507,6 @@ export const events: Event[] = [
       faculty: [],
       student: [{ name: "B S Mokshada" }, { name: "Siddharth P" }],
     },
-    dashboardEmails: ["24etas012008@msruas.ac.in", "24etas012048@msruas.ac.in"],
     brochureUrl: "/glide-x-rules.pdf",
   },
   {
@@ -547,7 +524,6 @@ export const events: Event[] = [
       faculty: [],
       student: [{ name: "Spandana J S" }, { name: "Dhvani Viroja" }],
     },
-    dashboardEmails: ["25etmc412021@msruas.ac.in", "24etmc412010@msruas.ac.in"],
     brochureUrl: "https://drive.google.com/open?id=12PxcuNAKMp-XQCC1ACFht2C6jXHV0Z4o",
   },
   {
@@ -565,7 +541,6 @@ export const events: Event[] = [
       faculty: [],
       student: [{ name: "Shravya T" }, { name: "Pranav P J" }],
     },
-    dashboardEmails: ["24etas012046@msruas.ac.in", "24etas012033@msruas.ac.in"],
     /* Served from public/ so coordinators can hand over a replacement
        without anyone needing Drive permissions. */
     brochureUrl: "/rc-x-rules.pdf",
@@ -594,7 +569,6 @@ export const events: Event[] = [
       student: [{ name: "Pranav Bansal" }, { name: "Siddharth Gupta" }],
     },
     club: "LEADS",
-    dashboardEmails: ["pranavbansal310@gmail.com", "gsiddharth214@gmail.com"],
     /* Served from the site rather than Drive: the Drive copy is the older
        rulebook, and a link students cannot open on a locked-down phone is a
        rulebook they do not read. */
@@ -616,7 +590,6 @@ export const events: Event[] = [
       faculty: [],
       student: [{ name: "Ankush Chadichal" }, { name: "Abhilashree B Hosmani" }],
     },
-    dashboardEmails: ["ankush.chadichal@gmail.com", "gowuri.kotabagi@gmail.com"],
     /* The Drive file that used to sit here was the club's internal "Event
        Proposal, Requirement Form & Guidelines" — three personal mobile
        numbers, four personal email addresses and the event budget, served
@@ -642,7 +615,6 @@ export const events: Event[] = [
       faculty: [],
       student: [{ name: "Ankith A Joshi" }, { name: "Afifa Fatima Karigar" }],
     },
-    dashboardEmails: ["23etas012004@msruas.ac.in", "23etas012002@msruas.ac.in"],
     brochureUrl: "https://drive.google.com/open?id=1_-znmVyUw5XJYEnpXfQ0SzuQXG0_Lq68",
   },
   {
@@ -663,7 +635,6 @@ export const events: Event[] = [
       student: [{ name: "Abhilash N M" }, { name: "Rajeshwari" }],
     },
     club: "Ramaiah Civil Club",
-    dashboardEmails: ["ramaiahcivilclub@gmail.com", "kadaganchirajeshwaariv@gmail.com"],
     brochureUrl: "https://drive.google.com/open?id=154puKWw4eax-7EaWMGhwhuRj1yztw_N_",
   },
   {
@@ -681,7 +652,6 @@ export const events: Event[] = [
       student: [{ name: "Ganesh" }, { name: "Shravanth" }],
     },
     club: "IEEE",
-    dashboardEmails: ["voxmastery@gmail.com", "shravanth.polisetty@gmail.com"],
     brochureUrl: "https://drive.google.com/open?id=1OMN_3v5Wxu6UhkZXUKWaAXtyNw6aROmo",
   },
   {
@@ -699,7 +669,6 @@ export const events: Event[] = [
       student: [{ name: "Ganesh" }, { name: "Shravanth" }],
     },
     club: "IEEE",
-    dashboardEmails: ["voxmastery@gmail.com", "shravanth.polisetty@gmail.com"],
     brochureUrl: "https://drive.google.com/open?id=1agRe2bIb_QXyatw1OcwjvKi0EtU5W0VL",
   },
   {
@@ -717,7 +686,6 @@ export const events: Event[] = [
       faculty: [],
       student: [{ name: "Madhumitha A" }, { name: "N Anushka" }],
     },
-    dashboardEmails: ["mynaamadhu30@gmail.com", "anushkanagabhyru05@gmail.com"],
     /* Served from public/ rather than Drive: a Drive link shows a
        "request access" wall to anyone outside the owner's account. */
     brochureUrl: "/escape-room-rules.pdf",
@@ -737,7 +705,6 @@ export const events: Event[] = [
       faculty: [],
       student: [{ name: "Pradeep Raj M" }, { name: "Suman A" }],
     },
-    dashboardEmails: ["pradeepmadasamy55@gmail.com"],
     /* Served from public/ so coordinators can hand over a replacement
        without anyone needing Drive permissions. */
     brochureUrl: "/bracket-blitz-rules.pdf",
@@ -757,7 +724,6 @@ export const events: Event[] = [
       faculty: [],
       student: [{ name: "Sudeepa Priyadarshini" }, { name: "Tanya Shedde" }],
     },
-    dashboardEmails: ["sudeepapriyadarshini1826@gmail.com", "tanyashedde@gmail.com"],
     /* Served from public/ so coordinators can hand over a replacement
        without anyone needing Drive permissions. */
     brochureUrl: "/zero-hour-rules.pdf",
@@ -778,7 +744,6 @@ export const events: Event[] = [
       faculty: [],
       student: [{ name: "Hrithik A" }, { name: "L Mahadeva Balan" }],
     },
-    dashboardEmails: ["hrithik18a@gmail.com", "mahadevlakshmanan@gmail.com"],
     brochureUrl: "https://drive.google.com/file/d/1ReNsPaD1nCLpK5bnTO9dHwFjVXEH-_tt/view?usp=drive_open",
   },
   {
@@ -800,7 +765,6 @@ export const events: Event[] = [
       faculty: [],
       student: [{ name: "Aman Tebriwal" }, { name: "Sneha" }],
     },
-    dashboardEmails: ["amantebriwal104@gmail.com", "snehajangid027@gmail.com"],
     brochureUrl: "https://drive.google.com/open?id=1sSsvN1DOCowLaWqpeNWncriNXRJkmS8O",
   },
   {
@@ -820,7 +784,6 @@ export const events: Event[] = [
       faculty: [{ name: "Kiran Kumar BM" }],
       student: [{ name: "Jeslene Iniya D" }],
     },
-    dashboardEmails: ["kirankumar.ee.et@msruas.ac.in", "25etcs002129@msruas.ac.in"],
     brochureUrl: "/pitch-pulse-rules.pdf",
     club: "IIC",
   },

@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { events, clubs, clubFor } from "@/lib/pravrutti-data";
+import { events, clubs, clubFor, eventId } from "@/lib/pravrutti-data";
+import { deskEmailsFor } from "@/lib/dashboard-access";
 
 /* "Hosted by" names the organising club. A wrong club on a public page is
    worse than none, so Event.club is set only where the repo says so outright —
@@ -38,7 +39,7 @@ describe("club attribution", () => {
 
   it("credits the Ramaiah Civil Club with the event run from its own address", () => {
     const e = events.find((ev) => ev.name === "BRIDGE IT");
-    expect(e?.dashboardEmails?.some((m) => m.includes("civilclub"))).toBe(true);
+    expect(deskEmailsFor(eventId(e!.name)).some((m) => m.includes("civilclub"))).toBe(true);
     expect(e?.club).toBe("Ramaiah Civil Club");
   });
 });

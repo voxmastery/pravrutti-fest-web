@@ -1,4 +1,5 @@
 import { events, eventId } from "@/lib/pravrutti-data";
+import { deskEmailsFor } from "@/lib/dashboard-access";
 
 export type Role =
   | { kind: "organiser" }
@@ -25,8 +26,8 @@ export function roleForEmail(email: string | null): Role {
   if (organiserEmails().includes(who)) return { kind: "organiser" };
 
   const eventIds = events
-    .filter((e) => (e.dashboardEmails ?? []).some((c) => norm(c) === who))
-    .map((e) => eventId(e.name));
+    .map((e) => eventId(e.name))
+    .filter((slug) => deskEmailsFor(slug).includes(who));
 
   if (eventIds.length === 0) return { kind: "none" };
   /* Every event they are listed on. Whether each dashboard is actually open is

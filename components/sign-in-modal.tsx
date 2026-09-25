@@ -92,8 +92,10 @@ function DemoLogins() {
   if (!isDev()) return null;
 
   const organiser = (process.env.NEXT_PUBLIC_DEMO_ORGANISER_EMAIL ?? "").trim();
-  const coordinatorEvent = events.find((e) => (e.dashboardEmails ?? []).length > 0);
-  const coordinator = coordinatorEvent?.dashboardEmails?.[0];
+  /* From the environment, not the event data. Reading a real coordinator's
+     address here is what dragged all fifty-one of them into the client
+     bundle and out onto every public event page. */
+  const coordinator = (process.env.NEXT_PUBLIC_DEMO_COORDINATOR_EMAIL ?? "").trim();
 
   return (
     <div className="mt-4 pt-4 border-t border-white/[0.08]">
@@ -113,7 +115,7 @@ function DemoLogins() {
           className="rounded-xl border border-royal-wine bg-cosmic-purple px-3 py-2.5 text-left transition-colors hover:border-cyber-pink/60 disabled:opacity-40" >
           <span className="block text-[13px] font-semibold text-champagne-gold">Coordinator</span>
           <span className="block text-[10px] text-white/40 truncate">
-            {coordinatorEvent ? coordinatorEvent.name : "no data"}
+            {coordinator || "set NEXT_PUBLIC_DEMO_COORDINATOR_EMAIL"}
           </span>
         </button>
       </div>

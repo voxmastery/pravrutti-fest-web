@@ -4,6 +4,7 @@ import { resolveEmail } from "@/lib/identity";
 import { loadAccess, saveAccess } from "@/lib/access-store";
 import { applyAction, type AccessAction } from "@/lib/access-control";
 import { events, eventId } from "@/lib/pravrutti-data";
+import { deskEmailsFor } from "@/lib/dashboard-access";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -47,7 +48,7 @@ export async function GET() {
       events: events.map((e) => ({
         eventId: eventId(e.name),
         name: e.name,
-        coordinators: (e.dashboardEmails ?? []).length,
+        coordinators: deskEmailsFor(eventId(e.name)).length,
       })),
     },
     { headers: { "cache-control": "no-store" } }

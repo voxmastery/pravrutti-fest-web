@@ -2,6 +2,7 @@ import type { Application } from "@/lib/applications";
 import { isLiveApplication } from "@/lib/applications";
 import { applicationPath, readJsonByPath, putJson, listAll, readPrivate } from "@/lib/blob-store";
 import { normalizeTeamCode } from "@/lib/teams";
+import { isDiscoverize } from "@/lib/discoverize";
 import { sendConfirmationEmail } from "@/lib/confirmation-email";
 import type { SendResult } from "@/lib/mailer";
 
@@ -51,6 +52,21 @@ async function persistWithConfirmation(path: string, record: Application): Promi
 export async function verifyPayment(args: { eventId: string; email: string; by: string; paymentRef?: string | null }) {
   const { path, record } = await load(args.eventId, args.email);
   if (!record) return null;
+
+  /* Discoverize inverts what this button means.
+     Everywhere else confirmed says "your money arrived, you are in".
+     Discoverize charges nothing, and discoverizeState reads a confirmed row
+     as "Final round confirmed" — the end of a ladder whose earlier rungs are
+     submitting an abstract and being shortlisted by the judges. So a single
+     press on the desk promoted two teams straight past the screening and
+     told them by email they were through to the presentation round.
+
+     Nobody should have to remember that one event of twenty-five means the
+     opposite by its own button, so the rule is enforced rather than
+     remembered: not shortlisted, not confirmable. A team already through
+     stays through; this only refuses the promotion. */
+  if (isDiscoverize(record.eventId) && record.status !== "confirmed" && !record.round?.shortlistedAt)
+    return { application: record, mail: null } satisfies ReviewOutcome;
 
   const at = new Date().toISOString();
   const confirming = record.status === "pending";
