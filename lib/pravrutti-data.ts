@@ -765,7 +765,7 @@ export const events: Event[] = [
       faculty: [],
       student: [{ name: "Aman Tebriwal" }, { name: "Sneha" }],
     },
-    brochureUrl: "https://drive.google.com/open?id=1sSsvN1DOCowLaWqpeNWncriNXRJkmS8O",
+    brochureUrl: "/triathlon-rules.pdf",
   },
   {
     name: "Pitch Pulse",
