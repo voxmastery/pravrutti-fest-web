@@ -144,16 +144,35 @@ export async function GET(
           appliedAt: now,
           ...(confirmed ? { decidedAt: now } : {}),
         };
-        await putJson(applicationPath(pointer.eventId, pointer.email), app, false);
+        const appPath = applicationPath(pointer.eventId, pointer.email);
+        await putJson(appPath, app, false);
 
         /* Best effort, like every other ticket mail: a confirmed place is
-           already recorded, and losing the email must not lose the place. */
+           already recorded, and losing the email must not lose the place.
+
+           But the outcome is written down. A refusal that nobody records is
+           a student nobody knows to chase — Hostinger throttles this mailbox,
+           and teammates sat confirmed-and-silent for days because the result
+           of this one send went nowhere. Stamped on the row, they read as
+           "no ticket email sent yet" on the desk and the resend queue
+           (/api/admin/reconcile, resend_missing) comes back for them. */
         if (confirmed) {
+          let outcome: { sent: boolean; error?: string };
           try {
-            await sendConfirmationEmail(app);
+            outcome = await sendConfirmationEmail(app);
           } catch (e) {
             console.error("invite accept: confirmation email failed", e);
+            outcome = { sent: false, error: e instanceof Error ? e.message : "Mail send failed." };
           }
+          await putJson(
+            appPath,
+            {
+              ...app,
+              confirmationEmailAt: outcome.sent ? new Date().toISOString() : undefined,
+              confirmationEmailError: outcome.sent ? null : outcome.error ?? "Mail send failed.",
+            },
+            true,
+          );
         }
       }
     }

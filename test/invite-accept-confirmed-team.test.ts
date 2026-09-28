@@ -16,7 +16,7 @@ import { describe, it, expect, vi, beforeEach, beforeAll } from "vitest";
 
 const store = new Map<string, any>();
 const mailed: string[] = [];
-const mail = vi.hoisted(() => ({ throws: false }));
+const mail = vi.hoisted(() => ({ throws: false, result: { sent: true } as { sent: boolean; error?: string } }));
 
 vi.mock("@/lib/blob-store", () => ({
   applicationPath: (e: string, m: string) => `app/${e}/${m}.json`,
@@ -32,7 +32,7 @@ vi.mock("@/lib/confirmation-email", () => ({
   sendConfirmationEmail: async (a: any) => {
     if (mail.throws) throw new Error("smtp down");
     mailed.push(a.email);
-    return { sent: true };
+    return mail.result;
   },
 }));
 
@@ -68,7 +68,9 @@ function seed(leadStatus: "pending" | "confirmed") {
   });
 }
 
-beforeEach(() => { store.clear(); mailed.length = 0; mail.throws = false; });
+beforeEach(() => {
+  store.clear(); mailed.length = 0; mail.throws = false; mail.result = { sent: true };
+});
 
 describe("accepting an invite into a team that is already confirmed", () => {
   it("confirms the new member instead of parking them in review", async () => {
@@ -92,6 +94,36 @@ describe("accepting an invite into a team that is already confirmed", () => {
     seed("confirmed");
     await accept();
     expect(mailed).toEqual([MATE]);
+  });
+
+  it("stamps the send on their row, like every other confirmation", async () => {
+    seed("confirmed");
+    await accept();
+    expect(app().confirmationEmailAt).toBeTruthy();
+    expect(app().confirmationEmailError).toBeNull();
+  });
+
+  /* The place is kept either way — but a refusal that goes unrecorded is a
+     student nobody knows to chase. Hostinger throttles this mailbox, and
+     nine teammates sat confirmed-and-silent for days because the outcome of
+     this one send was thrown away. Recorded, they show on the desk as owed a
+     ticket and the resend queue picks them up. */
+  it("records a refusal instead of dropping it", async () => {
+    seed("confirmed");
+    mail.result = { sent: false, error: '451 4.7.1 Ratelimit "hostinger_out_ratelimit" exceeded' };
+    await accept();
+    expect(app().status).toBe("confirmed");
+    expect(app().confirmationEmailAt ?? null).toBeNull();
+    expect(app().confirmationEmailError).toMatch(/Ratelimit/);
+  });
+
+  it("records a send that threw, and still keeps the place", async () => {
+    seed("confirmed");
+    mail.throws = true;
+    await accept();
+    expect(app().status).toBe("confirmed");
+    expect(app().confirmationEmailAt ?? null).toBeNull();
+    expect(app().confirmationEmailError).toBeTruthy();
   });
 });
 
