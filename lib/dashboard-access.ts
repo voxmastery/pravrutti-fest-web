@@ -27,7 +27,7 @@ export const DESK_ACCESS: Record<string, string[]> = {
   "beyond-the-blueprint-2-0": ["akshayworkofficial01@gmail.com", "nikhita.n0601@gmail.com"],
   "respawn": ["jesleneiniya@gmail.com", "25etai@msruas.ac.in", "25etmc412021@msruas.ac.in", "24etis411024@msruas.ac.in"],
   "glide-x": ["24etas012008@msruas.ac.in", "24etas012048@msruas.ac.in"],
-  "the-logic-circuit": ["25etmc412021@msruas.ac.in", "24etmc412010@msruas.ac.in"],
+  "the-logic-circuit": ["25etmc412021@msruas.ac.in", "24etmc412010@msruas.ac.in", "ddhviroja@gmail.com", "rainent27@gmail.com"],
   "rc-x": ["24etas012046@msruas.ac.in", "24etas012033@msruas.ac.in"],
   "leads-innovation-challenge": ["pranavbansal310@gmail.com", "gsiddharth214@gmail.com"],
   "dent-innovate": ["ankush.chadichal@gmail.com", "gowuri.kotabagi@gmail.com"],
