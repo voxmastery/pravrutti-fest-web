@@ -45,7 +45,12 @@ function hostingerServer(server) {
   if (fromEnv) {
     return {
       command: srv?.command ?? "npx",
-      args: srv?.args ?? ["--package=hostinger-api-mcp@latest", `${server}-mcp`],
+      /* Pinned, not @latest. 2.0.0 (2026-09-28) dropped every tool this
+         script calls — hosting_deployJsApplication, hosting_listJsDeployments,
+         hosting_clearWebsiteCacheV1, hosting_getNodeJSBuildLogsV1 — and the
+         first deploy after it failed with "Tool not found". Moving past 1.63.4
+         means porting the calls below to the new tool names first. */
+      args: srv?.args ?? ["--package=hostinger-api-mcp@1.63.4", `${server}-mcp`],
       env: { ...(srv?.env ?? {}), HOSTINGER_API_TOKEN: fromEnv },
     };
   }
