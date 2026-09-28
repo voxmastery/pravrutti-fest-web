@@ -54,6 +54,12 @@ async function readAll<T>(prefix: string): Promise<T[]> {
   return out;
 }
 
+/* A soft refusal that is about volume, not about the address: the same
+   message sent later goes through untouched. Hostinger answers
+   `451 4.7.1 Ratelimit "hostinger_out_ratelimit" exceeded`; the other shapes
+   are what the common relays say for the same thing. */
+const THROTTLED = /ratelimit|rate limit|too many|throttl|4\.7\.1|\b(?:421|450|451)\b/i;
+
 const key = (evId: string, email: string) => `${evId}::${String(email).trim().toLowerCase()}`;
 
 type MemberRecord = { code?: string; eventId?: string; member?: TeamMember };
@@ -237,6 +243,81 @@ export async function POST(req: Request) {
         paymentRef: a.paymentRef ?? null, verifiedBy: a.paymentVerifiedBy ?? null,
       })),
       mailed: out.mails.filter((m) => m?.sent).length,
+    });
+  }
+
+  /* Sending the tickets the mail server refused.
+   *
+   * Confirming someone and telling them are two separate acts, and only the
+   * first is guaranteed. Hostinger throttles outbound mail from the fest
+   * mailbox, so a run of confirmations comes back "451 Ratelimit exceeded":
+   * the rows are confirmed, the students hear nothing, and the only record of
+   * it is confirmationEmailError on a row nobody thinks to open. That is how
+   * a team ends up messaging us three days later asking why their teammates
+   * are still "in review" when the dashboard has said confirmed all along.
+   *
+   * So the gap is treated as a queue. Everyone confirmed without a ticket
+   * email is sent one, longest wait first, with a pause between each so the
+   * throttle sees a trickle rather than a burst. A throttled refusal ends the
+   * run: the next message would be refused just as fast, and working down the
+   * list would only stamp fresh errors on rows that never had a chance. Any
+   * other refusal is about that one address, so the queue carries on.
+   *
+   * Sending is idempotent by construction — a sent ticket stamps
+   * confirmationEmailAt, which takes the row out of the queue — so calling
+   * this repeatedly until `remaining` reaches zero is the intended use. */
+  if (String(body?.action ?? "") === "resend_missing") {
+    const dryRun = body?.dryRun === true;
+    const limit = Math.min(Math.max(Math.trunc(Number(body?.limit ?? 5)) || 5, 1), 25);
+    const rawGap = Math.trunc(Number(body?.gapMs));
+    const gapMs = Math.min(Math.max(Number.isFinite(rawGap) ? rawGap : 4000, 0), 30_000);
+
+    const owed = (await readAll<Application>("app/"))
+      .filter((a) => a.status === "confirmed" && !a.confirmationEmailAt)
+      .sort((a, b) =>
+        String(a.decidedAt ?? a.appliedAt).localeCompare(String(b.decidedAt ?? b.appliedAt)),
+      );
+
+    if (dryRun)
+      return NextResponse.json({
+        ok: true,
+        dryRun: true,
+        owed: owed.length,
+        people: owed.map((a) => ({
+          name: a.name,
+          email: a.email,
+          eventId: a.eventId,
+          decidedAt: a.decidedAt ?? null,
+          lastError: a.confirmationEmailError ?? null,
+        })),
+      });
+
+    const { resendConfirmation } = await import("@/lib/payment-review");
+    const results: {
+      name: string; email: string; eventId: string; sent: boolean; error: string | null;
+    }[] = [];
+    let stopped: string | null = null;
+
+    for (const a of owed.slice(0, limit)) {
+      if (results.length && gapMs) await new Promise((r) => setTimeout(r, gapMs));
+
+      const out = await resendConfirmation({ eventId: a.eventId, email: a.email });
+      const mail = out?.mail ?? { sent: false, error: "Application not found." };
+      results.push({
+        name: a.name, email: a.email, eventId: a.eventId,
+        sent: !!mail.sent, error: mail.error ?? null,
+      });
+
+      if (!mail.sent && THROTTLED.test(String(mail.error ?? ""))) {
+        stopped = "Mail server is throttling — stopped here. Wait, then call again.";
+        break;
+      }
+    }
+
+    const sent = results.filter((r) => r.sent).length;
+    return NextResponse.json({
+      ok: true, owed: owed.length, attempted: results.length, sent,
+      remaining: owed.length - sent, stopped, results,
     });
   }
 
