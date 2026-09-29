@@ -321,6 +321,49 @@ export async function POST(req: Request) {
     });
   }
 
+  /* Correcting the name somebody registered under.
+   *
+   * Students put jokes in the name field and then want their own name back,
+   * because it is the name on the ticket, on the desk list and on whatever
+   * is checked at the door. Refusing is not kindness — it leaves a real
+   * student holding a ticket that does not look like theirs.
+   *
+   * The name sits in two records: the application, which the ticket and the
+   * desk read, and the team-member record, which the team roster reads.
+   * Changing one leaves the other showing the joke.
+   *
+   * Nothing else moves. Not the status, not the money, and above all not the
+   * ticket ID — they may already have a screenshot of it. */
+  if (String(body?.action ?? "") === "rename") {
+    const evId = String(body?.eventId ?? "").trim();
+    const email = String(body?.email ?? "").trim().toLowerCase();
+    const name = String(body?.name ?? "").trim();
+
+    if (!evId || !email)
+      return NextResponse.json({ error: "Missing eventId or email." }, { status: 400 });
+    if (name.length < 2 || name.length > 80)
+      return NextResponse.json({ error: "Enter a full name (2–80 characters)." }, { status: 400 });
+
+    const appPath = applicationPath(evId, email);
+    const record = (await readJsonByPath(appPath)) as Application | null;
+    if (!record) return NextResponse.json({ error: "No registration for that person." }, { status: 404 });
+
+    const was = record.name;
+    await putJson(appPath, { ...record, name }, true);
+
+    /* Solo entrants have no member record, and that is not a failure. */
+    const memberKey = teamMemberPath(evId, email);
+    const membership = (await readJsonByPath(memberKey)) as MemberRecord | null;
+    const onRoster = !!membership?.member;
+    if (onRoster)
+      await putJson(memberKey, { ...membership, member: { ...membership!.member, name } }, true);
+
+    return NextResponse.json({
+      ok: true, eventId: evId, email, was, name, roster: onRoster,
+      ticketId: record.ticketId ?? null,
+    });
+  }
+
   /* Undoing a restore.
 
      A restored row is a guess — that a team with members around it belonged to
