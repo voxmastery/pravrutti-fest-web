@@ -11,6 +11,7 @@ import {
 } from "@/lib/invites";
 import { newTicketId } from "@/lib/ticket-id";
 import { sendConfirmationEmail } from "@/lib/confirmation-email";
+import { leadIsConfirmed } from "@/lib/lead-decision";
 import { siteOrigin } from "@/lib/mailer";
 import {
   applicationPath,
@@ -53,20 +54,6 @@ function destination(path: string) {
 
 function problem(_req: Request, reason: string) {
   return NextResponse.redirect(destination(`/invite/problem?reason=${reason}`), 303);
-}
-
-/**
- * Has this team already been approved?
- *
- * Asked of the lead's own registration, because that is the row the fee and
- * the decision both sit on. No registration at all means the lead invited
- * before submitting, which is the ordinary case and not a confirmation.
- */
-async function leadIsConfirmed(evId: string, team: Team): Promise<boolean> {
-  const lead = String(team.createdByEmail ?? "").trim().toLowerCase();
-  if (!lead) return false;
-  const app = (await readJsonByPath(applicationPath(evId, lead))) as Application | null;
-  return app?.status === "confirmed";
 }
 
 export async function GET(
