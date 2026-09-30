@@ -21,6 +21,8 @@ import {
   readInviteToken,
 } from "@/lib/invites";
 import { inviteUrl, sendInviteEmail } from "@/lib/invite-email";
+import { sendConfirmationEmail } from "@/lib/confirmation-email";
+import { leadIsConfirmed } from "@/lib/lead-decision";
 import {
   Team,
   TeamMember,
@@ -175,17 +177,23 @@ function personApplication(args: {
   phone: string;
   college: string;
   team: Team;
+  /* An approved team brings its newest member in with it — see
+     lib/lead-decision. The invite link has always done this; typing the team
+     code in did not, so the same student got a different answer depending on
+     which way their lead added them. */
+  confirmed: boolean;
 }): Application {
   const { payment, fee } = feeForApplicant({
     eventFree: args.event.fee.toLowerCase().startsWith("free"),
     eventFee: args.event.fee,
     isJoiner: true,
   });
+  const now = new Date().toISOString();
   return {
     ticketId: newTicketId(),
     eventId: args.evId,
     eventName: args.event.name,
-    status: "pending",
+    status: args.confirmed ? "confirmed" : "pending",
     payment,
     fee,
     name: args.name,
@@ -195,7 +203,8 @@ function personApplication(args: {
     teamName: args.team.name,
     teamCode: args.team.code,
     members: null,
-    appliedAt: new Date().toISOString(),
+    appliedAt: now,
+    ...(args.confirmed ? { decidedAt: now } : {}),
   };
 }
 
@@ -404,14 +413,41 @@ async function joinTeam(body: any) {
     return jsonError("Couldn't add you to this team. Try again in a moment.", 500);
   }
 
-  const record = personApplication({ event, evId, name, email, phone, college, team });
+  const confirmed = await leadIsConfirmed(evId, team);
+  const record = personApplication({ event, evId, name, email, phone, college, team, confirmed });
+  const appPath = applicationPath(evId, email);
   try {
-    await putJson(applicationPath(evId, email), record, replacingCancelled);
+    await putJson(appPath, record, replacingCancelled);
   } catch (e: any) {
     if (/exists|overwrite/i.test(String(e?.message)))
       return jsonError("You've already applied for this event.", 409);
     console.error("application put failed", e);
     return jsonError("Your application didn't save. Try again in a moment.", 500);
+  }
+
+  /* A confirmed place has a ticket, so it is sent — best effort, because the
+     place is already recorded and losing the email must not lose it. The
+     outcome is written down either way: the mailbox is throttled, and a
+     refusal nobody records is a confirmed student nobody knows has not been
+     told. Stamped here, they read as "no ticket email sent yet" on the desk
+     and the resend queue comes back for them. */
+  if (confirmed) {
+    let outcome: { sent: boolean; error?: string };
+    try {
+      outcome = await sendConfirmationEmail(record);
+    } catch (e) {
+      console.error("team join: confirmation email failed", e);
+      outcome = { sent: false, error: e instanceof Error ? e.message : "Mail send failed." };
+    }
+    await putJson(
+      appPath,
+      {
+        ...record,
+        confirmationEmailAt: outcome.sent ? new Date().toISOString() : undefined,
+        confirmationEmailError: outcome.sent ? null : outcome.error ?? "Mail send failed.",
+      },
+      true,
+    );
   }
 
   const queue = (await listAll(`app/${evId}/`)).length;

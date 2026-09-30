@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
 import { resolveRole, canViewEvent } from "@/lib/roles";
 import { listAll, readPrivate } from "@/lib/blob-store";
-import type { Application } from "@/lib/applications";
+import { createHash } from "crypto";
+import { countsAsRegistered, type Application } from "@/lib/applications";
+import { countRegistrations, entryKey } from "@/lib/registration-counts";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -13,6 +15,15 @@ type RosterEntry = {
   college: string;
   status: Application["status"];
   checkedInAt: string | null;
+  /** The team's display name; null for someone who entered alone. */
+  team: string | null;
+  /** Same for everyone who entered together. Opaque on purpose: the team
+      code is what a stranger types to join a team, and grouping a list
+      does not need it. */
+  group: string;
+  /** Whether this person holds a place — see countsAsRegistered. A team
+      block counts only these; withdrawn teammates are listed, not counted. */
+  live: boolean;
 };
 
 /**
@@ -62,6 +73,9 @@ export async function GET(
     college: r.college,
     status: r.status,
     checkedInAt: r.checkedInAt ?? null,
+    team: r.teamCode ? r.teamName?.trim() || "Unnamed team" : null,
+    group: createHash("sha256").update(`${eventId}|${entryKey(r)}`).digest("hex").slice(0, 12),
+    live: countsAsRegistered(r),
   });
 
   /* Branch on the role, not on a request flag — a coordinator asking for
@@ -85,17 +99,22 @@ export async function GET(
     )
     .sort((a, b) => a.name.localeCompare(b.name));
 
-  const confirmed = mine.filter((r) => r.status === "confirmed");
-  const checkedIn = confirmed.filter((r) => r.checkedInAt);
+  /* The roster still lists withdrawn students — the desk needs to see that
+     somebody pulled out — but they are not counted. Counting every row read
+     from the store is how this panel came to show 239 for CHAOS while the
+     table directly above it showed 227. */
+  const counts = countRegistrations(mine);
 
   return NextResponse.json(
     {
       eventId,
       counts: {
-        registered: mine.length,
-        confirmed: confirmed.length,
-        checkedIn: checkedIn.length,
-        notArrived: confirmed.length - checkedIn.length,
+        registered: counts.people,
+        teams: counts.teams,
+        confirmed: counts.confirmedPeople,
+        confirmedTeams: counts.confirmedTeams,
+        checkedIn: counts.checkedIn,
+        notArrived: counts.notArrived,
       },
       roster,
     },
