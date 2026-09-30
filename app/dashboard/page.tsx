@@ -14,13 +14,23 @@ import { AppStatusBadge } from "@/components/dashboard/status-badge";
 import { AccessPanel } from "@/components/dashboard/access-panel";
 import { AlertTriangle, Check, ChevronDown, ClipboardList, FileSpreadsheet, Star } from "lucide-react";
 
-type Counts = { registered: number; confirmed: number; checkedIn: number; notArrived: number };
+type Counts = {
+  registered: number; teams: number;
+  confirmed: number; confirmedTeams: number;
+  checkedIn: number; notArrived: number;
+};
 /** Contact fields arrive only for organisers — see the event route. */
 type Entry = {
   name: string;
   college: string;
   status: string;
   checkedInAt: string | null;
+  /** Team display name, or null for someone who entered alone. */
+  team: string | null;
+  /** Shared by everyone who entered together. */
+  group: string;
+  /** Holds a place. Withdrawn teammates are listed but not counted. */
+  live: boolean;
   email?: string;
   phone?: string;
   teamName?: string | null;
@@ -38,14 +48,23 @@ type Row = {
   category: string;
   venue: string | null;
   capacity: number | null;
+  capacityTeams: number | null;
+  /** A team event, or one where people may enter alone. */
+  unit: "team" | "entry";
   registered: number;
+  teams: number;
   confirmed: number;
+  confirmedTeams: number;
   checkedIn: number;
   fill: number | null;
 };
 type Overview = {
   phase: "before" | "during" | "after";
-  totals: { registered: number; confirmed: number; checkedIn: number; capacity: number };
+  totals: {
+    registered: number; teams: number;
+    confirmed: number; confirmedTeams: number;
+    checkedIn: number; capacity: number;
+  };
   events: Row[];
 };
 
@@ -220,8 +239,10 @@ export default function DashboardPage() {
         </div>
 
         <div className="mt-5 flex flex-wrap gap-x-8 gap-y-2 text-sm">
-          <StatInline label="Registered" value={totals.registered} />
-          <StatInline label="Confirmed" value={totals.confirmed} />
+          <StatInline label="Teams" value={totals.teams} />
+          <StatInline label="Students" value={totals.registered} />
+          <StatInline label="Confirmed teams" value={totals.confirmedTeams} />
+          <StatInline label="Confirmed students" value={totals.confirmed} />
           <StatInline label="Checked in" value={totals.checkedIn} />
         </div>
       </Card>
@@ -282,7 +303,7 @@ export default function DashboardPage() {
             <TableRow className="border-royal-wine/50 hover:bg-transparent">
               <TableHead className="text-white/40">Event</TableHead>
               <TableHead className="hidden w-32 text-white/40 sm:table-cell">Fill</TableHead>
-              <TableHead className="w-28 text-right text-white/40">Registered</TableHead>
+              <TableHead className="w-36 text-right text-white/40">Registered</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -306,9 +327,13 @@ export default function DashboardPage() {
     answerable by scanning, without opening anything. */
 function EventRow({ r, open, onToggle }: { r: Row; open: boolean; onToggle: () => void }) {
   const pct = r.fill === null ? null : Math.round(r.fill * 100);
-  // Only flagged while there is still time to act on it.
-  const empty = r.capacity !== null && r.registered / r.capacity < 0.25;
-  const full = r.capacity !== null && r.registered >= r.capacity;
+  /* Read off the same fill the bar draws, so the warning and the bar can
+     never tell different stories — and fill is measured in whichever unit
+     the event is actually capped in. */
+  const empty = r.fill !== null && r.fill < 0.25;
+  const full = r.fill !== null && r.fill >= 1;
+  const unitWord = r.unit === "team" ? "team" : "entry";
+  const unitWords = r.unit === "team" ? "teams" : "entries";
 
   const bar = full ? "bg-danger" : empty ? "bg-soft-gold" : "bg-cyber-pink";
   const detailId = `event-${r.eventId}`;
@@ -354,12 +379,19 @@ function EventRow({ r, open, onToggle }: { r: Row; open: boolean; onToggle: () =
             <span className="block text-[11px] text-white/25">No cap set</span>
           )}
         </TableCell>
+        {/* Both units, because one number answered two questions badly: a
+            coordinator read Line Follower's 33 as 33 teams when it was 33
+            students in 17. The field size leads; the head count follows. */}
         <TableCell className="text-right tabular-nums">
           <span className="block font-semibold text-pearl-white">
-            {r.registered}
-            {r.capacity !== null && <span className="font-normal text-white/35"> / {r.capacity}</span>}
+            {r.teams}
+            {r.capacityTeams !== null && <span className="font-normal text-white/35"> / {r.capacityTeams}</span>}
+            <span className="font-normal text-white/50"> {r.teams === 1 ? unitWord : unitWords}</span>
           </span>
-          <span className="block text-[11px] text-white/40">{r.checkedIn} in</span>
+          <span className="block text-[11px] text-white/40">
+            {r.registered} {r.registered === 1 ? "student" : "students"}
+            {r.checkedIn > 0 && ` \u00b7 ${r.checkedIn} in`}
+          </span>
         </TableCell>
       </TableRow>
       {open && (
@@ -408,8 +440,10 @@ function EventDetail({ eventId }: { eventId: string }) {
   return (
     <div className="pt-3">
       <div className="mb-3 flex flex-wrap gap-x-6 gap-y-2 text-sm">
-        <StatInline label="Registered" value={data.counts.registered} />
-        <StatInline label="Confirmed" value={data.counts.confirmed} />
+        <StatInline label="Teams" value={data.counts.teams} />
+        <StatInline label="Students" value={data.counts.registered} />
+        <StatInline label="Confirmed teams" value={data.counts.confirmedTeams} />
+        <StatInline label="Confirmed students" value={data.counts.confirmed} />
         <StatInline label="Checked in" value={data.counts.checkedIn} />
         <StatInline label="Not arrived" value={data.counts.notArrived} />
       </div>
@@ -418,7 +452,7 @@ function EventDetail({ eventId }: { eventId: string }) {
         {data.roster.length === 0 ? (
           <p className="p-5 text-sm text-white/45">No registrations yet.</p>
         ) : (
-          data.roster.map((p, i) => <Participant key={i} p={p} />)
+          groupRoster(data.roster).map((g) => <RosterGroup key={g.key} g={g} />)
         )}
       </Card>
       {/* Only true for coordinators now; organisers see them inline. */}
@@ -426,6 +460,72 @@ function EventDetail({ eventId }: { eventId: string }) {
         <p className="mt-2 text-xs text-white/30">Contact details are held by the organising team.</p>
       )}
     </div>
+  );
+}
+
+type Group = {
+  key: string;
+  /** Null for the block of people who entered alone. */
+  team: string | null;
+  people: Entry[];
+  coming: number;
+  withdrew: number;
+};
+
+const WITHDRAWN = new Set(["cancelled", "declined"]);
+
+/**
+ * The roster by team, because a flat list of two hundred names tells a
+ * coordinator nothing about who came together — Line Follower read as 33
+ * teams when it was 33 students in 17.
+ *
+ * Teams A\u2013Z, then anyone who entered alone in one block at the end. Inside
+ * a team the people coming are listed first; a teammate who withdrew stays on
+ * the list, because the desk needs to know, but is not counted in the header.
+ * A team nobody is coming for any more sinks below the live ones.
+ */
+function groupRoster(roster: readonly Entry[]): Group[] {
+  const byName = (a: Entry, b: Entry) => a.name.localeCompare(b.name);
+  const liveFirst = (a: Entry, b: Entry) => Number(b.live) - Number(a.live) || byName(a, b);
+  const summarise = (key: string, team: string | null, people: Entry[]): Group => ({
+    key,
+    team,
+    people: [...people].sort(liveFirst),
+    coming: people.filter((p) => p.live).length,
+    withdrew: people.filter((p) => !p.live && WITHDRAWN.has(p.status)).length,
+  });
+
+  const teams = new Map<string, Entry[]>();
+  for (const p of roster) if (p.team !== null) teams.set(p.group, [...(teams.get(p.group) ?? []), p]);
+  const solos = roster.filter((p) => p.team === null);
+
+  const grouped = [...teams].map(([key, people]) => summarise(key, people[0].team, people));
+  grouped.sort((a, b) => Number(b.coming > 0) - Number(a.coming > 0) || String(a.team).localeCompare(String(b.team)));
+
+  return solos.length ? [...grouped, summarise("solo", null, solos)] : grouped;
+}
+
+function RosterGroup({ g }: { g: Group }) {
+  const noun = g.team === null ? "" : g.coming === 1 ? " member" : " members";
+  return (
+    <section aria-label={g.team ?? "Individual entries"}>
+      <header className="flex items-baseline justify-between gap-4 bg-white/[0.04] px-4 py-2">
+        <span className={`min-w-0 truncate text-[11px] font-semibold uppercase tracking-wider ${g.coming ? "text-pearl-white/80" : "text-white/35"}`}>
+          {g.team ?? "Individual entries"}
+        </span>
+        <span className="shrink-0 text-[11px] tabular-nums text-white/40">
+          {g.coming}{noun}
+          {g.withdrew > 0 && <span className="text-white/30">{` \u00b7 ${g.withdrew} withdrew`}</span>}
+        </span>
+      </header>
+      <div className="divide-y divide-white/[0.04]">
+        {g.people.map((p, i) => (
+          <div key={i} className={p.live ? "" : "opacity-60"}>
+            <Participant p={p} />
+          </div>
+        ))}
+      </div>
+    </section>
   );
 }
 
@@ -463,6 +563,11 @@ function Participant({ p }: { p: Entry }) {
     </>
   ) : p.status === "confirmed" ? (
     <span className="text-white/45">Not arrived</span>
+  ) : p.status === "pending" && !p.live ? (
+    /* Started, left for the payment portal, never came back with a receipt.
+       "In review" would claim somebody is looking at it; nobody is, and it
+       holds no place. */
+    <span className="text-xs text-white/35">Didn&apos;t finish</span>
   ) : (
     <AppStatusBadge status={p.status} />
   );

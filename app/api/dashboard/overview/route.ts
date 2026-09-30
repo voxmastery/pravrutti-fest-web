@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
 import { resolveRole } from "@/lib/roles";
 import { listAll, readPrivate } from "@/lib/blob-store";
-import { events, eventId, capacityInPeople, FEST } from "@/lib/pravrutti-data";
+import { events, eventId, capacityInPeople, maxTeamsFor, FEST } from "@/lib/pravrutti-data";
 import { venueFor } from "@/lib/event-venues";
 import type { Application } from "@/lib/applications";
-import { countsAsRegistered } from "@/lib/applications";
+import { countRegistrationsByEvent } from "@/lib/registration-counts";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -32,47 +32,60 @@ export async function GET() {
   const blobs = await listAll("app/");
   const apps = (await Promise.all(blobs.map((b) => readPrivate(b.url)))) as (Application | null)[];
 
-  type Tally = { registered: number; confirmed: number; checkedIn: number };
-  const byEvent = new Map<string, Tally>();
-
-  for (const a of apps) {
-    if (!a?.eventId) continue;
-    /* Cancelled, declined and unpaid attempts are not registrations. Counting
-       them inflated every fill figure and could show an event full while real
-       places sat empty. */
-    if (!countsAsRegistered(a)) continue;
-    const t = byEvent.get(a.eventId) ?? { registered: 0, confirmed: 0, checkedIn: 0 };
-    t.registered++;
-    if (a.status === "confirmed") t.confirmed++;
-    if (a.checkedInAt) t.checkedIn++;
-    byEvent.set(a.eventId, t);
-  }
+  /* Cancelled, declined and unpaid attempts are not registrations, and one
+     team is not four registrations — see lib/registration-counts, which the
+     public seat counter uses too so the two can never disagree. */
+  const byEvent = countRegistrationsByEvent(apps.filter(Boolean) as Application[]);
+  const EMPTY = {
+    people: 0, teams: 0, confirmedPeople: 0, confirmedTeams: 0, checkedIn: 0, notArrived: 0,
+  };
 
   const rows = events.map((e) => {
     const id = eventId(e.name);
-    const t = byEvent.get(id) ?? { registered: 0, confirmed: 0, checkedIn: 0 };
+    const t = byEvent.get(id) ?? EMPTY;
     const capacity = capacityInPeople(e);
+    /* An event run in teams is full when its teams are, not when its heads
+       are: AI Escape Room at 74 of 100 students is 24 of 25 teams, and only
+       the second number tells you whether to extend it. */
+    const capacityTeams = maxTeamsFor(e);
+    const fill = capacityTeams
+      ? Math.min(t.teams / capacityTeams, 1)
+      : capacity
+      ? Math.min(t.people / capacity, 1)
+      : null;
+
     return {
       eventId: id,
       name: e.name,
       category: e.category,
       venue: venueFor(id),
       capacity,
-      ...t,
+      capacityTeams,
+      /* What one entry in this field is. Solo-allowed events mix lone
+         entrants with teams, so calling every entry a "team" there would be
+         wrong on the screen even though the arithmetic is the same. */
+      unit: !e.teamSize.soloAllowed && e.teamSize.max > 1 ? ("team" as const) : ("entry" as const),
+      registered: t.people,
+      teams: t.teams,
+      confirmed: t.confirmedPeople,
+      confirmedTeams: t.confirmedTeams,
+      checkedIn: t.checkedIn,
       // Null rather than 0 when there's no cap, so the UI shows no bar
       // instead of drawing an empty one that reads as "nobody signed up".
-      fill: capacity ? Math.min(t.registered / capacity, 1) : null,
+      fill,
     };
   });
 
   const totals = rows.reduce(
     (acc, r) => ({
       registered: acc.registered + r.registered,
+      teams: acc.teams + r.teams,
       confirmed: acc.confirmed + r.confirmed,
+      confirmedTeams: acc.confirmedTeams + r.confirmedTeams,
       checkedIn: acc.checkedIn + r.checkedIn,
       capacity: acc.capacity + (r.capacity ?? 0),
     }),
-    { registered: 0, confirmed: 0, checkedIn: 0, capacity: 0 }
+    { registered: 0, teams: 0, confirmed: 0, confirmedTeams: 0, checkedIn: 0, capacity: 0 }
   );
 
   /* The headline question changes with the phase: before the fest an
