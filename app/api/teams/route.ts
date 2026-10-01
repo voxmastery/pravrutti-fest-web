@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { randomBytes } from "crypto";
-import { events, eventId, capacityFor, effectiveRegistrationOpen, registrationUnavailableMessage, eventFullMessage } from "@/lib/pravrutti-data";
+import { events, eventId, capacityFor, effectiveRegistrationOpen, registrationUnavailableMessage, eventFullMessage, festFor, eventClosedMessage } from "@/lib/pravrutti-data";
 import {
   Application,
   PHONE_HINT,
@@ -176,7 +176,7 @@ async function mineTeam(evId: string, bodyEmail: string) {
         team: {
           ...toTeamPreview(team, members, maxTeamSizeFor(event), true),
           isLead: String(team.createdByEmail).toLowerCase() === who.email.toLowerCase(),
-          canInvite: effectiveRegistrationOpen(),
+          canInvite: effectiveRegistrationOpen(undefined, festFor(event)),
         },
       },
       { headers: { "cache-control": "no-store" } }
@@ -231,6 +231,8 @@ async function createTeam(body: any) {
   const evId = String(body?.eventId ?? "").trim();
   const event = findEvent(evId);
   if (!event) return jsonError("That event doesn't exist.", 400);
+  /* An event can close before the fest-wide date (Event.registrationCloses). */
+  if (!effectiveRegistrationOpen(undefined, festFor(event))) return jsonError(eventClosedMessage(event), 409);
   /* A new team is exactly what a full event is not taking. */
   if (event.full) return jsonError(eventFullMessage(event.name), 409);
 
@@ -359,6 +361,8 @@ async function joinTeam(body: any) {
   const evId = String(body?.eventId ?? "").trim();
   const event = findEvent(evId);
   if (!event) return jsonError("That event doesn't exist.", 400);
+  /* An event can close before the fest-wide date (Event.registrationCloses). */
+  if (!effectiveRegistrationOpen(undefined, festFor(event))) return jsonError(eventClosedMessage(event), 409);
 
   const who = await resolveApplicantEmail(String(body?.email ?? ""));
   if ("error" in who) return who.error;
@@ -604,6 +608,8 @@ async function addMember(body: any) {
   const evId = String(body?.eventId ?? "").trim();
   const event = findEvent(evId);
   if (!event) return jsonError("That event doesn't exist.", 400);
+  /* An event can close before the fest-wide date (Event.registrationCloses). */
+  if (!effectiveRegistrationOpen(undefined, festFor(event))) return jsonError(eventClosedMessage(event), 409);
 
   const who = await resolveApplicantEmail(String(body?.email ?? ""));
   if ("error" in who) return who.error;

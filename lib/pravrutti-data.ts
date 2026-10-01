@@ -43,6 +43,10 @@ export interface Event {
       A switch rather than an automatic cap, so that declining or moving one
       team mid-review does not reopen the place to a stranger. */
   full?: boolean;
+  /** ISO instant this event stops taking registrations, when it closes
+      earlier than the fest-wide FEST.registrationCloses. Every gate reads it
+      through festFor(), so the event page, the forms and the API agree. */
+  registrationCloses?: string;
   /** How long the event runs, e.g. "3 hours", "24 hours". */
   duration?: string;
   /** Entry restriction, where one exists (year, branch, team make-up). */
@@ -671,6 +675,8 @@ export const events: Event[] = [
     prizes: [20000, 15000, 10000],
     teamSize: { min: 2, max: 4, soloAllowed: false },
     capacityUnit: "teams",
+    /* Closes early: 11:59 PM IST on 1 October, organisers' call. */
+    registrationCloses: "2026-10-01T18:29:59.000Z",
     duration: "24 hours",
     coordinators: {
       faculty: [],
@@ -908,6 +914,27 @@ export const REGISTRATION_CLOSES_DISPLAY = (() => {
   const day = String(ist.getUTCDate()).padStart(2, "0");
   return `${day} ${MONTHS_SHORT[ist.getUTCMonth()] ?? ""} ${ist.getUTCFullYear()}`;
 })();
+
+/** FEST with this event's own closing time, where it has one. Pass the result
+    to the registration-state helpers so one event can close early. */
+export const festFor = (e?: { registrationCloses?: string } | null) =>
+  e?.registrationCloses ? { ...FEST, registrationCloses: e.registrationCloses } : FEST;
+
+/** An event's own closing time as participants read it, in IST:
+    "11:59 PM, 01 OCT 2026". Empty when it follows the fest-wide date. */
+export const eventClosesDisplay = (e?: { registrationCloses?: string } | null) => {
+  if (!e?.registrationCloses) return "";
+  const ist = new Date(Date.parse(e.registrationCloses) + IST_OFFSET_MS);
+  if (Number.isNaN(ist.getTime())) return "";
+  const h = ist.getUTCHours(), m = String(ist.getUTCMinutes()).padStart(2, "0");
+  const time = `${((h + 11) % 12) + 1}:${m} ${h < 12 ? "AM" : "PM"}`;
+  const day = String(ist.getUTCDate()).padStart(2, "0");
+  return `${time}, ${day} ${MONTHS_SHORT[ist.getUTCMonth()] ?? ""} ${ist.getUTCFullYear()}`;
+};
+
+/** Refusal text for an event that closed early on its own date. */
+export const eventClosedMessage = (e: { name: string; registrationCloses?: string }) =>
+  `Registration for ${e.name} closed at ${eventClosesDisplay(e)} IST.`;
 
 /** Refusal text for an event switched to full — see Event.full. */
 export const eventFullMessage = (name: string) =>

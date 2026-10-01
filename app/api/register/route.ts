@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { runAfterResponse } from "@/lib/after-response";
-import { events, eventId, capacityFor, effectiveRegistrationOpen, registrationUnavailableMessage, eventFullMessage } from "@/lib/pravrutti-data";
+import { events, eventId, capacityFor, effectiveRegistrationOpen, registrationUnavailableMessage, eventFullMessage, festFor, eventClosedMessage } from "@/lib/pravrutti-data";
 import { leadIsRegistered } from "@/lib/lead-decision";
 import { newTicketId } from "@/lib/ticket-id";
 import {
@@ -372,6 +372,16 @@ export async function POST(req: Request) {
         );
     if (entering)
       return NextResponse.json({ error: eventFullMessage(event.name) }, { status: 409 });
+  }
+  /* An event that closed early (Event.registrationCloses) refuses new entries
+     the same way a full one does, and for the same reason lets through anyone
+     already holding a live row: they left for the payment portal before the
+     deadline, may well have paid, and refusing them would not refund it. */
+  if (!effectiveRegistrationOpen(undefined, festFor(event))) {
+    const holding = isLiveApplication(
+      ((await readJsonByPath(applicationPath(evId, email))) as Application | null)?.status,
+    );
+    if (!holding) return NextResponse.json({ error: eventClosedMessage(event) }, { status: 409 });
   }
   // Whoever is charged pays on Juno first and proves it with the receipt's
   // transaction ID. `awaiting` is exactly "charged and not yet verified";
