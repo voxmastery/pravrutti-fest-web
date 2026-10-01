@@ -142,10 +142,15 @@ export function EventRegisterPanel({
      confirmed teams, so on its own it read "37 of 45" while 52 teams already
      held places — and invited more. When the event is closed it says so. */
   const closedFull = !!event.full;
-  const ready = closedFull || (inTeams ? teamCount !== null : count !== null);
+  /* No stated cap (CHAOS, Hacktivate): capacityFor falls back to a placeholder
+     100, which put "231 of 100" on the page. With nothing to measure against,
+     show the confirmed count alone — no "of", no bar, no "filling fast". */
+  const uncapped = !inTeams && !event.capacity;
+  const countTeams = inTeams || (uncapped && event.capacityUnit === "teams");
+  const ready = closedFull || (countTeams ? teamCount !== null : count !== null);
   const total = inTeams ? maxTeams : cap;
-  const taken = (inTeams ? teamCount : count) ?? 0;
-  const left = closedFull ? 0 : Math.max(total - taken, 0);
+  const taken = (countTeams ? teamCount : count) ?? 0;
+  const left = closedFull ? 0 : uncapped ? Infinity : Math.max(total - taken, 0);
   const full = closedFull || (ready && left === 0);
   const pct = closedFull ? 100 : Math.min((taken / Math.max(total, 1)) * 100, 100);
   const invite = mine ? <TeamInviteCard team={mine} level={level} /> : null;
@@ -239,20 +244,20 @@ export function EventRegisterPanel({
           <div className="space-y-2">
             <div className="flex items-baseline justify-between gap-3">
               <span className="font-display text-[10px] uppercase tracking-widest text-pearl-white/45">
-                {closedFull ? "Registrations" : inTeams ? "Teams confirmed" : "Seats confirmed"}
+                {closedFull ? "Registrations" : countTeams ? "Teams confirmed" : "Seats confirmed"}
               </span>
               <span className="font-display text-xs font-black text-champagne-gold tabular-nums">
-                {closedFull ? "Full" : !ready ? "—" : `${taken} of ${total}`}
+                {closedFull ? "Full" : !ready ? "—" : uncapped ? `${taken}` : `${taken} of ${total}`}
               </span>
             </div>
-            <div className="h-2 rounded-full bg-midnight-navy border border-royal-wine overflow-hidden">
+            {!uncapped && <div className="h-2 rounded-full bg-midnight-navy border border-royal-wine overflow-hidden">
               {ready && (
                 <div
                   className={`h-full animate-meter ${full ? "bg-soft-gold" : "bg-cyber-pink"}`}
                   style={{ width: `${Math.max(pct, 2)}%` }}
                 />
               )}
-            </div>
+            </div>}
             {closedFull && (
               <p className="text-xs text-pearl-white/60 leading-relaxed">
                 {`${event.name} isn’t taking new teams. Teams already registered are unaffected.`}
