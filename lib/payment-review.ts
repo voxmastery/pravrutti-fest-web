@@ -156,6 +156,47 @@ export async function verifyTeam(args: {
   };
 }
 
+/**
+ * Verifying the payer, from the desk's per-person button.
+ *
+ * Each row has its own "Verify payment" and each team block its own "Confirm
+ * team", and the per-person one used to confirm the payer alone. Their
+ * teammates stayed in review behind a decision already taken, and nothing on
+ * the desk would ever come back for them — sixteen teams in one day.
+ *
+ * The fee is one payment for the team, so once the payer's money is verified
+ * the people it covers are confirmed too. Only those people: a teammate who
+ * owes nothing (not_required) and is still waiting. Nobody else is marked as
+ * having paid, a withdrawn teammate stays withdrawn, and verifying a
+ * teammate's own row confirms that teammate alone — their row is no evidence
+ * of the payer's money, so it must not approve it.
+ */
+export async function verifyPayer(args: {
+  eventId: string;
+  email: string;
+  by: string;
+  paymentRef?: string | null;
+}) {
+  const outcome = await verifyPayment(args);
+  if (!outcome) return null;
+
+  const a = outcome.application;
+  const coversOthers = a.status === "confirmed" && a.payment !== "not_required" && !!a.teamCode;
+  if (!coversOthers) return { ...outcome, teammates: [] as Application[] };
+
+  const waiting = (await liveTeamMembers(args.eventId, a.teamCode!)).filter(
+    (m) => m.email !== a.email && m.status === "pending" && m.payment === "not_required",
+  );
+  const moved = await Promise.all(
+    waiting.map((m) => verifyPayment({ eventId: args.eventId, email: m.email, by: args.by })),
+  );
+
+  return {
+    ...outcome,
+    teammates: moved.filter((o): o is NonNullable<typeof o> => !!o).map((o) => o.application),
+  };
+}
+
 /** Undo, because the common failure is a mis-click on the wrong row. */
 export async function unverifyPayment(args: { eventId: string; email: string }) {
   const { path, record } = await load(args.eventId, args.email);

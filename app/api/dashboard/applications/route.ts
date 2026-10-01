@@ -7,7 +7,7 @@ import type { Application } from "@/lib/applications";
 import { mailerConfigured } from "@/lib/mailer";
 import { ticketQrDataUrl } from "@/lib/ticket-qr";
 import {
-  verifyPayment,
+  verifyPayer,
   verifyTeam,
   declineTeam,
   unverifyPayment,
@@ -132,9 +132,12 @@ export async function POST(req: Request) {
 
   if (!evId || !email) return fail("Missing event or applicant.", 400);
 
+  /* verifyPayer, not verifyPayment: the payer's money settles the whole
+     team, so their teammates are confirmed with them rather than left in
+     review behind a decision already taken. */
   const outcome =
     action === "verify_payment"
-      ? await verifyPayment({ eventId: evId, email, by, paymentRef })
+      ? await verifyPayer({ eventId: evId, email, by, paymentRef })
       : action === "unverify_payment"
       ? await unverifyPayment({ eventId: evId, email })
       : action === "decline"
@@ -149,5 +152,6 @@ export async function POST(req: Request) {
     ok: true,
     application: outcome.application,
     mail: outcome.mail,
+    teammates: "teammates" in outcome ? outcome.teammates : [],
   });
 }
