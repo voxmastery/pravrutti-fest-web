@@ -35,6 +35,14 @@ export interface Event {
       or an event whose cap was given in people. It wins over the derivation,
       so the page never has to fall back to counting heads. */
   maxTeams?: number;
+  /** Taking no new teams. Set by hand when the field is at or over its cap
+      and the organisers are deciding who stays. "Full" means no new entry —
+      no new team, no new lead or solo registration — and nothing else:
+      members can still join a team whose lead is registered, a registered
+      lead can still add people, and anyone mid-payment can still finish.
+      A switch rather than an automatic cap, so that declining or moving one
+      team mid-review does not reopen the place to a stranger. */
+  full?: boolean;
   /** How long the event runs, e.g. "3 hours", "24 hours". */
   duration?: string;
   /** Entry restriction, where one exists (year, branch, team make-up). */
@@ -641,7 +649,7 @@ export const events: Event[] = [
     name: "CHAOS",
     category: "TECHNOVERSE",
     subCategory: "8-Hour Software Hackathon",
-    description: "CHAOS is an 8-hour on-site hackathon hosted by the IEEE Student Branch. Teams of 2 to 4 students build a working software solution from scratch against a real-world problem, judged live at the end of the day — no recorded demos, no slide-only submissions. Problem statements are revealed only on the day itself, so no team walks in pre-prepared. Every team starts from zero and builds the entire product within the same eight hours. What sets CHAOS apart is its Buffs & Debuffs wheel. Four times throughout the day, a spin on the main screen hands the entire hall either a helpful perk or a fun, bothersome restriction (voice-only coding, no Enter key, whisper-mode communication) for the next thirty minutes. Every team faces the same twist at the same time, keeping the day unpredictable without affecting anyone's score. Backed by industry sponsors including Cursor, CHAOS gives students a full problem-to-demo cycle in a single day, under the same pressure and unpredictability.",
+    description: "CHAOS is an 8-hour on-site hackathon hosted by the IEEE Student Branch. Teams of 2 to 4 students build a working software solution from scratch against a real-world problem, judged live at the end of the day — no recorded demos, no slide-only submissions. Problem statements are revealed only on the day itself, so no team walks in pre-prepared. Every team starts from zero and builds the entire product within the same eight hours. What sets CHAOS apart is its Buffs & Debuffs wheel. Four times throughout the day, a spin on the main screen hands the entire hall either a helpful perk or a fun, bothersome restriction (voice-only coding, no Enter key, whisper-mode communication) for the next thirty minutes. Every team faces the same twist at the same time, keeping the day unpredictable without affecting anyone's score. CHAOS gives students a full problem-to-demo cycle in a single day, under the same pressure and unpredictability.",
     fee: "Rs. 200/-",
     prizes: [15000, 10000, 7000],
     teamSize: { min: 2, max: 4, soloAllowed: false },
@@ -668,6 +676,10 @@ export const events: Event[] = [
     capacity: 180,
     capacityUnit: "teams",
     maxTeams: 45,
+    /* 52 teams were holding places against the 45 when this went on, 1 Oct.
+       Closed to new teams while the organisers review the 15 in review;
+       remove it to reopen. */
+    full: true,
     duration: "24 hours",
     coordinators: {
       faculty: [],
@@ -905,6 +917,10 @@ export const REGISTRATION_CLOSES_DISPLAY = (() => {
   const day = String(ist.getUTCDate()).padStart(2, "0");
   return `${day} ${MONTHS_SHORT[ist.getUTCMonth()] ?? ""} ${ist.getUTCFullYear()}`;
 })();
+
+/** Refusal text for an event switched to full — see Event.full. */
+export const eventFullMessage = (name: string) =>
+  `${name} is full and isn’t taking new teams. Teams already registered are unaffected — if you’re on one, join it with its team code.`;
 
 /** API refusal text, so every route says the same thing for the same reason. */
 export const registrationUnavailableMessage = (state: RegistrationState = registrationState()) =>

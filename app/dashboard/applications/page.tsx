@@ -363,6 +363,7 @@ export default function ApplicationsDeskPage() {
                       mailConfigured={feed.mailConfigured}
                       onToggle={() => setOpen(open === g.key ? null : g.key)}
                       onChanged={patch}
+                      onChangedMany={patchMany}
                     />
                   ) : (
                     <TeamBlock
@@ -396,12 +397,16 @@ function Row({
   mailConfigured,
   onToggle,
   onChanged,
+  onChangedMany,
 }: {
   a: Application;
   open: boolean;
   mailConfigured: boolean;
   onToggle: () => void;
   onChanged: (next: Application) => void;
+  /** Verifying a payer confirms the teammates their fee covers, so their
+      rows change too. */
+  onChangedMany?: (next: Application[]) => void;
 }) {
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -427,11 +432,17 @@ function Row({
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "That didn't go through.");
-      onChanged(data.application);
+      const teammates: Application[] = Array.isArray(data.teammates) ? data.teammates : [];
+      if (teammates.length && onChangedMany) onChangedMany([data.application, ...teammates]);
+      else onChanged(data.application);
 
       // Mail is reported separately from the decision, because the decision
       // sticks even when the send fails.
-      if (data.mail?.sent) setFlash("Ticket emailed.");
+      const withTeam = teammates.length
+        ? ` ${teammates.length} ${teammates.length === 1 ? "teammate" : "teammates"} confirmed with them.`
+        : "";
+      if (data.mail?.sent) setFlash(`Ticket emailed.${withTeam}`);
+      else if (withTeam) setFlash(withTeam.trim());
       else if (data.mail?.skipped) setFlash("Saved. Mail isn't configured, so no email went out.");
       else if (data.mail?.error) setError(`Saved, but the email failed: ${data.mail.error}`);
     } catch (e) {
@@ -813,6 +824,7 @@ function TeamBlock({
             mailConfigured={mailConfigured}
             onToggle={() => onToggle(key(a))}
             onChanged={onChanged}
+            onChangedMany={onChangedMany}
           />
         ))}
         {hidden > 0 && (

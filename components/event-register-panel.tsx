@@ -138,21 +138,22 @@ export function EventRegisterPanel({
   const inTeams = maxTeams !== null;
   const unit = inTeams ? "team" : "seat";
 
-  const ready = inTeams ? teamCount !== null : count !== null;
+  /* Switched to full by the organisers (Event.full). The counter only counts
+     confirmed teams, so on its own it read "37 of 45" while 52 teams already
+     held places — and invited more. When the event is closed it says so. */
+  const closedFull = !!event.full;
+  const ready = closedFull || (inTeams ? teamCount !== null : count !== null);
   const total = inTeams ? maxTeams : cap;
   const taken = (inTeams ? teamCount : count) ?? 0;
-  const left = Math.max(total - taken, 0);
-  const full = ready && left === 0;
-  const pct = Math.min((taken / Math.max(total, 1)) * 100, 100);
+  const left = closedFull ? 0 : Math.max(total - taken, 0);
+  const full = closedFull || (ready && left === 0);
+  const pct = closedFull ? 100 : Math.min((taken / Math.max(total, 1)) * 100, 100);
   const invite = mine ? <TeamInviteCard team={mine} level={level} /> : null;
 
-  /* Confirmed viewers already have a ticket — the card's job (explain approval
-     and collect a new application) would contradict "You're going". They still
-     get the team code so they can invite after submit. */
-  if (dash.ready && staff) return null;
-  if (viewerReady && viewerStatus === "confirmed") return invite;
-
-  const showApply = viewerReady && dash.ready && !live && !closed && !staff;
+  const showApply = viewerReady && dash.ready && !live && !closed && !staff && !closedFull;
+  /* Full is not shut: someone on a team that is already in still needs a way
+     to join it — Nexovate's members did, the day it filled. */
+  const showJoinOnly = viewerReady && dash.ready && !live && !closed && !staff && closedFull;
   const showClosed = viewerReady && !live && closed;
   /* Two different people are pending without a reference. One left for the
      portal and never told us how it went — they get the question. The other
@@ -186,6 +187,18 @@ export function EventRegisterPanel({
     openToFinish(showAnswer ? "answer" : "reference");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showAnswer, showAddRef]);
+
+  /* Confirmed viewers already have a ticket — the card's job (explain approval
+     and collect a new application) would contradict "You're going". They still
+     get the team code so they can invite after submit.
+
+     Below every hook, never above one. These returns once sat above the
+     deep-link effect, so a viewer who became confirmed while the page was
+     open — exactly what joining an approved team now does — rendered two
+     fewer hooks than the render before, and the page fell over with "This
+     page couldn't load". test/event-register-panel-hooks keeps them here. */
+  if (dash.ready && staff) return null;
+  if (viewerReady && viewerStatus === "confirmed") return invite;
 
   return (
     <div className="space-y-3">
@@ -226,10 +239,10 @@ export function EventRegisterPanel({
           <div className="space-y-2">
             <div className="flex items-baseline justify-between gap-3">
               <span className="font-display text-[10px] uppercase tracking-widest text-pearl-white/45">
-                {inTeams ? "Teams confirmed" : "Seats confirmed"}
+                {closedFull ? "Registrations" : inTeams ? "Teams confirmed" : "Seats confirmed"}
               </span>
               <span className="font-display text-xs font-black text-champagne-gold tabular-nums">
-                {!ready ? "—" : `${taken} of ${total}`}
+                {closedFull ? "Full" : !ready ? "—" : `${taken} of ${total}`}
               </span>
             </div>
             <div className="h-2 rounded-full bg-midnight-navy border border-royal-wine overflow-hidden">
@@ -240,7 +253,12 @@ export function EventRegisterPanel({
                 />
               )}
             </div>
-            {waiting > 0 && (
+            {closedFull && (
+              <p className="text-xs text-pearl-white/60 leading-relaxed">
+                {`${event.name} isn’t taking new teams. Teams already registered are unaffected.`}
+              </p>
+            )}
+            {waiting > 0 && !closedFull && (
               <p className="text-xs text-pearl-white/45">
                 {waiting} {waiting === 1 ? "application" : "applications"} in review
               </p>
@@ -259,6 +277,23 @@ export function EventRegisterPanel({
               <Ticket className="w-4 h-4 mr-2" aria-hidden="true" />
               {full ? "Apply · join the queue" : "Request to join"}
             </Button>
+          )}
+          {showJoinOnly && (
+            <div className="space-y-2">
+              <Button
+                disabled
+                className="w-full h-12 rounded-xl font-display text-xs font-black uppercase tracking-widest bg-electric-magenta/10 text-electric-magenta/70 border border-electric-magenta/30"
+              >
+                Full · no new teams
+              </Button>
+              <button
+                type="button"
+                onClick={() => setRegistering(true)}
+                className="block w-full text-center text-xs text-pearl-white/60 hover:text-pearl-white underline underline-offset-2 cursor-pointer"
+              >
+                Already on a registered team? Join it with your team code
+              </button>
+            </div>
           )}
           {showAnswer && (
             <div className="space-y-2">

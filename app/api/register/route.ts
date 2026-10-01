@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { runAfterResponse } from "@/lib/after-response";
-import { events, eventId, capacityFor, effectiveRegistrationOpen, registrationUnavailableMessage } from "@/lib/pravrutti-data";
+import { events, eventId, capacityFor, effectiveRegistrationOpen, registrationUnavailableMessage, eventFullMessage } from "@/lib/pravrutti-data";
+import { leadIsRegistered } from "@/lib/lead-decision";
 import { newTicketId } from "@/lib/ticket-id";
 import {
   Application,
@@ -15,6 +16,7 @@ import {
   PAYMENT_REF_HINT,
   readJunoRegId,
   countsAsRegistered,
+  isLiveApplication,
 } from "@/lib/applications";
 import { Team, normalizeTeamCode, isValidTeamCode } from "@/lib/teams";
 import { cancelApplication } from "@/lib/payment-review";
@@ -355,6 +357,22 @@ export async function POST(req: Request) {
   const isFree = event.fee.toLowerCase().startsWith("free");
   const isJoiner = Boolean(team && team.createdByEmail !== email);
   const { payment, fee } = feeForApplicant({ eventFree: isFree, eventFee: event.fee, isJoiner });
+
+  /* A full event takes no new entries (Event.full). Someone already holding a
+     live row here is not new: an intent row is a person who left for the
+     payment portal before the event filled and may well have paid, and
+     refusing them now would not give the money back. Checked before the
+     receipt reference is claimed below, so a refused applicant's ID is not
+     spent on a registration that never happened. */
+  if (event.full) {
+    const entering = isJoiner
+      ? !(await leadIsRegistered(evId, team))
+      : !isLiveApplication(
+          ((await readJsonByPath(applicationPath(evId, email))) as Application | null)?.status,
+        );
+    if (entering)
+      return NextResponse.json({ error: eventFullMessage(event.name) }, { status: 409 });
+  }
   // Whoever is charged pays on Juno first and proves it with the receipt's
   // transaction ID. `awaiting` is exactly "charged and not yet verified";
   // joiners and free events never reach this branch.

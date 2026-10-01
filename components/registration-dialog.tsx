@@ -256,8 +256,19 @@ export function RegistrationDialog({
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => {
         if (!alive || !d?.team?.code) return;
-        setCreatedTeam(d.team);
-        setTeamPane("created");
+        /* Being on a team's list is not the same as running it. Someone the
+           lead added is on the list before they have joined — and showing
+           them the lead's screen gave them a "full" team to manage and no
+           way in. Nexovate's teammates, whose invite emails bounced, were
+           stuck exactly there. They get the join step instead, already
+           pointing at their team. */
+        if (d.team.isLead) {
+          setCreatedTeam(d.team);
+          setTeamPane("created");
+        } else {
+          setVerifiedTeam({ ...d.team, invited: true });
+          setTeamPane("verified");
+        }
       })
       .catch(() => {});
 
@@ -647,6 +658,9 @@ export function RegistrationDialog({
           action: "verify",
           eventId: eventId(event.name),
           code,
+          /* Only used where nobody is signed in (the test site); otherwise
+             the server reads the session, as it will when they join. */
+          email: form.email.trim(),
         }),
       });
       const data = await res.json();
@@ -667,7 +681,10 @@ export function RegistrationDialog({
   const handleJoinTeam = async () => {
     if (!event || teamBusy || !verifiedTeam) return;
     if (!detailsOk()) return;
-    if (verifiedTeam.isFull) return fail(`This team is full (${verifiedTeam.maxMembers} including the lead).`);
+    /* A full team still has a place for someone its lead already added —
+       their own invite is what fills it. */
+    if (verifiedTeam.isFull && !verifiedTeam.invited)
+      return fail(`This team is full (${verifiedTeam.maxMembers} including the lead).`);
     setTeamBusy(true);
     setError(null);
     try {
@@ -736,7 +753,7 @@ export function RegistrationDialog({
                     : joining
                       ? "no payment"
                       : `₹${FEE_PER_HEAD} per team`}
-                  {typeof seatsLeft === "number" && seatsLeft <= 0 && " · waitlist"}
+                  {typeof seatsLeft === "number" && seatsLeft <= 0 && (event.full ? " · full" : " · waitlist")}
                 </DialogDescription>
                 <div className="flex items-center justify-between pt-1">
                   <DialogTitle className="font-semibold text-[22px] text-white">
@@ -817,12 +834,15 @@ export function RegistrationDialog({
                 </div>
               ) : step === 2 ? (
                 <div className="space-y-4 animate-step">
-                  <Field label="Team lead name *">
+                  {/* Only the person starting the team is its lead; someone
+                      joining one is asked for their own name. */}
+                  <Field label={joining ? "Your name *" : "Team lead name *"}>
                     <Input
                       className={inputCls}
                       value={form.name}
                       onChange={set("name")}
-                      placeholder="Your full name" autoComplete="name" aria-label="Team lead name" />
+                      placeholder="Your full name" autoComplete="name"
+                      aria-label={joining ? "Your name" : "Team lead name"} />
                   </Field>
                   <Field label="Phone number *">
                     <Input
@@ -843,7 +863,23 @@ export function RegistrationDialog({
                     <Input className={inputCls} value={form.college} onChange={set("college")} />
                   </Field>
 
-                  {teamPane === "idle" && (
+                  {teamPane === "idle" && event.full && (
+                    /* Full: no new team, but a member of a team that is
+                       already in still has to be able to join it. */
+                    <div className="space-y-3">
+                      <p className="text-[13px] text-champagne-gold/80 leading-relaxed">
+                        {`${event.name} is full and isn’t taking new teams. If your team is already registered, join it with the team code your lead shared.`}
+                      </p>
+                      <Button
+                        type="button" onClick={() => { setError(null); setTeamPane("join"); }}
+                        className={`${primaryBtn} w-full`}
+                        aria-label="Join team" >
+                        Join your team
+                      </Button>
+                    </div>
+                  )}
+
+                  {teamPane === "idle" && !event.full && (
                     <div className="space-y-3">
 
                       {/* They already have a team elsewhere — offer the name
@@ -1065,8 +1101,9 @@ export function RegistrationDialog({
                         )}
                       </div>
                       <p className="text-[13px] text-white/50">
-                        {verifiedTeam.memberCount}/{verifiedTeam.maxMembers} members
-                        {verifiedTeam.isFull ? " · full" : ""}
+                        {verifiedTeam.invited
+                          ? "Your team lead has already added you — join to take your place."
+                          : `${verifiedTeam.memberCount}/${verifiedTeam.maxMembers} members${verifiedTeam.isFull ? " · full" : ""}`}
                       </p>
                       <p className="text-[13px] text-white/50 leading-relaxed">
                         Joining adds you to this team for {event.name}. The team lead covers the fee — you don&apos;t pay.
@@ -1080,7 +1117,7 @@ export function RegistrationDialog({
                         </Button>
                         <Button
                           type="button" onClick={handleJoinTeam}
-                          disabled={teamBusy || verifiedTeam.isFull}
+                          disabled={teamBusy || (verifiedTeam.isFull && !verifiedTeam.invited)}
                           className={`${primaryBtn} flex-1`}
                         >
                           {teamBusy ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Joining…</> : "Join"}
@@ -1089,6 +1126,15 @@ export function RegistrationDialog({
                     </div>
                   )}
 
+                  {/* A full event takes no new team, so nobody here is about
+                      to pay — a fee box would only suggest otherwise. */}
+                  {event.full && teamPane === "created" && (
+                    <p className="text-[13px] text-champagne-gold/80 leading-relaxed">
+                      {`${event.name} is full and isn’t taking new teams, so this team can’t be registered now.`}
+                    </p>
+                  )}
+
+                  {(!event.full || joining) && (
                   <div className={`${card} flex items-center justify-between px-4 py-3`}>
                     <div>
                       <p className="text-[13px] text-white/50">{joining ? "Your fee" : "Your fee (online)"}</p>
@@ -1104,6 +1150,7 @@ export function RegistrationDialog({
                     </div>
                     <p className="font-semibold text-lg text-white">{joining ? "—" : applicantFee}</p>
                   </div>
+                  )}
 
                   {errorBox}
 
@@ -1111,7 +1158,7 @@ export function RegistrationDialog({
                     <Button variant="outline" onClick={() => { setError(null); setStep(1); }} className={`${ghostBtn} px-4`} aria-label="Back">
                       <ArrowLeft className="w-4 h-4" />
                     </Button>
-                    {teamPane !== "join" && teamPane !== "verified" && teamPane !== "create" && (
+                    {teamPane !== "join" && teamPane !== "verified" && teamPane !== "create" && !event.full && (
                       <Button
                         onClick={() => {
                           if (!detailsOk()) return;
