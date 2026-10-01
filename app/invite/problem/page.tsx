@@ -33,6 +33,11 @@ const REASONS: Record<string, { title: string; blurb: string }> = {
     blurb:
       "The team lead deleted it, so there is nothing left to join. You can still register for the event yourself, or ask them to create it again.",
   },
+  full: {
+    title: "This event is full",
+    blurb:
+      "It isn't taking new teams, and your team lead hasn't completed the team's registration. Your invite stays valid — if the event reopens, the same link will work.",
+  },
   error: {
     title: "Something went wrong opening that invite",
     blurb: "Try the link once more. If it still fails, ask your team lead to send a fresh one.",

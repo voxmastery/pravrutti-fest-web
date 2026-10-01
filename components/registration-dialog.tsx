@@ -753,7 +753,7 @@ export function RegistrationDialog({
                     : joining
                       ? "no payment"
                       : `₹${FEE_PER_HEAD} per team`}
-                  {typeof seatsLeft === "number" && seatsLeft <= 0 && " · waitlist"}
+                  {typeof seatsLeft === "number" && seatsLeft <= 0 && (event.full ? " · full" : " · waitlist")}
                 </DialogDescription>
                 <div className="flex items-center justify-between pt-1">
                   <DialogTitle className="font-semibold text-[22px] text-white">
@@ -863,7 +863,23 @@ export function RegistrationDialog({
                     <Input className={inputCls} value={form.college} onChange={set("college")} />
                   </Field>
 
-                  {teamPane === "idle" && (
+                  {teamPane === "idle" && event.full && (
+                    /* Full: no new team, but a member of a team that is
+                       already in still has to be able to join it. */
+                    <div className="space-y-3">
+                      <p className="text-[13px] text-champagne-gold/80 leading-relaxed">
+                        {`${event.name} is full and isn’t taking new teams. If your team is already registered, join it with the team code your lead shared.`}
+                      </p>
+                      <Button
+                        type="button" onClick={() => { setError(null); setTeamPane("join"); }}
+                        className={`${primaryBtn} w-full`}
+                        aria-label="Join team" >
+                        Join your team
+                      </Button>
+                    </div>
+                  )}
+
+                  {teamPane === "idle" && !event.full && (
                     <div className="space-y-3">
 
                       {/* They already have a team elsewhere — offer the name
@@ -1110,6 +1126,15 @@ export function RegistrationDialog({
                     </div>
                   )}
 
+                  {/* A full event takes no new team, so nobody here is about
+                      to pay — a fee box would only suggest otherwise. */}
+                  {event.full && teamPane === "created" && (
+                    <p className="text-[13px] text-champagne-gold/80 leading-relaxed">
+                      {`${event.name} is full and isn’t taking new teams, so this team can’t be registered now.`}
+                    </p>
+                  )}
+
+                  {(!event.full || joining) && (
                   <div className={`${card} flex items-center justify-between px-4 py-3`}>
                     <div>
                       <p className="text-[13px] text-white/50">{joining ? "Your fee" : "Your fee (online)"}</p>
@@ -1125,6 +1150,7 @@ export function RegistrationDialog({
                     </div>
                     <p className="font-semibold text-lg text-white">{joining ? "—" : applicantFee}</p>
                   </div>
+                  )}
 
                   {errorBox}
 
@@ -1132,7 +1158,7 @@ export function RegistrationDialog({
                     <Button variant="outline" onClick={() => { setError(null); setStep(1); }} className={`${ghostBtn} px-4`} aria-label="Back">
                       <ArrowLeft className="w-4 h-4" />
                     </Button>
-                    {teamPane !== "join" && teamPane !== "verified" && teamPane !== "create" && (
+                    {teamPane !== "join" && teamPane !== "verified" && teamPane !== "create" && !event.full && (
                       <Button
                         onClick={() => {
                           if (!detailsOk()) return;

@@ -1,5 +1,5 @@
 import { applicationPath, readJsonByPath } from "@/lib/blob-store";
-import type { Application } from "@/lib/applications";
+import { isLiveApplication, type Application } from "@/lib/applications";
 import type { Team } from "@/lib/teams";
 
 /**
@@ -28,4 +28,20 @@ export async function leadIsConfirmed(evId: string, team: Team | null): Promise<
   if (!lead) return false;
   const app = (await readJsonByPath(applicationPath(evId, lead))) as Application | null;
   return app?.status === "confirmed";
+}
+
+/**
+ * Whether a team is already in the field: its lead holds a live registration,
+ * in review or confirmed.
+ *
+ * What decides who may still join once an event is full (Event.full). A team
+ * whose lead is registered is in, and its members joining adds no new team;
+ * a team whose lead never registered is not, and cannot get in now — letting
+ * people join it would only hand them a ticket that can never be confirmed.
+ */
+export async function leadIsRegistered(evId: string, team: Team | null): Promise<boolean> {
+  const lead = String(team?.createdByEmail ?? "").trim().toLowerCase();
+  if (!lead) return false;
+  const app = (await readJsonByPath(applicationPath(evId, lead))) as Application | null;
+  return isLiveApplication(app?.status);
 }

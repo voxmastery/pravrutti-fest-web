@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { randomBytes } from "crypto";
-import { events, eventId, capacityFor, effectiveRegistrationOpen, registrationUnavailableMessage } from "@/lib/pravrutti-data";
+import { events, eventId, capacityFor, effectiveRegistrationOpen, registrationUnavailableMessage, eventFullMessage } from "@/lib/pravrutti-data";
 import {
   Application,
   PHONE_HINT,
@@ -22,7 +22,7 @@ import {
 } from "@/lib/invites";
 import { inviteUrl, sendInviteEmail } from "@/lib/invite-email";
 import { sendConfirmationEmail } from "@/lib/confirmation-email";
-import { leadIsConfirmed } from "@/lib/lead-decision";
+import { leadIsConfirmed, leadIsRegistered } from "@/lib/lead-decision";
 import {
   Team,
   TeamMember,
@@ -231,6 +231,8 @@ async function createTeam(body: any) {
   const evId = String(body?.eventId ?? "").trim();
   const event = findEvent(evId);
   if (!event) return jsonError("That event doesn't exist.", 400);
+  /* A new team is exactly what a full event is not taking. */
+  if (event.full) return jsonError(eventFullMessage(event.name), 409);
 
   const who = await resolveApplicantEmail(String(body?.email ?? ""));
   if ("error" in who) return who.error;
@@ -403,6 +405,12 @@ async function joinTeam(body: any) {
   } catch (e) {
     return blobFailed(e, "team join precheck failed");
   }
+
+  /* A full event still lets people onto a team that is already in it — that
+     adds no team. A team whose lead never registered is not in it and cannot
+     get in now, so joining it would only strand them in review. */
+  if (event.full && !(await leadIsRegistered(evId, team)))
+    return jsonError(eventFullMessage(event.name), 409);
 
   const maxMembers = maxTeamSizeFor(event);
   const roster = await listTeamMembers(evId, code);
@@ -616,6 +624,9 @@ async function addMember(body: any) {
     if (!team) return jsonError("No team found for that code.", 404);
     if (team.createdByEmail !== who.email)
       return jsonError("Only the team lead can add members.", 403);
+    /* Same rule as joining: growing a team that is already in is fine. */
+    if (event.full && !(await leadIsRegistered(evId, team)))
+      return jsonError(eventFullMessage(event.name), 409);
     if (fields.email === who.email)
       return jsonError("You're already on this team as the lead.", 409);
 
