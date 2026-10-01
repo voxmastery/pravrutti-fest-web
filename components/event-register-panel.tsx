@@ -146,12 +146,6 @@ export function EventRegisterPanel({
   const pct = Math.min((taken / Math.max(total, 1)) * 100, 100);
   const invite = mine ? <TeamInviteCard team={mine} level={level} /> : null;
 
-  /* Confirmed viewers already have a ticket — the card's job (explain approval
-     and collect a new application) would contradict "You're going". They still
-     get the team code so they can invite after submit. */
-  if (dash.ready && staff) return null;
-  if (viewerReady && viewerStatus === "confirmed") return invite;
-
   const showApply = viewerReady && dash.ready && !live && !closed && !staff;
   const showClosed = viewerReady && !live && closed;
   /* Two different people are pending without a reference. One left for the
@@ -186,6 +180,18 @@ export function EventRegisterPanel({
     openToFinish(showAnswer ? "answer" : "reference");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showAnswer, showAddRef]);
+
+  /* Confirmed viewers already have a ticket — the card's job (explain approval
+     and collect a new application) would contradict "You're going". They still
+     get the team code so they can invite after submit.
+
+     Below every hook, never above one. These returns once sat above the
+     deep-link effect, so a viewer who became confirmed while the page was
+     open — exactly what joining an approved team now does — rendered two
+     fewer hooks than the render before, and the page fell over with "This
+     page couldn't load". test/event-register-panel-hooks keeps them here. */
+  if (dash.ready && staff) return null;
+  if (viewerReady && viewerStatus === "confirmed") return invite;
 
   return (
     <div className="space-y-3">

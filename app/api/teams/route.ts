@@ -127,7 +127,7 @@ async function previewResponse(team: Team, maxMembers: number, includeRoster = f
   });
 }
 
-async function verifyTeam(evId: string, rawCode: string) {
+async function verifyTeam(evId: string, rawCode: string, bodyEmail: string) {
   const code = normalizeTeamCode(rawCode);
   const event = findEvent(evId);
   if (!evId || !event) return jsonError("That event doesn't exist.", 400);
@@ -135,7 +135,24 @@ async function verifyTeam(evId: string, rawCode: string) {
   try {
     const team = await loadTeam(evId, code);
     if (!team) return jsonError("No team found for that code.", 404);
-    return await previewResponse(team, maxTeamSizeFor(event));
+
+    /* Whether the person looking is one the lead already added. Each
+       unaccepted invite holds a place, so the team they were invited to can
+       read full to them — and joinTeam lets them in regardless. The viewer is
+       resolved exactly as joinTeam will resolve them, so the two agree; it
+       only ever says whether *your own* address is on the list. */
+    const signedIn = await resolveEmail();
+    const viewer = (signedIn ?? (authRequired() ? "" : bodyEmail)).trim().toLowerCase();
+    const members = await listTeamMembers(team.eventId, team.code);
+    const invited =
+      !!viewer &&
+      viewer !== String(team.createdByEmail ?? "").toLowerCase() &&
+      members.some((m: TeamMember) => String(m.email ?? "").toLowerCase() === viewer);
+
+    return NextResponse.json(
+      { ...toTeamPreview(team, members, maxTeamSizeFor(event)), ...(invited ? { invited: true } : {}) },
+      { headers: { "cache-control": "no-store" } },
+    );
   } catch (e) {
     return blobFailed(e, "team verify failed");
   }
@@ -389,7 +406,7 @@ async function joinTeam(body: any) {
 
   const maxMembers = maxTeamSizeFor(event);
   const roster = await listTeamMembers(evId, code);
-  const alreadyMember = roster.some((m: any) => m.email === email);
+  const alreadyMember = roster.some((m: any) => String(m.email ?? "").toLowerCase() === email);
   if (alreadyMember && team.createdByEmail === email)
     return jsonError("You're the team lead — continue to submit your application.", 409);
 
@@ -772,7 +789,8 @@ export async function GET(req: Request) {
   const mine = url.searchParams.get("mine");
   if (mine === "1" || mine === "true") return mineTeam(evId, "");
   const code = String(url.searchParams.get("code") ?? "");
-  return verifyTeam(evId, code);
+  /* GET carries no body, so only a signed-in viewer can be recognised here. */
+  return verifyTeam(evId, code, "");
 }
 
 export async function POST(req: Request) {
@@ -786,7 +804,7 @@ export async function POST(req: Request) {
   const action = String(body?.action ?? "create").toLowerCase();
   if (action === "verify") {
     const evId = String(body?.eventId ?? body?.event ?? "").trim();
-    return verifyTeam(evId, String(body?.code ?? ""));
+    return verifyTeam(evId, String(body?.code ?? ""), String(body?.email ?? ""));
   }
   if (action === "mine") {
     const evId = String(body?.eventId ?? body?.event ?? "").trim();

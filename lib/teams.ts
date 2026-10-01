@@ -78,6 +78,11 @@ export type TeamPreview = {
       alongside isLead, so the ticket page can say why rather than offering a
       button the server would refuse. */
   canInvite?: boolean;
+  /** The signed-in viewer is already on this team's list — the lead added
+      them — so a full team still has their place. Without it, an invited
+      teammate whose email bounced and who typed the code instead found their
+      own team "full" and could not join it. */
+  invited?: boolean;
 };
 
 /** Strip phones and college before anything leaves the teams API. */
