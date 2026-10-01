@@ -4,9 +4,9 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { RegistrationDialog } from "@/components/registration-dialog";
 import { TeamInviteCard, useMyTeam } from "@/components/team-invite-card";
-import { Event, eventId, capacityFor, maxTeamsFor, effectiveRegistrationState, type RegistrationState } from "@/lib/pravrutti-data";
+import { Event, eventId, capacityFor, maxTeamsFor, effectiveRegistrationState, festFor, eventClosesDisplay, type RegistrationState } from "@/lib/pravrutti-data";
 import { FEE_PER_HEAD, isLiveApplication, type AppStatus } from "@/lib/applications";
-import { IndianRupee, Ticket, UserCheck } from "lucide-react";
+import { Clock, IndianRupee, Ticket, UserCheck } from "lucide-react";
 import { useDashboardRole } from "@/hooks/use-dashboard-role";
 import { isStaffRole } from "@/lib/staff-cockpit";
 import { DiscoverizeGroupCard } from "@/components/discoverize-group-card";
@@ -28,6 +28,16 @@ import {
  * `onRegisterOpenChange` lets the slide-over collapse itself while the apply
  * dialog is up, rather than stacking two modal layers on a phone.
  */
+/** "tonight at 11:59 PM" on the closing day itself, the full date otherwise. */
+function closesLabel(iso: string): string {
+  const IST = 330 * 60 * 1000;
+  const close = new Date(Date.parse(iso) + IST);
+  const now = new Date(Date.now() + IST);
+  const sameDay = close.toISOString().slice(0, 10) === now.toISOString().slice(0, 10);
+  const full = eventClosesDisplay({ registrationCloses: iso });
+  return sameDay ? `tonight at ${full.split(",")[0]}` : `at ${full}`;
+}
+
 export function EventRegisterPanel({
   event,
   level = 2,
@@ -82,11 +92,22 @@ export function EventRegisterPanel({
      render time disagrees with the build-time HTML the moment the deadline
      passes without a redeploy — a hydration mismatch on the primary button. */
   const [regState, setRegState] = useState<RegistrationState>("open");
+  /* Read on the client only: "tonight" depends on today's date, and this card
+     is prerendered, so computing it during render would mismatch hydration. */
+  const [closesText, setClosesText] = useState("");
   const closed = regState !== "open";
 
   useEffect(() => {
-    setRegState(effectiveRegistrationState());
-  }, []);
+    /* festFor: an event can close before the fest-wide date. Re-checked each
+       minute so an open tab flips to closed at the deadline. */
+    const check = () => {
+      setRegState(effectiveRegistrationState(undefined, festFor(event)));
+      setClosesText(event.registrationCloses ? closesLabel(event.registrationCloses) : "");
+    };
+    check();
+    const t = setInterval(check, 60_000);
+    return () => clearInterval(t);
+  }, [event]);
 
   const load = useCallback(() => {
     fetch(`/api/register?event=${id}`, { cache: "no-store" })
@@ -240,6 +261,13 @@ export function EventRegisterPanel({
               ? "Free — nothing to pay at any stage"
               : `${FEE_PER_HEAD} per team · paid online by the lead`}
           </p>
+
+          {closesText && regState === "open" && (
+            <p className="flex items-center gap-2 text-sm font-semibold text-soft-gold">
+              <Clock className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+              Registration closes {closesText} IST
+            </p>
+          )}
 
           <div className="space-y-2">
             <div className="flex items-baseline justify-between gap-3">
