@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Calendar, Trophy, ChevronDown } from "lucide-react";
+import { ArrowRight, Calendar, Trophy, ChevronDown, Clock } from "lucide-react";
 import { useParallax, useMousePosition } from "@/hooks/use-animations";
 import {
   CAMPUS_COORDS,
@@ -11,6 +11,7 @@ import {
   FEST,
   formatINR,
   REGISTRATION_CLOSES_DISPLAY,
+  REGISTRATION_CLOSES_LONG,
   effectiveRegistrationState,
   ANNOUNCED_PRIZE_POOL,
 } from "@/lib/pravrutti-data";
@@ -337,6 +338,20 @@ export function HeroSection() {
             </div>
           </div>
         </div>
+
+        {/* ── Deadline, right under the prize: the organisers want it seen
+               before anything else on the first screen. ── */}
+        {isRegistrationOpen && REGISTRATION_CLOSES_LONG && (
+          <div
+            className={`mb-4 xl:mb-6 transition-all duration-1000 ${isLoaded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"}`}
+            style={{ transitionDelay: "1.45s" }}
+          >
+            <p className="inline-flex items-center justify-center text-center gap-2 xl:gap-3 whitespace-nowrap max-[379px]:whitespace-normal max-[379px]:rounded-2xl max-[379px]:max-w-[17rem] rounded-full border border-cyber-pink/50 bg-cyber-pink/15 px-3.5 py-2.5 xl:px-6 xl:py-3 font-display font-black uppercase tracking-[0.04em] xl:tracking-[0.08em] text-[13px] sm:text-base xl:text-2xl text-champagne-gold shadow-[0_0_18px_rgba(214,77,141,0.35)]">
+              <Clock className="w-4 h-4 xl:w-6 xl:h-6 shrink-0 text-cyber-pink" aria-hidden="true" />
+              Registrations close {REGISTRATION_CLOSES_LONG}
+            </p>
+          </div>
+        )}
 
         {/* ── CTA Buttons ── */}
         <div
