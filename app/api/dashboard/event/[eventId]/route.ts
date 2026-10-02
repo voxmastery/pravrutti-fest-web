@@ -2,8 +2,8 @@ import { NextResponse } from "next/server";
 import { resolveRole, canViewEvent } from "@/lib/roles";
 import { listAll, readPrivate } from "@/lib/blob-store";
 import { createHash } from "crypto";
-import { countsAsRegistered, type Application } from "@/lib/applications";
-import { countRegistrations, entryKey } from "@/lib/registration-counts";
+import type { Application } from "@/lib/applications";
+import { countRegistrations, entryKey, heldRows, isTeammate } from "@/lib/registration-counts";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -31,9 +31,14 @@ type RosterEntry = {
       code is what a stranger types to join a team, and grouping a list
       does not need it. */
   group: string;
-  /** Whether this person holds a place — see countsAsRegistered. A team
-      block counts only these; withdrawn teammates are listed, not counted. */
+  /** Whether this person holds a place — see heldRows. A team block counts
+      only these; withdrawn teammates are listed, not counted. A teammate
+      holds a place only while their lead does. */
   live: boolean;
+  /** "lead" pays for the team; "member" is covered by the lead; null for
+      someone entered alone, or on a free event where nobody pays. Without
+      it the roster could not say who a team is waiting on. */
+  role: "lead" | "member" | null;
 };
 
 /**
@@ -70,6 +75,7 @@ export async function GET(
     .filter(Boolean) as Application[];
 
   const mine = records.filter((r) => r.eventId === eventId);
+  const holding = heldRows(mine);
 
   const base = (r: Application): RosterEntry => ({
     name: r.name,
@@ -80,7 +86,8 @@ export async function GET(
     checkedInAt: r.checkedInAt ?? null,
     team: r.teamCode ? r.teamName?.trim() || "Unnamed team" : null,
     group: createHash("sha256").update(`${eventId}|${entryKey(r)}`).digest("hex").slice(0, 12),
-    live: countsAsRegistered(r),
+    live: holding.has(r),
+    role: !r.teamCode ? null : isTeammate(r) ? "member" : r.payment !== "not_required" ? "lead" : null,
   });
 
   /* Branch on the role, not on a request flag — a coordinator asking for

@@ -29,8 +29,11 @@ type Entry = {
   team: string | null;
   /** Shared by everyone who entered together. */
   group: string;
-  /** Holds a place. Withdrawn teammates are listed but not counted. */
+  /** Holds a place. Withdrawn teammates are listed but not counted, and a
+      teammate holds a place only while their lead does. */
   live: boolean;
+  /** Who pays for the team ("lead") and who is covered ("member"). */
+  role?: "lead" | "member" | null;
   email?: string;
   phone?: string;
   teamName?: string | null;
@@ -502,7 +505,7 @@ const VIEWS: { id: View; label: string; hint: string }[] = [
   { id: "all", label: "Everyone", hint: "Everyone who has started registering, grouped by team. Withdrawn people are listed but not counted." },
   { id: "confirmed", label: "Confirmed", hint: "Verified and holding a ticket." },
   { id: "review", label: "In review", hint: "Paid, or gave a payment ID — waiting for an organiser to verify it." },
-  { id: "unfinished", label: "Didn't finish", hint: "Started registering but never finished paying, so they hold no place. Worth a call." },
+  { id: "unfinished", label: "Didn't finish", hint: "Leads who started registering but never finished paying, and their teammates — nobody on those teams holds a place until the lead pays. Call the lead." },
 ];
 
 type Group = {
@@ -528,7 +531,10 @@ const WITHDRAWN = new Set(["cancelled", "declined"]);
  */
 function groupRoster(roster: readonly Entry[]): Group[] {
   const byName = (a: Entry, b: Entry) => a.name.localeCompare(b.name);
-  const liveFirst = (a: Entry, b: Entry) => Number(b.live) - Number(a.live) || byName(a, b);
+  /* The lead first — everyone else on the team stands where they stand —
+     then the people coming, then by name. */
+  const liveFirst = (a: Entry, b: Entry) =>
+    Number(b.role === "lead") - Number(a.role === "lead") || Number(b.live) - Number(a.live) || byName(a, b);
   const summarise = (key: string, team: string | null, people: Entry[]): Group => ({
     key,
     team,
@@ -615,6 +621,10 @@ function Participant({ p }: { p: Entry }) {
     </>
   ) : p.status === "confirmed" ? (
     <span className="text-white/45">Not arrived</span>
+  ) : p.status === "pending" && !p.live && p.role === "member" ? (
+    /* They did their part; the team's fee is the lead's to pay, and until it
+       is, nobody on the team holds a place. */
+    <span className="text-xs text-white/35">Lead hasn&apos;t paid</span>
   ) : p.status === "pending" && !p.live ? (
     /* Started, left for the payment portal, never came back with a receipt.
        "In review" would claim somebody is looking at it; nobody is, and it
@@ -627,8 +637,13 @@ function Participant({ p }: { p: Entry }) {
   const row = (
     <>
       <span className="min-w-0 text-left">
-        <span className={`block truncate text-sm font-medium ${hasDetail ? "text-champagne-gold" : "text-pearl-white"}`}>
-          {p.name}
+        <span className={`flex items-center gap-2 truncate text-sm font-medium ${hasDetail ? "text-champagne-gold" : "text-pearl-white"}`}>
+          <span className="truncate">{p.name}</span>
+          {p.role === "lead" && (
+            <span className="shrink-0 rounded border border-champagne-gold/40 px-1.5 py-px text-[10px] font-semibold uppercase tracking-wider text-champagne-gold/90">
+              Lead
+            </span>
+          )}
         </span>
         <span className="block truncate text-sm text-white/40">{p.college}</span>
         {!hasDetail && (p.phone || p.email) && (
