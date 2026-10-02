@@ -232,10 +232,10 @@ describe("an event closes on its own when it reaches its cap", () => {
      somebody who withdrew, or left for the portal and never came back with
      a receipt, does not — or a handful of abandoned attempts would shut an
      event that has room. */
-  it("does not count withdrawn or abandoned registrations against the cap", async () => {
+  it("does not count withdrawn or declined registrations against the cap", async () => {
     holdPlace(1);
     holdPlace(2, { status: "cancelled" });
-    holdPlace(3, { paymentRef: null });
+    holdPlace(3, { status: "declined", payment: "refunded" });
     expect((await teamsCall(createBody("robo-race"))).status).toBe(200);
   });
 

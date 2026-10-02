@@ -505,7 +505,7 @@ const VIEWS: { id: View; label: string; hint: string }[] = [
   { id: "all", label: "Everyone", hint: "Everyone who has started registering, grouped by team. Withdrawn people are listed but not counted." },
   { id: "confirmed", label: "Confirmed", hint: "Verified and holding a ticket." },
   { id: "review", label: "In review", hint: "Paid, or gave a payment ID — waiting for an organiser to verify it." },
-  { id: "unfinished", label: "Didn't finish", hint: "Leads who started registering but never finished paying, and their teammates — nobody on those teams holds a place until the lead pays. Call the lead." },
+  { id: "unfinished", label: "Didn't finish", hint: "Teammates whose lead never registered the team, or withdrew it — they hold no place until their lead registers. Call the lead. (Leads who went to pay and didn't come back are in review.)" },
 ];
 
 type Group = {
@@ -622,9 +622,9 @@ function Participant({ p }: { p: Entry }) {
   ) : p.status === "confirmed" ? (
     <span className="text-white/45">Not arrived</span>
   ) : p.status === "pending" && !p.live && p.role === "member" ? (
-    /* They did their part; the team's fee is the lead's to pay, and until it
-       is, nobody on the team holds a place. */
-    <span className="text-xs text-white/35">Lead hasn&apos;t paid</span>
+    /* They did their part, but their lead never registered the team, or
+       withdrew it — and nobody on a team holds a place without its lead. */
+    <span className="text-xs text-white/35">Lead not registered</span>
   ) : p.status === "pending" && !p.live ? (
     /* Started, left for the payment portal, never came back with a receipt.
        "In review" would claim somebody is looking at it; nobody is, and it

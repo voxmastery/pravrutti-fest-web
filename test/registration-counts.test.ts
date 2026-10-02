@@ -74,10 +74,12 @@ describe("what does not hold a place", () => {
     expect(c.teams).toBe(1);
   });
 
-  /* Left for the payment portal and never came back. */
-  it("leaves out an unpaid attempt with no receipt reference", () => {
+  /* Left for the payment portal and never came back — they may have paid on
+     Juno, so the place is held in review (organisers' call, 2 Oct 2026). */
+  it("counts someone who left to pay and never came back, in review", () => {
     const c = countRegistrations([row({ status: "pending", payment: "awaiting", paymentRef: null })]);
-    expect(c.people).toBe(0);
+    expect(c.people).toBe(1);
+    expect(c.confirmedPeople).toBe(0);
   });
 
   it("counts someone who paid and is waiting on us, because their place is taken", () => {
@@ -153,10 +155,12 @@ describe("a teammate stands where their lead stands", () => {
     row({ email: `mate${n}@x.com`, status: "pending", payment: "not_required", fee: COV,
           teamCode: "TEAMAAAA1111", ...over });
 
-  it("does not count teammates whose lead left to pay and never came back", () => {
+  /* The whole team is in review with a lead who left to pay and never came
+     back: the lead may have paid on Juno (organisers' call, 2 Oct 2026). */
+  it("puts teammates in review with a lead who left to pay and never came back", () => {
     const c = countRegistrations([lead({ paymentRef: null, stage: "intent" }), mate(1), mate(2)]);
-    expect(c.people).toBe(0);
-    expect(c.teams).toBe(0);
+    expect(c.people).toBe(3);
+    expect(c.teams).toBe(1);
   });
 
   it("counts teammates whose lead is in review with a receipt", () => {
@@ -180,7 +184,7 @@ describe("a teammate stands where their lead stands", () => {
 
   /* The organisers' decision stands: a confirmed teammate holds a place. */
   it("counts a teammate an organiser has confirmed, whatever the lead did", () => {
-    const c = countRegistrations([lead({ paymentRef: null }), mate(1, { status: "confirmed" })]);
+    const c = countRegistrations([lead({ status: "cancelled" }), mate(1, { status: "confirmed" })]);
     expect(c.people).toBe(1);
     expect(c.confirmedPeople).toBe(1);
   });
@@ -202,7 +206,7 @@ describe("a teammate stands where their lead stands", () => {
   it("judges each team on its own lead", () => {
     const c = countRegistrations([
       lead(), mate(1),
-      lead({ email: "lead2@x.com", teamCode: "TEAMBBBB2222", paymentRef: null }),
+      lead({ email: "lead2@x.com", teamCode: "TEAMBBBB2222", status: "cancelled" }),
       mate(2, { teamCode: "TEAMBBBB2222" }),
     ]);
     expect(c.people).toBe(2);
@@ -221,7 +225,7 @@ describe("a teammate stands where their lead stands", () => {
 
 describe("heldRows", () => {
   it("returns exactly the rows holding a place", () => {
-    const l = row({ email: "lead@x.com", status: "pending", payment: "awaiting", paymentRef: null,
+    const l = row({ email: "lead@x.com", status: "cancelled", payment: "awaiting", paymentRef: null,
                     fee: "Rs. 200/-", teamCode: "TEAMAAAA1111" });
     const m = row({ email: "mate@x.com", status: "pending", payment: "not_required",
                     fee: "Covered by team lead", teamCode: "TEAMAAAA1111" });

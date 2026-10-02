@@ -34,10 +34,12 @@ describe("countsAsRegistered", () => {
     expect(countsAsRegistered(app({ status: "pending", payment: "awaiting" }))).toBe(true);
   });
 
-  /* Started and never paid — the incomplete registration this rule exists for. */
-  it("does not count an unverified fee with no reference", () => {
-    expect(countsAsRegistered(app({ status: "pending", payment: "awaiting", paymentRef: null }))).toBe(false);
-    expect(countsAsRegistered(app({ status: "pending", payment: "awaiting", paymentRef: "   " }))).toBe(false);
+  /* Left for the payment portal and never came back. They may well have paid
+     on Juno, so since 2 Oct 2026 the organisers hold the place in review
+     until the payment report says otherwise. */
+  it("counts an unverified fee with no reference as in review", () => {
+    expect(countsAsRegistered(app({ status: "pending", payment: "awaiting", paymentRef: null }))).toBe(true);
+    expect(countsAsRegistered(app({ status: "pending", payment: "awaiting", paymentRef: "   " }))).toBe(true);
   });
 
   it("does not count someone who withdrew", () => {

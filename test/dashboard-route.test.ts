@@ -121,12 +121,12 @@ describe("GET /api/dashboard/event/[eventId]", () => {
   /* The bug this replaced: every row read from the store was counted, so a
      withdrawn student and an abandoned payment both kept filling a seat.
      CHAOS showed 239 here and 227 in the table above it. */
-  it("leaves withdrawn and abandoned registrations out of the counts", async () => {
+  it("leaves withdrawn and declined registrations out of the counts", async () => {
     apps.push(
       { eventId: "robo-climb", name: "Esha", college: "RUAS", email: "e@x.com",
         phone: "9000000005", status: "cancelled", payment: "not_required" },
       { eventId: "robo-climb", name: "Farid", college: "RUAS", email: "f@x.com",
-        phone: "9000000006", status: "pending", payment: "awaiting", paymentRef: null },
+        phone: "9000000006", status: "declined", payment: "refunded", paymentRef: null },
     );
     const body = await (await get("robo-climb")).json();
     expect(body.counts.registered).toBe(3);
@@ -209,12 +209,22 @@ describe("the roster judges a teammate by their lead", () => {
     expect(by(body, "Ranjitha").role).toBe("member");
   });
 
-  it("holds no place for a teammate whose lead never finished paying", async () => {
+  /* Organisers' call, 2 Oct 2026: a lead who left to pay and never came back
+     may have paid on Juno, so the whole team is in review and counted. */
+  it("puts the whole team in review with a lead who never came back from paying", async () => {
     seed({});
+    const body = await (await get("pitch-at-mach")).json();
+    expect(by(body, "Sonika M").live).toBe(true);
+    expect(by(body, "Ranjitha").live).toBe(true);
+    expect(body.counts.registered).toBe(2);
+    expect(body.counts.teams).toBe(1);
+  });
+
+  it("holds no place for a teammate whose lead withdrew", async () => {
+    seed({ status: "cancelled" });
     const body = await (await get("pitch-at-mach")).json();
     expect(by(body, "Ranjitha").live).toBe(false);
     expect(body.counts.registered).toBe(0);
-    expect(body.counts.teams).toBe(0);
   });
 
   it("puts the teammate in review alongside a lead who is in review", async () => {
