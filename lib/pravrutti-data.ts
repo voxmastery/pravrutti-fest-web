@@ -662,6 +662,9 @@ export const events: Event[] = [
     prizes: [15000, 10000, 7000],
     teamSize: { min: 2, max: 4, soloAllowed: false },
     capacityUnit: "teams",
+    /* Registrations full, organisers' call, 2 Oct. Switched to full by hand —
+       CHAOS has no stated cap — so it stays shut until this is removed. */
+    full: true,
     duration: "8 hours",
     coordinators: {
       faculty: [],
