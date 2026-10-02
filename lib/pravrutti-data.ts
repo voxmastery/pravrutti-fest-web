@@ -687,7 +687,9 @@ export const events: Event[] = [
     duration: "24 hours",
     coordinators: {
       faculty: [],
-      student: [{ name: "Ganesh" }, { name: "Shravanth" }],
+      /* Shravanth alone since 2 Oct — Ganesh asked to come off Hacktivate.
+         He stays on CHAOS. */
+      student: [{ name: "Shravanth" }],
     },
     club: "IEEE",
     brochureUrl: "https://drive.google.com/open?id=1agRe2bIb_QXyatw1OcwjvKi0EtU5W0VL",
