@@ -83,6 +83,10 @@ export type TeamPreview = {
       teammate whose email bounced and who typed the code instead found their
       own team "full" and could not join it. */
   invited?: boolean;
+  /** Who leads the team, for the team's own members. The roster is ordered
+      by when people joined, and the first to join is not always the lead —
+      a lead can be changed (see set_lead). Only sent where the roster is. */
+  leadEmail?: string;
 };
 
 /** Strip phones and college before anything leaves the teams API. */

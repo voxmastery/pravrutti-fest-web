@@ -177,6 +177,7 @@ async function mineTeam(evId: string, bodyEmail: string) {
         team: {
           ...toTeamPreview(team, members, maxTeamSizeFor(event), true),
           isLead: String(team.createdByEmail).toLowerCase() === who.email.toLowerCase(),
+          leadEmail: String(team.createdByEmail ?? "").toLowerCase(),
           canInvite: effectiveRegistrationOpen(undefined, festFor(event)),
         },
       },

@@ -71,7 +71,15 @@ export function TeamInviteCard({
 }) {
   const [copied, setCopied] = useState(false);
   const Heading = level === 2 ? "h2" : "h3";
-  const people = team.members ?? [];
+  /* The lead first, marked by who the team says leads it. The roster is in
+     the order people joined, and a team whose lead was changed would
+     otherwise label the wrong person. Falls back to the first to join where
+     the lead is not sent. */
+  const lead = team.leadEmail?.toLowerCase();
+  const isLeadOf = (p: { email: string }, i: number) => (lead ? p.email.toLowerCase() === lead : i === 0);
+  const people = [...(team.members ?? [])].sort(
+    (a, b) => Number(isLeadOf(b, 1)) - Number(isLeadOf(a, 1)),
+  );
 
   const handleCopy = async () => {
     try {
@@ -140,7 +148,7 @@ export function TeamInviteCard({
                     {person.email}
                   </a>
                 </div>
-                {i === 0 && (
+                {isLeadOf(person, i) && (
                   <span className="shrink-0 font-display text-[10px] font-bold uppercase tracking-widest text-champagne-gold/80 pt-0.5">
                     Lead
                   </span>
