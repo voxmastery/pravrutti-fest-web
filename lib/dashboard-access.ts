@@ -25,7 +25,9 @@ export const DESK_ACCESS: Record<string, string[]> = {
   "fault-x-load": ["bhauthikfirefly@gmail.com", "vimalkanth411@gmail.com"],
   "campus-innovators-2-0": ["akshayworkofficial01@gmail.com", "nikhita.n0601@gmail.com"],
   "beyond-the-blueprint-2-0": ["akshayworkofficial01@gmail.com", "nikhita.n0601@gmail.com"],
-  "respawn": ["jesleneiniya@gmail.com", "25etai@msruas.ac.in", "25etmc412021@msruas.ac.in", "24etis411024@msruas.ac.in"],
+  /* Sooraj Chakravarthy S moved off his college address (25etai@msruas.ac.in),
+     given by mistake, on 2 Oct. */
+  "respawn": ["jesleneiniya@gmail.com", "soorajchakravarthy3v@gmail.com", "25etmc412021@msruas.ac.in", "24etis411024@msruas.ac.in"],
   "glide-x": ["24etas012008@msruas.ac.in", "24etas012048@msruas.ac.in"],
   "the-logic-circuit": ["25etmc412021@msruas.ac.in", "24etmc412010@msruas.ac.in", "ddhviroja@gmail.com", "rainent27@gmail.com"],
   "rc-x": ["24etas012046@msruas.ac.in", "24etas012033@msruas.ac.in"],
