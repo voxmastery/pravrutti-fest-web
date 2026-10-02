@@ -23,6 +23,7 @@ import {
 import { inviteUrl, sendInviteEmail } from "@/lib/invite-email";
 import { sendConfirmationEmail } from "@/lib/confirmation-email";
 import { leadIsConfirmed, leadIsRegistered } from "@/lib/lead-decision";
+import { eventIsFull } from "@/lib/event-full";
 import {
   Team,
   TeamMember,
@@ -234,7 +235,7 @@ async function createTeam(body: any) {
   /* An event can close before the fest-wide date (Event.registrationCloses). */
   if (!effectiveRegistrationOpen(undefined, festFor(event))) return jsonError(eventClosedMessage(event), 409);
   /* A new team is exactly what a full event is not taking. */
-  if (event.full) return jsonError(eventFullMessage(event.name), 409);
+  if (await eventIsFull(event)) return jsonError(eventFullMessage(event.name), 409);
 
   const who = await resolveApplicantEmail(String(body?.email ?? ""));
   if ("error" in who) return who.error;
@@ -413,7 +414,7 @@ async function joinTeam(body: any) {
   /* A full event still lets people onto a team that is already in it — that
      adds no team. A team whose lead never registered is not in it and cannot
      get in now, so joining it would only strand them in review. */
-  if (event.full && !(await leadIsRegistered(evId, team)))
+  if (!(await leadIsRegistered(evId, team)) && (await eventIsFull(event)))
     return jsonError(eventFullMessage(event.name), 409);
 
   const maxMembers = maxTeamSizeFor(event);
@@ -631,7 +632,7 @@ async function addMember(body: any) {
     if (team.createdByEmail !== who.email)
       return jsonError("Only the team lead can add members.", 403);
     /* Same rule as joining: growing a team that is already in is fine. */
-    if (event.full && !(await leadIsRegistered(evId, team)))
+    if (!(await leadIsRegistered(evId, team)) && (await eventIsFull(event)))
       return jsonError(eventFullMessage(event.name), 409);
     if (fields.email === who.email)
       return jsonError("You're already on this team as the lead.", 409);

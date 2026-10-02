@@ -695,6 +695,9 @@ export const events: Event[] = [
     teamSize: { min: 2, max: 4, soloAllowed: false },
     capacity: 100,
     capacityUnit: "teams",
+    /* 29 teams were holding places against the 25 when this went on, 2 Oct.
+       Switched to full by the organisers; remove it to reopen. */
+    full: true,
     duration: "1h 30m",
     coordinators: {
       faculty: [],

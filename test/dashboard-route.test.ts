@@ -66,27 +66,46 @@ describe("GET /api/dashboard/event/[eventId]", () => {
     expect(bala.paymentRef).toBeNull();
   });
 
-  it("a coordinator cannot obtain contacts by asking differently", async () => {
+  /* Changed 2 Oct 2026, on the organisers' decision: coordinators now ring
+     their own event's people — above all the ones who started registering
+     and never finished — so they get each person's email and phone. Only
+     for their own events (see the access tests below), and nothing about
+     money: the payment ID, who verified it and the lead's member list stay
+     with the organisers, who decide payments. */
+  it("gives a coordinator the email and phone of their own event's people", async () => {
+    role.current = { kind: "coordinator", eventIds: ["robo-climb"] };
+    const body = await (await get("robo-climb")).json();
+    const asha = body.roster.find((p: { name: string }) => p.name === "Asha");
+    expect(asha.email).toBe("a@x.com");
+    expect(asha.phone).toBe("9000000001");
+  });
+
+  it("still keeps the payment record from a coordinator", async () => {
+    role.current = { kind: "coordinator", eventIds: ["robo-climb"] };
+    const body = await (await get("robo-climb")).json();
+    for (const p of body.roster) {
+      expect(p).not.toHaveProperty("paymentRef");
+      expect(p).not.toHaveProperty("paymentVerifiedBy");
+      expect(p).not.toHaveProperty("payment");
+      expect(p).not.toHaveProperty("members");
+    }
+    expect(JSON.stringify(body)).not.toContain("4183 7712 9930");
+  });
+
+  it("a coordinator cannot obtain the payment record by asking differently", async () => {
     // The role decides the shape; nothing in the request can change it.
     role.current = { kind: "coordinator", eventIds: ["robo-climb"] };
     const res = await GET(new Request("http://t?contacts=1&full=true"), {
       params: Promise.resolve({ eventId: "robo-climb" }),
     });
-    expect(JSON.stringify(await res.json())).not.toContain("@x.com");
+    expect(JSON.stringify(await res.json())).not.toContain("4183 7712 9930");
   });
 
-  it("NEVER returns contact details to a coordinator", async () => {
+  it("never gives a coordinator another event's people", async () => {
     role.current = { kind: "coordinator", eventIds: ["robo-climb"] };
-    const body = await (await get("robo-climb")).json();
-    const serialised = JSON.stringify(body);
-    expect(serialised).not.toContain("@x.com");
-    expect(serialised).not.toContain("9000000001");
-    for (const p of body.roster) {
-      expect(p).not.toHaveProperty("email");
-      expect(p).not.toHaveProperty("phone");
-      expect(p).not.toHaveProperty("paymentRef");
-    }
-    expect(serialised).not.toContain("4183 7712 9930");
+    const res = await get("skycraft");
+    expect(res.status).toBe(403);
+    expect(JSON.stringify(await res.json())).not.toContain("@x.com");
   });
 
   /* Both units. A coordinator reading one number guessed at the other and

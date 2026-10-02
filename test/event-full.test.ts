@@ -47,7 +47,8 @@ vi.mock("@/lib/roles", () => ({
   resolveRoleFor: async () => ({ kind: "none" }),
 }));
 /* Two events switched to full by the test, whatever the real data says, so
-   reopening Hacktivate never breaks this file. */
+   reopening an event never breaks this file — and Robo Race given a cap of
+   two teams, to exercise closing automatically at the cap. */
 vi.mock("@/lib/pravrutti-data", async (o) => {
   const real = await o<typeof import("@/lib/pravrutti-data")>();
   const FULL = new Set(["line-follower", "the-logic-circuit"]);
@@ -55,7 +56,11 @@ vi.mock("@/lib/pravrutti-data", async (o) => {
     ...real,
     registrationOpen: () => true,
     effectiveRegistrationOpen: () => true,
-    events: real.events.map((e) => ({ ...e, full: FULL.has(real.eventId(e.name)) })),
+    events: real.events.map((e) => {
+      const id = real.eventId(e.name);
+      if (id === "robo-race") return { ...e, full: false, maxTeams: 2, registrationCloses: undefined };
+      return { ...e, full: FULL.has(id), registrationCloses: undefined };
+    }),
   };
 });
 vi.mock("@/lib/invite-email", () => ({
@@ -68,9 +73,10 @@ vi.mock("@/lib/received-email", () => ({ sendReceivedEmail: async () => ({ sent:
 let teams: typeof import("@/app/api/teams/route").POST;
 let register: typeof import("@/app/api/register/route").POST;
 let accept: typeof import("@/app/invite/[token]/route").GET;
+let counts: typeof import("@/app/api/register/route").GET;
 beforeAll(async () => {
   ({ POST: teams } = await import("@/app/api/teams/route"));
-  ({ POST: register } = await import("@/app/api/register/route"));
+  ({ POST: register, GET: counts } = await import("@/app/api/register/route"));
   ({ GET: accept } = await import("@/app/invite/[token]/route"));
 });
 
@@ -194,6 +200,69 @@ describe("teams already in keep working", () => {
     const res = await accept(new Request(`https://pravrutti.tech/invite/${TOKEN}`), { params: Promise.resolve({ token: TOKEN }) });
     expect(res.headers.get("location")).not.toContain("/invite/problem");
     expect(store.get(`app/${FULL_EV}/${MATE}.json`)).toBeTruthy();
+  });
+});
+
+/* A team holding a place on Robo Race (cap: two teams, through the mock). */
+function holdPlace(n: number, over: Record<string, unknown> = {}) {
+  const email = `lead${n}@example.com`;
+  store.set(`app/robo-race/${email}.json`, {
+    ticketId: `PRV-${n}`, eventId: "robo-race", eventName: "ROBO RACE", status: "pending",
+    payment: "awaiting", fee: "Rs. 200/-", name: `Lead ${n}`, email, phone: "9876543210",
+    college: "RUAS", teamName: `Team ${n}`, teamCode: `TEAMRR00000${n}`,
+    paymentRef: "J5N3Z8Y0MUQG1U" + n, appliedAt: AT, ...over,
+  });
+}
+
+describe("an event closes on its own when it reaches its cap", () => {
+  it("refuses a new team once the cap is reached", async () => {
+    holdPlace(1);
+    holdPlace(2);
+    const res = await teamsCall(createBody("robo-race"));
+    expect(res.status).toBe(409);
+    expect(res.body.error).toMatch(/full/i);
+  });
+
+  it("takes a new team while there is still room", async () => {
+    holdPlace(1);
+    expect((await teamsCall(createBody("robo-race"))).status).toBe(200);
+  });
+
+  /* The same count the desk shows: in review and confirmed hold a place;
+     somebody who withdrew, or left for the portal and never came back with
+     a receipt, does not — or a handful of abandoned attempts would shut an
+     event that has room. */
+  it("does not count withdrawn or abandoned registrations against the cap", async () => {
+    holdPlace(1);
+    holdPlace(2, { status: "cancelled" });
+    holdPlace(3, { paymentRef: null });
+    expect((await teamsCall(createBody("robo-race"))).status).toBe(200);
+  });
+
+  it("still lets a team that is in grow once the cap is reached", async () => {
+    holdPlace(1);
+    holdPlace(2);
+    seedTeam("robo-race", true);
+    expect((await teamsCall(joinBody("robo-race"))).status).toBe(200);
+  });
+
+  /* The event page reads this to say "Full" without waiting for someone to
+     be refused. */
+  it("tells the event page which events are full", async () => {
+    holdPlace(1);
+    holdPlace(2);
+    const res = await counts(new Request("http://t/api/register"));
+    const body = await res.json();
+    expect(body.full["robo-race"]).toBe(true);
+    expect(body.full["line-follower"]).toBe(true);
+    expect(body.full["chaos"]).toBe(false);
+  });
+
+  it("reopens on its own when a place frees up", async () => {
+    holdPlace(1);
+    holdPlace(2, { status: "declined" });
+    const body = await (await counts(new Request("http://t/api/register"))).json();
+    expect(body.full["robo-race"]).toBe(false);
   });
 });
 

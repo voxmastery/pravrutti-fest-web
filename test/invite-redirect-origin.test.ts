@@ -14,6 +14,11 @@ vi.mock("@/lib/blob-store", () => ({
   teamMemberPath: (e: string, m: string) => `member/${e}/${m}.json`,
   invitePath: (t: string) => `invite/${t}.json`,
   readJsonByPath: async (p: string) => store.get(p) ?? null,
+  /* The invite route checks whether the event is full, which lists the
+     event's registrations. */
+  listAll: async (prefix: string) =>
+    [...store.keys()].filter((k) => k.startsWith(prefix)).map((k) => ({ url: "mem:" + k })),
+  readPrivate: async (url: string) => store.get(url.slice(4)) ?? null,
   putJson: async (p: string, d: unknown) => { store.set(p, d); },
 }));
 vi.mock("@/lib/mailer", () => ({ siteOrigin: () => "https://pravrutti.tech" }));

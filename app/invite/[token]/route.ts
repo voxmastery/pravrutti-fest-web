@@ -12,6 +12,7 @@ import {
 import { newTicketId } from "@/lib/ticket-id";
 import { sendConfirmationEmail } from "@/lib/confirmation-email";
 import { leadIsConfirmed, leadIsRegistered } from "@/lib/lead-decision";
+import { eventIsFull } from "@/lib/event-full";
 import { siteOrigin } from "@/lib/mailer";
 import {
   applicationPath,
@@ -92,7 +93,7 @@ export async function GET(
     /* A full event takes no new teams, and a team whose lead never registered
        is not in it. Turned away before anything is written, so the invite
        stays unspent and works again if the event reopens. */
-    if (event?.full && !(await leadIsRegistered(pointer.eventId, team)))
+    if (event && !(await leadIsRegistered(pointer.eventId, team)) && (await eventIsFull(event)))
       return problem(req, "full");
 
     await putJson(

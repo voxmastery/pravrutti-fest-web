@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { runAfterResponse } from "@/lib/after-response";
 import { events, eventId, capacityFor, effectiveRegistrationOpen, registrationUnavailableMessage, eventFullMessage, festFor, eventClosedMessage } from "@/lib/pravrutti-data";
 import { leadIsRegistered } from "@/lib/lead-decision";
+import { isFull, eventIsFull } from "@/lib/event-full";
+import { countRegistrationsByEvent } from "@/lib/registration-counts";
 import { newTicketId } from "@/lib/ticket-id";
 import {
   Application,
@@ -88,6 +90,17 @@ export async function GET(req: Request) {
     pendingTeams: countSets(pendingTeamSets),
     open: effectiveRegistrationOpen(),
   };
+
+  /* Which events are taking no new teams — switched to full, or holding
+     places up to their cap (lib/event-full). The event page reads this to
+     say "Full" up front rather than let someone fill in the form first. */
+  const held = countRegistrationsByEvent(records.filter(Boolean) as Application[]);
+  body.full = Object.fromEntries(
+    events.map((e) => {
+      const id = eventId(e.name);
+      return [id, isFull(e, held.get(id) ?? { people: 0, teams: 0 })];
+    }),
+  );
 
   if (slug) {
     /* Defensive on both fields: one legacy row without an appliedAt, or with a
@@ -364,7 +377,7 @@ export async function POST(req: Request) {
      refusing them now would not give the money back. Checked before the
      receipt reference is claimed below, so a refused applicant's ID is not
      spent on a registration that never happened. */
-  if (event.full) {
+  if (await eventIsFull(event)) {
     const entering = isJoiner
       ? !(await leadIsRegistered(evId, team))
       : !isLiveApplication(
