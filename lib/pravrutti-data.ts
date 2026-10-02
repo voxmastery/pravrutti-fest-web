@@ -423,7 +423,9 @@ export const events: Event[] = [
     fee: "Free",
     prizes: [7000, 5000, 3000],
     teamSize: { min: 1, max: 4, soloAllowed: true },
-    capacity: 60,
+    /* No cap, organisers' call 2 Oct: it had closed itself at 60 people with
+       61 holding places. Entry is only the abstract round — the judges'
+       shortlist decides who presents — so the field need not be limited. */
     capacityUnit: "participants",
     duration: "3 hours",
     eligibility: "Diploma, UG, PG and Ph.D. students",
