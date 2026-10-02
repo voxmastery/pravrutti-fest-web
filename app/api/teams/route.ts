@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { randomBytes } from "crypto";
-import { events, eventId, capacityFor, effectiveRegistrationOpen, registrationUnavailableMessage, eventFullMessage, festFor, eventClosedMessage } from "@/lib/pravrutti-data";
+import { events, eventId, capacityFor, statedCapacity, effectiveRegistrationOpen, registrationUnavailableMessage, eventFullMessage, festFor, eventClosedMessage } from "@/lib/pravrutti-data";
 import {
   Application,
   PHONE_HINT,
@@ -490,7 +490,7 @@ async function joinTeam(body: any) {
     eventName: event.name,
     name,
     queuePosition: queue,
-    capacity: capacityFor(evId),
+    capacity: statedCapacity(evId),
     teamName: team.name,
     teamCode: team.code,
     memberCount: alreadyMember ? roster.length : roster.length + 1,

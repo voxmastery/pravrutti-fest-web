@@ -835,6 +835,14 @@ const CAPACITY_BY_ID: Record<string, number> = Object.fromEntries(
     .filter((e) => e.capacity != null)
     .map((e) => [eventId(e.name), e.capacity as number])
 );
+/** The capacity to quote to an applicant, or null when the event has no
+    stated cap. capacityFor falls back to a placeholder 100, which told
+    somebody registering for CHAOS they were "#300 of 100". */
+export const statedCapacity = (id: string): number | null => {
+  const e = events.find((x) => eventId(x.name) === id);
+  return e ? capacityInPeople(e) : null;
+};
+
 export const capacityFor = (id: string) =>
   EVENT_CAPACITY[id] ?? CAPACITY_BY_ID[id] ?? DEFAULT_CAPACITY;
 

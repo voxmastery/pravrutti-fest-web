@@ -53,7 +53,8 @@ type Result = {
   eventName: string;
   name: string;
   queuePosition: number;
-  capacity: number;
+  /** Null when the event has no stated cap. */
+  capacity: number | null;
   teamName?: string | null;
   teamCode?: string | null;
   hasPaymentRef?: boolean;

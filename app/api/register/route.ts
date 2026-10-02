@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { runAfterResponse } from "@/lib/after-response";
-import { events, eventId, capacityFor, effectiveRegistrationOpen, registrationUnavailableMessage, eventFullMessage, festFor, eventClosedMessage } from "@/lib/pravrutti-data";
+import { events, eventId, capacityFor, statedCapacity, effectiveRegistrationOpen, registrationUnavailableMessage, eventFullMessage, festFor, eventClosedMessage } from "@/lib/pravrutti-data";
 import { leadIsRegistered } from "@/lib/lead-decision";
 import { isFull, eventIsFull } from "@/lib/event-full";
 import { countRegistrationsByEvent, heldRows } from "@/lib/registration-counts";
@@ -257,7 +257,7 @@ export async function POST(req: Request) {
       eventName: updated.eventName,
       name: updated.name,
       queuePosition: (await listAll(`app/${evId}/`)).length,
-      capacity: capacityFor(evId),
+      capacity: statedCapacity(evId),
       teamName: updated.teamName ?? null,
       teamCode: updated.teamCode ?? null,
       hasPaymentRef: Boolean(updated.paymentRef),
@@ -579,7 +579,7 @@ export async function POST(req: Request) {
     eventName: event.name,
     name,
     queuePosition: queue,
-    capacity: capacityFor(evId),
+    capacity: statedCapacity(evId),
     teamName: record.teamName,
     teamCode: record.teamCode ?? null,
     /* Whether they gave us anything to verify against. Somebody who paid but
