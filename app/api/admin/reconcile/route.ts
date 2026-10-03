@@ -8,7 +8,7 @@ import {
   teamPath,
   teamMemberPath,
 } from "@/lib/blob-store";
-import { Application, feeForApplicant } from "@/lib/applications";
+import { Application, feeForApplicant, isLiveApplication } from "@/lib/applications";
 import { Team, TeamMember, normalizeTeamCode, memberStatus } from "@/lib/teams";
 import { events, eventId as slugFor } from "@/lib/pravrutti-data";
 import { newTicketId } from "@/lib/ticket-id";
@@ -361,6 +361,97 @@ export async function POST(req: Request) {
     return NextResponse.json({
       ok: true, eventId: evId, email, was, name, roster: onRoster,
       ticketId: record.ticketId ?? null,
+    });
+  }
+
+  /* Changing who leads — and pays for — a team.
+
+     The lead is whoever the team record names, and the lead's registration
+     is the charged one; changing the lead moves both. The new lead's
+     registration becomes the one owing the fee, set up exactly like a lead
+     who has not paid yet — so their event page offers "Did your payment go
+     through? / Not yet — reopen the portal" — and the old lead's becomes an
+     ordinary teammate's, covered by the new lead. Ticket IDs never change.
+
+     It never moves money. If the current lead has paid, quoted a payment ID
+     or been confirmed, the fee is recorded against them, and handing the team
+     over would leave that payment hanging off a teammate — a refund
+     conversation, not a button. Wonderfools is why this exists: their lead
+     went to pay on 26 Sep, never did, and the team asked for Darshan to
+     take over. */
+  if (String(body?.action ?? "") === "set_lead") {
+    const evId = String(body?.eventId ?? "").trim();
+    const code = normalizeTeamCode(String(body?.code ?? ""));
+    const email = String(body?.email ?? "").trim().toLowerCase();
+    const by = String(body?.by ?? "").trim().toLowerCase();
+    if (!evId || !code || !email)
+      return NextResponse.json({ error: "Missing eventId, code or email." }, { status: 400 });
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(by))
+      return NextResponse.json(
+        { error: "Say who decided: pass the organiser's email as `by`. The shared key names nobody." },
+        { status: 400 },
+      );
+
+    const event = events.find((e) => slugFor(e.name) === evId);
+    if (!event) return NextResponse.json({ error: "That event doesn't exist." }, { status: 400 });
+    const team = (await readJsonByPath(teamPath(evId, code))) as Team | null;
+    if (!team || team.deletedAt)
+      return NextResponse.json({ error: "No team found for that code." }, { status: 404 });
+
+    const oldLead = String(team.createdByEmail ?? "").trim().toLowerCase();
+    if (oldLead === email)
+      return NextResponse.json({ error: "They already lead this team." }, { status: 409 });
+
+    const nextPath = applicationPath(evId, email);
+    const next = (await readJsonByPath(nextPath)) as Application | null;
+    if (!next || !isLiveApplication(next.status) || normalizeTeamCode(next.teamCode ?? "") !== code)
+      return NextResponse.json(
+        { error: "They need a live registration on this team first — have them join it with the team code." },
+        { status: 409 },
+      );
+
+    const prevPath = applicationPath(evId, oldLead);
+    const prev = oldLead ? ((await readJsonByPath(prevPath)) as Application | null) : null;
+    const prevLive = !!prev && isLiveApplication(prev.status);
+    if (prevLive && (prev!.status === "confirmed" || prev!.payment === "paid" || String(prev!.paymentRef ?? "").trim()))
+      return NextResponse.json(
+        {
+          error:
+            "The current lead has paid, quoted a payment ID, or been confirmed — the fee is recorded against them. Moving the team would leave that payment on a teammate. Sort the payment out first.",
+        },
+        { status: 409 },
+      );
+
+    const at = new Date().toISOString();
+    const free = event.fee.toLowerCase().startsWith("free");
+    const lead = feeForApplicant({ eventFree: free, eventFee: event.fee, isJoiner: false });
+    const mate = feeForApplicant({ eventFree: free, eventFee: event.fee, isJoiner: true });
+
+    /* The new lead first: if a later write fails, the team still has a lead
+       who can pay, rather than a team pointing at nobody who owes the fee. */
+    const promoted: Application = {
+      ...next,
+      payment: lead.payment,
+      fee: lead.fee,
+      paymentRef: null,
+      ...(free ? {} : { stage: "intent" as const }),
+    };
+    await putJson(nextPath, promoted, true);
+    await putJson(
+      teamPath(evId, code),
+      { ...team, createdByEmail: email, previousLead: oldLead || null, leadChangedBy: by, leadChangedAt: at },
+      true,
+    );
+    if (prevLive) {
+      const { stage: _stage, ...rest } = prev!;
+      await putJson(prevPath, { ...rest, payment: mate.payment, fee: mate.fee, paymentRef: null }, true);
+    }
+
+    return NextResponse.json({
+      ok: true,
+      team: { code, name: team.name, eventId: evId },
+      lead: { email, name: promoted.name, payment: promoted.payment, fee: promoted.fee, ticketId: promoted.ticketId },
+      previousLead: prevLive ? { email: oldLead, name: prev!.name, payment: mate.payment } : { email: oldLead || null, registered: false },
     });
   }
 

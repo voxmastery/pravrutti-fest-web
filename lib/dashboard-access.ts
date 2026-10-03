@@ -25,13 +25,22 @@ export const DESK_ACCESS: Record<string, string[]> = {
   "fault-x-load": ["bhauthikfirefly@gmail.com", "vimalkanth411@gmail.com"],
   "campus-innovators-2-0": ["akshayworkofficial01@gmail.com", "nikhita.n0601@gmail.com"],
   "beyond-the-blueprint-2-0": ["akshayworkofficial01@gmail.com", "nikhita.n0601@gmail.com"],
-  "respawn": ["jesleneiniya@gmail.com", "25etai@msruas.ac.in", "25etmc412021@msruas.ac.in", "24etis411024@msruas.ac.in"],
-  "glide-x": ["24etas012008@msruas.ac.in", "24etas012048@msruas.ac.in"],
+  /* Sooraj Chakravarthy S moved off his college address (25etai@msruas.ac.in),
+     given by mistake, on 2 Oct. */
+  "respawn": ["jesleneiniya@gmail.com", "soorajchakravarthy3v@gmail.com", "25etmc412021@msruas.ac.in", "24etis411024@msruas.ac.in"],
+  /* Both coordinators moved off their college addresses to Gmail on 2 Oct —
+     college addresses were not signing in. Mokshada was 24etas012008,
+     Siddharth 24etas012048. */
+  "glide-x": ["mokshada.aeroengg@gmail.com", "siddharthprakash06@gmail.com"],
   "the-logic-circuit": ["25etmc412021@msruas.ac.in", "24etmc412010@msruas.ac.in", "ddhviroja@gmail.com", "rainent27@gmail.com"],
-  "rc-x": ["24etas012046@msruas.ac.in", "24etas012033@msruas.ac.in"],
+  /* Moved to Gmail on 2 Oct (college addresses were not signing in):
+     Shravya T was 24etas012046, Pranav P J 24etas012033. */
+  "rc-x": ["shravyathirumurthy@gmail.com", "officialpranavclg@gmail.com"],
   "leads-innovation-challenge": ["pranavbansal310@gmail.com", "gsiddharth214@gmail.com"],
   "dent-innovate": ["ankush.chadichal@gmail.com", "gowuri.kotabagi@gmail.com"],
-  "pitch-at-mach": ["23etas012004@msruas.ac.in", "23etas012002@msruas.ac.in"],
+  /* Ankith A Joshi signs in with Gmail (3 Oct) — the college addresses stay
+     until we know which is Afifa's. */
+  "pitch-at-mach": ["ankithjoshi908@gmail.com", "23etas012004@msruas.ac.in", "23etas012002@msruas.ac.in"],
   "bridge-it": ["ramaiahcivilclub@gmail.com", "abhilashnm429@gmail.com"],
   "chaos": ["voxmastery@gmail.com", "shravanth.polisetty@gmail.com"],
   "hacktivate": ["voxmastery@gmail.com", "shravanth.polisetty@gmail.com"],

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { RegistrationDialog } from "@/components/registration-dialog";
 import { TeamInviteCard, useMyTeam } from "@/components/team-invite-card";
@@ -86,6 +86,8 @@ export function EventRegisterPanel({
   /* Teams confirmed so far, for events whose field is stated in teams. */
   const [teamCount, setTeamCount] = useState<number | null>(null);
   const [waiting, setWaiting] = useState(0);
+  /* Full by the server's count — at its cap — as well as by hand. */
+  const [serverFull, setServerFull] = useState(false);
   const [open, setOpen] = useState(false);
   /* Starts open and closes on mount rather than being read during render. This
      card is now prerendered into all 24 static event pages, and a clock read at
@@ -117,6 +119,7 @@ export function EventRegisterPanel({
         setCount(d.confirmed?.[id] ?? 0);
         setTeamCount(d.confirmedTeams?.[id] ?? 0);
         setWaiting(d.pending?.[id] ?? 0);
+        setServerFull(Boolean(d.full?.[id]));
       })
       .catch(() => {
         setCount(null);
@@ -162,7 +165,14 @@ export function EventRegisterPanel({
   /* Switched to full by the organisers (Event.full). The counter only counts
      confirmed teams, so on its own it read "37 of 45" while 52 teams already
      held places — and invited more. When the event is closed it says so. */
-  const closedFull = !!event.full;
+  const closedFull = !!event.full || serverFull;
+  /* The form reads event.full to drop "Create team" and the fee; an event
+     full by its count has to look the same to it. Memoised so the form's
+     effects, which depend on the event, do not re-run every render. */
+  const dialogEvent = useMemo(
+    () => (closedFull === !!event.full ? event : { ...event, full: closedFull }),
+    [event, closedFull],
+  );
   /* No stated cap (CHAOS, Hacktivate): capacityFor falls back to a placeholder
      100, which put "231 of 100" on the page. With nothing to measure against,
      show the confirmed count alone — no "of", no bar, no "filling fast". */
@@ -392,7 +402,7 @@ export function EventRegisterPanel({
         /* Stay open on `open`, not `showApply`. Refreshing access after
            submit flips showApply to false; gating here would unmount the
            success screen before they can read the queue position. */
-        event={open ? event : null}
+        event={open ? dialogEvent : null}
         onClose={() => { setRegistering(false); setResuming(null); }}
         resumeAtReference={resuming !== null}
         resumeWithReferenceField={resuming === "reference"}

@@ -52,12 +52,22 @@ beforeEach(() => {
 });
 
 describe("the hall is not in anything a browser is handed", () => {
+  /* As a whole word or phrase: one hall is simply "Labs", and a sponsor
+     called ElevenLabs is not that hall leaking. A hall written into prose
+     ("held in the Labs") or a venue field still fails. */
   it("keeps every hall out of the public events array", () => {
     const publicData = JSON.stringify(events);
+    const escape = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     for (const e of events) {
       const hall = venueFor(eventId(e.name));
-      if (hall) expect(publicData).not.toContain(hall);
+      if (hall) expect(publicData).not.toMatch(new RegExp(`(?<![A-Za-z0-9])${escape(hall)}(?![A-Za-z0-9])`));
     }
+  });
+
+  it("would still catch a hall leaking as a word", () => {
+    const leak = JSON.stringify([{ name: "X", description: "Held in the Labs on day two" }]);
+    expect(leak).toMatch(/(?<![A-Za-z0-9])Labs(?![A-Za-z0-9])/);
+    expect(JSON.stringify([{ name: "ElevenLabs" }])).not.toMatch(/(?<![A-Za-z0-9])Labs(?![A-Za-z0-9])/);
   });
 
   it("still has a hall on file for most events", () => {

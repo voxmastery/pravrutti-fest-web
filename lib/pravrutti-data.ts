@@ -47,6 +47,10 @@ export interface Event {
       earlier than the fest-wide FEST.registrationCloses. Every gate reads it
       through festFor(), so the event page, the forms and the API agree. */
   registrationCloses?: string;
+  /** A sponsor's perks for this event's participants, shown under the
+      prizes — ElevenLabs on Hacktivate. The logo follows the sponsor's own
+      brand guidelines: their white wordmark, on our dark ground. */
+  sponsorPerks?: { sponsor: string; logo: string; website: string; perks: string[] };
   /** How long the event runs, e.g. "3 hours", "24 hours". */
   duration?: string;
   /** Entry restriction, where one exists (year, branch, team make-up). */
@@ -173,6 +177,11 @@ export interface Sponsor {
   name: string;
   logo: string;
   website: string;
+  /** The logo is the sponsor's name set in their own type — a wide wordmark,
+      not a square mark. It stands in for the name instead of being squeezed
+      into the 48px icon box, where ElevenLabs' 7.7:1 wordmark would be a
+      sliver. */
+  wordmark?: boolean;
 }
 
 export interface Club {
@@ -204,6 +213,14 @@ export const sponsors: Sponsor[] = [
     name: "IEEE Smart Cities",
     logo: "",
     website: "https://smartcities.ieee.org/"
+  },
+  {
+    /* Hacktivate's partner, 2 Oct 2026. White wordmark from
+       elevenlabs.io/brand, written "ElevenLabs" as their guidelines ask. */
+    name: "ElevenLabs",
+    logo: "/sponsors/elevenlabs.svg",
+    website: "https://elevenlabs.io/",
+    wordmark: true,
   },
 ];
 
@@ -326,8 +343,12 @@ export const events: Event[] = [
     fee: "Rs. 200/-",
     prizes: [5000, 3000, 2000],
     teamSize: { min: 2, max: 4, soloAllowed: false },
-    capacity: 96,
+    /* Raised from 24 to 35 teams on 2 Oct, organisers' call: it had closed
+       itself at 28 holding places. capacity is the head count at the max
+       team size, so the desk's meter and the page agree. */
+    capacity: 140,
     capacityUnit: "teams",
+    maxTeams: 35,
     duration: "3 hours",
     coordinators: {
       faculty: [],
@@ -419,7 +440,9 @@ export const events: Event[] = [
     fee: "Free",
     prizes: [7000, 5000, 3000],
     teamSize: { min: 1, max: 4, soloAllowed: true },
-    capacity: 60,
+    /* No cap, organisers' call 2 Oct: it had closed itself at 60 people with
+       61 holding places. Entry is only the abstract round — the judges'
+       shortlist decides who presents — so the field need not be limited. */
     capacityUnit: "participants",
     duration: "3 hours",
     eligibility: "Diploma, UG, PG and Ph.D. students",
@@ -658,6 +681,9 @@ export const events: Event[] = [
     prizes: [15000, 10000, 7000],
     teamSize: { min: 2, max: 4, soloAllowed: false },
     capacityUnit: "teams",
+    /* Registrations full, organisers' call, 2 Oct. Switched to full by hand —
+       CHAOS has no stated cap — so it stays shut until this is removed. */
+    full: true,
     duration: "8 hours",
     coordinators: {
       faculty: [],
@@ -677,10 +703,22 @@ export const events: Event[] = [
     capacityUnit: "teams",
     /* Closes early: 11:59 PM IST on 1 October, organisers' call. */
     registrationCloses: "2026-10-01T18:29:59.000Z",
+    sponsorPerks: {
+      sponsor: "ElevenLabs",
+      logo: "/sponsors/elevenlabs.svg",
+      website: "https://elevenlabs.io/",
+      perks: [
+        "Every participant: 1 month of ElevenLabs Creator, free",
+        "Overall winning team: 3 months of ElevenLabs Pro for each member",
+        "Best project built with ElevenLabs: 3 months of ElevenLabs Scale for each member",
+      ],
+    },
     duration: "24 hours",
     coordinators: {
       faculty: [],
-      student: [{ name: "Ganesh" }, { name: "Shravanth" }],
+      /* Shravanth alone since 2 Oct — Ganesh asked to come off Hacktivate.
+         He stays on CHAOS. */
+      student: [{ name: "Shravanth" }],
     },
     club: "IEEE",
     brochureUrl: "https://drive.google.com/open?id=1agRe2bIb_QXyatw1OcwjvKi0EtU5W0VL",
@@ -695,6 +733,9 @@ export const events: Event[] = [
     teamSize: { min: 2, max: 4, soloAllowed: false },
     capacity: 100,
     capacityUnit: "teams",
+    /* 29 teams were holding places against the 25 when this went on, 2 Oct.
+       Switched to full by the organisers; remove it to reopen. */
+    full: true,
     duration: "1h 30m",
     coordinators: {
       faculty: [],
@@ -823,6 +864,14 @@ const CAPACITY_BY_ID: Record<string, number> = Object.fromEntries(
     .filter((e) => e.capacity != null)
     .map((e) => [eventId(e.name), e.capacity as number])
 );
+/** The capacity to quote to an applicant, or null when the event has no
+    stated cap. capacityFor falls back to a placeholder 100, which told
+    somebody registering for CHAOS they were "#300 of 100". */
+export const statedCapacity = (id: string): number | null => {
+  const e = events.find((x) => eventId(x.name) === id);
+  return e ? capacityInPeople(e) : null;
+};
+
 export const capacityFor = (id: string) =>
   EVENT_CAPACITY[id] ?? CAPACITY_BY_ID[id] ?? DEFAULT_CAPACITY;
 

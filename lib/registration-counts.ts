@@ -1,4 +1,4 @@
-import { countsAsRegistered, type Application } from "@/lib/applications";
+import { countsAsRegistered, COVERED_BY_LEAD, type Application } from "@/lib/applications";
 
 /**
  * One way to count a field, in both the units people ask about.
@@ -10,7 +10,8 @@ import { countsAsRegistered, type Application } from "@/lib/applications";
  * Both numbers are true and neither is enough alone, so both are returned and
  * the screens say which is which.
  *
- * What counts is countsAsRegistered and nothing looser — a withdrawn student
+ * What counts is heldRows below — countsAsRegistered, judged per team so a
+ * teammate stands where their lead stands — and nothing looser: a withdrawn student
  * or an attempt that never came back from the payment portal is not holding a
  * place, and counting it fills an event that has room. The per-event panel
  * used to count every row it could read, cancelled ones included, which is
@@ -36,8 +37,45 @@ export type RegistrationCounts = {
   notArrived: number;
 };
 
+/** A teammate: on someone else's team, owing nothing because the lead pays.
+    A free event's entrants owe nothing too, but they are nobody's teammate
+    in this sense — their fee reads "Free", not this. */
+export const isTeammate = (r: Pick<Application, "fee">) => r.fee === COVERED_BY_LEAD;
+
+/**
+ * The rows that hold a place, judged per team.
+ *
+ * countsAsRegistered judges one row alone, and a teammate's row alone always
+ * looks settled — they owe nothing. So a teammate was counted as registered
+ * whatever their lead had done: Pitch at Mach showed Ranjitha "In review"
+ * while her lead had left for the payment portal and never come back, and
+ * sixty teammates across thirty-six teams filled places for teams that had
+ * paid nothing, or whose lead never registered at all.
+ *
+ * A teammate now holds a place only while somebody on their team, on the
+ * same event, who is not a teammate holds one — the lead, paid or with a
+ * receipt in review. An organiser's confirmation always stands, so a
+ * confirmed teammate holds their place and carries the team. Everyone who is
+ * not a teammate is judged on their own row, exactly as before.
+ */
+export function heldRows<T extends Application>(rows: readonly T[]): Set<T> {
+  const teamOf = (r: T) => `${r.eventId}|${String(r.teamCode ?? "").trim().toUpperCase()}`;
+  const carried = new Set<string>();
+  for (const r of rows)
+    if (r.teamCode && countsAsRegistered(r) && (r.status === "confirmed" || !isTeammate(r)))
+      carried.add(teamOf(r));
+
+  const held = new Set<T>();
+  for (const r of rows) {
+    if (!countsAsRegistered(r)) continue;
+    if (r.status === "confirmed" || !isTeammate(r) || !r.teamCode || carried.has(teamOf(r))) held.add(r);
+  }
+  return held;
+}
+
 export function countRegistrations(rows: readonly Application[]): RegistrationCounts {
-  const held = rows.filter(countsAsRegistered);
+  const holding = heldRows(rows);
+  const held = rows.filter((r) => holding.has(r));
   const confirmed = held.filter((r) => r.status === "confirmed");
   const checkedIn = confirmed.filter((r) => r.checkedInAt).length;
 

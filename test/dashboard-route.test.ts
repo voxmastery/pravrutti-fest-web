@@ -66,27 +66,46 @@ describe("GET /api/dashboard/event/[eventId]", () => {
     expect(bala.paymentRef).toBeNull();
   });
 
-  it("a coordinator cannot obtain contacts by asking differently", async () => {
+  /* Changed 2 Oct 2026, on the organisers' decision: coordinators now ring
+     their own event's people — above all the ones who started registering
+     and never finished — so they get each person's email and phone. Only
+     for their own events (see the access tests below), and nothing about
+     money: the payment ID, who verified it and the lead's member list stay
+     with the organisers, who decide payments. */
+  it("gives a coordinator the email and phone of their own event's people", async () => {
+    role.current = { kind: "coordinator", eventIds: ["robo-climb"] };
+    const body = await (await get("robo-climb")).json();
+    const asha = body.roster.find((p: { name: string }) => p.name === "Asha");
+    expect(asha.email).toBe("a@x.com");
+    expect(asha.phone).toBe("9000000001");
+  });
+
+  it("still keeps the payment record from a coordinator", async () => {
+    role.current = { kind: "coordinator", eventIds: ["robo-climb"] };
+    const body = await (await get("robo-climb")).json();
+    for (const p of body.roster) {
+      expect(p).not.toHaveProperty("paymentRef");
+      expect(p).not.toHaveProperty("paymentVerifiedBy");
+      expect(p).not.toHaveProperty("payment");
+      expect(p).not.toHaveProperty("members");
+    }
+    expect(JSON.stringify(body)).not.toContain("4183 7712 9930");
+  });
+
+  it("a coordinator cannot obtain the payment record by asking differently", async () => {
     // The role decides the shape; nothing in the request can change it.
     role.current = { kind: "coordinator", eventIds: ["robo-climb"] };
     const res = await GET(new Request("http://t?contacts=1&full=true"), {
       params: Promise.resolve({ eventId: "robo-climb" }),
     });
-    expect(JSON.stringify(await res.json())).not.toContain("@x.com");
+    expect(JSON.stringify(await res.json())).not.toContain("4183 7712 9930");
   });
 
-  it("NEVER returns contact details to a coordinator", async () => {
+  it("never gives a coordinator another event's people", async () => {
     role.current = { kind: "coordinator", eventIds: ["robo-climb"] };
-    const body = await (await get("robo-climb")).json();
-    const serialised = JSON.stringify(body);
-    expect(serialised).not.toContain("@x.com");
-    expect(serialised).not.toContain("9000000001");
-    for (const p of body.roster) {
-      expect(p).not.toHaveProperty("email");
-      expect(p).not.toHaveProperty("phone");
-      expect(p).not.toHaveProperty("paymentRef");
-    }
-    expect(serialised).not.toContain("4183 7712 9930");
+    const res = await get("skycraft");
+    expect(res.status).toBe(403);
+    expect(JSON.stringify(await res.json())).not.toContain("@x.com");
   });
 
   /* Both units. A coordinator reading one number guessed at the other and
@@ -102,12 +121,12 @@ describe("GET /api/dashboard/event/[eventId]", () => {
   /* The bug this replaced: every row read from the store was counted, so a
      withdrawn student and an abandoned payment both kept filling a seat.
      CHAOS showed 239 here and 227 in the table above it. */
-  it("leaves withdrawn and abandoned registrations out of the counts", async () => {
+  it("leaves withdrawn and declined registrations out of the counts", async () => {
     apps.push(
       { eventId: "robo-climb", name: "Esha", college: "RUAS", email: "e@x.com",
         phone: "9000000005", status: "cancelled", payment: "not_required" },
       { eventId: "robo-climb", name: "Farid", college: "RUAS", email: "f@x.com",
-        phone: "9000000006", status: "pending", payment: "awaiting", paymentRef: null },
+        phone: "9000000006", status: "declined", payment: "refunded", paymentRef: null },
     );
     const body = await (await get("robo-climb")).json();
     expect(body.counts.registered).toBe(3);
@@ -162,5 +181,58 @@ describe("GET /api/dashboard/event/[eventId]", () => {
   it("denies a roleless account", async () => {
     role.current = { kind: "none" };
     expect((await get("robo-climb")).status).toBe(403);
+  });
+});
+
+/* A teammate stands where their lead stands: Pitch at Mach showed Ranjitha
+   "In review" while her lead Sonika had left to pay and never come back. The
+   roster now marks who the lead is, and a teammate whose lead has not paid
+   holds no place. */
+describe("the roster judges a teammate by their lead", () => {
+  const seed = (leadOver: Record<string, unknown>) => {
+    apps.length = 0;
+    apps.push(
+      { eventId: "pitch-at-mach", name: "Sonika M", college: "NMIT", email: "sonika@x.com",
+        phone: "9000000011", status: "pending", payment: "awaiting", fee: "Rs. 200/-",
+        teamCode: "ASB255Z3RQCH", teamName: "Avianova", paymentRef: null, stage: "intent", ...leadOver },
+      { eventId: "pitch-at-mach", name: "Ranjitha", college: "NMIT", email: "ranjitha@x.com",
+        phone: "9000000012", status: "pending", payment: "not_required", fee: "Covered by team lead",
+        teamCode: "ASB255Z3RQCH", teamName: "Avianova" },
+    );
+  };
+  const by = (body: any, n: string) => body.roster.find((r: any) => r.name === n);
+
+  it("says which one is the lead", async () => {
+    seed({});
+    const body = await (await get("pitch-at-mach")).json();
+    expect(by(body, "Sonika M").role).toBe("lead");
+    expect(by(body, "Ranjitha").role).toBe("member");
+  });
+
+  /* Organisers' call, 2 Oct 2026: a lead who left to pay and never came back
+     may have paid on Juno, so the whole team is in review and counted. */
+  it("puts the whole team in review with a lead who never came back from paying", async () => {
+    seed({});
+    const body = await (await get("pitch-at-mach")).json();
+    expect(by(body, "Sonika M").live).toBe(true);
+    expect(by(body, "Ranjitha").live).toBe(true);
+    expect(body.counts.registered).toBe(2);
+    expect(body.counts.teams).toBe(1);
+  });
+
+  it("holds no place for a teammate whose lead withdrew", async () => {
+    seed({ status: "cancelled" });
+    const body = await (await get("pitch-at-mach")).json();
+    expect(by(body, "Ranjitha").live).toBe(false);
+    expect(body.counts.registered).toBe(0);
+  });
+
+  it("puts the teammate in review alongside a lead who is in review", async () => {
+    seed({ paymentRef: "J5N3Z8Y0MUQG1UY", stage: undefined });
+    const body = await (await get("pitch-at-mach")).json();
+    expect(by(body, "Ranjitha").live).toBe(true);
+    expect(by(body, "Sonika M").live).toBe(true);
+    expect(body.counts.registered).toBe(2);
+    expect(body.counts.teams).toBe(1);
   });
 });

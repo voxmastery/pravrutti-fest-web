@@ -20,7 +20,8 @@ import { Hourglass, Check, Copy } from "lucide-react";
 export type ReviewResult = {
   eventName: string;
   queuePosition: number;
-  capacity: number;
+  /** Null when the event has no stated cap. */
+  capacity: number | null;
   name: string;
   fee: string;
   ticketId: string;
@@ -107,7 +108,8 @@ export function ApplicationReviewCard({
         </Row>
         <Row label="Queue position">
           <span className="text-[13px] font-semibold text-white">
-            #{result.queuePosition} of {result.capacity}
+            #{result.queuePosition}
+            {result.capacity ? ` of ${result.capacity}` : ""}
           </span>
         </Row>
         <Row label="Applicant">

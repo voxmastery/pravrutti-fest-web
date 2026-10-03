@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
 import { runAfterResponse } from "@/lib/after-response";
-import { events, eventId, capacityFor, effectiveRegistrationOpen, registrationUnavailableMessage, eventFullMessage, festFor, eventClosedMessage } from "@/lib/pravrutti-data";
+import { events, eventId, capacityFor, statedCapacity, effectiveRegistrationOpen, registrationUnavailableMessage, eventFullMessage, festFor, eventClosedMessage } from "@/lib/pravrutti-data";
 import { leadIsRegistered } from "@/lib/lead-decision";
+import { isFull, eventIsFull } from "@/lib/event-full";
+import { countRegistrationsByEvent, heldRows } from "@/lib/registration-counts";
 import { newTicketId } from "@/lib/ticket-id";
 import {
   Application,
@@ -15,7 +17,6 @@ import {
   isValidPaymentRef,
   PAYMENT_REF_HINT,
   readJunoRegId,
-  countsAsRegistered,
   isLiveApplication,
 } from "@/lib/applications";
 import { Team, normalizeTeamCode, isValidTeamCode } from "@/lib/teams";
@@ -56,10 +57,14 @@ export async function GET(req: Request) {
   const pending: Record<string, number> = {};
   const records = await Promise.all(blobs.map((b) => readPrivate(b.url)));
 
-  /* Only registrations that actually hold a place — see countsAsRegistered.
+  /* Only registrations that actually hold a place — see heldRows.
      An unpaid, withdrawn or declined attempt is an incomplete registration and
      must not occupy a seat in any of these figures. */
-  const valid = (records.filter(Boolean) as Application[]).filter(countsAsRegistered);
+  /* Judged per team (heldRows): a teammate's place stands or falls with
+     their lead's, so a team whose lead never paid fills no seat here. */
+  const all = records.filter(Boolean) as Application[];
+  const holding = heldRows(all);
+  const valid = all.filter((r) => holding.has(r));
   for (const r of valid) {
     if (r.status === "confirmed") confirmed[r.eventId] = (confirmed[r.eventId] ?? 0) + 1;
     else if (r.status === "pending") pending[r.eventId] = (pending[r.eventId] ?? 0) + 1;
@@ -88,6 +93,17 @@ export async function GET(req: Request) {
     pendingTeams: countSets(pendingTeamSets),
     open: effectiveRegistrationOpen(),
   };
+
+  /* Which events are taking no new teams — switched to full, or holding
+     places up to their cap (lib/event-full). The event page reads this to
+     say "Full" up front rather than let someone fill in the form first. */
+  const held = countRegistrationsByEvent(records.filter(Boolean) as Application[]);
+  body.full = Object.fromEntries(
+    events.map((e) => {
+      const id = eventId(e.name);
+      return [id, isFull(e, held.get(id) ?? { people: 0, teams: 0 })];
+    }),
+  );
 
   if (slug) {
     /* Defensive on both fields: one legacy row without an appliedAt, or with a
@@ -241,7 +257,7 @@ export async function POST(req: Request) {
       eventName: updated.eventName,
       name: updated.name,
       queuePosition: (await listAll(`app/${evId}/`)).length,
-      capacity: capacityFor(evId),
+      capacity: statedCapacity(evId),
       teamName: updated.teamName ?? null,
       teamCode: updated.teamCode ?? null,
       hasPaymentRef: Boolean(updated.paymentRef),
@@ -364,7 +380,7 @@ export async function POST(req: Request) {
      refusing them now would not give the money back. Checked before the
      receipt reference is claimed below, so a refused applicant's ID is not
      spent on a registration that never happened. */
-  if (event.full) {
+  if (await eventIsFull(event)) {
     const entering = isJoiner
       ? !(await leadIsRegistered(evId, team))
       : !isLiveApplication(
@@ -563,7 +579,7 @@ export async function POST(req: Request) {
     eventName: event.name,
     name,
     queuePosition: queue,
-    capacity: capacityFor(evId),
+    capacity: statedCapacity(evId),
     teamName: record.teamName,
     teamCode: record.teamCode ?? null,
     /* Whether they gave us anything to verify against. Somebody who paid but

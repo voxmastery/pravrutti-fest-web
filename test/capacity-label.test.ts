@@ -88,11 +88,12 @@ describe("capacityLabel — an explicit team cap", () => {
     expect(capacityLabel(solo)).toBe("60 participants");
   });
 
-  it("no event still falls back to participants except the two known ones", () => {
+  /* Discoverize was the other one until its cap was removed on 2 Oct. */
+  it("no event still falls back to participants except the one known one", () => {
     const onHeads = events
       .filter((e) => (capacityLabel(e) ?? "").includes("participants"))
       .map((e) => e.name)
       .sort();
-    expect(onHeads).toEqual(["DENT - INNOVATE", "Discoverize (Research Paper Presentation)"]);
+    expect(onHeads).toEqual(["DENT - INNOVATE"]);
   });
 });

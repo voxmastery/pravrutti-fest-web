@@ -256,10 +256,13 @@ export const EVENT_PAGE_STATUS: Record<AppStatus, string> = {
  * event full while real places sit empty.
  *
  * Paid means the fee is settled or was never owed: verified by an organiser, or
- * a joiner and free entry that owes nothing. An unverified fee counts only when
- * the applicant quoted a receipt reference — they have paid on the portal and
- * are waiting on us, so their place is genuinely taken. A fee that went back
- * (refunded) does not hold anything.
+ * a joiner and free entry that owes nothing. An unverified fee counts too, with
+ * or without a receipt reference: it is in review. Somebody who left for the
+ * payment portal and never came back may well have paid on Juno — the portal
+ * gives us no callback, and the reference is the one thing that goes missing
+ * when it fails — so the organisers decided (2 Oct 2026) to hold their place
+ * until the payment report says otherwise, rather than show their team as
+ * not registered. A fee that went back (refunded) does not hold anything.
  */
 export function countsAsRegistered(a: {
   status?: AppStatus | string | null;
@@ -272,7 +275,7 @@ export function countsAsRegistered(a: {
     case "not_required":
       return true;
     case "awaiting":
-      return Boolean(a.paymentRef && String(a.paymentRef).trim());
+      return true;
     default:
       // "refunded", or anything unrecognised — not a held place.
       return false;

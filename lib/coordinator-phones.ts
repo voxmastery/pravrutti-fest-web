@@ -97,7 +97,6 @@ const PHONES: Record<string, CoordinatorPhone[]> = {
     { name: "Shravanth", phone: "6363860239" },
   ],
   "hacktivate": [
-    { name: "Ganesh", phone: "7975324769" },
     { name: "Shravanth", phone: "6363860239" },
   ],
   "ai-escape-room": [

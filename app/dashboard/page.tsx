@@ -29,8 +29,11 @@ type Entry = {
   team: string | null;
   /** Shared by everyone who entered together. */
   group: string;
-  /** Holds a place. Withdrawn teammates are listed but not counted. */
+  /** Holds a place. Withdrawn teammates are listed but not counted, and a
+      teammate holds a place only while their lead does. */
   live: boolean;
+  /** Who pays for the team ("lead") and who is covered ("member"). */
+  role?: "lead" | "member" | null;
   email?: string;
   phone?: string;
   teamName?: string | null;
@@ -409,6 +412,7 @@ function EventRow({ r, open, onToggle }: { r: Row; open: boolean; onToggle: () =
 function EventDetail({ eventId }: { eventId: string }) {
   const [data, setData] = useState<{ counts: Counts; roster: Entry[] } | null>(null);
   const [state, setState] = useState<"loading" | "ok" | "error">("loading");
+  const [view, setView] = useState<View>("all");
 
   useEffect(() => {
     let cancelled = false;
@@ -448,20 +452,61 @@ function EventDetail({ eventId }: { eventId: string }) {
         <StatInline label="Not arrived" value={data.counts.notArrived} />
       </div>
 
-      <Card className="max-h-[380px] gap-0 divide-y divide-white/[0.05] overflow-y-auto rounded-xl border-white/[0.08] bg-midnight-navy/60 py-0 shadow-none">
-        {data.roster.length === 0 ? (
-          <p className="p-5 text-sm text-white/45">No registrations yet.</p>
-        ) : (
-          groupRoster(data.roster).map((g) => <RosterGroup key={g.key} g={g} />)
-        )}
-      </Card>
-      {/* Only true for coordinators now; organisers see them inline. */}
-      {data.roster.length > 0 && data.roster[0].email === undefined && (
-        <p className="mt-2 text-xs text-white/30">Contact details are held by the organising team.</p>
+      {data.roster.length > 0 && (
+        <div className="mb-3 space-y-1.5">
+          <FilterGroup
+            value={view}
+            onChange={setView}
+            label="Show who"
+            options={VIEWS.map((v) => ({
+              id: v.id,
+              label: `${v.label} (${v.id === "all" ? data.roster.length : data.roster.filter((p) => stageOf(p) === v.id).length})`,
+            }))}
+          />
+          <p className="text-xs text-white/40">{VIEWS.find((v) => v.id === view)?.hint}</p>
+        </div>
       )}
+
+      <Card className="max-h-[380px] gap-0 divide-y divide-white/[0.05] overflow-y-auto rounded-xl border-white/[0.08] bg-midnight-navy/60 py-0 shadow-none">
+        {(() => {
+          const shown = view === "all" ? data.roster : data.roster.filter((p) => stageOf(p) === view);
+          if (data.roster.length === 0)
+            return <p className="p-5 text-sm text-white/45">No registrations yet.</p>;
+          if (shown.length === 0)
+            return <p className="p-5 text-sm text-white/45">Nobody here right now.</p>;
+          return groupRoster(shown).map((g) => <RosterGroup key={g.key} g={g} view={view} />);
+        })()}
+      </Card>
     </div>
   );
 }
+
+/**
+ * Where somebody stands, as a coordinator needs to know it.
+ *
+ * "Didn't finish" is somebody who started registering, left for the payment
+ * portal and never came back with a receipt — they hold no place, and a call
+ * from the coordinator is often all it takes. "In review" has paid, or quoted
+ * a payment ID, and is waiting on an organiser to verify it.
+ */
+type Stage = "confirmed" | "review" | "unfinished" | "withdrew";
+type View = "all" | Exclude<Stage, "withdrew">;
+
+const stageOf = (p: Entry): Stage =>
+  p.status === "confirmed"
+    ? "confirmed"
+    : p.status === "pending"
+    ? p.live
+      ? "review"
+      : "unfinished"
+    : "withdrew";
+
+const VIEWS: { id: View; label: string; hint: string }[] = [
+  { id: "all", label: "Everyone", hint: "Everyone who has started registering, grouped by team. Withdrawn people are listed but not counted." },
+  { id: "confirmed", label: "Confirmed", hint: "Verified and holding a ticket." },
+  { id: "review", label: "In review", hint: "Paid, or gave a payment ID — waiting for an organiser to verify it." },
+  { id: "unfinished", label: "Didn't finish", hint: "Teammates whose lead never registered the team, or withdrew it — they hold no place until their lead registers. Call the lead. (Leads who went to pay and didn't come back are in review.)" },
+];
 
 type Group = {
   key: string;
@@ -486,7 +531,10 @@ const WITHDRAWN = new Set(["cancelled", "declined"]);
  */
 function groupRoster(roster: readonly Entry[]): Group[] {
   const byName = (a: Entry, b: Entry) => a.name.localeCompare(b.name);
-  const liveFirst = (a: Entry, b: Entry) => Number(b.live) - Number(a.live) || byName(a, b);
+  /* The lead first — everyone else on the team stands where they stand —
+     then the people coming, then by name. */
+  const liveFirst = (a: Entry, b: Entry) =>
+    Number(b.role === "lead") - Number(a.role === "lead") || Number(b.live) - Number(a.live) || byName(a, b);
   const summarise = (key: string, team: string | null, people: Entry[]): Group => ({
     key,
     team,
@@ -505,8 +553,17 @@ function groupRoster(roster: readonly Entry[]): Group[] {
   return solos.length ? [...grouped, summarise("solo", null, solos)] : grouped;
 }
 
-function RosterGroup({ g }: { g: Group }) {
-  const noun = g.team === null ? "" : g.coming === 1 ? " member" : " members";
+function RosterGroup({ g, view }: { g: Group; view: View }) {
+  /* In a filtered view everyone shown is the point, so the header counts
+     them; in "everyone" it counts only the people coming. */
+  const all = view === "all";
+  const n = all ? g.coming : g.people.length;
+  /* A team with nobody holding a place reads "0 members" otherwise, which
+     says nothing about why. */
+  const label =
+    all && n === 0
+      ? g.withdrew === g.people.length ? "withdrew" : "not registered"
+      : `${n}${all ? (g.team === null ? "" : n === 1 ? " member" : " members") : n === 1 ? " person" : " people"}`;
   return (
     <section aria-label={g.team ?? "Individual entries"}>
       <header className="flex items-baseline justify-between gap-4 bg-white/[0.04] px-4 py-2">
@@ -514,13 +571,13 @@ function RosterGroup({ g }: { g: Group }) {
           {g.team ?? "Individual entries"}
         </span>
         <span className="shrink-0 text-[11px] tabular-nums text-white/40">
-          {g.coming}{noun}
-          {g.withdrew > 0 && <span className="text-white/30">{` \u00b7 ${g.withdrew} withdrew`}</span>}
+          {label}
+          {all && n > 0 && g.withdrew > 0 && <span className="text-white/30">{` \u00b7 ${g.withdrew} withdrew`}</span>}
         </span>
       </header>
       <div className="divide-y divide-white/[0.04]">
         {g.people.map((p, i) => (
-          <div key={i} className={p.live ? "" : "opacity-60"}>
+          <div key={i} className={p.live || !all ? "" : "opacity-60"}>
             <Participant p={p} />
           </div>
         ))}
@@ -531,12 +588,13 @@ function RosterGroup({ g }: { g: Group }) {
 
 /**
  * One roster line. For an organiser the name is a button that opens the
- * person's contact details; for a coordinator no contact fields arrive, so it
- * stays a plain row rather than an affordance that leads nowhere.
+ * person's contact details and payment record. A coordinator gets no payment
+ * record, so their row is plain — with the phone and email on it, to ring or
+ * write to straight from the list.
  */
 function Participant({ p }: { p: Entry }) {
   const [open, setOpen] = useState(false);
-  const hasDetail = p.email !== undefined;
+  const hasDetail = p.payment !== undefined;
   const paid = p.payment === "paid";
 
   const team = (() => {
@@ -563,6 +621,10 @@ function Participant({ p }: { p: Entry }) {
     </>
   ) : p.status === "confirmed" ? (
     <span className="text-white/45">Not arrived</span>
+  ) : p.status === "pending" && !p.live && p.role === "member" ? (
+    /* They did their part, but their lead never registered the team, or
+       withdrew it — and nobody on a team holds a place without its lead. */
+    <span className="text-xs text-white/35">Lead not registered</span>
   ) : p.status === "pending" && !p.live ? (
     /* Started, left for the payment portal, never came back with a receipt.
        "In review" would claim somebody is looking at it; nobody is, and it
@@ -575,10 +637,25 @@ function Participant({ p }: { p: Entry }) {
   const row = (
     <>
       <span className="min-w-0 text-left">
-        <span className={`block truncate text-sm font-medium ${hasDetail ? "text-champagne-gold" : "text-pearl-white"}`}>
-          {p.name}
+        <span className={`flex items-center gap-2 truncate text-sm font-medium ${hasDetail ? "text-champagne-gold" : "text-pearl-white"}`}>
+          <span className="truncate">{p.name}</span>
+          {p.role === "lead" && (
+            <span className="shrink-0 rounded border border-champagne-gold/40 px-1.5 py-px text-[10px] font-semibold uppercase tracking-wider text-champagne-gold/90">
+              Lead
+            </span>
+          )}
         </span>
         <span className="block truncate text-sm text-white/40">{p.college}</span>
+        {!hasDetail && (p.phone || p.email) && (
+          <span className="mt-0.5 flex flex-wrap gap-x-3 gap-y-0.5 text-xs">
+            {p.phone && (
+              <a href={`tel:${p.phone}`} className="tabular-nums text-champagne-gold hover:underline">{p.phone}</a>
+            )}
+            {p.email && (
+              <a href={`mailto:${p.email}`} className="break-all text-champagne-gold/80 hover:underline">{p.email}</a>
+            )}
+          </span>
+        )}
       </span>
       <span className="shrink-0 text-right text-sm">{status}</span>
     </>
