@@ -120,6 +120,10 @@ export type Application = {
   stage?: "intent";
   decidedAt?: string;
   refundedAt?: string;
+  /** An organiser took a decline back once the money was found — who, and
+      when. See reinstateApplication in lib/payment-review. */
+  reinstatedAt?: string;
+  reinstatedBy?: string;
   /** When the applicant withdrew it themselves. Distinct from decidedAt, which
       records an organiser's decision. */
   cancelledAt?: string;

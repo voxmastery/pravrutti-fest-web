@@ -12,7 +12,7 @@ import { Application, feeForApplicant, isLiveApplication } from "@/lib/applicati
 import { Team, TeamMember, normalizeTeamCode, memberStatus } from "@/lib/teams";
 import { events, eventId as slugFor } from "@/lib/pravrutti-data";
 import { newTicketId } from "@/lib/ticket-id";
-import { cancelApplication } from "@/lib/payment-review";
+import { cancelApplication, reinstateApplication } from "@/lib/payment-review";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -466,6 +466,42 @@ export async function POST(req: Request) {
      under their team. That guard protects teammates from a lead leaving
      silently; an organiser removing a row they know to be wrong is the case it
      was never meant to catch. */
+  /* Taking back a decline once the money is found (lib/payment-review). The
+     desk has no button for it — verifying a declined row's money records it
+     and nothing more — so it lives here, and like verify_team it names the
+     organiser who decided. */
+  if (body?.action === "reinstate") {
+    const evId = String(body?.eventId ?? "").trim();
+    const email = String(body?.email ?? "").trim().toLowerCase();
+    const by = String(body?.by ?? "").trim().toLowerCase();
+    const paymentRef = String(body?.paymentRef ?? "").trim() || null;
+    if (!evId || !email)
+      return NextResponse.json({ error: "Missing eventId or email." }, { status: 400 });
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(by))
+      return NextResponse.json(
+        { error: "Say who decided: pass the organiser's email as `by`. The shared key names nobody." },
+        { status: 400 },
+      );
+
+    const result = await reinstateApplication({ eventId: evId, email, by, paymentRef });
+    if ("refused" in result) {
+      const why = {
+        missing: ["No such application.", 404],
+        not_declined: ["Only a declined registration can be reinstated.", 409],
+        not_paid: ["Its money isn't verified as held — a refunded or unverified fee is a conversation, not a button.", 409],
+      } as const;
+      const [error, status] = why[result.refused];
+      return NextResponse.json({ error }, { status });
+    }
+    const a = result.outcome.application;
+    return NextResponse.json({
+      ok: true,
+      status: a.status, payment: a.payment, paymentRef: a.paymentRef ?? null,
+      reinstatedBy: a.reinstatedBy, mailed: !!result.outcome.mail?.sent,
+      mailError: a.confirmationEmailError ?? null,
+    });
+  }
+
   if (body?.action === "cancel") {
     const evId = String(body?.eventId ?? "").trim();
     const email = String(body?.email ?? "").trim().toLowerCase();
