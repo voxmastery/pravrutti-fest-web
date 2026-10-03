@@ -38,7 +38,9 @@ export const DESK_ACCESS: Record<string, string[]> = {
   "rc-x": ["shravyathirumurthy@gmail.com", "officialpranavclg@gmail.com"],
   "leads-innovation-challenge": ["pranavbansal310@gmail.com", "gsiddharth214@gmail.com"],
   "dent-innovate": ["ankush.chadichal@gmail.com", "gowuri.kotabagi@gmail.com"],
-  "pitch-at-mach": ["23etas012004@msruas.ac.in", "23etas012002@msruas.ac.in"],
+  /* Ankith A Joshi signs in with Gmail (3 Oct) — the college addresses stay
+     until we know which is Afifa's. */
+  "pitch-at-mach": ["ankithjoshi908@gmail.com", "23etas012004@msruas.ac.in", "23etas012002@msruas.ac.in"],
   "bridge-it": ["ramaiahcivilclub@gmail.com", "abhilashnm429@gmail.com"],
   "chaos": ["voxmastery@gmail.com", "shravanth.polisetty@gmail.com"],
   "hacktivate": ["voxmastery@gmail.com", "shravanth.polisetty@gmail.com"],
