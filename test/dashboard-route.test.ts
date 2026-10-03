@@ -266,4 +266,22 @@ describe("the roster judges a teammate by their lead", () => {
     expect(by("Farah").group).toBe(by("Asha").group);
     expect(body.counts.registered).toBe(2);
   });
+
+  /* TitanAlphaa, 3 Oct: a confirmed lead whose teammates were still in review
+     showed as a team of one to coordinators. */
+  it("shows a coordinator the whole of a confirmed team", async () => {
+    apps.push(
+      { eventId: "robo-climb", name: "Gita", college: "RUAS", email: "g@x.com",
+        phone: "9000000007", status: "pending", payment: "not_required",
+        teamCode: "ROBOTEAM0001", teamName: "Robo Rangers" },
+      { code: "ROBOTEAM0001", eventId: "robo-climb", name: "Robo Rangers", createdByEmail: "a@x.com" },
+      { code: "ROBOTEAM0001", member: { name: "Hari", email: "h@x.com", phone: "9000000008",
+        college: "RUAS", joinedAt: "2026-10-02T00:00:00Z" } },
+    );
+    role.current = { kind: "coordinator", eventIds: ["robo-climb"] };
+    const body = await (await get("robo-climb")).json();
+    const names = body.roster.map((r: any) => r.name).sort();
+    expect(names).toEqual(["Asha", "Bala", "Gita", "Hari"]);
+    expect(names).not.toContain("Chetan");
+  });
 });

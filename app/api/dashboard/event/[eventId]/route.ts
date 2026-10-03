@@ -3,7 +3,7 @@ import { resolveRole, canViewEvent } from "@/lib/roles";
 import { listAll, readPrivate } from "@/lib/blob-store";
 import { createHash } from "crypto";
 import type { Application } from "@/lib/applications";
-import { memberStatus, type Team, type TeamMember } from "@/lib/teams";
+import type { Team, TeamMember } from "@/lib/teams";
 import { countRegistrations, entryKey, heldRows, isTeammate } from "@/lib/registration-counts";
 
 export const runtime = "nodejs";
@@ -130,7 +130,10 @@ export async function GET(
     const m = rec?.member;
     const code = String(rec?.code ?? "").trim().toUpperCase();
     const team = teams.get(code);
-    if (!m?.email || !team || memberStatus(m) !== "invited") continue;
+    /* Anyone on the team list without an application of their own: usually
+       an invite not yet accepted, but a join that never wrote its row counts
+       too — either way the team showed a name short without them. */
+    if (!m?.email || !team) continue;
     if (applied.has(m.email.trim().toLowerCase())) continue;
     invited.push({
       name: m.name,
@@ -151,10 +154,15 @@ export async function GET(
      they had places. An invited teammate shows only on a team that has a
      confirmed member. Organisers still see everyone. */
   const confirmedGroups = new Set(roster.filter((r) => r.status === "confirmed").map((r) => r.group));
+  /* On a team with a confirmed member the whole team is shown, not just the
+     confirmed rows: a teammate left "in review" under a confirmed lead holds
+     the lead's place (heldRows), and hiding them showed confirmed teams with
+     one name. Withdrawn people and teams with nobody confirmed stay hidden. */
+  const onConfirmedTeam = (r: RosterEntry) =>
+    r.status === "confirmed" ||
+    (r.team !== null && confirmedGroups.has(r.group) && (r.status === "pending" || r.status === "invited"));
   const visible: (RosterEntry | OrganiserEntry)[] =
-    role.kind === "organiser"
-      ? [...roster, ...invited]
-      : [...roster.filter((r) => r.status === "confirmed"), ...invited.filter((r) => confirmedGroups.has(r.group))];
+    role.kind === "organiser" ? [...roster, ...invited] : [...roster, ...invited].filter(onConfirmedTeam);
   visible.sort((a, b) => a.name.localeCompare(b.name));
 
   /* The roster still lists withdrawn students — the desk needs to see that

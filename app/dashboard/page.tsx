@@ -624,9 +624,9 @@ function Participant({ p }: { p: Entry }) {
   ) : p.status === "confirmed" ? (
     <span className="text-white/45">Not arrived</span>
   ) : p.status === "invited" ? (
-    /* Their lead added them; they have not opened the invite, so they have
-       no registration and no ticket yet. */
-    <span className="text-xs text-white/35">Invite not accepted</span>
+    /* On the team list with no registration of their own — usually an invite
+       not yet accepted — so no ticket yet. */
+    <span className="text-xs text-white/35">Not registered yet</span>
   ) : p.status === "pending" && !p.live && p.role === "member" ? (
     /* They did their part, but their lead never registered the team, or
        withdrew it — and nobody on a team holds a place without its lead. */
