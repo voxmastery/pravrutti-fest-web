@@ -47,6 +47,10 @@ export interface Event {
       earlier than the fest-wide FEST.registrationCloses. Every gate reads it
       through festFor(), so the event page, the forms and the API agree. */
   registrationCloses?: string;
+  /** A sponsor's perks for this event's participants, shown under the
+      prizes — ElevenLabs on Hacktivate. The logo follows the sponsor's own
+      brand guidelines: their white wordmark, on our dark ground. */
+  sponsorPerks?: { sponsor: string; logo: string; website: string; perks: string[] };
   /** How long the event runs, e.g. "3 hours", "24 hours". */
   duration?: string;
   /** Entry restriction, where one exists (year, branch, team make-up). */
@@ -173,6 +177,11 @@ export interface Sponsor {
   name: string;
   logo: string;
   website: string;
+  /** The logo is the sponsor's name set in their own type — a wide wordmark,
+      not a square mark. It stands in for the name instead of being squeezed
+      into the 48px icon box, where ElevenLabs' 7.7:1 wordmark would be a
+      sliver. */
+  wordmark?: boolean;
 }
 
 export interface Club {
@@ -204,6 +213,14 @@ export const sponsors: Sponsor[] = [
     name: "IEEE Smart Cities",
     logo: "",
     website: "https://smartcities.ieee.org/"
+  },
+  {
+    /* Hacktivate's partner, 2 Oct 2026. White wordmark from
+       elevenlabs.io/brand, written "ElevenLabs" as their guidelines ask. */
+    name: "ElevenLabs",
+    logo: "/sponsors/elevenlabs.svg",
+    website: "https://elevenlabs.io/",
+    wordmark: true,
   },
 ];
 
@@ -686,6 +703,16 @@ export const events: Event[] = [
     capacityUnit: "teams",
     /* Closes early: 11:59 PM IST on 1 October, organisers' call. */
     registrationCloses: "2026-10-01T18:29:59.000Z",
+    sponsorPerks: {
+      sponsor: "ElevenLabs",
+      logo: "/sponsors/elevenlabs.svg",
+      website: "https://elevenlabs.io/",
+      perks: [
+        "Every participant: 1 month of ElevenLabs Creator, free",
+        "Overall winning team: 3 months of ElevenLabs Pro for each member",
+        "Best project built with ElevenLabs: 3 months of ElevenLabs Scale for each member",
+      ],
+    },
     duration: "24 hours",
     coordinators: {
       faculty: [],

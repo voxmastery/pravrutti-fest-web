@@ -232,6 +232,35 @@ export function EventPageView({ event, slug }: { event: Event; slug: string }) {
             </div>
           </section>
 
+          {event.sponsorPerks && (
+            /* A sponsor's perks for this event's people (ElevenLabs on
+               Hacktivate) — under the prizes, because that is what they are. */
+            <section className="order-11 lg:order-none min-w-0 space-y-3">
+              <SectionLabel>Partner perks</SectionLabel>
+              <a
+                href={event.sponsorPerks.website}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block rounded-2xl border border-royal-wine bg-cosmic-purple/60 p-5 transition-colors hover:border-cyber-pink/50"
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={event.sponsorPerks.logo}
+                  alt={event.sponsorPerks.sponsor}
+                  className="h-5 w-auto max-w-full object-contain object-left"
+                />
+                <ul className="mt-5 space-y-2 text-sm leading-relaxed text-pearl-white/75">
+                  {event.sponsorPerks.perks.map((p) => (
+                    <li key={p} className="flex gap-2">
+                      <span aria-hidden="true" className="text-champagne-gold">•</span>
+                      <span>{p}</span>
+                    </li>
+                  ))}
+                </ul>
+              </a>
+            </section>
+          )}
+
           <div className="order-12 lg:order-none min-w-0">
             <EventFormat rows={formatRows} />
           </div>

@@ -11,6 +11,7 @@ import { useScrollReveal } from "@/hooks/use-animations";
 const sponsorMeta: Record<string, { icon: typeof Rocket; desc: string }> = {
   "PCB Cupid": { icon: CircuitBoard, desc: "Modular electronics and dev boards for makers" },
   "IEEE Smart Cities": { icon: Building2, desc: "IEEE's global smart-city technology initiative" },
+  ElevenLabs: { icon: Rocket, desc: "AI voice and audio — Hacktivate's partner" },
 };
 
 function SponsorCard({ sponsor, index }: { sponsor: (typeof sponsors)[0]; index: number }) {
@@ -29,6 +30,11 @@ function SponsorCard({ sponsor, index }: { sponsor: (typeof sponsors)[0]; index:
     if (el && el.complete && el.naturalWidth === 0) setBroken(true);
   }, []);
 
+  /* A wordmark is the name, so it takes the name's place at a size it can
+     be read at; the square box is for square marks. If the file fails, the
+     card falls back to the ordinary icon-and-name layout. */
+  const showWordmark = !!sponsor.wordmark && !!sponsor.logo && !broken;
+
   return (
     <a
       href={sponsor.website}
@@ -44,6 +50,7 @@ function SponsorCard({ sponsor, index }: { sponsor: (typeof sponsors)[0]; index:
           have not. Several sponsors point at logo files that were never
           shipped, and a broken image is worse than a clean glyph — so a file
           that fails to load falls back rather than leaving a torn box. */}
+      {!showWordmark && (
       <span className="grid h-12 w-12 shrink-0 place-items-center overflow-hidden rounded-xl bg-neon-purple/20 transition-colors group-hover:bg-cyber-pink/20">
         {sponsor.logo && !broken ? (
           /* eslint-disable-next-line @next/next/no-img-element */
@@ -58,14 +65,26 @@ function SponsorCard({ sponsor, index }: { sponsor: (typeof sponsors)[0]; index:
           <Icon className="h-5 w-5 text-champagne-gold transition-colors group-hover:text-cyber-pink" />
         )}
       </span>
+      )}
 
       <span className="min-w-0 flex-1">
         {/* at 500, not Orbitron 900. The display face is 40% wider per
             glyph and was the reason the longer names broke. */}
         <span className="flex items-center gap-1.5">
+          {showWordmark ? (
+            /* eslint-disable-next-line @next/next/no-img-element */
+            <img
+              ref={img}
+              src={sponsor.logo}
+              alt={sponsor.name}
+              onError={() => setBroken(true)}
+              className="h-5 w-auto max-w-[75%] object-contain object-left"
+            />
+          ) : (
           <span className="truncate text-[17px] font-semibold text-pearl-white transition-colors group-hover:text-champagne-gold">
             {sponsor.name}
           </span>
+          )}
           <ArrowUpRight className="h-4 w-4 shrink-0 text-pearl-white/25 transition-all group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-cyber-pink" />
         </span>
         <span className="mt-1 block text-sm leading-snug text-pearl-white/55">
