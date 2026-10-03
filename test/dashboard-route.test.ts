@@ -140,7 +140,7 @@ describe("GET /api/dashboard/event/[eventId]", () => {
      and an opaque group id — never the team code, which is what a stranger
      types to join a team, and a coordinator has no reason to hold. */
   it("tells the roster which people entered together", async () => {
-    role.current = { kind: "coordinator", eventIds: ["robo-climb"] };
+    role.current = { kind: "organiser" };
     const body = await (await get("robo-climb")).json();
     const by = (n: string) => body.roster.find((r: any) => r.name === n);
     expect(by("Asha").group).toBe(by("Bala").group);
@@ -234,5 +234,36 @@ describe("the roster judges a teammate by their lead", () => {
     expect(by(body, "Sonika M").live).toBe(true);
     expect(body.counts.registered).toBe(2);
     expect(body.counts.teams).toBe(1);
+  });
+
+  /* Organisers' decision, 3 Oct 2026: coordinators see confirmed people only. */
+  it("shows a coordinator confirmed people only, and counts only them", async () => {
+    role.current = { kind: "coordinator", eventIds: ["robo-climb"] };
+    const body = await (await get("robo-climb")).json();
+    expect(body.roster.map((r: any) => r.name).sort()).toEqual(["Asha", "Bala"]);
+    expect(body.counts.registered).toBe(2);
+    expect(body.counts.teams).toBe(1);
+  });
+
+  it("still shows an organiser everyone", async () => {
+    role.current = { kind: "organiser" };
+    const body = await (await get("robo-climb")).json();
+    expect(body.roster.map((r: any) => r.name)).toContain("Chetan");
+  });
+
+  /* A teammate the lead added who has not accepted has no application, so
+     their name used to be missing from the team. */
+  it("lists an invited teammate on their team", async () => {
+    apps.push(
+      { code: "ROBOTEAM0001", eventId: "robo-climb", name: "Robo Rangers", createdByEmail: "a@x.com" },
+      { code: "ROBOTEAM0001", member: { name: "Farah", email: "f@x.com", phone: "9000000006",
+        college: "RUAS", joinedAt: "", invitedAt: "2026-10-02T00:00:00Z" } },
+    );
+    role.current = { kind: "coordinator", eventIds: ["robo-climb"] };
+    const body = await (await get("robo-climb")).json();
+    const by = (n: string) => body.roster.find((r: any) => r.name === n);
+    expect(by("Farah")).toMatchObject({ status: "invited", team: "Robo Rangers", live: false, role: "member" });
+    expect(by("Farah").group).toBe(by("Asha").group);
+    expect(body.counts.registered).toBe(2);
   });
 });

@@ -3,6 +3,7 @@ import { resolveRole, canViewEvent } from "@/lib/roles";
 import { listAll, readPrivate } from "@/lib/blob-store";
 import { createHash } from "crypto";
 import type { Application } from "@/lib/applications";
+import { memberStatus, type Team, type TeamMember } from "@/lib/teams";
 import { countRegistrations, entryKey, heldRows, isTeammate } from "@/lib/registration-counts";
 
 export const runtime = "nodejs";
@@ -23,7 +24,9 @@ type RosterEntry = {
   college: string;
   email: string;
   phone: string;
-  status: Application["status"];
+  /** "invited": added by their lead, invite not accepted yet, so no
+      registration of their own. Listed so every teammate's name shows. */
+  status: Application["status"] | "invited";
   checkedInAt: string | null;
   /** The team's display name; null for someone who entered alone. */
   team: string | null;
@@ -109,6 +112,51 @@ export async function GET(
     )
     .sort((a, b) => a.name.localeCompare(b.name));
 
+  /* Teammates the lead added who have not accepted have no application, so
+     the roster above never had them, and coordinators saw teams missing
+     names. They come from the team-member records; they hold no place yet. */
+  const [memberRows, teamRows] = await Promise.all([
+    listAll(`team-member/${eventId}/`).then((bs) => Promise.all(bs.map((b) => readPrivate(b.url)))),
+    listAll(`team/${eventId}/`).then((bs) => Promise.all(bs.map((b) => readPrivate(b.url)))),
+  ]);
+  const teams = new Map(
+    (teamRows as (Team | null)[])
+      .filter((t): t is Team => !!t?.code && !("member" in t) && !t.deletedAt && !t.movedTo)
+      .map((t) => [t.code.trim().toUpperCase(), t]),
+  );
+  const applied = new Set(mine.map((r) => String(r.email).trim().toLowerCase()));
+  const invited: RosterEntry[] = [];
+  for (const rec of memberRows as ({ code?: string; member?: TeamMember } | null)[]) {
+    const m = rec?.member;
+    const code = String(rec?.code ?? "").trim().toUpperCase();
+    const team = teams.get(code);
+    if (!m?.email || !team || memberStatus(m) !== "invited") continue;
+    if (applied.has(m.email.trim().toLowerCase())) continue;
+    invited.push({
+      name: m.name,
+      college: m.college,
+      email: m.email,
+      phone: m.phone ?? "",
+      status: "invited",
+      checkedInAt: null,
+      team: team.name?.trim() || "Unnamed team",
+      group: createHash("sha256").update(`${eventId}|${entryKey({ teamCode: code })}`).digest("hex").slice(0, 12),
+      live: false,
+      role: "member",
+    });
+  }
+
+  /* Coordinators see confirmed people only, on the organisers' decision of
+     3 Oct 2026: unconfirmed entrants were being added to event groups as if
+     they had places. An invited teammate shows only on a team that has a
+     confirmed member. Organisers still see everyone. */
+  const confirmedGroups = new Set(roster.filter((r) => r.status === "confirmed").map((r) => r.group));
+  const visible: (RosterEntry | OrganiserEntry)[] =
+    role.kind === "organiser"
+      ? [...roster, ...invited]
+      : [...roster.filter((r) => r.status === "confirmed"), ...invited.filter((r) => confirmedGroups.has(r.group))];
+  visible.sort((a, b) => a.name.localeCompare(b.name));
+
   /* The roster still lists withdrawn students — the desk needs to see that
      somebody pulled out — but they are not counted. Counting every row read
      from the store is how this panel came to show 239 for CHAOS while the
@@ -119,14 +167,16 @@ export async function GET(
     {
       eventId,
       counts: {
-        registered: counts.people,
-        teams: counts.teams,
+        /* A coordinator's view holds confirmed people only, so its headline
+           numbers do too. */
+        registered: role.kind === "organiser" ? counts.people : counts.confirmedPeople,
+        teams: role.kind === "organiser" ? counts.teams : counts.confirmedTeams,
         confirmed: counts.confirmedPeople,
         confirmedTeams: counts.confirmedTeams,
         checkedIn: counts.checkedIn,
         notArrived: counts.notArrived,
       },
-      roster,
+      roster: visible,
     },
     { headers: { "cache-control": "no-store" } }
   );
