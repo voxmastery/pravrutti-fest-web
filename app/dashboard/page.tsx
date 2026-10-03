@@ -495,6 +495,8 @@ type View = "all" | Exclude<Stage, "withdrew">;
 const stageOf = (p: Entry): Stage =>
   p.status === "confirmed"
     ? "confirmed"
+    : p.status === "invited"
+    ? "unfinished"
     : p.status === "pending"
     ? p.live
       ? "review"
@@ -505,7 +507,7 @@ const VIEWS: { id: View; label: string; hint: string }[] = [
   { id: "all", label: "Everyone", hint: "Everyone who has started registering, grouped by team. Withdrawn people are listed but not counted." },
   { id: "confirmed", label: "Confirmed", hint: "Verified and holding a ticket." },
   { id: "review", label: "In review", hint: "Paid, or gave a payment ID — waiting for an organiser to verify it." },
-  { id: "unfinished", label: "Didn't finish", hint: "Teammates whose lead never registered the team, or withdrew it — they hold no place until their lead registers. Call the lead. (Leads who went to pay and didn't come back are in review.)" },
+  { id: "unfinished", label: "Didn't finish", hint: "Teammates whose lead never registered the team, or withdrew it, and teammates who haven't accepted their invite — they hold no place yet. Call the lead. (Leads who went to pay and didn't come back are in review.)" },
 ];
 
 type Group = {
@@ -621,6 +623,10 @@ function Participant({ p }: { p: Entry }) {
     </>
   ) : p.status === "confirmed" ? (
     <span className="text-white/45">Not arrived</span>
+  ) : p.status === "invited" ? (
+    /* Their lead added them; they have not opened the invite, so they have
+       no registration and no ticket yet. */
+    <span className="text-xs text-white/35">Invite not accepted</span>
   ) : p.status === "pending" && !p.live && p.role === "member" ? (
     /* They did their part, but their lead never registered the team, or
        withdrew it — and nobody on a team holds a place without its lead. */
