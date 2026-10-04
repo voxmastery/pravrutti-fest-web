@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach, beforeAll } from "vitest";
+import { countRegistrations } from "@/lib/registration-counts";
 
 /**
  * Registrations taken on Unstop, brought onto the desk.
@@ -144,5 +145,99 @@ describe("POST /api/admin/reconcile { action: import_external }", () => {
   it("matches an address whatever its case", async () => {
     await importRows([{ ...NIKESH, email: "NikeshYadavP7488@Gmail.com" }]);
     expect(row(NIKESH.email).email).toBe(NIKESH.email);
+  });
+});
+
+/**
+ * A team entered on Unstop stays a team.
+ *
+ * CHAOS took eight four-person teams through Unstop, one Rs. 200 per team.
+ * Imported row by row they became 31 solo entrants, 31 "teams" on the count
+ * and Rs. 6,200 in the books. So rows sharing an Unstop team ID become one
+ * team: the leader carries the fee, the rest are covered by them, and the
+ * team exists as a team — a record and a roster — so the ticket page and the
+ * desk see it like any other.
+ */
+describe("POST /api/admin/reconcile { action: import_external } — teams", () => {
+  const CH = "chaos";
+  const member = (name: string, email: string, role: "lead" | "member") => ({
+    externalId: "U39ITW47", teamName: "iVision", name, email, role,
+    phone: "+917230997704", college: "BMSITM", registeredAt: "2026-09-29T16:44:10.000Z",
+  });
+  const IVISION = [
+    member("Madhav Bansal", "madhav@example.com", "member"),
+    member("Fahad Ishak", "fahad@example.com", "lead"),
+    member("Sriram Reddy", "sriram@example.com", "member"),
+    member("Roshan V", "roshan@example.com", "member"),
+  ];
+  const importTeam = (entries: unknown[]) =>
+    post({ action: "import_external", source: "unstop", eventId: CH, by: BY, entries });
+  const app = (email: string) => store.get(`app/${CH}/${email}.json`);
+  const apps = () => [...store.entries()].filter(([k]) => k.startsWith(`app/${CH}/`)).map(([, v]) => v);
+
+  it("puts everyone on one team, under one code", async () => {
+    await importTeam(IVISION);
+    const codes = new Set(apps().map((a) => a.teamCode));
+    expect(codes.size).toBe(1);
+    expect([...codes][0]).toMatch(/^[A-Z2-9]{12}$/);
+    expect(apps().every((a) => a.teamName === "iVision")).toBe(true);
+  });
+
+  it("charges the leader alone, whatever order the rows come in", async () => {
+    await importTeam(IVISION);
+    expect(app("fahad@example.com")).toMatchObject({ payment: "paid", fee: "Rs. 200/-", paymentRef: "UNSTOP-U39ITW47", paymentVerifiedBy: BY });
+    for (const e of ["madhav@example.com", "sriram@example.com", "roshan@example.com"])
+      expect(app(e)).toMatchObject({ status: "confirmed", payment: "not_required", fee: "Covered by team lead", paymentRef: null });
+  });
+
+  it("counts as one team of four", async () => {
+    await importTeam(IVISION);
+    const c = countRegistrations(apps());
+    expect(c.teams).toBe(1);
+    expect(c.people).toBe(4);
+    expect(c.confirmedTeams).toBe(1);
+  });
+
+  it("creates the team and its roster, led by the leader", async () => {
+    await importTeam(IVISION);
+    const code = app("fahad@example.com").teamCode;
+    expect(store.get(`team/${CH}/${code}.json`)).toMatchObject({ name: "iVision", createdByEmail: "fahad@example.com" });
+    for (const p of IVISION)
+      expect(store.get(`team-member/${CH}/${p.email}.json`)).toMatchObject({ code, member: { email: p.email, name: p.name } });
+  });
+
+  it("sends every member their ticket", async () => {
+    await importTeam(IVISION);
+    expect(mailed.sort()).toEqual(IVISION.map((p) => p.email).sort());
+  });
+
+  /* Splitting a team between a registration we hold and one we import
+     would leave two leads, or a member covered by nobody. */
+  it("leaves a whole team out if anyone on it is already registered", async () => {
+    store.set(`app/${CH}/sriram@example.com.json`, { email: "sriram@example.com", status: "confirmed", payment: "paid" });
+    const res = await importTeam(IVISION);
+    expect(res.body.imported).toEqual([]);
+    expect(app("fahad@example.com")).toBeUndefined();
+    expect(res.body.skipped.map((s: any) => s.email).sort()).toEqual(IVISION.map((p) => p.email).sort());
+    expect(res.body.skipped[0].reason).toMatch(/sriram@example.com/);
+  });
+
+  it("leaves a whole team out if anyone on it is on another team here", async () => {
+    store.set(`team-member/${CH}/roshan@example.com.json`, { code: "OTHERTEAM123", eventId: CH, member: { email: "roshan@example.com" } });
+    const res = await importTeam(IVISION);
+    expect(res.body.imported).toEqual([]);
+    expect(app("fahad@example.com")).toBeUndefined();
+  });
+
+  it("takes the first row as leader when nobody is marked", async () => {
+    await importTeam(IVISION.map(({ role: _r, ...p }) => p));
+    expect(app("madhav@example.com").payment).toBe("paid");
+    expect(app("fahad@example.com").payment).toBe("not_required");
+  });
+
+  it("keeps a one-person 'team' a solo entry", async () => {
+    await importTeam([IVISION[1]]);
+    expect(app("fahad@example.com").teamCode).toBeNull();
+    expect(app("fahad@example.com").teamName).toBe("iVision");
   });
 });

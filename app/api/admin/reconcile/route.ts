@@ -13,7 +13,7 @@ import { Team, TeamMember, normalizeTeamCode, memberStatus } from "@/lib/teams";
 import { events, eventId as slugFor } from "@/lib/pravrutti-data";
 import { newTicketId } from "@/lib/ticket-id";
 import { cancelApplication, reinstateApplication, resendConfirmation } from "@/lib/payment-review";
-import { buildExternalApplication, EXTERNAL_SOURCES, type ExternalSource } from "@/lib/external-registrations";
+import { EXTERNAL_SOURCES, importExternal, type ExternalEntry, type ExternalSource } from "@/lib/external-registrations";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -489,27 +489,10 @@ export async function POST(req: Request) {
     const event = events.find((e) => slugFor(e.name) === evId);
     if (!event) return NextResponse.json({ error: "Unknown event." }, { status: 404 });
 
-    const at = new Date().toISOString();
-    const free = event.fee.toLowerCase().startsWith("free");
-    const imported: { email: string; name: string; ticketId: string; mailed: boolean }[] = [];
-    const skipped: { email: string; reason: string }[] = [];
-    for (const entry of entries) {
-      const built = buildExternalApplication({
-        entry: (entry ?? {}) as Record<string, string>, source, by, at,
-        event: { id: evId, name: event.name, fee: event.fee, free },
-      });
-      const email = String((entry as { email?: string })?.email ?? "").trim().toLowerCase();
-      if ("error" in built) { skipped.push({ email, reason: built.error }); continue; }
-      const app = built.application;
-      try {
-        await putJson(applicationPath(evId, app.email), app, false);
-      } catch {
-        skipped.push({ email: app.email, reason: "Already registered for this event — left as it is." });
-        continue;
-      }
-      const sent = await resendConfirmation({ eventId: evId, email: app.email });
-      imported.push({ email: app.email, name: app.name, ticketId: app.ticketId, mailed: !!sent?.mail?.sent });
-    }
+    const { imported, skipped } = await importExternal({
+      entries: entries as ExternalEntry[], source, by,
+      event: { id: evId, name: event.name, fee: event.fee, free: event.fee.toLowerCase().startsWith("free") },
+    });
     return NextResponse.json({ ok: true, imported, skipped });
   }
 

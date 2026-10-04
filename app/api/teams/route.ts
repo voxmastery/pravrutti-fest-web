@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { randomBytes } from "crypto";
+import { generateTeamCode } from "@/lib/team-code";
 import { events, eventId, capacityFor, statedCapacity, effectiveRegistrationOpen, registrationUnavailableMessage, eventFullMessage, festFor, eventClosedMessage } from "@/lib/pravrutti-data";
 import {
   Application,
@@ -27,7 +27,6 @@ import { eventIsFull } from "@/lib/event-full";
 import {
   Team,
   TeamMember,
-  TEAM_CODE_LENGTH,
   MAX_TEAM_BIO,
   normalizeTeamCode,
   isValidTeamCode,
@@ -53,14 +52,6 @@ import {
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-
-function generateTeamCode() {
-  const bytes = randomBytes(TEAM_CODE_LENGTH);
-  let out = "";
-  for (let i = 0; i < TEAM_CODE_LENGTH; i++) out += CODE_ALPHABET[bytes[i] % CODE_ALPHABET.length];
-  return out;
-}
 
 function jsonError(message: string, status: number) {
   return NextResponse.json({ error: message }, { status });
