@@ -496,6 +496,42 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: true, imported, skipped });
   }
 
+  /* Correcting a registration's payment ID. Skanda K N's Respawn and
+     Bracket Blitz were both verified against one payment while his fourth
+     sat attached to nothing: the money was there, the books said one
+     payment paid for two places. Names who corrected it, and refuses a
+     payment that already pays for somebody else's place. */
+  if (body?.action === "set_payment_ref") {
+    const evId = String(body?.eventId ?? "").trim();
+    const email = String(body?.email ?? "").trim().toLowerCase();
+    const by = String(body?.by ?? "").trim().toLowerCase();
+    const paymentRef = String(body?.paymentRef ?? "").trim().toUpperCase();
+    if (!evId || !email || !paymentRef)
+      return NextResponse.json({ error: "Missing eventId, email or paymentRef." }, { status: 400 });
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(by))
+      return NextResponse.json(
+        { error: "Say who decided: pass the organiser's email as `by`. The shared key names nobody." },
+        { status: 400 },
+      );
+    const path = applicationPath(evId, email);
+    const record = (await readJsonByPath(path)) as Application | null;
+    if (!record) return NextResponse.json({ error: "No such application." }, { status: 404 });
+
+    const claimed = (await readAll<Application>("app/")).find(
+      (a) => a.payment === "paid" && String(a.paymentRef ?? "").trim().toUpperCase() === paymentRef &&
+        !(a.eventId === evId && String(a.email).trim().toLowerCase() === email),
+    );
+    if (claimed)
+      return NextResponse.json(
+        { error: `That payment already pays for ${claimed.name}'s place at ${claimed.eventId}.` },
+        { status: 409 },
+      );
+
+    const next: Application = { ...record, paymentRef, paymentRefSetBy: by, paymentRefSetAt: new Date().toISOString() };
+    await putJson(path, next, true);
+    return NextResponse.json({ ok: true, eventId: evId, email, paymentRef, setBy: by });
+  }
+
   if (body?.action === "reinstate") {
     const evId = String(body?.eventId ?? "").trim();
     const email = String(body?.email ?? "").trim().toLowerCase();
