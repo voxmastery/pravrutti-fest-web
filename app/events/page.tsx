@@ -105,7 +105,7 @@ export default function EventsPage() {
             <span className="text-pearl-white/70">
               After you register, your entry stays &ldquo;in process&rdquo; until we verify the payment.
               Once your payment has been confirmed, you will receive an email confirmation.{" "}
-              <a href="/tickets" className="font-bold text-champagne-gold underline hover:text-white">
+              <a href="/ticket" className="font-bold text-champagne-gold underline hover:text-white">
                 Track your registrations
               </a>
               .
