@@ -74,7 +74,7 @@ describe("capacityInPeople", () => {
  */
 describe("capacityFor", () => {
   it("uses the event's own capacity from the coordinators' sheet", () => {
-    expect(capacityFor(eventId("ROBO RACE"))).toBe(120);
+    expect(capacityFor(eventId("ROBO RACE"))).toBe(160);
   });
 
   it("agrees with capacityInPeople for every capped event", () => {

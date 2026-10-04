@@ -333,9 +333,11 @@ export const events: Event[] = [
     fee: "Rs. 200/-",
     prizes: [10000, 7000, 5000],
     teamSize: { min: 2, max: 4, soloAllowed: false },
-    /* 30 teams (was 20), coordinators' call on 3 Oct: 120 at four a team. */
-    capacity: 120,
+    /* 30 teams (was 20), coordinators' call on 3 Oct; raised to 40 on 4 Oct
+       as it neared 30. capacity is the head count at four a team. */
+    capacity: 160,
     capacityUnit: "teams",
+    maxTeams: 40,
     duration: "3 hours",
     coordinators: {
       faculty: [],
