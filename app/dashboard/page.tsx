@@ -12,6 +12,7 @@ import { StatInline } from "@/components/dashboard/stat-tile";
 import { FilterGroup } from "@/components/dashboard/filter-group";
 import { AppStatusBadge } from "@/components/dashboard/status-badge";
 import { AccessPanel } from "@/components/dashboard/access-panel";
+import { DISCOVERIZE_EVENT_ID } from "@/lib/discoverize";
 import { AlertTriangle, Check, ChevronDown, ClipboardList, FileSpreadsheet, Star } from "lucide-react";
 
 type Counts = {
@@ -176,6 +177,22 @@ export default function DashboardPage() {
             >
               View event page
             </Link>
+            {/* Discoverize's coordinators screen abstracts there, and this
+                roster only holds the teams already through to the final. */}
+            {open === DISCOVERIZE_EVENT_ID && (
+              <Link
+                href="/dashboard/discoverize"
+                className="mb-6 flex items-center justify-between gap-4 rounded-2xl border border-royal-wine bg-cosmic-purple/60 px-5 py-4 transition-colors hover:border-cyber-pink/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyber-pink"
+              >
+                <span>
+                  <span className="block font-semibold text-champagne-gold">Discoverize screening</span>
+                  <span className="block text-sm text-white/45">
+                    Every team that registered, their abstracts, and the shortlist — this list shows only the finalists
+                  </span>
+                </span>
+                <Star className="h-5 w-5 shrink-0 text-cyber-pink" />
+              </Link>
+            )}
             <EventDetail eventId={open} />
           </>
         )}
