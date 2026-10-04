@@ -4,11 +4,14 @@ import nodemailer, { type Transporter } from "nodemailer";
 /**
  * Outbound mail. Two transports, tried in this order:
  *
- *   1. SMTP   — the college's own mailbox (no-reply@pravrutti.tech on
- *               Hostinger). Preferred: pravrutti.tech already publishes SPF,
- *               DKIM and DMARC for Hostinger's servers, so mail sent this way
- *               is authenticated as the domain it claims to come from.
- *   2. Resend — HTTP fallback, kept so a deployment without SMTP can still send.
+ *   1. Resend — once RESEND_API_KEY is set. The Hostinger mailbox sends 100
+ *               messages a rolling day, shared between invites and tickets,
+ *               and by 4 Oct 2026 832 confirmed students were waiting on a
+ *               ticket. Resend's paid plan has no daily cap; pravrutti.tech is
+ *               verified there, so its mail is authenticated as the domain.
+ *   2. SMTP   — the fest's own mailbox (no-reply@pravrutti.tech on Hostinger).
+ *               The only transport before Resend, and still the fallback: a
+ *               Resend outage or refusal is retried here, not lost.
  *
  * Unconfigured is a first-class state, not an error: the fest can run its whole
  * review queue without mail, and an organiser marking a payment verified must
@@ -158,7 +161,10 @@ export async function sendMail(mail: {
   text: string;
   attachments?: Attachment[];
 }): Promise<SendResult> {
+  if (process.env.RESEND_API_KEY) {
+    const viaResend = await sendViaResend(mail);
+    if (viaResend.sent || !smtpConfigured()) return viaResend;
+  }
   if (smtpConfigured()) return sendViaSmtp(mail);
-  if (process.env.RESEND_API_KEY) return sendViaResend(mail);
   return { sent: false, skipped: true, error: "Mail is not configured." };
 }
