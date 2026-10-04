@@ -1,4 +1,5 @@
 import { TEST_SITE } from "@/lib/test-site";
+import { accommodation } from "@/lib/schedule";
 
 /**
  * A coordinator as the public site knows them: a name, and nothing to dial.
@@ -275,7 +276,13 @@ export const faqs = [
   },
   {
     question: "Will accommodation be provided for outstation participants?",
-    answer: "Accommodation will not be provided , however we will be suggesting the accommodations near to the venue."
+    /* Built from the schedule page's figures, so the two cannot disagree
+       again — this said "will not be provided" long after beds were
+       arranged. */
+    answer:
+      `Yes — accommodation is available for outstation participants at ` +
+      `${accommodation.currency}${accommodation.ratePerHeadPerDay} per head, per day. To book, call ` +
+      accommodation.contacts.map((c) => `${c.name} (${c.phone})`).join(" or ") + "."
   },
   {
     question: "Are there on-the-spot registrations?",
