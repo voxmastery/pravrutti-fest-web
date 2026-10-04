@@ -13,7 +13,8 @@ import { FilterGroup } from "@/components/dashboard/filter-group";
 import { AppStatusBadge } from "@/components/dashboard/status-badge";
 import { AccessPanel } from "@/components/dashboard/access-panel";
 import { DISCOVERIZE_EVENT_ID } from "@/lib/discoverize";
-import { AlertTriangle, Check, ChevronDown, ClipboardList, FileSpreadsheet, Star } from "lucide-react";
+import { downloadXlsx, exportFileName, exportRows } from "@/lib/roster-export";
+import { AlertTriangle, Check, ChevronDown, ClipboardList, Download, FileSpreadsheet, Star } from "lucide-react";
 
 type Counts = {
   registered: number; teams: number;
@@ -430,6 +431,7 @@ function EventDetail({ eventId }: { eventId: string }) {
   const [data, setData] = useState<{ counts: Counts; roster: Entry[] } | null>(null);
   const [state, setState] = useState<"loading" | "ok" | "error">("loading");
   const [view, setView] = useState<View>("all");
+  const [exporting, setExporting] = useState<"idle" | "busy" | "failed">("idle");
 
   useEffect(() => {
     let cancelled = false;
@@ -458,6 +460,22 @@ function EventDetail({ eventId }: { eventId: string }) {
 
   if (!data) return null;
 
+  const shown = view === "all" ? data.roster : data.roster.filter((p) => stageOf(p) === view);
+  /* The export is the list on screen, in its order: whichever filter is
+     chosen, grouped by team, lead first. Withdrawn people drop out. */
+  const exportable = exportRows(
+    groupRoster(shown).flatMap((g) => g.people).map((p) => ({ ...p, stage: stageLabel(p) })),
+  );
+  const exportShown = async () => {
+    setExporting("busy");
+    try {
+      await downloadXlsx(exportable, exportFileName(eventId));
+      setExporting("idle");
+    } catch {
+      setExporting("failed");
+    }
+  };
+
   return (
     <div className="pt-3">
       <div className="mb-3 flex flex-wrap gap-x-6 gap-y-2 text-sm">
@@ -481,12 +499,25 @@ function EventDetail({ eventId }: { eventId: string }) {
             }))}
           />
           <p className="text-xs text-white/40">{VIEWS.find((v) => v.id === view)?.hint}</p>
+          <div className="flex flex-wrap items-center gap-3 pt-1">
+            <button
+              type="button"
+              onClick={exportShown}
+              disabled={exporting === "busy" || exportable.length === 0}
+              className="inline-flex items-center gap-2 rounded-lg border border-royal-wine bg-cosmic-purple/60 px-3 py-1.5 text-sm text-champagne-gold transition-colors hover:border-cyber-pink/50 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyber-pink"
+            >
+              <Download className="h-4 w-4" />
+              {exporting === "busy" ? "Preparing…" : `Export to Excel (${exportable.length})`}
+            </button>
+            {exporting === "failed" && (
+              <span className="text-xs text-red-300">Couldn&apos;t build the file — try again.</span>
+            )}
+          </div>
         </div>
       )}
 
       <Card className="max-h-[380px] gap-0 divide-y divide-white/[0.05] overflow-y-auto rounded-xl border-white/[0.08] bg-midnight-navy/60 py-0 shadow-none">
         {(() => {
-          const shown = view === "all" ? data.roster : data.roster.filter((p) => stageOf(p) === view);
           if (data.roster.length === 0)
             return <p className="p-5 text-sm text-white/45">No registrations yet.</p>;
           if (shown.length === 0)
@@ -508,6 +539,14 @@ function EventDetail({ eventId }: { eventId: string }) {
  */
 type Stage = "confirmed" | "review" | "unfinished" | "withdrew";
 type View = "all" | Exclude<Stage, "withdrew">;
+
+/** The label a person carries in the export — the filter they fall under,
+    or the reason they hold no place. */
+const stageLabel = (p: Entry): string => {
+  if (p.status === "invited") return "Invite not accepted";
+  const stage = stageOf(p);
+  return stage === "withdrew" ? "Withdrew" : VIEWS.find((v) => v.id === stage)?.label ?? stage;
+};
 
 const stageOf = (p: Entry): Stage =>
   p.status === "confirmed"
