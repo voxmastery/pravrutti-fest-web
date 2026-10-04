@@ -345,11 +345,12 @@ export const events: Event[] = [
     prizes: [5000, 3000, 2000],
     teamSize: { min: 2, max: 4, soloAllowed: false },
     /* Raised from 24 to 35 teams on 2 Oct, organisers' call: it had closed
-       itself at 28 holding places. capacity is the head count at the max
-       team size, so the desk's meter and the page agree. */
-    capacity: 140,
+       itself at 28 holding places. Raised again to 40 on 4 Oct, when it
+       filled all 35. capacity is the head count at the max team size, so
+       the desk's meter and the page agree. */
+    capacity: 160,
     capacityUnit: "teams",
-    maxTeams: 35,
+    maxTeams: 40,
     duration: "3 hours",
     coordinators: {
       faculty: [],
