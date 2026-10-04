@@ -124,6 +124,10 @@ export type Application = {
       when. See reinstateApplication in lib/payment-review. */
   reinstatedAt?: string;
   reinstatedBy?: string;
+  /** Taken on another platform and imported (lib/external-registrations):
+      where, and that platform's own ID for the registration. */
+  source?: "unstop";
+  externalId?: string;
   /** When the applicant withdrew it themselves. Distinct from decidedAt, which
       records an organiser's decision. */
   cancelledAt?: string;

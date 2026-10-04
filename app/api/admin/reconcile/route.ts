@@ -12,7 +12,8 @@ import { Application, feeForApplicant, isLiveApplication } from "@/lib/applicati
 import { Team, TeamMember, normalizeTeamCode, memberStatus } from "@/lib/teams";
 import { events, eventId as slugFor } from "@/lib/pravrutti-data";
 import { newTicketId } from "@/lib/ticket-id";
-import { cancelApplication, reinstateApplication } from "@/lib/payment-review";
+import { cancelApplication, reinstateApplication, resendConfirmation } from "@/lib/payment-review";
+import { buildExternalApplication, EXTERNAL_SOURCES, type ExternalSource } from "@/lib/external-registrations";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -292,7 +293,6 @@ export async function POST(req: Request) {
         })),
       });
 
-    const { resendConfirmation } = await import("@/lib/payment-review");
     const results: {
       name: string; email: string; eventId: string; sent: boolean; error: string | null;
     }[] = [];
@@ -470,6 +470,49 @@ export async function POST(req: Request) {
      desk has no button for it — verifying a declined row's money records it
      and nothing more — so it lives here, and like verify_team it names the
      organiser who decided. */
+  /* Entries taken on Unstop, imported (lib/external-registrations). Only
+     ever adds: someone already registered keeps the row they have, and an
+     entry that cannot be read is reported back rather than guessed at. */
+  if (body?.action === "import_external") {
+    const evId = String(body?.eventId ?? "").trim();
+    const by = String(body?.by ?? "").trim().toLowerCase();
+    const source = String(body?.source ?? "") as ExternalSource;
+    const entries: unknown[] = Array.isArray(body?.entries) ? body.entries.slice(0, 200) : [];
+    if (!(EXTERNAL_SOURCES as readonly string[]).includes(source))
+      return NextResponse.json({ error: `Unknown source. Known: ${EXTERNAL_SOURCES.join(", ")}.` }, { status: 400 });
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(by))
+      return NextResponse.json(
+        { error: "Say who decided: pass the organiser's email as `by`. The shared key names nobody." },
+        { status: 400 },
+      );
+    if (entries.length === 0) return NextResponse.json({ error: "No entries." }, { status: 400 });
+    const event = events.find((e) => slugFor(e.name) === evId);
+    if (!event) return NextResponse.json({ error: "Unknown event." }, { status: 404 });
+
+    const at = new Date().toISOString();
+    const free = event.fee.toLowerCase().startsWith("free");
+    const imported: { email: string; name: string; ticketId: string; mailed: boolean }[] = [];
+    const skipped: { email: string; reason: string }[] = [];
+    for (const entry of entries) {
+      const built = buildExternalApplication({
+        entry: (entry ?? {}) as Record<string, string>, source, by, at,
+        event: { id: evId, name: event.name, fee: event.fee, free },
+      });
+      const email = String((entry as { email?: string })?.email ?? "").trim().toLowerCase();
+      if ("error" in built) { skipped.push({ email, reason: built.error }); continue; }
+      const app = built.application;
+      try {
+        await putJson(applicationPath(evId, app.email), app, false);
+      } catch {
+        skipped.push({ email: app.email, reason: "Already registered for this event — left as it is." });
+        continue;
+      }
+      const sent = await resendConfirmation({ eventId: evId, email: app.email });
+      imported.push({ email: app.email, name: app.name, ticketId: app.ticketId, mailed: !!sent?.mail?.sent });
+    }
+    return NextResponse.json({ ok: true, imported, skipped });
+  }
+
   if (body?.action === "reinstate") {
     const evId = String(body?.eventId ?? "").trim();
     const email = String(body?.email ?? "").trim().toLowerCase();
