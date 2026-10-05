@@ -66,6 +66,14 @@ describe("the four closed events", () => {
   });
 });
 
+/* Paused, not hidden: it stays on the list, and takes no new entries. */
+describe("DENT - INNOVATE", () => {
+  it("takes no new entries, and is still listed", () => {
+    expect(isFull(ev("DENT - INNOVATE"), { people: 0, teams: 0 })).toBe(true);
+    expect(listedEvents).toContain(ev("DENT - INNOVATE"));
+  });
+});
+
 describe("the events page", () => {
   const src = readFileSync(fileURLToPath(new URL("../app/events/page.tsx", import.meta.url)), "utf8");
   it("lists only listed events", () => {

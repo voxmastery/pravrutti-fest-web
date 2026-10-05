@@ -639,6 +639,9 @@ export const events: Event[] = [
     teamSize: { min: 1, max: 2, soloAllowed: true },
     capacity: 50,
     capacityUnit: "participants",
+    /* Registrations paused on 5 Oct, organisers' call: no new entries, still
+       listed, and everyone already in keeps their place. */
+    full: true,
     duration: "3 hours",
     eligibility: "Open to postgraduate students.",
     coordinators: {
