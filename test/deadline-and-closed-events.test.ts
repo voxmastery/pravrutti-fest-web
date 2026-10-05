@@ -76,8 +76,12 @@ describe("DENT - INNOVATE", () => {
 
 describe("the events page", () => {
   const src = readFileSync(fileURLToPath(new URL("../app/events/page.tsx", import.meta.url)), "utf8");
-  it("lists only listed events", () => {
-    expect(src).toMatch(/listedEvents\.filter\(matchesSearch\)/);
-    expect(src).not.toMatch(/\bevents\.filter\(matchesSearch\)/);
+  /* Organisers' decision, 5 Oct: closed events are shown, struck through and
+     unclickable, rather than hidden. */
+  it("lists every event, closed ones marked and not linked", () => {
+    expect(src).toMatch(/allEvents\.filter\(matchesSearch\)/);
+    expect(src).toMatch(/e\.full \|\| e\.unlisted/);
+    expect(src).toMatch(/"Event is full"/);
+    expect(src).toMatch(/aria-disabled="true"/);
   });
 });
