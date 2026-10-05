@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { Navigation } from "@/components/landing/navigation";
 import { FooterSection } from "@/components/landing/footer-section";
 import Link from "next/link";
-import { events, Event, FEST, clubFor, eventId, eventWhen, formatINR, prizePool, teamLabel } from "@/lib/pravrutti-data";
+import { events, listedEvents, Event, FEST, clubFor, eventId, eventWhen, formatINR, prizePool, teamLabel } from "@/lib/pravrutti-data";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { EventPoster } from "@/components/event-poster";
@@ -38,7 +38,7 @@ export default function EventsPage() {
   };
 
   // Everything is visible by default; a chip narrows rather than switches.
-  const searched = events.filter(matchesSearch);
+  const searched = listedEvents.filter(matchesSearch);
   const visible = activeCategory
     ? searched.filter((e) => e.category === activeCategory)
     : searched;
@@ -105,7 +105,7 @@ export default function EventsPage() {
             <span className="text-pearl-white/70">
               After you register, your entry stays &ldquo;in process&rdquo; until we verify the payment.
               Once your payment has been confirmed, you will receive an email confirmation.{" "}
-              <a href="/tickets" className="font-bold text-champagne-gold underline hover:text-white">
+              <a href="/ticket" className="font-bold text-champagne-gold underline hover:text-white">
                 Track your registrations
               </a>
               .
@@ -156,8 +156,8 @@ export default function EventsPage() {
             </div>
 
             <p className="text-center text-sm text-white/40 mb-8">
-              {visible.length === events.length
-                ? `Showing all ${events.length} events` : `${visible.length} of ${events.length} events`}
+              {visible.length === listedEvents.length
+                ? `Showing all ${listedEvents.length} events` : `${visible.length} of ${listedEvents.length} events`}
             </p>
 
             {visible.length > 0 ? (

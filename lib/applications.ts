@@ -120,6 +120,18 @@ export type Application = {
   stage?: "intent";
   decidedAt?: string;
   refundedAt?: string;
+  /** An organiser took a decline back once the money was found — who, and
+      when. See reinstateApplication in lib/payment-review. */
+  reinstatedAt?: string;
+  reinstatedBy?: string;
+  /** An organiser corrected paymentRef after it was verified — who, and when.
+      paymentVerifiedBy still names whoever checked the money itself. */
+  paymentRefSetBy?: string;
+  paymentRefSetAt?: string;
+  /** Taken on another platform and imported (lib/external-registrations):
+      where, and that platform's own ID for the registration. */
+  source?: "unstop";
+  externalId?: string;
   /** When the applicant withdrew it themselves. Distinct from decidedAt, which
       records an organiser's decision. */
   cancelledAt?: string;

@@ -12,7 +12,9 @@ import { StatInline } from "@/components/dashboard/stat-tile";
 import { FilterGroup } from "@/components/dashboard/filter-group";
 import { AppStatusBadge } from "@/components/dashboard/status-badge";
 import { AccessPanel } from "@/components/dashboard/access-panel";
-import { AlertTriangle, Check, ChevronDown, ClipboardList, FileSpreadsheet, Star } from "lucide-react";
+import { DISCOVERIZE_EVENT_ID } from "@/lib/discoverize";
+import { downloadXlsx, exportFileName, exportRows } from "@/lib/roster-export";
+import { AlertTriangle, Check, ChevronDown, ClipboardList, Download, FileSpreadsheet, Star } from "lucide-react";
 
 type Counts = {
   registered: number; teams: number;
@@ -176,6 +178,22 @@ export default function DashboardPage() {
             >
               View event page
             </Link>
+            {/* Discoverize's coordinators screen abstracts there, and this
+                roster only holds the teams already through to the final. */}
+            {open === DISCOVERIZE_EVENT_ID && (
+              <Link
+                href="/dashboard/discoverize"
+                className="mb-6 flex items-center justify-between gap-4 rounded-2xl border border-royal-wine bg-cosmic-purple/60 px-5 py-4 transition-colors hover:border-cyber-pink/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyber-pink"
+              >
+                <span>
+                  <span className="block font-semibold text-champagne-gold">Discoverize screening</span>
+                  <span className="block text-sm text-white/45">
+                    Every team that registered, their abstracts, and the shortlist — this list shows only the finalists
+                  </span>
+                </span>
+                <Star className="h-5 w-5 shrink-0 text-cyber-pink" />
+              </Link>
+            )}
             <EventDetail eventId={open} />
           </>
         )}
@@ -413,6 +431,7 @@ function EventDetail({ eventId }: { eventId: string }) {
   const [data, setData] = useState<{ counts: Counts; roster: Entry[] } | null>(null);
   const [state, setState] = useState<"loading" | "ok" | "error">("loading");
   const [view, setView] = useState<View>("all");
+  const [exporting, setExporting] = useState<"idle" | "busy" | "failed">("idle");
 
   useEffect(() => {
     let cancelled = false;
@@ -441,6 +460,22 @@ function EventDetail({ eventId }: { eventId: string }) {
 
   if (!data) return null;
 
+  const shown = view === "all" ? data.roster : data.roster.filter((p) => stageOf(p) === view);
+  /* The export is the list on screen, in its order: whichever filter is
+     chosen, grouped by team, lead first. Withdrawn people drop out. */
+  const exportable = exportRows(
+    groupRoster(shown).flatMap((g) => g.people).map((p) => ({ ...p, stage: stageLabel(p) })),
+  );
+  const exportShown = async () => {
+    setExporting("busy");
+    try {
+      await downloadXlsx(exportable, exportFileName(eventId));
+      setExporting("idle");
+    } catch {
+      setExporting("failed");
+    }
+  };
+
   return (
     <div className="pt-3">
       <div className="mb-3 flex flex-wrap gap-x-6 gap-y-2 text-sm">
@@ -464,12 +499,25 @@ function EventDetail({ eventId }: { eventId: string }) {
             }))}
           />
           <p className="text-xs text-white/40">{VIEWS.find((v) => v.id === view)?.hint}</p>
+          <div className="flex flex-wrap items-center gap-3 pt-1">
+            <button
+              type="button"
+              onClick={exportShown}
+              disabled={exporting === "busy" || exportable.length === 0}
+              className="inline-flex items-center gap-2 rounded-lg border border-royal-wine bg-cosmic-purple/60 px-3 py-1.5 text-sm text-champagne-gold transition-colors hover:border-cyber-pink/50 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyber-pink"
+            >
+              <Download className="h-4 w-4" />
+              {exporting === "busy" ? "Preparing…" : `Export to Excel (${exportable.length})`}
+            </button>
+            {exporting === "failed" && (
+              <span className="text-xs text-red-300">Couldn&apos;t build the file — try again.</span>
+            )}
+          </div>
         </div>
       )}
 
       <Card className="max-h-[380px] gap-0 divide-y divide-white/[0.05] overflow-y-auto rounded-xl border-white/[0.08] bg-midnight-navy/60 py-0 shadow-none">
         {(() => {
-          const shown = view === "all" ? data.roster : data.roster.filter((p) => stageOf(p) === view);
           if (data.roster.length === 0)
             return <p className="p-5 text-sm text-white/45">No registrations yet.</p>;
           if (shown.length === 0)
@@ -491,6 +539,14 @@ function EventDetail({ eventId }: { eventId: string }) {
  */
 type Stage = "confirmed" | "review" | "unfinished" | "withdrew";
 type View = "all" | Exclude<Stage, "withdrew">;
+
+/** The label a person carries in the export — the filter they fall under,
+    or the reason they hold no place. */
+const stageLabel = (p: Entry): string => {
+  if (p.status === "invited") return "Invite not accepted";
+  const stage = stageOf(p);
+  return stage === "withdrew" ? "Withdrew" : VIEWS.find((v) => v.id === stage)?.label ?? stage;
+};
 
 const stageOf = (p: Entry): Stage =>
   p.status === "confirmed"
@@ -571,6 +627,13 @@ function RosterGroup({ g, view }: { g: Group; view: View }) {
       <header className="flex items-baseline justify-between gap-4 bg-white/[0.04] px-4 py-2">
         <span className={`min-w-0 truncate text-[11px] font-semibold uppercase tracking-wider ${g.coming ? "text-pearl-white/80" : "text-white/35"}`}>
           {g.team ?? "Individual entries"}
+          {/* A team holding a place that nobody has confirmed yet: in review,
+              so a coordinator knows not to treat it as in. */}
+          {g.team !== null && g.coming > 0 && !g.people.some((p) => p.status === "confirmed") && (
+            <span className="ml-2 rounded border border-amber-400/40 px-1.5 py-px text-[10px] normal-case tracking-normal text-amber-300">
+              In review — not confirmed yet
+            </span>
+          )}
         </span>
         <span className="shrink-0 text-[11px] tabular-nums text-white/40">
           {label}

@@ -1,4 +1,5 @@
 import { TEST_SITE } from "@/lib/test-site";
+import { accommodation } from "@/lib/schedule";
 
 /**
  * A coordinator as the public site knows them: a name, and nothing to dial.
@@ -42,6 +43,11 @@ export interface Event {
       lead can still add people, and anyone mid-payment can still finish.
       A switch rather than an automatic cap, so that declining or moving one
       team mid-review does not reopen the place to a stranger. */
+  /** Left off the public events list — nobody new goes looking for it —
+      while its page still opens, from a ticket or a direct link, for the
+      people already registered. Set by hand with `full`, on the organisers'
+      call (5 Oct 2026: CHAOS, AI Escape Room, Line Follower). */
+  unlisted?: boolean;
   full?: boolean;
   /** ISO instant this event stops taking registrations, when it closes
       earlier than the fest-wide FEST.registrationCloses. Every gate reads it
@@ -267,7 +273,7 @@ export const faqs = [
   },
   {
     question: "What is the last date for registration?",
-    answer: "The last date to register for all events is 5th October 2026, 11:59 PM IST."
+    answer: "The last date to register for all events is 9th October 2026, 11:59 PM IST."
   },
   {
     question: "Can I participate in multiple events?",
@@ -275,7 +281,13 @@ export const faqs = [
   },
   {
     question: "Will accommodation be provided for outstation participants?",
-    answer: "Accommodation will not be provided , however we will be suggesting the accommodations near to the venue."
+    /* Built from the schedule page's figures, so the two cannot disagree
+       again — this said "will not be provided" long after beds were
+       arranged. */
+    answer:
+      `Yes — accommodation is available for outstation participants at ` +
+      `${accommodation.currency}${accommodation.ratePerHeadPerDay} per head, per day. To book, call ` +
+      accommodation.contacts.map((c) => `${c.name} (${c.phone})`).join(" or ") + "."
   },
   {
     question: "Are there on-the-spot registrations?",
@@ -326,9 +338,11 @@ export const events: Event[] = [
     fee: "Rs. 200/-",
     prizes: [10000, 7000, 5000],
     teamSize: { min: 2, max: 4, soloAllowed: false },
-    /* 30 teams (was 20), coordinators' call on 3 Oct: 120 at four a team. */
-    capacity: 120,
+    /* 30 teams (was 20), coordinators' call on 3 Oct; raised to 40 on 4 Oct
+       as it neared 30. capacity is the head count at four a team. */
+    capacity: 160,
     capacityUnit: "teams",
+    maxTeams: 40,
     duration: "3 hours",
     coordinators: {
       faculty: [],
@@ -345,11 +359,16 @@ export const events: Event[] = [
     prizes: [5000, 3000, 2000],
     teamSize: { min: 2, max: 4, soloAllowed: false },
     /* Raised from 24 to 35 teams on 2 Oct, organisers' call: it had closed
-       itself at 28 holding places. capacity is the head count at the max
-       team size, so the desk's meter and the page agree. */
-    capacity: 140,
+       itself at 28 holding places. Raised again to 40 on 4 Oct, when it
+       filled all 35. capacity is the head count at the max team size, so
+       the desk's meter and the page agree. */
+    capacity: 160,
     capacityUnit: "teams",
-    maxTeams: 35,
+    /* Closed to new registrations and taken off the list on 5 Oct,
+       organisers' call; registered and in-review teams keep their places. */
+    full: true,
+    unlisted: true,
+    maxTeams: 40,
     duration: "3 hours",
     coordinators: {
       faculty: [],
@@ -620,6 +639,9 @@ export const events: Event[] = [
     teamSize: { min: 1, max: 2, soloAllowed: true },
     capacity: 50,
     capacityUnit: "participants",
+    /* Registrations paused on 5 Oct, organisers' call: no new entries, still
+       listed, and everyone already in keeps their place. */
+    full: true,
     duration: "3 hours",
     eligibility: "Open to postgraduate students.",
     coordinators: {
@@ -682,6 +704,7 @@ export const events: Event[] = [
     prizes: [15000, 10000, 7000],
     teamSize: { min: 2, max: 4, soloAllowed: false },
     capacityUnit: "teams",
+    unlisted: true,
     /* Registrations full, organisers' call, 2 Oct. Switched to full by hand —
        CHAOS has no stated cap — so it stays shut until this is removed. */
     full: true,
@@ -734,6 +757,7 @@ export const events: Event[] = [
     teamSize: { min: 2, max: 4, soloAllowed: false },
     capacity: 100,
     capacityUnit: "teams",
+    unlisted: true,
     /* 29 teams were holding places against the 25 when this went on, 2 Oct.
        Switched to full by the organisers; remove it to reopen. */
     full: true,
@@ -845,6 +869,10 @@ export const events: Event[] = [
   },
 ];
 
+/** The events the public list shows: everything not marked unlisted. Pages,
+    tickets and the desk still use `events`, which has every event. */
+export const listedEvents = events.filter((e) => !e.unlisted);
+
 // ── Registration system ──────────────────────────────────────
 export const eventId = (name: string) =>
   name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
@@ -884,9 +912,10 @@ export const FEST = {
   startUtc: "20261014T033000Z", // 09:00 IST, 14 Oct
   endUtc: "20261016T123000Z",   // 18:00 IST, 16 Oct
   /** ISO instant registration closes, or null for no announced deadline.
-      5 October 2026, 11:59:59 PM IST. After it the site stops taking
-      applications on its own; nothing else needs changing. */
-  registrationCloses: "2026-10-05T18:29:59.000Z" as string | null,
+      9 October 2026, 11:59:59 PM IST (extended from 5 October on 5 Oct,
+      organisers' call). After it the site stops taking applications on its
+      own; nothing else needs changing. */
+  registrationCloses: "2026-10-09T18:29:59.000Z" as string | null,
   /** ISO instant registration opens. null until the committee announces it,
       which the site renders as "Opening soon" and refuses applications. */
   registrationOpens: "2026-09-16T00:00:00.000Z" as string | null,

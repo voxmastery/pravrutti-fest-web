@@ -232,6 +232,49 @@ export async function declineApplication(args: { eventId: string; email: string 
 }
 
 /**
+ * Taking a decline back once the money turns up.
+ *
+ * verifyPayment never revives a declined registration, and should not: a
+ * payment arriving late is not a decision to let someone in. But a decline
+ * made because the money had not shown up yet is wrong once it has, and the
+ * desk had no way back — Ruhan's Respawn row sat "declined, paid" for two
+ * weeks while his three teammates held tickets on the fee he paid.
+ *
+ * So this is the way back, and only for that case: the row is declined and
+ * its money is verified. A refunded fee went back to the student, and with
+ * nothing verified there is nothing to stand on; both are refused. It names
+ * the organiser who decided, clears the refund the decline stamped on money
+ * that never actually went back, and sends the ticket.
+ */
+export type ReinstateResult =
+  | { outcome: ReviewOutcome }
+  | { refused: "missing" | "not_declined" | "not_paid" };
+
+export async function reinstateApplication(args: {
+  eventId: string;
+  email: string;
+  by: string;
+  paymentRef?: string | null;
+}): Promise<ReinstateResult> {
+  const { path, record } = await load(args.eventId, args.email);
+  if (!record) return { refused: "missing" };
+  if (record.status !== "declined") return { refused: "not_declined" };
+  if (record.payment !== "paid" || !record.paymentVerifiedAt) return { refused: "not_paid" };
+
+  const at = new Date().toISOString();
+  const { refundedAt: _voided, ...rest } = record;
+  const next: Application = {
+    ...rest,
+    status: "confirmed",
+    decidedAt: at,
+    reinstatedAt: at,
+    reinstatedBy: args.by,
+    paymentRef: args.paymentRef ? args.paymentRef : record.paymentRef ?? null,
+  };
+  return { outcome: await persistWithConfirmation(path, next) };
+}
+
+/**
  * Turning a whole team away.
  *
  * The other half of the team decision. Declining the lead alone refunds the

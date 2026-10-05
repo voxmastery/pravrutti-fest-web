@@ -13,7 +13,7 @@ const footerLinks = {
     { name: "Schedule", href: "/schedule" },
   ],
   Support: [
-    { name: "My Tickets", href: "/tickets" },
+    { name: "My Tickets", href: "/ticket" },
     { name: "FAQs", href: "/faq" },
     { name: "Contact Us", href: "/contact" },
   ],
