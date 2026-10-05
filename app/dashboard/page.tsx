@@ -627,6 +627,13 @@ function RosterGroup({ g, view }: { g: Group; view: View }) {
       <header className="flex items-baseline justify-between gap-4 bg-white/[0.04] px-4 py-2">
         <span className={`min-w-0 truncate text-[11px] font-semibold uppercase tracking-wider ${g.coming ? "text-pearl-white/80" : "text-white/35"}`}>
           {g.team ?? "Individual entries"}
+          {/* A team holding a place that nobody has confirmed yet: in review,
+              so a coordinator knows not to treat it as in. */}
+          {g.team !== null && g.coming > 0 && !g.people.some((p) => p.status === "confirmed") && (
+            <span className="ml-2 rounded border border-amber-400/40 px-1.5 py-px text-[10px] normal-case tracking-normal text-amber-300">
+              In review — not confirmed yet
+            </span>
+          )}
         </span>
         <span className="shrink-0 text-[11px] tabular-nums text-white/40">
           {label}

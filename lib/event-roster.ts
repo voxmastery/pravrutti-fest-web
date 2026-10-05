@@ -145,20 +145,22 @@ export async function buildEventRoster(eventId: string, view: RosterView) {
     });
   }
 
-  /* Coordinators see confirmed people only, on the organisers' decision of
-     3 Oct 2026: unconfirmed entrants were being added to event groups as if
-     they had places. An invited teammate shows only on a team that has a
-     confirmed member. Organisers still see everyone. */
-  const confirmedGroups = new Set(roster.filter((r) => r.status === "confirmed").map((r) => r.group));
-  /* On a team with a confirmed member the whole team is shown, not just the
-     confirmed rows: a teammate left "in review" under a confirmed lead holds
-     the lead's place (heldRows), and hiding them showed confirmed teams with
-     one name. Withdrawn people and teams with nobody confirmed stay hidden. */
-  const onConfirmedTeam = (r: RosterEntry) =>
-    r.status === "confirmed" ||
-    (r.team !== null && confirmedGroups.has(r.group) && (r.status === "pending" || r.status === "invited"));
+  /* What a coordinator sees: everyone holding a place — confirmed, or in
+     review — and the teammates on those teams who haven't accepted their
+     invite yet. On 3 Oct 2026 the organisers limited coordinators to
+     confirmed people (unconfirmed entrants were being added to event groups
+     as if they had places); on 5 Oct they put teams in review back, after
+     Pitch at Mach's coordinator read "11 applications in review" on the
+     event page and found none here. They show as in review, and the
+     dashboard marks a team nobody on which is confirmed yet. Withdrawn
+     people, and teammates whose lead never registered, hold no place and
+     stay off a coordinator's desk. Organisers still see everyone. */
+  const placedGroups = new Set(roster.filter((r) => r.live).map((r) => r.group));
+  const holdsOrJoinsAPlace = (r: RosterEntry) =>
+    r.live ||
+    (r.team !== null && placedGroups.has(r.group) && (r.status === "pending" || r.status === "invited"));
   const visible: (RosterEntry | OrganiserEntry)[] =
-    view === "organiser" ? [...roster, ...invited] : [...roster, ...invited].filter(onConfirmedTeam);
+    view === "organiser" ? [...roster, ...invited] : [...roster, ...invited].filter(holdsOrJoinsAPlace);
   visible.sort((a, b) => a.name.localeCompare(b.name));
 
   /* The roster still lists withdrawn students — the desk needs to see that
@@ -169,10 +171,10 @@ export async function buildEventRoster(eventId: string, view: RosterView) {
 
   return {
     counts: {
-      /* A coordinator's view holds confirmed people only, so its headline
-         numbers do too. */
-      registered: view === "organiser" ? counts.people : counts.confirmedPeople,
-      teams: view === "organiser" ? counts.teams : counts.confirmedTeams,
+      /* The same for both views now that a coordinator sees teams in review:
+         everyone holding a place, as the event page counts them. */
+      registered: counts.people,
+      teams: counts.teams,
       confirmed: counts.confirmedPeople,
       confirmedTeams: counts.confirmedTeams,
       checkedIn: counts.checkedIn,

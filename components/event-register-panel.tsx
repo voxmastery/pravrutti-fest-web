@@ -86,6 +86,10 @@ export function EventRegisterPanel({
   /* Teams confirmed so far, for events whose field is stated in teams. */
   const [teamCount, setTeamCount] = useState<number | null>(null);
   const [waiting, setWaiting] = useState(0);
+  /* Teams in review, for events counted in teams: "11 applications in
+     review" on Pitch at Mach was eleven people in four teams, read as
+     eleven teams. */
+  const [waitingTeams, setWaitingTeams] = useState(0);
   /* Full by the server's count — at its cap — as well as by hand. */
   const [serverFull, setServerFull] = useState(false);
   const [open, setOpen] = useState(false);
@@ -119,6 +123,7 @@ export function EventRegisterPanel({
         setCount(d.confirmed?.[id] ?? 0);
         setTeamCount(d.confirmedTeams?.[id] ?? 0);
         setWaiting(d.pending?.[id] ?? 0);
+        setWaitingTeams(d.pendingTeams?.[id] ?? 0);
         setServerFull(Boolean(d.full?.[id]));
       })
       .catch(() => {
@@ -301,9 +306,11 @@ export function EventRegisterPanel({
                 {`${event.name} isn’t taking new teams. Teams already registered are unaffected.`}
               </p>
             )}
-            {waiting > 0 && !closedFull && (
+            {(countTeams ? waitingTeams : waiting) > 0 && !closedFull && (
               <p className="text-xs text-pearl-white/45">
-                {waiting} {waiting === 1 ? "application" : "applications"} in review
+                {countTeams
+                  ? `${waitingTeams} ${waitingTeams === 1 ? "team" : "teams"} in review`
+                  : `${waiting} ${waiting === 1 ? "application" : "applications"} in review`}
               </p>
             )}
             {!full && ready && left <= 15 && (

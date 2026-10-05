@@ -236,13 +236,34 @@ describe("the roster judges a teammate by their lead", () => {
     expect(body.counts.teams).toBe(1);
   });
 
-  /* Organisers' decision, 3 Oct 2026: coordinators see confirmed people only. */
-  it("shows a coordinator confirmed people only, and counts only them", async () => {
+  /* 3 Oct 2026 the organisers limited coordinators to confirmed people; on
+     5 Oct they put teams in review back — Pitch at Mach's coordinator read
+     "11 applications in review" on the event page and found none on their
+     desk. In review shows as in review; the coordinator's counts match the
+     event page's. */
+  it("shows a coordinator confirmed and in-review people, and counts both", async () => {
     role.current = { kind: "coordinator", eventIds: ["robo-climb"] };
     const body = await (await get("robo-climb")).json();
-    expect(body.roster.map((r: any) => r.name).sort()).toEqual(["Asha", "Bala"]);
-    expect(body.counts.registered).toBe(2);
-    expect(body.counts.teams).toBe(1);
+    expect(body.roster.map((r: any) => r.name).sort()).toEqual(["Asha", "Bala", "Chetan"]);
+    expect(body.roster.find((r: any) => r.name === "Chetan")).toMatchObject({ status: "pending", live: true });
+    expect(body.counts.registered).toBe(3);
+    expect(body.counts.teams).toBe(2);
+  });
+
+  /* Still not on a coordinator's desk: people holding no place. */
+  it("keeps from a coordinator anyone who never finished, or withdrew", async () => {
+    apps.push(
+      /* A teammate whose lead never registered the team: no place. */
+      { eventId: "robo-climb", name: "Ira", college: "RUAS", email: "i@x.com", phone: "9000000009",
+        status: "pending", payment: "not_required", fee: "Covered by team lead",
+        teamCode: "NOLEADTEAM01", teamName: "Ghosts" },
+      { eventId: "robo-climb", name: "Jai", college: "RUAS", email: "j@x.com", phone: "9000000010",
+        status: "cancelled", payment: "paid" },
+    );
+    role.current = { kind: "coordinator", eventIds: ["robo-climb"] };
+    const names = (await (await get("robo-climb")).json()).roster.map((r: any) => r.name);
+    expect(names).not.toContain("Ira");
+    expect(names).not.toContain("Jai");
   });
 
   it("still shows an organiser everyone", async () => {
@@ -264,7 +285,8 @@ describe("the roster judges a teammate by their lead", () => {
     const by = (n: string) => body.roster.find((r: any) => r.name === n);
     expect(by("Farah")).toMatchObject({ status: "invited", team: "Robo Rangers", live: false, role: "member" });
     expect(by("Farah").group).toBe(by("Asha").group);
-    expect(body.counts.registered).toBe(2);
+    /* Asha, Bala and Chetan hold places; Farah does not yet. */
+    expect(body.counts.registered).toBe(3);
   });
 
   /* TitanAlphaa, 3 Oct: a confirmed lead whose teammates were still in review
@@ -281,7 +303,6 @@ describe("the roster judges a teammate by their lead", () => {
     role.current = { kind: "coordinator", eventIds: ["robo-climb"] };
     const body = await (await get("robo-climb")).json();
     const names = body.roster.map((r: any) => r.name).sort();
-    expect(names).toEqual(["Asha", "Bala", "Gita", "Hari"]);
-    expect(names).not.toContain("Chetan");
+    expect(names).toEqual(["Asha", "Bala", "Chetan", "Gita", "Hari"]);
   });
 });

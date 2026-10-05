@@ -51,3 +51,12 @@ describe("EventRegisterPanel and the rules of hooks", () => {
     expect(late.map((x) => x.l)).toEqual([]);
   });
 });
+
+/* "11 applications in review" on Pitch at Mach was eleven people in four
+   teams, and read as eleven teams beside "7 of 25 teams confirmed". */
+describe("the in-review line", () => {
+  it("counts teams on an event counted in teams", () => {
+    expect(src).toMatch(/d\.pendingTeams\?\.\[id\]/);
+    expect(src).toMatch(/countTeams\s*\?\s*`\$\{waitingTeams\} \$\{waitingTeams === 1 \? "team" : "teams"\} in review`/);
+  });
+});

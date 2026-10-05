@@ -39,10 +39,11 @@ const app = (email: string, over: Record<string, unknown>) =>
 
 beforeEach(() => {
   store.clear();
-  /* A confirmed team, and a team still in review. */
+  /* A confirmed team, and a teammate whose lead never registered — the
+     one kind of entry an organiser sees and a coordinator doesn't. */
   app("lead@x.com", { status: "confirmed", payment: "paid", fee: "Rs. 200/-" });
   app("mate@x.com", { status: "confirmed", payment: "not_required", fee: "Covered by team lead" });
-  app("other@x.com", { status: "pending", payment: "awaiting", fee: "Rs. 200/-", paymentRef: "REF123456789012", teamName: "Moth", teamCode: "MOTH00000001" });
+  app("other@x.com", { status: "pending", payment: "not_required", fee: "Covered by team lead", teamName: "Moth", teamCode: "MOTH00000001" });
 });
 
 describe("GET /api/admin/roster", () => {
@@ -66,9 +67,9 @@ describe("GET /api/admin/roster", () => {
     expect(body.coordinator.roster.every((r: any) => !("payment" in r) && !("paymentRef" in r))).toBe(true);
   });
 
-  it("returns each view's headline counts", async () => {
+  it("returns each view's headline counts, which agree", async () => {
     const { body } = await get(`eventId=${EV}`);
-    expect(body.organiser.counts.teams).toBe(2);
+    expect(body.organiser.counts.teams).toBe(1);
     expect(body.coordinator.counts.teams).toBe(1);
   });
 });
