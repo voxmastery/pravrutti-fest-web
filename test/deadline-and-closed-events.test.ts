@@ -19,6 +19,9 @@ import { isFull } from "@/lib/event-full";
  */
 
 const CLOSED = ["CHAOS", "Hacktivate", "AI ESCAPE ROOM", "LINE FOLLOWER"];
+/* Hacktivate was hidden with the others, then put back on the list the same
+   day — closed, but still shown. */
+const HIDDEN = ["CHAOS", "AI ESCAPE ROOM", "LINE FOLLOWER"];
 const ev = (name: string) => events.find((e) => e.name === name)!;
 const AFTER_OLD_DEADLINE = Date.parse("2026-10-07T06:00:00.000Z"); // 7 Oct, 11:30 AM IST
 
@@ -50,9 +53,10 @@ describe("the four closed events", () => {
     expect(registrationState(AFTER_OLD_DEADLINE, festFor(ev("Hacktivate")))).toBe("closed");
   });
 
-  it("are left off the events list, and nothing else is", () => {
+  it("are left off the events list — all but Hacktivate — and nothing else is", () => {
     const hidden = events.filter((e) => !listedEvents.includes(e)).map((e) => e.name).sort();
-    expect(hidden).toEqual([...CLOSED].sort());
+    expect(hidden).toEqual([...HIDDEN].sort());
+    expect(listedEvents).toContain(ev("Hacktivate"));
   });
 
   /* Hidden from the list, not deleted: registered students reach their

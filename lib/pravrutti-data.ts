@@ -46,7 +46,7 @@ export interface Event {
   /** Left off the public events list — nobody new goes looking for it —
       while its page still opens, from a ticket or a direct link, for the
       people already registered. Set by hand with `full`, on the organisers'
-      call (5 Oct 2026: CHAOS, Hacktivate, AI Escape Room, Line Follower). */
+      call (5 Oct 2026: CHAOS, AI Escape Room, Line Follower). */
   unlisted?: boolean;
   full?: boolean;
   /** ISO instant this event stops taking registrations, when it closes
@@ -722,7 +722,6 @@ export const events: Event[] = [
     prizes: [20000, 15000, 10000],
     teamSize: { min: 2, max: 4, soloAllowed: false },
     capacityUnit: "teams",
-    unlisted: true,
     /* Closes early: 11:59 PM IST on 1 October, organisers' call. */
     registrationCloses: "2026-10-01T18:29:59.000Z",
     sponsorPerks: {
