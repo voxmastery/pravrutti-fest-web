@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { Navigation } from "@/components/landing/navigation";
 import { FooterSection } from "@/components/landing/footer-section";
 import Link from "next/link";
-import { events, listedEvents, Event, FEST, clubFor, eventId, eventWhen, formatINR, prizePool, teamLabel } from "@/lib/pravrutti-data";
+import { events, Event, FEST, clubFor, eventId, eventWhen, formatINR, prizePool, teamLabel } from "@/lib/pravrutti-data";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { EventPoster } from "@/components/event-poster";
@@ -37,8 +37,21 @@ export default function EventsPage() {
     );
   };
 
+  /* Closed events stay on the list, struck through and unclickable, instead
+     of disappearing: people looking for CHAOS should learn it is full, not
+     wonder whether it exists. Full (Event.full, or unlisted) reads "Event is
+     full"; one past its own closing time reads "Registrations closed". */
+  const closedLabel = (e: Event): string | null =>
+    e.full || e.unlisted
+      ? "Event is full"
+      : e.registrationCloses && Date.now() >= Date.parse(e.registrationCloses)
+      ? "Registrations closed"
+      : null;
+  // Open events first, closed ones after, each group in catalogue order.
+  const allEvents = [...events.filter((e) => !closedLabel(e)), ...events.filter((e) => closedLabel(e))];
+
   // Everything is visible by default; a chip narrows rather than switches.
-  const searched = listedEvents.filter(matchesSearch);
+  const searched = allEvents.filter(matchesSearch);
   const visible = activeCategory
     ? searched.filter((e) => e.category === activeCategory)
     : searched;
@@ -156,8 +169,8 @@ export default function EventsPage() {
             </div>
 
             <p className="text-center text-sm text-white/40 mb-8">
-              {visible.length === listedEvents.length
-                ? `Showing all ${listedEvents.length} events` : `${visible.length} of ${listedEvents.length} events`}
+              {visible.length === allEvents.length
+                ? `Showing all ${allEvents.length} events` : `${visible.length} of ${allEvents.length} events`}
             </p>
 
             {visible.length > 0 ? (
@@ -166,6 +179,70 @@ export default function EventsPage() {
                         const pool = formatINR(prizePool(event));
                         const slug = eventId(event.name);
                         const club = clubFor(event);
+                        const closed = closedLabel(event);
+
+                        const body = (
+                          <>
+                            {/* Cover leads the card. Square to match the poster
+                                artwork and the detail panel — a 4:3 box was
+                                cropping 25% off every poster's sides. */}
+                            <div className="relative aspect-square w-full">
+                              <EventPoster
+                                event={event}
+                                name={event.name}
+                                className={`absolute inset-0 w-full h-full ${closed ? "grayscale opacity-60" : ""}`} />
+                              {closed && (
+                                <div className="absolute inset-0 z-20 flex items-center justify-center">
+                                  <span className="rounded-full border border-cyber-pink/70 bg-midnight-navy/90 px-4 py-2 font-display text-xs sm:text-sm font-black uppercase tracking-[0.14em] text-cyber-pink shadow-[0_0_18px_rgba(214,77,141,0.45)]">
+                                    {closed}
+                                  </span>
+                                </div>
+                              )}
+                            </div>
+
+                            <div className="flex flex-col flex-1 min-w-0 p-4 gap-1">
+                              <p className="text-sm text-champagne-gold/80 break-words">{eventWhen(event).line}</p>
+                              <h3 className={`font-semibold text-base leading-snug transition-colors break-words ${closed ? "text-white/60 line-through decoration-cyber-pink/70" : "text-white group-hover:text-champagne-gold"}`}>
+                                {event.name}
+                              </h3>
+                              <p className="text-sm text-white/45 min-w-0 break-words">
+                                {club ? `${club.name} · ${event.subCategory}` : event.subCategory}
+                              </p>
+                              <p className="flex items-start gap-1.5 text-sm text-white/35 min-w-0">
+                                <MapPin className="w-3.5 h-3.5 shrink-0 mt-0.5" aria-hidden="true" />
+                                <span className="min-w-0 break-words">{FEST.venue}</span>
+                              </p>
+                              <div className="mt-auto pt-3 flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-white/[0.07]">
+                                <span className="flex items-center gap-1.5 text-sm text-white/60">
+                                  <Trophy className="w-3.5 h-3.5 text-champagne-gold shrink-0" aria-hidden="true" />
+                                  {pool}
+                                </span>
+                                <span className="flex items-center gap-1.5 text-sm text-white/60">
+                                  <Users className="w-3.5 h-3.5 text-cyber-pink shrink-0" aria-hidden="true" />
+                                  {teamLabel(event)}
+                                </span>
+                              </div>
+                            </div>
+                          </>
+                        );
+
+                        /* Closed: not a link. People already in reach their
+                           event from their ticket, which still opens the page. */
+                        if (closed)
+                          return (
+                            <div
+                              key={event.name}
+                              aria-disabled="true"
+                              title={`${event.name}: ${closed.toLowerCase()}`}
+                              className="relative min-w-0 rounded-2xl border border-white/[0.06] bg-white/[0.02] overflow-hidden flex flex-col cursor-not-allowed select-none"
+                            >
+                              {body}
+                              {/* The strike: one diagonal line across the card. */}
+                              <svg className="pointer-events-none absolute inset-0 z-10 h-full w-full" preserveAspectRatio="none" viewBox="0 0 100 100" aria-hidden="true">
+                                <line x1="0" y1="100" x2="100" y2="0" stroke="rgba(214,77,141,0.8)" vectorEffect="non-scaling-stroke" style={{ strokeWidth: 3 }} />
+                              </svg>
+                            </div>
+                          );
 
                         return (
                           /* Straight to the event page, on every device.
@@ -178,47 +255,7 @@ export default function EventsPage() {
                             key={event.name}
                             href={`/events/${slug}`}
                             className="group min-w-0 rounded-2xl border border-white/[0.08] bg-white/[0.04] hover:bg-white/[0.07] hover:border-white/[0.16] transition-colors overflow-hidden flex flex-col focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyber-pink" >
-                            {/* Cover leads the card. Square to match the poster
-                                artwork and the detail panel — a 4:3 box was
-                                cropping 25% off every poster's sides. */}
-                            <div className="relative aspect-square w-full">
-                              <EventPoster
-                                event={event}
-                                name={event.name}
-                                className="absolute inset-0 w-full h-full" />
-                            </div>
-
-                            <div className="flex flex-col flex-1 min-w-0 p-4 gap-1">
-                              {/* Luma leads every Discover card with the when,
-                                  because that is what decides whether you can
-                                  even attend. Ours is the fest range until the
-                                  coordinators assign days. */}
-                              <p className="text-sm text-champagne-gold/80 break-words">{eventWhen(event).line}</p>
-                              <h3 className="font-semibold text-base text-white leading-snug group-hover:text-champagne-gold transition-colors break-words">
-                                {event.name}
-                              </h3>
-                              <p className="text-sm text-white/45 min-w-0 break-words">
-                                {club ? `${club.name} · ${event.subCategory}` : event.subCategory}
-                              </p>
-                              <p className="flex items-start gap-1.5 text-sm text-white/35 min-w-0">
-                                <MapPin className="w-3.5 h-3.5 shrink-0 mt-0.5" aria-hidden="true" />
-                                <span className="min-w-0 break-words">{FEST.venue}</span>
-                              </p>
-
-                              {/* Facts that actually differ between events.
-                                  Both now come from the coordinators' sheet
-                                  rather than being derived from a tier. */}
-                              <div className="mt-auto pt-3 flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-white/[0.07]">
-                                <span className="flex items-center gap-1.5 text-sm text-white/60">
-                                  <Trophy className="w-3.5 h-3.5 text-champagne-gold shrink-0" aria-hidden="true" />
-                                  {pool}
-                                </span>
-                                <span className="flex items-center gap-1.5 text-sm text-white/60">
-                                  <Users className="w-3.5 h-3.5 text-cyber-pink shrink-0" aria-hidden="true" />
-                                  {teamLabel(event)}
-                                </span>
-                              </div>
-                            </div>
+                            {body}
                           </Link>
                         );
                       })}
