@@ -105,7 +105,7 @@ export default function SchedulePage() {
             </p>
             <p className="font-display text-base font-black tracking-wide text-pearl-white tabular-nums">
               {accommodation.currency}
-              {accommodation.ratePerHeadPerDay}
+              {accommodation.ratePerHeadPerDay.toLocaleString("en-IN")}
               <span className="ml-1.5 text-[12px] font-bold uppercase tracking-[0.14em] text-pearl-white/55">
                 per head, per day
               </span>

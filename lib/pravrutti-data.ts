@@ -286,7 +286,7 @@ export const faqs = [
        arranged. */
     answer:
       `Yes — accommodation is available for outstation participants at ` +
-      `${accommodation.currency}${accommodation.ratePerHeadPerDay} per head, per day. To book, call ` +
+      `${accommodation.currency}${accommodation.ratePerHeadPerDay.toLocaleString("en-IN")} per head, per day. To book, call ` +
       accommodation.contacts.map((c) => `${c.name} (${c.phone})`).join(" or ") + "."
   },
   {

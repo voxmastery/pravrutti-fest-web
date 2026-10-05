@@ -26,7 +26,7 @@ describe("the FAQ on accommodation", () => {
   });
 
   it("gives the schedule's rate", () => {
-    expect(answer()).toContain(`${accommodation.currency}${accommodation.ratePerHeadPerDay}`);
+    expect(answer()).toContain(`${accommodation.currency}${accommodation.ratePerHeadPerDay.toLocaleString("en-IN")}`);
   });
 
   it("says who to call to book, with their numbers", () => {

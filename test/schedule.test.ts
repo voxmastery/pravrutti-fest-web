@@ -118,7 +118,7 @@ describe("workshops", () => {
 describe("accommodation", () => {
   it("is offered, at the rate the committee set", () => {
     expect(accommodation.offered).toBe(true);
-    expect(accommodation.ratePerHeadPerDay).toBe(450);
+    expect(accommodation.ratePerHeadPerDay).toBe(1000);
   });
 
   /* A rate with nobody to ring is half an answer — somebody reading this is

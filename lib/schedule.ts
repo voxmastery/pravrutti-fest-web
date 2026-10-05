@@ -260,7 +260,7 @@ export function entryRowSpan(day: ScheduleDay, blockIndex: number, track: TrackE
  */
 export const accommodation = {
   offered: true,
-  ratePerHeadPerDay: 450,
+  ratePerHeadPerDay: 1000,
   currency: "\u20b9",
   /* Beds are arranged by a person, not a form: whoever is coming from out of
      town has to reach one of these two to book one. Named here rather than
