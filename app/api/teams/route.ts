@@ -25,6 +25,7 @@ import { inviteUrl, sendInviteEmail } from "@/lib/invite-email";
 import { sendConfirmationEmail } from "@/lib/confirmation-email";
 import { leadIsConfirmed, leadIsRegistered } from "@/lib/lead-decision";
 import { teammateApplication as personApplication } from "@/lib/added-members";
+import { transferLead, paymentHoldsTeam, PAYMENT_HOLDS_TEAM } from "@/lib/lead-transfer";
 import { eventIsFull } from "@/lib/event-full";
 import {
   Team,
@@ -688,6 +689,33 @@ async function addMember(body: any) {
   }
 }
 
+/** The lead handing the team to a teammate — see lib/lead-transfer. */
+async function handOverLead(body: any) {
+  const evId = String(body?.eventId ?? "").trim();
+  const event = findEvent(evId);
+  if (!event) return jsonError("That event doesn't exist.", 400);
+  const code = normalizeTeamCode(String(body?.code ?? ""));
+  if (!isValidTeamCode(code)) return jsonError("Enter a valid team code.", 400);
+  const who = await resolveApplicantEmail(String(body?.email ?? ""));
+  if ("error" in who) return who.error;
+  const to = normalizeMemberEmail(body?.memberEmail);
+  if (!isValidMemberEmail(to)) return jsonError("Pick a teammate to hand the team to.", 400);
+
+  try {
+    const team = await loadTeam(evId, code);
+    if (!team) return jsonError("No team found for that code.", 404);
+    const out = await transferLead({ evId, event, team, from: who.email, to });
+    if (!out.ok) return jsonError(out.error, out.status);
+    const members = await listTeamMembers(evId, code);
+    return NextResponse.json(
+      { ok: true, moved: out.moved, team: toTeamPreview(out.team, members, maxTeamSizeFor(event), true) },
+      { headers: { "cache-control": "no-store" } },
+    );
+  } catch (e) {
+    return blobFailed(e, "team transfer lead failed");
+  }
+}
+
 /**
  * Taking someone off a roster — the lead removing them, or the member leaving.
  *
@@ -745,6 +773,11 @@ async function removeFromTeam(body: any, mode: "leave" | "remove") {
       | null;
     if (!record || normalizeTeamCode(record.code ?? "") !== code)
       return jsonError("They're not on this team.", 404);
+
+    /* After a hand-over the person who paid may be an ordinary member, and
+       until their payment is verified it is what holds the team's place. */
+    const targetApp = (await readJsonByPath(applicationPath(evId, target))) as Application | null;
+    if (await paymentHoldsTeam(evId, targetApp, team)) return jsonError(PAYMENT_HOLDS_TEAM, 409);
 
     const now = new Date().toISOString();
     await putJson(
@@ -811,6 +844,7 @@ export async function POST(req: Request) {
   if (action === "join") return joinTeam(body);
   if (action === "add_member") return addMember(body);
   if (action === "remove_member") return removeFromTeam(body, "remove");
+  if (action === "transfer_lead") return handOverLead(body);
   if (action === "leave") return removeFromTeam(body, "leave");
   if (action === "delete") return deleteTeam(body);
   if (action === "others") return otherTeams(body);

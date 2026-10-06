@@ -289,6 +289,16 @@ describe("the roster judges a teammate by their lead", () => {
     expect(body.counts.registered).toBe(3);
   });
 
+  /* After a hand-over the lead is whoever the team names, not whoever paid. */
+  it("tags the team's lead, even when someone else paid", async () => {
+    apps.push({ code: "ROBOTEAM0001", eventId: "robo-climb", name: "Robo Rangers", createdByEmail: "b@x.com" });
+    role.current = { kind: "coordinator", eventIds: ["robo-climb"] };
+    const body = await (await get("robo-climb")).json();
+    const by = (n: string) => body.roster.find((r: any) => r.name === n);
+    expect(by("Bala").role).toBe("lead");
+    expect(by("Asha").role).toBe("member");
+  });
+
   /* TitanAlphaa, 3 Oct: a confirmed lead whose teammates were still in review
      showed as a team of one to coordinators. */
   it("shows a coordinator the whole of a confirmed team", async () => {

@@ -76,6 +76,17 @@ export async function buildEventRoster(eventId: string, view: RosterView) {
   const mine = records.filter((r) => r.eventId === eventId);
   const holding = heldRows(mine);
 
+  const [memberRows, teamRows] = await Promise.all([
+    listAll(`team-member/${eventId}/`).then((bs) => Promise.all(bs.map((b) => readPrivate(b.url)))),
+    listAll(`team/${eventId}/`).then((bs) => Promise.all(bs.map((b) => readPrivate(b.url)))),
+  ]);
+  const teams = new Map(
+    (teamRows as (Team | null)[])
+      .filter((t): t is Team => !!t?.code && !("member" in t) && !t.deletedAt && !t.movedTo)
+      .map((t) => [t.code.trim().toUpperCase(), t]),
+  );
+  const leadOf = new Map([...teams].map(([code, t]) => [code, String(t.createdByEmail ?? "").trim().toLowerCase()]));
+
   const base = (r: Application): RosterEntry => ({
     name: r.name,
     college: r.college,
@@ -86,7 +97,14 @@ export async function buildEventRoster(eventId: string, view: RosterView) {
     team: r.teamCode ? r.teamName?.trim() || "Unnamed team" : null,
     group: createHash("sha256").update(`${eventId}|${entryKey(r)}`).digest("hex").slice(0, 12),
     live: holding.has(r),
-    role: !r.teamCode ? null : isTeammate(r) ? "member" : r.payment !== "not_required" ? "lead" : null,
+    /* The team's own lead where the team record names one — after a hand-over
+       that is no longer the person who paid — and otherwise read off the
+       payment, as before. */
+    role: !r.teamCode
+      ? null
+      : leadOf.has(String(r.teamCode).trim().toUpperCase())
+        ? leadOf.get(String(r.teamCode).trim().toUpperCase()) === String(r.email).trim().toLowerCase() ? "lead" : "member"
+        : isTeammate(r) ? "member" : r.payment !== "not_required" ? "lead" : null,
   });
 
   /* Branch on the role, not on a request flag — a coordinator asking for
@@ -111,15 +129,6 @@ export async function buildEventRoster(eventId: string, view: RosterView) {
   /* Teammates the lead added who have not accepted have no application, so
      the roster above never had them, and coordinators saw teams missing
      names. They come from the team-member records; they hold no place yet. */
-  const [memberRows, teamRows] = await Promise.all([
-    listAll(`team-member/${eventId}/`).then((bs) => Promise.all(bs.map((b) => readPrivate(b.url)))),
-    listAll(`team/${eventId}/`).then((bs) => Promise.all(bs.map((b) => readPrivate(b.url)))),
-  ]);
-  const teams = new Map(
-    (teamRows as (Team | null)[])
-      .filter((t): t is Team => !!t?.code && !("member" in t) && !t.deletedAt && !t.movedTo)
-      .map((t) => [t.code.trim().toUpperCase(), t]),
-  );
   const applied = new Set(mine.map((r) => String(r.email).trim().toLowerCase()));
   const invited: RosterEntry[] = [];
   for (const rec of memberRows as ({ code?: string; member?: TeamMember } | null)[]) {

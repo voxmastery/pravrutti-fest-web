@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { runAfterResponse } from "@/lib/after-response";
 import { events, eventId, capacityFor, statedCapacity, effectiveRegistrationOpen, registrationUnavailableMessage, eventFullMessage, festFor, eventClosedMessage } from "@/lib/pravrutti-data";
 import { leadIsRegistered } from "@/lib/lead-decision";
+import { paymentHoldsTeam, PAYMENT_HOLDS_TEAM } from "@/lib/lead-transfer";
 import { isFull, eventIsFull } from "@/lib/event-full";
 import { countRegistrationsByEvent, heldRows } from "@/lib/registration-counts";
 import { newTicketId } from "@/lib/ticket-id";
@@ -648,6 +649,10 @@ export async function DELETE(req: Request) {
           { status: 409 },
         );
     }
+    /* Someone who handed the lead over but whose payment still holds the
+       team's place, until it is verified (lib/lead-transfer). */
+    if (team && !team.deletedAt && (await paymentHoldsTeam(evId, record, team)))
+      return NextResponse.json({ error: PAYMENT_HOLDS_TEAM }, { status: 409 });
   }
 
   const outcome = await cancelApplication({ eventId: evId, email });

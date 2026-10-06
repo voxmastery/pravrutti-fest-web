@@ -47,6 +47,8 @@ export function TeamManage({
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  /** The teammate the lead is about to hand the team to, awaiting a yes. */
+  const [handingTo, setHandingTo] = useState<{ email: string; name: string } | null>(null);
   /** A member was added but the invite email did not go — not a failure, but
       the lead has to hand the link over themselves, so it cannot be silent. */
   const [mailWarning, setMailWarning] = useState<string | null>(null);
@@ -90,6 +92,7 @@ export function TeamManage({
       }
       setBusy(null);
       setConfirmDelete(false);
+      setHandingTo(null);
       onChanged();
     } catch {
       setError("Network dropped. Try again.");
@@ -206,6 +209,17 @@ export function TeamManage({
               <span className="shrink-0 text-[10px] uppercase tracking-wider text-white/35">
                 {m.status === "joined" ? "Joined" : "Invited"}
               </span>
+              {/* Handing over is for someone actually on the team. */}
+              {m.status === "joined" && (
+                <button
+                  type="button"
+                  onClick={() => { setHandingTo({ email: m.email, name: m.name }); setError(null); }}
+                  disabled={busy !== null}
+                  className="shrink-0 text-[11px] text-white/45 hover:text-champagne-gold underline underline-offset-2 transition-colors cursor-pointer disabled:opacity-50"
+                >
+                  Make lead
+                </button>
+              )}
               <button
                 type="button"
                 onClick={() => call({ action: "remove_member", memberEmail: m.email }, m.email)}
@@ -222,6 +236,35 @@ export function TeamManage({
             </li>
           ))}
         </ul>
+      )}
+
+      {handingTo && (
+        <div className="rounded-lg border border-champagne-gold/30 bg-champagne-gold/[0.06] p-2.5 space-y-2">
+          <p className="text-[12px] text-white/75 leading-relaxed">
+            Make {handingTo.name} the lead of {team.name}? They&apos;ll manage the team from now on —
+            adding and removing members. If you&apos;ve paid, your payment stays recorded against you; if
+            you haven&apos;t paid yet, {handingTo.name} pays instead.
+          </p>
+          <div className="flex gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setHandingTo(null)}
+              disabled={busy !== null}
+              className="h-[34px] rounded-2xl border border-white/[0.08] bg-white/[0.04] text-white/70 hover:bg-white/[0.08] hover:text-white font-medium text-sm px-4 cursor-pointer"
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              onClick={() => call({ action: "transfer_lead", memberEmail: handingTo.email }, "lead")}
+              disabled={busy !== null}
+              className="h-[34px] rounded-2xl bg-cyber-pink text-white hover:bg-electric-magenta font-medium text-sm px-4 cursor-pointer"
+            >
+              {busy === "lead" ? <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" /> : `Make ${handingTo.name} lead`}
+            </Button>
+          </div>
+        </div>
       )}
 
       {/* Removing is what frees somebody, so say so where it is decided. */}
