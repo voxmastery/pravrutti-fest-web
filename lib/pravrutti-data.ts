@@ -643,9 +643,8 @@ export const events: Event[] = [
     teamSize: { min: 1, max: 2, soloAllowed: true },
     capacity: 50,
     capacityUnit: "participants",
-    /* Registrations paused on 5 Oct, organisers' call: no new entries, still
-       listed, and everyone already in keeps their place. */
-    full: true,
+    /* Paused on 5 Oct, reopened on 6 Oct with its move to 15 Oct, 2:30 PM —
+       organisers' call. */
     duration: "3 hours",
     /* 15 Oct, 2:30 PM — moved from 14 Oct, 2:00 PM on 6 Oct, organisers' call. */
     day: 2,

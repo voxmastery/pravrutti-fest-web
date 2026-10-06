@@ -73,10 +73,11 @@ describe("Discoverize", () => {
   });
 });
 
-/* Paused, not hidden: it stays on the list, and takes no new entries. */
+/* Paused on 5 Oct, reopened on 6 Oct. */
 describe("DENT - INNOVATE", () => {
-  it("takes no new entries, and is still listed", () => {
-    expect(isFull(ev("DENT - INNOVATE"), { people: 0, teams: 0 })).toBe(true);
+  it("takes entries again, and is listed", () => {
+    expect(ev("DENT - INNOVATE").full).toBeFalsy();
+    expect(isFull(ev("DENT - INNOVATE"), { people: 0, teams: 0 })).toBe(false);
     expect(listedEvents).toContain(ev("DENT - INNOVATE"));
   });
 });
