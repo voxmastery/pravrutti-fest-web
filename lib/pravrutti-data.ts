@@ -637,7 +637,7 @@ export const events: Event[] = [
     name: "DENT - INNOVATE",
     category: "INNOVENTURE",
     subCategory: "Technical",
-    description: "DENT-INNOVATE 2026 is an exciting postgraduate e-poster competition showcasing innovative ideas that enhance patient care through the integration of technology, clinical expertise, and improved outcomes. Participants will present creative concepts, research innovations, and technology-driven solutions addressing contemporary challenges in dentistry. \u25cf Entry is by abstract: send a 250-word unstructured abstract to fdsruasresearch@gmail.com. Accepted entries then receive the presentation template, the guidelines and their time slot. \u25cf One slide only, on the template provided \u2014 title in Calibri 32, body in Calibri 24\u201328, headings in bold. Leave your name, department, institution and logo off it. \u25cf Presentations begin at 2:00 pm. Bring the deck on a pendrive and upload it by 1:30 pm, and be seated in the hall fifteen minutes before the start. \u25cf Five minutes to present and two for questions, strictly kept. The jury's decision is final. Join this platform to share ideas, inspire collaboration, demonstrate innovation, and contribute towards shaping the future of patient-centred dental care.",
+    description: "DENT-INNOVATE 2026 is an exciting postgraduate e-poster competition showcasing innovative ideas that enhance patient care through the integration of technology, clinical expertise, and improved outcomes. Participants will present creative concepts, research innovations, and technology-driven solutions addressing contemporary challenges in dentistry. \u25cf Entry is by abstract: send a 250-word unstructured abstract to fdsruasresearch@gmail.com. Accepted entries then receive the presentation template, the guidelines and their time slot. \u25cf One slide only, on the template provided \u2014 title in Calibri 32, body in Calibri 24\u201328, headings in bold. Leave your name, department, institution and logo off it. \u25cf Presentations begin at 2:30 pm on 15 October. Bring the deck on a pendrive and upload it by 2:00 pm, and be seated in the hall fifteen minutes before the start. \u25cf Five minutes to present and two for questions, strictly kept. The jury's decision is final. Join this platform to share ideas, inspire collaboration, demonstrate innovation, and contribute towards shaping the future of patient-centred dental care.",
     fee: "Rs. 200/-",
     prizes: [10000, 7000, 5000],
     teamSize: { min: 1, max: 2, soloAllowed: true },
@@ -647,6 +647,9 @@ export const events: Event[] = [
        listed, and everyone already in keeps their place. */
     full: true,
     duration: "3 hours",
+    /* 15 Oct, 2:30 PM — moved from 14 Oct, 2:00 PM on 6 Oct, organisers' call. */
+    day: 2,
+    startsAt: "2:30 PM",
     eligibility: "Open to postgraduate students.",
     coordinators: {
       faculty: [],

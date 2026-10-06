@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { scheduleDays, longRunning, scheduledEventIds, workshopSessions, workshops, accommodation, entryRowSpan } from "@/lib/schedule";
-import { events, eventId } from "@/lib/pravrutti-data";
+import { events, eventId, eventWhen } from "@/lib/pravrutti-data";
 
 /* The schedule on this page used to be an image, and it went on showing the
    2025 roster long after the events changed. These are the checks that image
@@ -149,7 +149,9 @@ describe("row spans", () => {
 
   it("carries Hammer and Kurukshetra down too", () => {
     const d2 = day(2).blocks.findIndex((b) => b.kind === "tracks" && b.time === "9:00 AM – 12:00 PM");
-    expect(entryRowSpan(day(2), d2, 4)).toBe(2);
+    /* Hammer runs to 3:00 PM: through the noon row, and into the 2:30 PM row
+       Dent Innovate opened on 15 Oct. */
+    expect(entryRowSpan(day(2), d2, 4)).toBe(3);
     const d3 = day(3).blocks.findIndex((b) => b.kind === "tracks" && b.time === "9:00 AM – 12:00 PM");
     expect(entryRowSpan(day(3), d3, 4)).toBe(2);
   });
@@ -195,5 +197,28 @@ describe("row spans", () => {
     if (b.kind !== "tracks") throw new Error("expected tracks");
     expect(b.entries.find((e) => e.track === 4)!.time).toBe("2:00 PM – 8:00 PM");
     expect(entryRowSpan(day(1), i, 4)).toBe(2);
+  });
+});
+
+/* Moved on 6 Oct 2026 from 14 Oct, 2:00 PM to 15 Oct, 2:30 PM, organisers'
+   call. The timetable, the event page and the event's own rules must agree. */
+describe("DENT - INNOVATE's slot", () => {
+  const where = scheduleDays.flatMap((d) =>
+    d.blocks.flatMap((b) => (b.kind === "tracks" && b.entries.some((e) => e.eventId === "dent-innovate") ? [{ date: d.date, time: b.time }] : [])),
+  );
+
+  it("is 15 October, from 2:30 PM, and nowhere else", () => {
+    expect(where).toEqual([{ date: "15 October 2026", time: "2:30 PM – 5:30 PM" }]);
+  });
+
+  it("is what its event page says", () => {
+    const dent = events.find((e) => eventId(e.name) === "dent-innovate")!;
+    expect(eventWhen(dent)).toEqual({ line: "Thu, 15 Oct, 2:30 PM", exact: true });
+  });
+
+  it("is when its rules say presentations begin", () => {
+    const dent = events.find((e) => eventId(e.name) === "dent-innovate")!;
+    expect(dent.description).toMatch(/Presentations begin at 2:30 pm on 15 October/);
+    expect(dent.description).not.toMatch(/begin at 2:00 pm/);
   });
 });
