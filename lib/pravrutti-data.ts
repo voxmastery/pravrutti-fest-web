@@ -614,8 +614,11 @@ export const events: Event[] = [
     /* Rulebook: "Minimum Team Size: 2 Members". The sheet said 1 with solo
        allowed, which had the site offering an entry the rulebook forbids. */
     teamSize: { min: 2, max: 4, soloAllowed: false },
-    capacity: 100,
+    /* Raised from 25 to 40 teams on 6 Oct, organisers' call. capacity is
+       the head count at four a team. */
+    capacity: 160,
     capacityUnit: "teams",
+    maxTeams: 40,
     /* 135 minutes end to end in the rulebook's timeline, briefing and prize
        distribution included. */
     duration: "2h 15m",
