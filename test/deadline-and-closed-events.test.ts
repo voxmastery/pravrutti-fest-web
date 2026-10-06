@@ -66,6 +66,13 @@ describe("the four closed events", () => {
   });
 });
 
+/* Closed on 6 Oct; its teams already in carry on through screening. */
+describe("Discoverize", () => {
+  it("takes no new entries", () => {
+    expect(isFull(ev("Discoverize (Research Paper Presentation)"), { people: 0, teams: 0 })).toBe(true);
+  });
+});
+
 /* Paused, not hidden: it stays on the list, and takes no new entries. */
 describe("DENT - INNOVATE", () => {
   it("takes no new entries, and is still listed", () => {

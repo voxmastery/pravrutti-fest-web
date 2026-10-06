@@ -23,10 +23,17 @@ vi.mock("@/lib/blob-store", () => ({
 }));
 vi.mock("@/lib/identity", () => ({ resolveEmail: async () => null, authRequired: () => false }));
 vi.mock("@/lib/roles", () => ({ resolveRole: async () => ({ kind: "none" }), resolveRoleFor: async () => ({ kind: "none" }) }));
-vi.mock("@/lib/pravrutti-data", async (o) => ({
-  ...(await o<typeof import("@/lib/pravrutti-data")>()),
-  effectiveRegistrationOpen: () => true,
-}));
+/* How a Discoverize registration works, tested against the event as it was
+   while open: registration closed on 6 Oct 2026 and now refuses new entries,
+   which is tested in deadline-and-closed-events. */
+vi.mock("@/lib/pravrutti-data", async (o) => {
+  const actual = await o<typeof import("@/lib/pravrutti-data")>();
+  return {
+    ...actual,
+    effectiveRegistrationOpen: () => true,
+    events: actual.events.map((e) => (e.name.startsWith("Discoverize") ? { ...e, full: false } : e)),
+  };
+});
 vi.mock("@/lib/received-email", () => ({
   sendReceivedEmail: async (r: any) => { sent.push(r); return { sent: true }; },
 }));

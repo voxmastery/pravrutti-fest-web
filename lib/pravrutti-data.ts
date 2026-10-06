@@ -464,6 +464,10 @@ export const events: Event[] = [
        61 holding places. Entry is only the abstract round — the judges'
        shortlist decides who presents — so the field need not be limited. */
     capacityUnit: "participants",
+    /* Registrations closed on 6 Oct, organisers' call: no new entries. Teams
+       already in keep their places, and screening and the shortlist carry on
+       at /dashboard/discoverize. */
+    full: true,
     duration: "3 hours",
     eligibility: "Diploma, UG, PG and Ph.D. students",
     coordinators: {
