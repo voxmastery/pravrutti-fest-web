@@ -13,6 +13,7 @@ import {
   InvitePointer,
   canAddMember,
   invitedMember,
+  acceptedMember,
   isValidInviteToken,
   isValidMemberEmail,
   newInviteToken,
@@ -23,6 +24,7 @@ import {
 import { inviteUrl, sendInviteEmail } from "@/lib/invite-email";
 import { sendConfirmationEmail } from "@/lib/confirmation-email";
 import { leadIsConfirmed, leadIsRegistered } from "@/lib/lead-decision";
+import { teammateApplication as personApplication } from "@/lib/added-members";
 import { eventIsFull } from "@/lib/event-full";
 import {
   Team,
@@ -179,44 +181,6 @@ async function mineTeam(evId: string, bodyEmail: string) {
   }
 }
 
-function personApplication(args: {
-  event: (typeof events)[number];
-  evId: string;
-  name: string;
-  email: string;
-  phone: string;
-  college: string;
-  team: Team;
-  /* An approved team brings its newest member in with it — see
-     lib/lead-decision. The invite link has always done this; typing the team
-     code in did not, so the same student got a different answer depending on
-     which way their lead added them. */
-  confirmed: boolean;
-}): Application {
-  const { payment, fee } = feeForApplicant({
-    eventFree: args.event.fee.toLowerCase().startsWith("free"),
-    eventFee: args.event.fee,
-    isJoiner: true,
-  });
-  const now = new Date().toISOString();
-  return {
-    ticketId: newTicketId(),
-    eventId: args.evId,
-    eventName: args.event.name,
-    status: args.confirmed ? "confirmed" : "pending",
-    payment,
-    fee,
-    name: args.name,
-    email: args.email,
-    phone: args.phone,
-    college: args.college,
-    teamName: args.team.name,
-    teamCode: args.team.code,
-    members: null,
-    appliedAt: now,
-    ...(args.confirmed ? { decidedAt: now } : {}),
-  };
-}
 
 async function createTeam(body: any) {
   if (!effectiveRegistrationOpen()) return jsonError(registrationUnavailableMessage(), 409);
@@ -659,7 +623,13 @@ async function addMember(body: any) {
       String(body?.leadName ?? "").trim() || String(leadRow?.name ?? "").trim() || "Your team lead";
 
     const token = newInviteToken();
-    const member = invitedMember({ fields, college, token });
+    /* Added is joined. Until 6 Oct 2026 an added teammate waited on their
+       invite email — no registration, no ticket, "Invite not accepted" — and
+       with the fest mailbox at its sending limit most never arrived: 379 sat
+       like that, 169 on confirmed teams. The organisers' call: a lead
+       entering a teammate's email has added them. The invite still goes, as
+       a heads-up; its link now opens the team page. */
+    const member = acceptedMember(invitedMember({ fields, college, token }));
     const pointer: InvitePointer = {
       token,
       eventId: evId,
@@ -670,6 +640,24 @@ async function addMember(body: any) {
 
     await putJson(invitePath(token), pointer, false);
     await putJson(teamMemberPath(evId, fields.email), { code, eventId: evId, member }, true);
+
+    /* Their own registration, as if they had joined with the code: covered by
+       the lead's fee, and confirmed if the team already is. A withdrawn
+       registration of theirs at this event is replaced; a live one was
+       refused above. No ticket email here — the invite tells them, and the
+       ticket queue sends the ticket. */
+    const confirmed = await leadIsConfirmed(evId, team);
+    await putJson(
+      applicationPath(evId, fields.email),
+      {
+        ...personApplication({
+          event, evId, name: member.name, email: member.email, phone: member.phone,
+          college: member.college, team, confirmed,
+        }),
+        addedByLead: true,
+      },
+      Boolean(priorApp),
+    );
 
     /* Best effort. A bounced invite must not undo a member the lead can already
        see on the roster — they still have the link to hand over themselves. */

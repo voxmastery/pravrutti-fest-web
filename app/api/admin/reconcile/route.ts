@@ -532,6 +532,25 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: true, eventId: evId, email, paymentRef, setBy: by });
   }
 
+  /* Registering the teammates leads added before added meant joined
+     (lib/added-members). Names the organiser who decided; dryRun reports. */
+  if (body?.action === "add_invited") {
+    const by = String(body?.by ?? "").trim().toLowerCase();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(by))
+      return NextResponse.json(
+        { error: "Say who decided: pass the organiser's email as `by`. The shared key names nobody." },
+        { status: 400 },
+      );
+    const { registerAddedMembers } = await import("@/lib/added-members");
+    const dryRun = body?.dryRun === true;
+    const { added, skipped } = await registerAddedMembers({ dryRun });
+    return NextResponse.json(
+      dryRun
+        ? { ok: true, dryRun: true, wouldAdd: added.length, added, skipped }
+        : { ok: true, added, skipped, by },
+    );
+  }
+
   if (body?.action === "reinstate") {
     const evId = String(body?.eventId ?? "").trim();
     const email = String(body?.email ?? "").trim().toLowerCase();

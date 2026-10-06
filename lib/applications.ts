@@ -128,6 +128,10 @@ export type Application = {
       paymentVerifiedBy still names whoever checked the money itself. */
   paymentRefSetBy?: string;
   paymentRefSetAt?: string;
+  /** Registered by their team lead adding them, not by their own hand —
+      the organisers' call of 6 Oct 2026 that a lead entering a teammate's
+      email has added them. */
+  addedByLead?: boolean;
   /** Taken on another platform and imported (lib/external-registrations):
       where, and that platform's own ID for the registration. */
   source?: "unstop";
