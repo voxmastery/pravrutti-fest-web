@@ -1012,15 +1012,18 @@ export const eventClosesDisplay = (e?: { registrationCloses?: string } | null) =
 };
 
 /** The fest-wide deadline as a headline: "5th October". IST, like the rest. */
-export const REGISTRATION_CLOSES_LONG = (() => {
-  if (!FEST.registrationCloses) return "";
-  const ist = new Date(Date.parse(FEST.registrationCloses) + IST_OFFSET_MS);
+/** An instant as an IST date in words: "9th October". Empty if unreadable. */
+export function longIstDate(iso: string | null | undefined): string {
+  if (!iso) return "";
+  const ist = new Date(Date.parse(iso) + IST_OFFSET_MS);
   if (Number.isNaN(ist.getTime())) return "";
   const d = ist.getUTCDate();
   const suffix = d % 10 === 1 && d !== 11 ? "st" : d % 10 === 2 && d !== 12 ? "nd" : d % 10 === 3 && d !== 13 ? "rd" : "th";
   const month = ist.toLocaleString("en-GB", { month: "long", timeZone: "UTC" });
   return `${d}${suffix} ${month}`;
-})();
+}
+
+export const REGISTRATION_CLOSES_LONG = longIstDate(FEST.registrationCloses);
 
 /** Refusal text for an event that closed early on its own date. */
 export const eventClosedMessage = (e: { name: string; registrationCloses?: string }) =>

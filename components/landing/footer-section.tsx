@@ -2,7 +2,8 @@
 
 import { ArrowUpRight, Mail, MapPin, Calendar, Instagram, Globe } from "lucide-react";
 import Link from "next/link";
-import { contacts } from "@/lib/pravrutti-data";
+import { useEffect, useState } from "react";
+import { contacts, FEST, longIstDate, registrationState } from "@/lib/pravrutti-data";
 import { useScrollReveal } from "@/hooks/use-animations";
 
 const footerLinks = {
@@ -25,8 +26,26 @@ const socials = [
   { name: "Email", href: `mailto:${contacts.email}`, icon: Mail },
 ];
 
+/** Where registration stands, for the footer. It read "Registrations open
+    soon" on every page from before launch until 6 Oct 2026 — three weeks
+    into registration. */
+export function footerRegistrationLine(
+  now: number,
+  fest: { registrationOpens: string | null; registrationCloses: string | null } = FEST,
+): string {
+  const state = registrationState(now, fest);
+  if (state === "upcoming") return "Registrations open soon";
+  if (state === "closed") return "Registrations closed";
+  const closes = longIstDate(fest.registrationCloses);
+  return closes ? `Registrations open till ${closes}` : "Registrations open";
+}
+
 export function FooterSection() {
   const ref = useScrollReveal();
+  /* Read again in the browser: the page may have been built before the
+     deadline and opened after it. */
+  const [registrationLine, setRegistrationLine] = useState(() => footerRegistrationLine(Date.now()));
+  useEffect(() => setRegistrationLine(footerRegistrationLine(Date.now())), []);
 
   return (
     <footer className="relative bg-midnight-navy border-t border-royal-wine/40 overflow-hidden">
@@ -130,7 +149,7 @@ export function FooterSection() {
 
           <div className="flex items-center gap-2 text-xs text-pearl-white/50">
             <span className="w-1.5 h-1.5 rounded-full bg-success animate-pulse" />
-            Registrations open soon
+            {registrationLine}
           </div>
         </div>
       </div>
