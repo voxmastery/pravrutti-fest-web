@@ -543,12 +543,44 @@ export async function POST(req: Request) {
       );
     const { registerAddedMembers } = await import("@/lib/added-members");
     const dryRun = body?.dryRun === true;
-    const { added, skipped } = await registerAddedMembers({ dryRun });
+    const eventId = String(body?.eventId ?? "").trim() || undefined;
+    const { added, skipped } = await registerAddedMembers({ dryRun, eventId });
     return NextResponse.json(
       dryRun
         ? { ok: true, dryRun: true, wouldAdd: added.length, added, skipped }
         : { ok: true, added, skipped, by },
     );
+  }
+
+  /* Take one person off a team without the lead being the one signed in.
+     Names the organiser. Refuses the current lead. Safe to repeat: someone
+     already gone comes back as alreadyGone. */
+  if (body?.action === "remove_member") {
+    const evId = String(body?.eventId ?? "").trim();
+    const email = String(body?.email ?? "").trim().toLowerCase();
+    const by = String(body?.by ?? "").trim().toLowerCase();
+    if (!evId || !email)
+      return NextResponse.json({ error: "Missing eventId or email." }, { status: 400 });
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(by))
+      return NextResponse.json(
+        { error: "Say who decided: pass the organiser's email as `by`. The shared key names nobody." },
+        { status: 400 },
+      );
+    const { removeTeammate } = await import("@/lib/remove-member");
+    const result = await removeTeammate({
+      eventId: evId,
+      email,
+      removedBy: by,
+      code: body?.code ? String(body.code) : undefined,
+    });
+    if (!result.ok) return NextResponse.json({ error: result.error }, { status: result.status });
+    return NextResponse.json({
+      ok: true,
+      alreadyGone: result.alreadyGone,
+      status: result.application?.status ?? null,
+      teamName: result.teamName,
+      by,
+    });
   }
 
   if (body?.action === "reinstate") {

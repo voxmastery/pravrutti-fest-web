@@ -14,11 +14,15 @@ import { AppStatusBadge } from "@/components/dashboard/status-badge";
 import { AccessPanel } from "@/components/dashboard/access-panel";
 import { DISCOVERIZE_EVENT_ID } from "@/lib/discoverize";
 import { downloadXlsx, exportFileName, exportRows } from "@/lib/roster-export";
+import { deskStage, type DeskStage } from "@/lib/desk-stage";
 import { AlertTriangle, Check, ChevronDown, ClipboardList, Download, FileSpreadsheet, Star } from "lucide-react";
 
 type Counts = {
   registered: number; teams: number;
   confirmed: number; confirmedTeams: number;
+  /** Held, not confirmed — the event page's in-review line, same counter. */
+  inReview?: number;
+  inReviewTeams?: number;
   checkedIn: number; notArrived: number;
 };
 /** Contact fields arrive only for organisers — see the event route. */
@@ -483,6 +487,8 @@ function EventDetail({ eventId }: { eventId: string }) {
         <StatInline label="Students" value={data.counts.registered} />
         <StatInline label="Confirmed teams" value={data.counts.confirmedTeams} />
         <StatInline label="Confirmed students" value={data.counts.confirmed} />
+        <StatInline label="In review teams" value={data.counts.inReviewTeams ?? 0} />
+        <StatInline label="In review students" value={data.counts.inReview ?? 0} />
         <StatInline label="Checked in" value={data.counts.checkedIn} />
         <StatInline label="Not arrived" value={data.counts.notArrived} />
       </div>
@@ -537,7 +543,7 @@ function EventDetail({ eventId }: { eventId: string }) {
  * from the coordinator is often all it takes. "In review" has paid, or quoted
  * a payment ID, and is waiting on an organiser to verify it.
  */
-type Stage = "confirmed" | "review" | "unfinished" | "withdrew";
+type Stage = DeskStage;
 type View = "all" | Exclude<Stage, "withdrew">;
 
 /** The label a person carries in the export — the filter they fall under,
@@ -548,21 +554,12 @@ const stageLabel = (p: Entry): string => {
   return stage === "withdrew" ? "Withdrew" : VIEWS.find((v) => v.id === stage)?.label ?? stage;
 };
 
-const stageOf = (p: Entry): Stage =>
-  p.status === "confirmed"
-    ? "confirmed"
-    : p.status === "invited"
-    ? "unfinished"
-    : p.status === "pending"
-    ? p.live
-      ? "review"
-      : "unfinished"
-    : "withdrew";
+const stageOf = (p: Entry): Stage => deskStage(p);
 
 const VIEWS: { id: View; label: string; hint: string }[] = [
   { id: "all", label: "Everyone", hint: "Everyone who has started registering, grouped by team. Withdrawn people are listed but not counted." },
   { id: "confirmed", label: "Confirmed", hint: "Verified and holding a ticket." },
-  { id: "review", label: "In review", hint: "Paid, or gave a payment ID — waiting for an organiser to verify it." },
+  { id: "review", label: "In review", hint: "Students holding a place who are not confirmed yet. The event page’s “teams in review” is the “In review teams” number above — a team already confirmed is not counted there again, even when a teammate on it is still in this tab." },
   { id: "unfinished", label: "Didn't finish", hint: "Teammates whose lead never registered the team, or withdrew it, and teammates who haven't accepted their invite — they hold no place yet. Call the lead. (Leads who went to pay and didn't come back are in review.)" },
 ];
 

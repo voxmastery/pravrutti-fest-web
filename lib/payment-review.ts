@@ -1,7 +1,7 @@
 import type { Application } from "@/lib/applications";
 import { isLiveApplication } from "@/lib/applications";
-import { applicationPath, readJsonByPath, putJson, listAll, readPrivate } from "@/lib/blob-store";
-import { normalizeTeamCode } from "@/lib/teams";
+import { applicationPath, readJsonByPath, putJson, listAll, readPrivate, teamPath } from "@/lib/blob-store";
+import { normalizeTeamCode, type Team } from "@/lib/teams";
 import { isDiscoverize } from "@/lib/discoverize";
 import { sendConfirmationEmail } from "@/lib/confirmation-email";
 import type { SendResult } from "@/lib/mailer";
@@ -130,7 +130,10 @@ export async function verifyTeam(args: {
   paymentRef?: string | null;
 }) {
   const members = await liveTeamMembers(args.eventId, args.code);
-  if (members.length === 0) return null;
+  const code = normalizeTeamCode(args.code);
+  const team = code
+    ? ((await readJsonByPath(teamPath(args.eventId, code))) as Team | null)
+    : null;
 
   const settled = (a: Application) => a.status === "confirmed" && a.payment !== "awaiting";
 
@@ -150,9 +153,35 @@ export async function verifyTeam(args: {
     }),
   );
 
+  /* Teammates the lead added who never accepted have no row yet. Verifying
+     the team is the decision that they are in, so they are registered and
+     emailed here rather than left INVITED on a confirmed team. */
+  const { enrollInvitedTeammates } = await import("@/lib/added-members");
+  const enrolled = team && !team.deletedAt
+    ? await enrollInvitedTeammates({
+        evId: args.eventId,
+        code: team.code,
+        teamName: team.name || members[0]?.teamName || "Team",
+        confirmed: true,
+      })
+    : [];
+
+  if (members.length === 0 && enrolled.length === 0) return null;
+
   return {
-    applications: outcomes.map((o) => o.application),
-    mails: outcomes.map((o) => o.mail),
+    applications: [...outcomes.map((o) => o.application), ...enrolled],
+    /* Enroll already sent (and stamped) the ticket. Report that send so the
+       desk can say how many emails went out, without sending a second one. */
+    mails: [
+      ...outcomes.map((o) => o.mail),
+      ...enrolled.map((a) =>
+        a.confirmationEmailAt
+          ? { sent: true }
+          : a.confirmationEmailError
+            ? { sent: false, error: a.confirmationEmailError }
+            : null,
+      ),
+    ],
   };
 }
 
@@ -190,10 +219,24 @@ export async function verifyPayer(args: {
   const moved = await Promise.all(
     waiting.map((m) => verifyPayment({ eventId: args.eventId, email: m.email, by: args.by })),
   );
+  const teammates = moved.filter((o): o is NonNullable<typeof o> => !!o).map((o) => o.application);
+
+  /* And the ones who were only invited: no application, so the loop above
+     never saw them. Dev Dynamos' two INVITED places were this case. */
+  const { enrollInvitedTeammates } = await import("@/lib/added-members");
+  const team = (await readJsonByPath(teamPath(args.eventId, normalizeTeamCode(a.teamCode!)!))) as Team | null;
+  const enrolled = team && !team.deletedAt
+    ? await enrollInvitedTeammates({
+        evId: args.eventId,
+        code: team.code,
+        teamName: team.name || a.teamName || "Team",
+        confirmed: true,
+      })
+    : [];
 
   return {
     ...outcome,
-    teammates: moved.filter((o): o is NonNullable<typeof o> => !!o).map((o) => o.application),
+    teammates: [...teammates, ...enrolled],
   };
 }
 

@@ -33,6 +33,19 @@ export type RegistrationCounts = {
   teams: number;
   confirmedPeople: number;
   confirmedTeams: number;
+  /**
+   * Students holding a place who are not confirmed yet. This is the event
+   * page's "applications in review" and the dashboard's In review tab —
+   * the same rows, so the two cannot disagree.
+   */
+  pendingPeople: number;
+  /**
+   * Teams holding a place with nobody confirmed yet. A team that already
+   * has a confirmed member is a confirmed team; its still-pending teammates
+   * are pendingPeople, not a second team in review. This is the event
+   * page's "teams in review".
+   */
+  pendingTeams: number;
   checkedIn: number;
   notArrived: number;
 };
@@ -77,13 +90,19 @@ export function countRegistrations(rows: readonly Application[]): RegistrationCo
   const holding = heldRows(rows);
   const held = rows.filter((r) => holding.has(r));
   const confirmed = held.filter((r) => r.status === "confirmed");
+  const pending = held.filter((r) => r.status !== "confirmed");
+  const confirmedKeys = new Set(confirmed.map(entryKey));
   const checkedIn = confirmed.filter((r) => r.checkedInAt).length;
 
   return {
     people: held.length,
     teams: new Set(held.map(entryKey)).size,
     confirmedPeople: confirmed.length,
-    confirmedTeams: new Set(confirmed.map(entryKey)).size,
+    confirmedTeams: confirmedKeys.size,
+    pendingPeople: pending.length,
+    /* A confirmed team's key is already in confirmedKeys, so its pending
+       teammates do not make it a team in review as well. */
+    pendingTeams: new Set(pending.map(entryKey).filter((k) => !confirmedKeys.has(k))).size,
     checkedIn,
     notArrived: confirmed.length - checkedIn,
   };

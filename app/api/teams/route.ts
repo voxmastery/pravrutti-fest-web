@@ -645,20 +645,38 @@ async function addMember(body: any) {
     /* Their own registration, as if they had joined with the code: covered by
        the lead's fee, and confirmed if the team already is. A withdrawn
        registration of theirs at this event is replaced; a live one was
-       refused above. No ticket email here — the invite tells them, and the
-       ticket queue sends the ticket. */
+       refused above. A team already confirmed has a ticket to send now; one
+       still in review waits until the lead's payment is verified. */
     const confirmed = await leadIsConfirmed(evId, team);
-    await putJson(
-      applicationPath(evId, fields.email),
-      {
-        ...personApplication({
-          event, evId, name: member.name, email: member.email, phone: member.phone,
-          college: member.college, team, confirmed,
-        }),
-        addedByLead: true,
-      },
-      Boolean(priorApp),
-    );
+    const mateApp = {
+      ...personApplication({
+        event, evId, name: member.name, email: member.email, phone: member.phone,
+        college: member.college, team, confirmed,
+      }),
+      addedByLead: true,
+    };
+    const matePath = applicationPath(evId, fields.email);
+    await putJson(matePath, mateApp, Boolean(priorApp));
+    /* Already confirmed: they have a ticket now, not only an invite. A team
+       still in review has nothing to send until the lead's payment is
+       verified — that step mails everyone it confirms. */
+    if (confirmed) {
+      let outcome: { sent: boolean; error?: string };
+      try {
+        outcome = await sendConfirmationEmail(mateApp);
+      } catch (e) {
+        outcome = { sent: false, error: e instanceof Error ? e.message : "Mail send failed." };
+      }
+      await putJson(
+        matePath,
+        {
+          ...mateApp,
+          confirmationEmailAt: outcome.sent ? new Date().toISOString() : undefined,
+          confirmationEmailError: outcome.sent ? null : outcome.error ?? "Mail send failed.",
+        },
+        true,
+      );
+    }
 
     /* Best effort. A bounced invite must not undo a member the lead can already
        see on the roster — they still have the link to hand over themselves. */

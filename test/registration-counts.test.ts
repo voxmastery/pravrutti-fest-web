@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { countRegistrations, entryKey, heldRows } from "@/lib/registration-counts";
+import { deskStage } from "@/lib/desk-stage";
 
 /**
  * What "registered" means on the desk.
@@ -58,6 +59,29 @@ describe("counting a field in teams and in people", () => {
     expect(c.teams).toBe(2);
     expect(c.confirmedPeople).toBe(2);
     expect(c.confirmedTeams).toBe(1);
+    expect(c.pendingPeople).toBe(1);
+    expect(c.pendingTeams).toBe(1);
+  });
+
+  /* Pitch at Mach: the event page said "11 applications in review" while the
+     desk's In review tab said 0, because the page counted people and the
+     desk was not looking at the same rows. A team with a confirmed member
+     is confirmed — its waiting teammates are students in review, not another
+     team. The desk stage for a held pending row is "review". */
+  it("does not count a confirmed team again as a team in review", () => {
+    const rows = [
+      row({ email: "lead@x.com", teamCode: "T1AAAAAAAAAA", status: "confirmed" }),
+      row({ email: "mate@x.com", teamCode: "T1AAAAAAAAAA", status: "pending", payment: "not_required", fee: "Covered by team lead" }),
+      row({ email: "wait@x.com", teamCode: "T2BBBBBBBBBB", status: "pending", payment: "awaiting", paymentRef: null, fee: "Rs. 200/-" }),
+    ];
+    const c = countRegistrations(rows);
+    expect(c.confirmedTeams).toBe(1);
+    expect(c.pendingTeams).toBe(1);
+    expect(c.pendingPeople).toBe(2);
+    expect(c.teams - c.confirmedTeams).toBe(c.pendingTeams);
+    const held = heldRows(rows);
+    const inReview = rows.filter((r) => held.has(r) && deskStage({ status: (r as { status: string }).status, live: true }) === "review");
+    expect(inReview).toHaveLength(c.pendingPeople);
   });
 });
 

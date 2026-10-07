@@ -1,11 +1,15 @@
 import { NextResponse } from "next/server";
 import { resolveRole } from "@/lib/roles";
 import { resolveEmail } from "@/lib/identity";
-import { listAll, readPrivate, applicationPath, readJsonByPath } from "@/lib/blob-store";
+import { listAll, readPrivate, applicationPath, readJsonByPath, teamPath } from "@/lib/blob-store";
 import { events, eventId } from "@/lib/pravrutti-data";
 import type { Application } from "@/lib/applications";
+import { enrollInvitedTeammates } from "@/lib/added-members";
+import { leadIsConfirmed } from "@/lib/lead-decision";
 import { mailerConfigured } from "@/lib/mailer";
+import { removeTeammate } from "@/lib/remove-member";
 import { ticketQrDataUrl } from "@/lib/ticket-qr";
+import { normalizeTeamCode, type Team } from "@/lib/teams";
 import {
   verifyPayer,
   verifyTeam,
@@ -81,6 +85,8 @@ type Action =
   | "verify_payment"
   | "verify_team"
   | "decline_team"
+  | "enroll_invited"
+  | "remove_member"
   | "unverify_payment"
   | "decline"
   | "set_payment_ref"
@@ -90,6 +96,8 @@ const ACTIONS: Action[] = [
   "verify_payment",
   "verify_team",
   "decline_team",
+  "enroll_invited",
+  "remove_member",
   "unverify_payment",
   "decline",
   "set_payment_ref",
@@ -130,7 +138,56 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: true, applications: team.applications, mails: team.mails });
   }
 
+  /* People the lead added who never accepted have no row, so Confirm team
+     never appears once everyone with a row is already confirmed. This
+     registers those invited teammates. Confirmed teams are emailed a ticket;
+     a team still in review waits for the payment check. */
+  if (action === "enroll_invited") {
+    const code = normalizeTeamCode(String(body?.teamCode ?? ""));
+    if (!evId || !code) return fail("Missing event or team.", 400);
+    const team = (await readJsonByPath(teamPath(evId, code))) as Team | null;
+    if (!team || team.deletedAt) return fail("No such team.", 404);
+    const enrolled = await enrollInvitedTeammates({
+      evId,
+      code: team.code,
+      teamName: team.name,
+      confirmed: await leadIsConfirmed(evId, team),
+    });
+    return NextResponse.json({
+      ok: true,
+      applications: enrolled,
+      mails: enrolled.map((a) =>
+        a.confirmationEmailAt
+          ? { sent: true }
+          : a.confirmationEmailError
+            ? { sent: false, error: a.confirmationEmailError }
+            : null,
+      ),
+    });
+  }
+
   if (!evId || !email) return fail("Missing event or applicant.", 400);
+
+  /* An organiser taking one person off a team. The lead's own remove only
+     works when the lead is signed in; Prital on Puzzlers needed this from
+     the desk. The current lead is refused — hand the team over, or decline it. */
+  if (action === "remove_member") {
+    const result = await removeTeammate({
+      eventId: evId,
+      email,
+      removedBy: by,
+      code: body?.teamCode ? String(body.teamCode) : undefined,
+    });
+    if (!result.ok) return fail(result.error, result.status);
+    return NextResponse.json({
+      ok: true,
+      application: result.application,
+      alreadyGone: result.alreadyGone,
+      teamName: result.teamName,
+      mail: null,
+      teammates: [],
+    });
+  }
 
   /* verifyPayer, not verifyPayment: the payer's money settles the whole
      team, so their teammates are confirmed with them rather than left in

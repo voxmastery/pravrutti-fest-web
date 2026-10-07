@@ -15,6 +15,8 @@ vi.mock("@/lib/blob-store", () => ({
   readPrivate: async (url: string) => store.get(url.slice(4)) ?? null,
   readJsonByPath: async (p: string) => store.get(p) ?? null,
   applicationPath: (e: string, m: string) => `app/${e}/${m}.json`,
+  teamPath: (e: string, c: string) => `team/${e}/${c}.json`,
+  teamMemberPath: (e: string, m: string) => `team-member/${e}/${m}.json`,
   putJson: async (p: string, d: unknown) => { store.set(p, d); },
 }));
 vi.mock("@/lib/roles", () => ({ resolveRole: async () => role.value }));

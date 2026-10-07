@@ -88,7 +88,8 @@ export function EventRegisterPanel({
   const [waiting, setWaiting] = useState(0);
   /* Teams in review, for events counted in teams: "11 applications in
      review" on Pitch at Mach was eleven people in four teams, read as
-     eleven teams. */
+     eleven teams beside "7 teams confirmed". The number is teams with
+     nobody confirmed yet — the same inReviewTeams the faculty desk shows. */
   const [waitingTeams, setWaitingTeams] = useState(0);
   /* Full by the server's count — at its cap — as well as by hand. */
   const [serverFull, setServerFull] = useState(false);
