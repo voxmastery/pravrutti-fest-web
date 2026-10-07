@@ -66,23 +66,25 @@ describe("the four closed events", () => {
   });
 });
 
-/* Closed on 7 Oct at 15 teams. The desk held fewer than 16, so the cap
-   could come down from 16 without cutting a team already in. Still listed,
-   struck through — closing is enough. */
+/* Closed at 15 on 7 Oct, reopened the same day. Back to the pre-close
+   field of 16 teams, listed, and taking new teams until that cap. */
 describe("Kurukshetra – The Robo War", () => {
-  it("is capped at 15 teams, takes no new teams, and stays on the list", () => {
+  it("is open at 16 teams and stays on the list", () => {
     const e = ev("KURUKSHETRA - THE ROBO WAR");
-    expect(e.maxTeams).toBe(15);
-    expect(e.capacity).toBe(60);
-    expect(isFull(e, { people: 0, teams: 0 })).toBe(true);
+    expect(e.maxTeams).toBeUndefined();
+    expect(e.capacity).toBe(64);
+    expect(e.full).toBeFalsy();
+    expect(isFull(e, { people: 0, teams: 0 })).toBe(false);
+    expect(isFull(e, { people: 0, teams: 15 })).toBe(false);
+    expect(isFull(e, { people: 0, teams: 16 })).toBe(true);
     expect(e.unlisted).toBeFalsy();
     expect(listedEvents).toContain(e);
   });
 });
 
-/* Closed on 7 Oct at 19 teams, the same way as Robo War: listed and struck
-   through, not taken off the list. The desk held 14 confirmed and 5 in
-   review, so 19 is the whole field and cuts nobody already in. */
+/* Closed on 7 Oct at 19 teams: listed and struck through, not taken off
+   the list. The desk held 14 confirmed and 5 in review, so 19 is the
+   whole field and cuts nobody already in. */
 describe("RC-X", () => {
   it("is capped at 19 teams, takes no new teams, and stays on the list", () => {
     const e = ev("RC-X");
