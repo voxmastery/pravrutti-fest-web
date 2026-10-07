@@ -196,6 +196,13 @@ export function EventPageView({ event, slug }: { event: Event; slug: string }) {
               viewerStatus={access.status}
               awaitingReference={access.awaitingReference}
               unanswered={access.unanswered}
+              /* The shortlist is a server-only view (withDiscoverizeShortlist).
+                 The stored row still says payment "not_required" until the
+                 lead acts on it, so the panel must be handed this view —
+                 otherwise a shortlisted payer reads as a free entry, Pay
+                 never appears, and ?finish=pay does nothing. */
+              round={access.round}
+              viewerPayment={access.payment}
               viewerReady={access.ready}
               onAccessRefresh={access.refresh}
               phones={access.byName}

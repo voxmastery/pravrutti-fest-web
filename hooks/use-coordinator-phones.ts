@@ -23,7 +23,13 @@ export type CoordinatorPhones = {
   /** They went to pay and never said how it went. */
   unanswered: boolean;
   /** Discoverize's rounds for this viewer; null everywhere else. */
-  round: { abstractSubmittedAt?: string; abstractSource?: "form" | "organiser"; shortlistedAt?: string; shortlistedBy?: string } | null;
+  round: {
+    abstractSubmittedAt?: string;
+    abstractSource?: "form" | "organiser";
+    shortlistedAt?: string;
+    shortlistedBy?: string;
+    paymentSubmittedAt?: string;
+  } | null;
   /** This viewer's own payment state. */
   payment: "not_required" | "awaiting" | "paid" | "refunded" | null;
 };

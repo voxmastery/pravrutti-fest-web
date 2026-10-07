@@ -414,6 +414,7 @@ export function EventRegisterPanel({
           {showPayRound && (
             <div className="space-y-2">
               <Button
+                type="button"
                 onClick={() => openToFinish("pay")}
                 className="w-full h-12 rounded-xl font-display text-xs font-black uppercase tracking-widest text-white arcade-btn-magenta border-cyber-pink cursor-pointer"
               >

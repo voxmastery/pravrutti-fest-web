@@ -603,11 +603,13 @@ function DiscoverizeRow({ a }: { a: App }) {
           the JUNO hand-off on the event page. Nobody else sees this. */}
       {state === "payment_pending" && (
         <div className="space-y-1.5">
-          <a href={`/events/${a.eventId}?finish=pay`} className="block">
-            <Button className="h-10 w-full rounded-xl bg-cyber-pink text-sm font-medium text-white hover:bg-electric-magenta">
-              Pay ₹{FEE_PER_HEAD}
-            </Button>
-          </a>
+          {/* The control has to be the link itself. A <button> nested in an
+              <a> is invalid: the click lands on the button, which does not
+              follow the href, and the lead is left on this site instead of
+              the event page's JUNO hand-off. */}
+          <Button asChild className="h-10 w-full rounded-xl bg-cyber-pink text-sm font-medium text-white hover:bg-electric-magenta">
+            <a href={`/events/${a.eventId}?finish=pay`}>Pay ₹{FEE_PER_HEAD}</a>
+          </Button>
           <p className="text-xs font-semibold text-emerald-400">{DISCOVERIZE_SHORTLIST_CONGRATS}</p>
         </div>
       )}

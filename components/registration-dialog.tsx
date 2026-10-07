@@ -517,8 +517,9 @@ export function RegistrationDialog({
 
   const goToPortal = async (force: boolean) => {
     if (!event || startingPayment) return;
-    /* Discoverize is free at every stage, so it never hands anybody to the
-       portal — its confirm screen has no "Proceed to payment" at all. */
+    /* A Discoverize team that has not been shortlisted never pays. A
+       shortlisted payer (resumeAtPayment) uses the same portal hand-off as
+       every other paid event. */
     if (discoverize && !payingRound) return;
     setError(null);
     setStartingPayment(true);
