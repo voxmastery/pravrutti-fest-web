@@ -5,6 +5,7 @@ import {
   events, listedEvents, eventId, faqs, FEST, REGISTRATION_CLOSES_LONG, festFor, registrationState,
 } from "@/lib/pravrutti-data";
 import { isFull } from "@/lib/event-full";
+import { registerNoteText } from "@/lib/register-note";
 
 /**
  * The deadline moved to 9 October; four events are closed and hidden.
@@ -112,9 +113,20 @@ describe("Discoverize", () => {
   it("is the only event with a note under Request to join", () => {
     const noted = events.filter((e) => e.registerNote).map((e) => e.name);
     expect(noted).toEqual(["Discoverize (Research Paper Presentation)"]);
-    expect(ev("Discoverize (Research Paper Presentation)").registerNote).toBe(
+    const e = ev("Discoverize (Research Paper Presentation)");
+    /* The digits stay on the coordinators route. The events array only
+       names who to ask, and the page fills the number in. */
+    expect(e.registerNote).toBe(
+      "Anyone joining on or after 7 Oct must join the WhatsApp group immediately and contact Aaliyah at {phone} for updates.",
+    );
+    expect(e.registerNote).not.toMatch(/\d{10}/);
+    expect(e.registerNoteCoordinator).toBe("Aaliyah Aijaz Ali Khan");
+    expect(registerNoteText(e.registerNote, e.registerNoteCoordinator, {
+      "Aaliyah Aijaz Ali Khan": "8197092607",
+    })).toBe(
       "Anyone joining on or after 7 Oct must join the WhatsApp group immediately and contact Aaliyah at 8197092607 for updates.",
     );
+    expect(registerNoteText(e.registerNote, e.registerNoteCoordinator, {})).toBeNull();
   });
 });
 

@@ -64,10 +64,12 @@ describe("the in-review line", () => {
 /* An organiser note belongs under the join button, and nowhere else on the
    card — it is for someone about to request a place. */
 describe("the register note", () => {
-  it("renders under Request to join", () => {
+  it("renders under Request to join, with the number filled in later", () => {
     const join = src.indexOf("Request to join");
-    const note = src.indexOf("event.registerNote");
+    const note = src.indexOf("{note ?");
     expect(join).toBeGreaterThan(-1);
     expect(note).toBeGreaterThan(join);
+    expect(src).toMatch(/registerNoteText\(/);
+    expect(src).not.toMatch(/8197092607/);
   });
 });

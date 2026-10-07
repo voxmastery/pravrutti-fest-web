@@ -198,6 +198,7 @@ export function EventPageView({ event, slug }: { event: Event; slug: string }) {
               unanswered={access.unanswered}
               viewerReady={access.ready}
               onAccessRefresh={access.refresh}
+              phones={access.byName}
             />
           </div>
 

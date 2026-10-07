@@ -17,6 +17,7 @@ import {
   DISCOVERIZE_STATE_BLURB,
   ABSTRACT_FORM_URL,
 } from "@/lib/discoverize";
+import { registerNoteText } from "@/lib/register-note";
 
 /**
  * The registration card, in Luma's shape: a labelled panel that states the
@@ -49,6 +50,7 @@ export function EventRegisterPanel({
   unanswered = false,
   round = null,
   viewerPayment = null,
+  phones = {},
 }: {
   event: Event;
   level?: 2 | 3;
@@ -75,6 +77,9 @@ export function EventRegisterPanel({
   /** This viewer's own payment state, needed to tell a free Discoverize entry
       from a shortlisted team that owes the team fee. */
   viewerPayment?: "not_required" | "awaiting" | "paid" | "refunded" | null;
+  /** Coordinator name → phone, from /api/events/coordinators. Fills
+      `{phone}` in a register note. Empty until that route has answered. */
+  phones?: Record<string, string>;
 }) {
   const id = eventId(event.name);
   const cap = capacityFor(id);
@@ -193,6 +198,9 @@ export function EventRegisterPanel({
   const invite = mine ? <TeamInviteCard team={mine} level={level} /> : null;
 
   const showApply = viewerReady && dash.ready && !live && !closed && !staff && !closedFull;
+  /* The number is not on the event. It arrives with the call-button lookup,
+     which is the same moment Request to join is allowed on screen. */
+  const note = registerNoteText(event.registerNote, event.registerNoteCoordinator, phones);
   /* Full is not shut: someone on a team that is already in still needs a way
      to join it — Nexovate's members did, the day it filled. */
   const showJoinOnly = viewerReady && dash.ready && !live && !closed && !staff && closedFull;
@@ -329,9 +337,9 @@ export function EventRegisterPanel({
                 <Ticket className="w-4 h-4 mr-2" aria-hidden="true" />
                 {full ? "Apply · join the queue" : "Request to join"}
               </Button>
-              {event.registerNote ? (
+              {note ? (
                 <p className="text-xs leading-relaxed text-pearl-white/80">
-                  {event.registerNote}
+                  {note}
                 </p>
               ) : null}
             </div>
