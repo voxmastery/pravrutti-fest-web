@@ -44,6 +44,7 @@ jobs:
 
       # Only from main, and never from a pull request — a fork's PR must not
       # be able to reach the production server or read the token.
+      # Redeploy retry after a transient upload timeout (connect ETIMEDOUT) on 4715c43.
       - name: Deploy and purge the CDN
         if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
         env:
