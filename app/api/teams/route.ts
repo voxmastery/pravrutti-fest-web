@@ -23,7 +23,7 @@ import {
 } from "@/lib/invites";
 import { inviteUrl, sendInviteEmail } from "@/lib/invite-email";
 import { sendConfirmationEmail } from "@/lib/confirmation-email";
-import { leadIsConfirmed, leadIsRegistered } from "@/lib/lead-decision";
+import { leadIsConfirmed, leadIsRegistered, leadMayInvite } from "@/lib/lead-decision";
 import { teammateApplication as personApplication } from "@/lib/added-members";
 import { transferLead, paymentHoldsTeam, PAYMENT_HOLDS_TEAM } from "@/lib/lead-transfer";
 import { eventIsFull } from "@/lib/event-full";
@@ -74,6 +74,23 @@ async function resolveApplicantEmail(bodyEmail: string) {
 
 function findEvent(evId: string) {
   return events.find((e) => eventId(e.name) === evId) ?? null;
+}
+
+/** Fest-wide date and this event's own, together. An early close (Hacktivate
+    on 1 Oct) shuts that event while the fest is still taking teams. */
+function registrationWindowOpen(event: { registrationCloses?: string } | null | undefined) {
+  return effectiveRegistrationOpen() && effectiveRegistrationOpen(undefined, festFor(event));
+}
+
+/** Add is allowed while the window is open, and after it closes when the
+    lead already holds a live registration. The registration read is skipped
+    while the window is open, because the answer does not depend on it. */
+async function mayInviteOnto(evId: string, event: { registrationCloses?: string }, team: Team) {
+  const windowOpen = registrationWindowOpen(event);
+  return leadMayInvite({
+    registrationOpen: windowOpen,
+    leadRegistered: windowOpen ? false : await leadIsRegistered(evId, team),
+  });
 }
 
 async function loadTeam(evId: string, code: string): Promise<Team | null> {
@@ -172,7 +189,7 @@ async function mineTeam(evId: string, bodyEmail: string) {
           ...toTeamPreview(team, members, maxTeamSizeFor(event), true),
           isLead: String(team.createdByEmail).toLowerCase() === who.email.toLowerCase(),
           leadEmail: String(team.createdByEmail ?? "").toLowerCase(),
-          canInvite: effectiveRegistrationOpen(undefined, festFor(event)),
+          canInvite: await mayInviteOnto(evId, event, team),
         },
       },
       { headers: { "cache-control": "no-store" } }
@@ -561,13 +578,9 @@ async function otherTeams(body: any) {
  * invite twelve people for a team of four and let the race settle it.
  */
 async function addMember(body: any) {
-  if (!effectiveRegistrationOpen()) return jsonError(registrationUnavailableMessage(), 409);
-
   const evId = String(body?.eventId ?? "").trim();
   const event = findEvent(evId);
   if (!event) return jsonError("That event doesn't exist.", 400);
-  /* An event can close before the fest-wide date (Event.registrationCloses). */
-  if (!effectiveRegistrationOpen(undefined, festFor(event))) return jsonError(eventClosedMessage(event), 409);
 
   const who = await resolveApplicantEmail(String(body?.email ?? ""));
   if ("error" in who) return who.error;
@@ -588,6 +601,13 @@ async function addMember(body: any) {
     if (!team) return jsonError("No team found for that code.", 404);
     if (team.createdByEmail !== who.email)
       return jsonError("Only the team lead can add members.", 403);
+    /* A closed window stops new teams (create and join still check it on
+       their own). A team already in keeps its empty seats: Hacktivate closed
+       on 1 Oct 2026 and confirmed leads were still short of four. */
+    if (!(await mayInviteOnto(evId, event, team))) {
+      if (!effectiveRegistrationOpen()) return jsonError(registrationUnavailableMessage(), 409);
+      return jsonError(eventClosedMessage(event), 409);
+    }
     /* Same rule as joining: growing a team that is already in is fine. */
     if (!(await leadIsRegistered(evId, team)) && (await eventIsFull(event)))
       return jsonError(eventFullMessage(event.name), 409);

@@ -11,7 +11,9 @@ import { describe, it, expect, vi, beforeEach, beforeAll } from "vitest";
  *
  * These tests pin the server side of that: a registered lead may still invite,
  * the details the ticket page cannot supply are filled in from the lead's own
- * registration, and every existing refusal still refuses.
+ * registration, and the refusals that are still refusals — not the lead, a
+ * duplicate, a closed window for a team that never got in — still refuse.
+ * A closed window does not stop a lead who is already in.
  */
 
 const store = new Map<string, any>();
@@ -136,8 +138,27 @@ describe("adding a member after the team has registered", () => {
     expect(res.status).toBe(403);
   });
 
-  it("refuses once registration has closed", async () => {
+  it("still lets a registered lead add once registration has closed", async () => {
     seedRegisteredTeam();
+    open.value = false;
+    expect((await addMate()).status).toBe(200);
+    expect(store.get(`member/${EV}/${MATE}.json`).code).toBe(CODE);
+  });
+
+  it("still lets a confirmed lead add once registration has closed", async () => {
+    seedRegisteredTeam();
+    store.get(`app/${EV}/${LEAD}.json`).status = "confirmed";
+    store.get(`app/${EV}/${LEAD}.json`).payment = "paid";
+    open.value = false;
+    expect((await addMate()).status).toBe(200);
+  });
+
+  /* The window closing is what stops a team that never got in. A lead who
+     withdrew, or who minted a code and never submitted, is not a team in
+     the field. */
+  it("refuses once registration has closed when the lead is not registered", async () => {
+    seedRegisteredTeam();
+    store.get(`app/${EV}/${LEAD}.json`).status = "cancelled";
     open.value = false;
     expect((await addMate()).status).toBe(409);
   });
@@ -155,8 +176,8 @@ describe("adding a member after the team has registered", () => {
   });
 });
 
-/* The button is drawn from what `mine` says, so a closed registration has to
-   reach the page as a fact rather than as a failed press. */
+/* The button is drawn from what `mine` says. A closed window is not, on its
+   own, a reason to hide it: a lead who is already in can still add. */
 describe("what the ticket page is told about inviting", () => {
   it("says invites are still possible while registration is open", async () => {
     seedRegisteredTeam();
@@ -166,8 +187,17 @@ describe("what the ticket page is told about inviting", () => {
     expect(body.team.canInvite).toBe(true);
   });
 
-  it("says they are not once registration has closed", async () => {
+  it("still says a registered lead can invite once registration has closed", async () => {
     seedRegisteredTeam();
+    identity.email = LEAD;
+    open.value = false;
+    const body = await (await mine()).json();
+    expect(body.team.canInvite).toBe(true);
+  });
+
+  it("says they cannot invite once registration has closed and the lead is not registered", async () => {
+    seedRegisteredTeam();
+    store.get(`app/${EV}/${LEAD}.json`).status = "cancelled";
     identity.email = LEAD;
     open.value = false;
     const body = await (await mine()).json();
