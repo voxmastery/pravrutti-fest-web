@@ -79,7 +79,15 @@ function SponsorCard({ sponsor, index }: { sponsor: (typeof sponsors)[0]; index:
               src={sponsor.logo}
               alt={sponsor.name}
               onError={() => setBroken(true)}
-              className="h-5 w-auto max-w-[75%] object-contain object-left"
+              /* The shared wordmark height is sized for a wide name like
+                 ElevenLabs. The .xyz bubble is only ~1.7:1, so that height
+                 renders it as a speck; twice the height, width following
+                 the file, keeps the ratio and stays inside the card. */
+              className={
+                sponsor.name === ".xyz"
+                  ? "h-10 w-auto max-w-[75%] object-contain object-left"
+                  : "h-5 w-auto max-w-[75%] object-contain object-left"
+              }
             />
           ) : (
           <span className="truncate text-[17px] font-semibold text-pearl-white transition-colors group-hover:text-champagne-gold">

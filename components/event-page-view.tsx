@@ -255,7 +255,11 @@ export function EventPageView({ event, slug }: { event: Event; slug: string }) {
                 <img
                   src={event.sponsorPerks.logo}
                   alt={event.sponsorPerks.sponsor}
-                  className="h-5 w-auto max-w-full object-contain object-left"
+                  className={
+                    event.sponsorPerks.sponsor === ".xyz"
+                      ? "h-10 w-auto max-w-full object-contain object-left"
+                      : "h-5 w-auto max-w-full object-contain object-left"
+                  }
                 />
                 <ul className="mt-5 space-y-2 text-sm leading-relaxed text-pearl-white/75">
                   {event.sponsorPerks.perks.map((p) => (
