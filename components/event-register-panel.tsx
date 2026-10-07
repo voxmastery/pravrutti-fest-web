@@ -16,6 +16,7 @@ import {
   DISCOVERIZE_STATE_LABEL,
   DISCOVERIZE_STATE_BLURB,
   ABSTRACT_FORM_URL,
+  DISCOVERIZE_SHORTLIST_CONGRATS,
 } from "@/lib/discoverize";
 import { registerNoteText } from "@/lib/register-note";
 
@@ -73,7 +74,7 @@ export function EventRegisterPanel({
       the question, not a demand for a transaction ID. */
   unanswered?: boolean;
   /** Discoverize's rounds for this viewer; null for every other event. */
-  round?: { abstractSubmittedAt?: string; shortlistedAt?: string } | null;
+  round?: { abstractSubmittedAt?: string; shortlistedAt?: string; paymentSubmittedAt?: string } | null;
   /** This viewer's own payment state, needed to tell a free Discoverize entry
       from a shortlisted team that owes the team fee. */
   viewerPayment?: "not_required" | "awaiting" | "paid" | "refunded" | null;
@@ -160,8 +161,8 @@ export function EventRegisterPanel({
 
   /* Opening to finish a payment rather than to start a registration: either
      to answer the question they never got, or to add the optional ID. */
-  const [resuming, setResuming] = useState<"answer" | "reference" | null>(null);
-  const openToFinish = (mode: "answer" | "reference") => {
+  const [resuming, setResuming] = useState<"answer" | "reference" | "pay" | null>(null);
+  const openToFinish = (mode: "answer" | "reference" | "pay") => {
     setResuming(mode);
     setRegistering(true);
   };
@@ -223,7 +224,13 @@ export function EventRegisterPanel({
     round: round ?? undefined,
   });
   const showAddRef =
-    viewerReady && dash.ready && awaitingReference && !unanswered && !staff && !discoverize;
+    viewerReady && dash.ready && awaitingReference && !unanswered && !staff &&
+    (!discoverize || roundState === "payment_submitted");
+  /* A Discoverize team the coordinators shortlisted, whose payer still owes
+     the team's ₹200. No other Discoverize team, and no other event, ever
+     reaches this — the server decides who is shortlisted. */
+  const showPayRound =
+    viewerReady && dash.ready && discoverize && live && roundState === "payment_pending" && !staff;
 
   /* A reminder email's button lands here with ?finish=reference. Open the
      screen it promised, once, the moment we know they are owed it. Read from
@@ -231,12 +238,19 @@ export function EventRegisterPanel({
      prerendered, and that hook would demand a Suspense boundary for it. */
   const deepLinked = useRef(false);
   useEffect(() => {
-    if (deepLinked.current || !(showAnswer || showAddRef)) return;
-    if (new URLSearchParams(window.location.search).get("finish") !== "reference") return;
+    if (deepLinked.current || !(showAnswer || showAddRef || showPayRound)) return;
+    const finish = new URLSearchParams(window.location.search).get("finish");
+    /* My tickets' "Pay ₹200" lands here with ?finish=pay. */
+    if (finish === "pay" && showPayRound) {
+      deepLinked.current = true;
+      openToFinish("pay");
+      return;
+    }
+    if (finish !== "reference" || !(showAnswer || showAddRef)) return;
     deepLinked.current = true;
     openToFinish(showAnswer ? "answer" : "reference");
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [showAnswer, showAddRef]);
+  }, [showAnswer, showAddRef, showPayRound]);
 
   /* Confirmed viewers already have a ticket — the card's job (explain approval
      and collect a new application) would contradict "You're going". They still
@@ -282,7 +296,9 @@ export function EventRegisterPanel({
             <IndianRupee className="w-3.5 h-3.5 shrink-0 text-cyber-pink" aria-hidden="true" />
             {/* Discoverize charges past its shortlist, not at the door. */}
             {discoverize
-              ? "Free — nothing to pay at any stage"
+              ? live && (roundState === "payment_pending" || roundState === "payment_submitted")
+                ? `${FEE_PER_HEAD} per team · shortlisted, paid online by the lead`
+                : `Free to enter · ${FEE_PER_HEAD} per team only if shortlisted`
               : `${FEE_PER_HEAD} per team · paid online by the lead`}
           </p>
 
@@ -395,6 +411,18 @@ export function EventRegisterPanel({
               </p>
             </div>
           )}
+          {showPayRound && (
+            <div className="space-y-2">
+              <Button
+                onClick={() => openToFinish("pay")}
+                className="w-full h-12 rounded-xl font-display text-xs font-black uppercase tracking-widest text-white arcade-btn-magenta border-cyber-pink cursor-pointer"
+              >
+                <IndianRupee className="w-4 h-4 mr-2" aria-hidden="true" />
+                Pay ₹{FEE_PER_HEAD}
+              </Button>
+              <p className="text-xs font-semibold text-emerald-400">{DISCOVERIZE_SHORTLIST_CONGRATS}</p>
+            </div>
+          )}
           {showAddRef && (
             <button
               type="button"
@@ -427,7 +455,8 @@ export function EventRegisterPanel({
            success screen before they can read the queue position. */
         event={open ? dialogEvent : null}
         onClose={() => { setRegistering(false); setResuming(null); }}
-        resumeAtReference={resuming !== null}
+        resumeAtReference={resuming === "answer" || resuming === "reference"}
+        resumeAtPayment={resuming === "pay"}
         resumeWithReferenceField={resuming === "reference"}
         onRegistered={handleRegistered}
         seatsLeft={left}

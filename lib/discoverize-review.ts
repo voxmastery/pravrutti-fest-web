@@ -1,7 +1,8 @@
 import type { Application } from "@/lib/applications";
 import { isLiveApplication } from "@/lib/applications";
 import { listAll, readPrivate, readJsonByPath, putJson, applicationPath, teamPath } from "@/lib/blob-store";
-import { DISCOVERIZE_EVENT_ID, DISCOVERIZE_FREE_FEE } from "@/lib/discoverize";
+import { DISCOVERIZE_EVENT_ID, DISCOVERIZE_FREE_FEE, DISCOVERIZE_ROUND_FEE } from "@/lib/discoverize";
+import { withDiscoverizeShortlist } from "@/lib/discoverize-shortlist";
 import type { Team } from "@/lib/teams";
 
 /**
@@ -91,27 +92,34 @@ export async function markAbstractSubmitted(args: {
 }
 
 /**
- * The judges' decision.
+ * The judges' decision, and the fee that follows it.
  *
- * Nothing about money: Discoverize is free at every stage, so being put
- * through to the presentation round changes what a team's ticket says and
- * nothing else. There is no cap either — how many teams go through is the
- * judges' call, and a number in the code would be a second opinion nobody
- * asked for.
+ * Shortlisting is what makes the ₹200 real: it lands on the payer's row as
+ * "awaiting", which is the same state every other event's lead sits in before
+ * an organiser verifies the money — so the event page's Pay button, the
+ * reference step and the verification desk all work on it unchanged.
+ * Teammates are marked shortlisted and owe nothing; the lead pays once.
+ *
+ * There is no cap here. How many teams go through is the judges' call, and a
+ * number in the code would be a second opinion nobody asked for.
  */
 export async function setShortlisted(args: {
   code?: string | null;
   email?: string | null;
   by: string;
   shortlisted: boolean;
-}) {
+}): Promise<{ applications: Application[]; payer: string } | { error: string } | null> {
   const rows = await teamRows({ code: args.code, email: args.email });
   if (!rows) return null;
   const payer = await payerOf(rows);
 
+  if (!args.shortlisted && payer.payment === "paid")
+    return { error: "That team has already paid for the final round. Decline it instead if they are out." };
+
   const at = new Date().toISOString();
   const applications = await Promise.all(
     rows.map((r) => {
+      const isPayer = r.email.toLowerCase() === payer.email.toLowerCase();
       const round = { ...r.round };
       if (args.shortlisted) {
         round.shortlistedAt = round.shortlistedAt ?? at;
@@ -119,31 +127,42 @@ export async function setShortlisted(args: {
       } else {
         delete round.shortlistedAt;
         delete round.shortlistedBy;
+        delete round.paymentSubmittedAt;
       }
-      /* No money changes hands here — the entry was free and the final round
-         is free too, so the row keeps the fee and payment it already had. */
-      return save({ ...r, round: Object.keys(round).length ? round : undefined });
+      /* Only the payer's row carries money, only while it is still pending,
+         and money that actually arrived ("paid") is never rewritten. */
+      const touchMoney = isPayer && r.status === "pending" && r.payment !== "paid";
+      const next: Application = {
+        ...r,
+        round: Object.keys(round).length ? round : undefined,
+        ...(touchMoney
+          ? args.shortlisted
+            ? { payment: "awaiting" as const, fee: DISCOVERIZE_ROUND_FEE }
+            : { payment: "not_required" as const, fee: DISCOVERIZE_FREE_FEE }
+          : {}),
+      };
+      return save(next);
     }),
   );
   return { applications, payer: payer.email };
 }
 
 /**
- * Brings rows written under the old paid flow into this one.
+ * Brings rows written under the old paid-at-entry flow into this one.
  *
  * Discoverize used to charge at registration like every other event, so the
- * teams who registered before this change are sitting on a ₹200 nobody should
- * have asked them for. They become free registrations; anything the judges
- * have since shortlisted, and anything already paid, is left exactly alone.
+ * teams who registered before entry went free were sitting on a ₹200 nobody
+ * should have asked them for. They become free registrations; anything the
+ * judges have shortlisted (which now owes the round fee on purpose), and
+ * anything already paid, is left exactly alone.
  *
  * Idempotent, so running it twice changes nothing the second time.
  */
 export async function migrateToFreeEntry() {
   const rows = await allLiveRows();
-  /* Anything still carrying a charge, or an older wording of the fee, from
-     before Discoverize went free. Money that actually arrived ("paid") is
-     left exactly as it is. */
-  const stale = rows.filter((r) => r.payment === "awaiting" || r.fee !== DISCOVERIZE_FREE_FEE);
+  const stale = rows.filter(
+    (r) => !r.round?.shortlistedAt && (r.payment === "awaiting" || r.fee !== DISCOVERIZE_FREE_FEE),
+  );
   const applications = await Promise.all(
     stale
       .filter((r) => r.payment !== "paid" || r.fee !== DISCOVERIZE_FREE_FEE)
@@ -158,9 +177,13 @@ export async function migrateToFreeEntry() {
   return { applications, converted: applications.length, looked: rows.length };
 }
 
-/** The rows a desk needs to see: every live team, grouped, newest last. */
+/**
+ * The rows a desk needs to see: every live team, grouped, newest last — read
+ * through the coordinators' shortlist so a listed team shows as shortlisted
+ * and owing before anybody has touched its row.
+ */
 export async function discoverizeRoster() {
-  const rows = await allLiveRows();
+  const rows = await Promise.all((await allLiveRows()).map((r) => withDiscoverizeShortlist(r)));
   const groups = new Map<string, Application[]>();
   for (const r of rows) {
     const key = r.teamCode ? `code:${String(r.teamCode).toUpperCase()}` : `solo:${r.email.toLowerCase()}`;

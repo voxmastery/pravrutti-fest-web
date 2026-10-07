@@ -3,6 +3,7 @@ import { isLiveApplication } from "@/lib/applications";
 import { applicationPath, readJsonByPath, putJson, listAll, readPrivate, teamPath } from "@/lib/blob-store";
 import { normalizeTeamCode, type Team } from "@/lib/teams";
 import { isDiscoverize } from "@/lib/discoverize";
+import { withDiscoverizeShortlist } from "@/lib/discoverize-shortlist";
 import { sendConfirmationEmail } from "@/lib/confirmation-email";
 import type { SendResult } from "@/lib/mailer";
 
@@ -50,8 +51,13 @@ async function persistWithConfirmation(path: string, record: Application): Promi
  * application is never revived by a late payment.
  */
 export async function verifyPayment(args: { eventId: string; email: string; by: string; paymentRef?: string | null }) {
-  const { path, record } = await load(args.eventId, args.email);
-  if (!record) return null;
+  const loaded = await load(args.eventId, args.email);
+  const path = loaded.path;
+  if (!loaded.record) return null;
+  /* A Discoverize team on the coordinators' shortlist counts as shortlisted
+     here too, and its payer as owing the round fee — so verifying it records
+     the ₹200 as paid and confirms the team (lib/discoverize-shortlist). */
+  const record = await withDiscoverizeShortlist(loaded.record);
 
   /* Discoverize inverts what this button means.
      Everywhere else confirmed says "your money arrived, you are in".

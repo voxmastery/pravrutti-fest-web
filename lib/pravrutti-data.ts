@@ -465,9 +465,10 @@ export const events: Event[] = [
       "\u25cf Stage 2 (Presentation Round) \u2014 selected participants present their paper live: 7 minutes for the presentation (PPT, 10 slides recommended) and 3 minutes for Q&A. Shortlisted teams present on 14 October, 2:00 PM to 5:00 PM, in front of the judges. " +
       "\u25cf NOTE \u2014 only shortlisted teams pay Rs. 200/- through the website. Every team should NOT pay to take part. Only a team that has passed the screening round (Round 1) is asked for the Rs. 200/-, to present in front of the judges in the final round. " +
       "\u25cf Presentation day \u2014 teams wait for their turn in the waiting room and are called to present in an isolated room when it is their turn.",
-    /* Free at every stage, shortlisted or not. Starting with "Free" is also
-       what makes the register route treat it as a free event (see
-       lib/discoverize.ts for the whole flow). */
+    /* Free to enter. Only the teams the coordinators shortlist pay — Rs. 200/-
+       for the team, through the website — as the description says. Starting
+       with "Free" is what makes the register route treat entry as free (see
+       lib/discoverize.ts and lib/discoverize-shortlist.ts for the flow). */
     fee: "Free",
     prizes: [7000, 5000, 3000],
     teamSize: { min: 1, max: 4, soloAllowed: true },

@@ -13,6 +13,7 @@ import {
   DISCOVERIZE_STATE_LABEL,
   DISCOVERIZE_STATE_BLURB,
   ABSTRACT_FORM_URL,
+  DISCOVERIZE_SHORTLIST_CONGRATS,
 } from "@/lib/discoverize";
 import { downloadEventIcs } from "@/lib/event-calendar";
 import { EventPoster } from "@/components/event-poster";
@@ -36,6 +37,7 @@ type App = {
     abstractSource?: "form" | "organiser";
     shortlistedAt?: string;
     shortlistedBy?: string;
+    paymentSubmittedAt?: string;
   } | null;
   name: string;
   teamName?: string | null;
@@ -595,6 +597,19 @@ function DiscoverizeRow({ a }: { a: App }) {
             Submit abstract
           </Button>
         </a>
+      )}
+
+      {/* Shortlisted, and the payer still owes the team's ₹200: straight to
+          the JUNO hand-off on the event page. Nobody else sees this. */}
+      {state === "payment_pending" && (
+        <div className="space-y-1.5">
+          <a href={`/events/${a.eventId}?finish=pay`} className="block">
+            <Button className="h-10 w-full rounded-xl bg-cyber-pink text-sm font-medium text-white hover:bg-electric-magenta">
+              Pay ₹{FEE_PER_HEAD}
+            </Button>
+          </a>
+          <p className="text-xs font-semibold text-emerald-400">{DISCOVERIZE_SHORTLIST_CONGRATS}</p>
+        </div>
       )}
 
       {/* At every stage, not just the first — a team that has submitted or

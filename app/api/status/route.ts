@@ -6,6 +6,7 @@ import { venueFor } from "@/lib/event-venues";
 import { Application } from "@/lib/applications";
 import { resolveEmail, authRequired } from "@/lib/identity";
 import { ticketQrDataUrl } from "@/lib/ticket-qr";
+import { withDiscoverizeShortlist } from "@/lib/discoverize-shortlist";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -54,7 +55,9 @@ export async function POST(req: Request) {
     const batch = await Promise.all(
       paths.slice(i, i + CHUNK).map((p) => readJsonByPath(p))
     );
-    for (const r of batch) if (r) found.push(r as Application);
+    /* A Discoverize team on the coordinators' shortlist reads as shortlisted,
+       and its payer as owing the round fee (lib/discoverize-shortlist). */
+    for (const r of batch) if (r) found.push(await withDiscoverizeShortlist(r as Application));
   }
 
   const out = await Promise.all(

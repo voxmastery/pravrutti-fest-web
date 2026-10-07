@@ -2,8 +2,8 @@ import { describe, it, expect } from "vitest";
 import { discoverizeState, mayPay, maySubmitAbstract, isDiscoverize, DISCOVERIZE_EVENT_ID } from "@/lib/discoverize";
 
 /* Discoverize charges at the END of its funnel: free to enter, ₹200 only if
-   the judges shortlist you. Every screen and every endpoint reads the team's
-   position from here, so this is where the rules have to be right. */
+   the coordinators shortlist you. Every screen and every endpoint reads the
+   team's position from here, so this is where the rules have to be right. */
 
 const app = (over: Record<string, unknown> = {}) =>
   ({ status: "pending", payment: "not_required", ...over }) as any;
@@ -22,8 +22,16 @@ describe("discoverizeState", () => {
     expect(discoverizeState(a)).toBe("payment_pending");
   });
 
-  /* A shortlist recorded before the fee is attached is still a shortlist. */
-  it("reads as shortlisted when the fee has not been attached yet", () => {
+  /* Back in review once they have answered the pay step — with or without a
+     JUNO reference — exactly like every other event's paid entry. */
+  it("moves to payment submitted once the pay step is answered", () => {
+    expect(discoverizeState(app({ round: { shortlistedAt: "y", paymentSubmittedAt: "z" }, payment: "awaiting" }))).toBe("payment_submitted");
+    expect(discoverizeState(app({ round: { shortlistedAt: "y" }, payment: "awaiting", paymentRef: "JIDCWIOOPNU1QEV" }))).toBe("payment_submitted");
+  });
+
+  /* A shortlist recorded before the fee is attached is still a shortlist —
+     and a teammate, who never owes, reads as shortlisted. */
+  it("reads as shortlisted when no fee sits on the row", () => {
     expect(discoverizeState(app({ round: { shortlistedAt: "y" } }))).toBe("shortlisted");
   });
 
@@ -42,13 +50,20 @@ describe("discoverizeState", () => {
 });
 
 describe("what a team is allowed to do", () => {
-  /* Discoverize is free at every stage, so the payment endpoints refuse
-     everybody — including a team the judges have put through. */
-  it("lets nobody pay, shortlisted or not", () => {
+  it("lets only a shortlisted team that owes the fee pay", () => {
     expect(mayPay(app())).toBe(false);
     expect(mayPay(app({ round: { abstractSubmittedAt: "x" } }))).toBe(false);
+    /* Shortlisted with nothing owed: a teammate, or a free-era shortlist. */
     expect(mayPay(app({ round: { shortlistedAt: "y" } }))).toBe(false);
-    expect(mayPay(app({ round: { shortlistedAt: "y" }, payment: "awaiting" }))).toBe(false);
+    expect(mayPay(app({ round: { shortlistedAt: "y" }, payment: "awaiting" }))).toBe(true);
+    /* Answered without a reference: may still add one. */
+    expect(mayPay(app({ round: { shortlistedAt: "y", paymentSubmittedAt: "z" }, payment: "awaiting" }))).toBe(true);
+    expect(mayPay(app({ round: { shortlistedAt: "y" }, payment: "paid" }))).toBe(false);
+    expect(mayPay(app({ round: { shortlistedAt: "y" }, payment: "paid", status: "confirmed" }))).toBe(false);
+  });
+
+  it("never lets an unshortlisted team pay, even with a fee on the row", () => {
+    expect(mayPay(app({ payment: "awaiting" }))).toBe(false);
   });
 
   it("asks for the abstract once, and stops asking after it arrives", () => {

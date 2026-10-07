@@ -26,7 +26,7 @@ const CODE = "DISCTEAM0001";
 const row = (email: string, over: Record<string, unknown> = {}) => {
   store.set(`app/${EV}/${email}.json`, {
     ticketId: `PRV-${email[0].toUpperCase()}`, eventId: EV, eventName: "Discoverize (Research Paper Presentation)",
-    status: "pending", payment: "not_required", fee: "Free · Rs. 200/- only if shortlisted",
+    status: "pending", payment: "not_required", fee: "Free",
     name: email.split("@")[0], email, phone: "9876543210", college: "RUAS",
     teamName: "Team One", teamCode: CODE, appliedAt: "2026-09-19T09:00:00.000Z", ...over,
   });
@@ -74,36 +74,35 @@ describe("markAbstractSubmitted", () => {
 });
 
 describe("setShortlisted", () => {
-  it("puts the whole team through and charges nobody", async () => {
+  it("puts the whole team through and puts the ₹200 on the lead alone", async () => {
     const out = await lib.setShortlisted({ code: CODE, by: "coordinator@example.com", shortlisted: true });
-    expect(out!.applications).toHaveLength(2);
+    expect(out && "applications" in out && out.applications).toHaveLength(2);
     expect(read(LEAD).round.shortlistedAt).toBeTruthy();
     expect(read(LEAD).round.shortlistedBy).toBe("coordinator@example.com");
     expect(read(MATE).round.shortlistedAt).toBeTruthy();
-    /* Free at every stage: being put through costs the team nothing. */
-    for (const e of [LEAD, MATE]) {
-      expect(read(e).payment, e).toBe("not_required");
-      expect(read(e).fee, e).toMatch(/^Free/);
-    }
+    expect(read(LEAD).payment).toBe("awaiting");
+    expect(read(LEAD).fee).toBe("Rs. 200/-");
+    /* The teammate is covered by the lead. */
+    expect(read(MATE).payment).toBe("not_required");
   });
 
-  it("shortlists a solo entry against its own row, still free", async () => {
+  it("shortlists a solo entry against its own row, which then owes the fee", async () => {
     await lib.setShortlisted({ email: SOLO, by: "c@example.com", shortlisted: true });
     expect(read(SOLO).round.shortlistedAt).toBeTruthy();
-    expect(read(SOLO).payment).toBe("not_required");
+    expect(read(SOLO).payment).toBe("awaiting");
   });
 
-  it("clears the mark when a team is un-shortlisted", async () => {
+  it("clears the mark and the fee when a team is un-shortlisted", async () => {
     await lib.setShortlisted({ code: CODE, by: "c@example.com", shortlisted: true });
     await lib.setShortlisted({ code: CODE, by: "c@example.com", shortlisted: false });
     expect(read(LEAD).round?.shortlistedAt).toBeUndefined();
     expect(read(MATE).round?.shortlistedAt).toBeUndefined();
     expect(read(LEAD).payment).toBe("not_required");
+    expect(read(LEAD).fee).toBe("Free");
   });
 
-  /* A row left "paid" from before Discoverize went free is money that did
-     arrive; shortlisting must not quietly rewrite it either way. */
-  it("leaves a legacy paid row's money alone", async () => {
+  /* Money that did arrive is never rewritten either way. */
+  it("leaves a paid row's money alone", async () => {
     store.set(`app/${EV}/${LEAD}.json`, { ...read(LEAD), payment: "paid", fee: "Rs. 200/-" });
     await lib.setShortlisted({ code: CODE, by: "c@example.com", shortlisted: true });
     expect(read(LEAD).payment).toBe("paid");
@@ -111,11 +110,19 @@ describe("setShortlisted", () => {
     expect(read(LEAD).round.shortlistedAt).toBeTruthy();
   });
 
+  it("refuses to un-shortlist a team that has already paid", async () => {
+    store.set(`app/${EV}/${LEAD}.json`, { ...read(LEAD), payment: "paid", fee: "Rs. 200/-", round: { shortlistedAt: "y" } });
+    const out = await lib.setShortlisted({ code: CODE, by: "c@example.com", shortlisted: false });
+    expect(out && "error" in out).toBe(true);
+    expect(read(LEAD).round.shortlistedAt).toBe("y");
+  });
+
   it("leaves other teams and other events alone", async () => {
     store.set(`app/${EV}/other@example.com.json`, { eventId: EV, email: "other@example.com", status: "pending", payment: "not_required", teamCode: "OTHERTEAM001" });
     store.set(`app/chaos/${LEAD}.json`, { eventId: "chaos", email: LEAD, status: "pending", payment: "awaiting", teamCode: CODE });
     await lib.setShortlisted({ code: CODE, by: "c@example.com", shortlisted: true });
     expect(store.get(`app/${EV}/other@example.com.json`).round).toBeUndefined();
+    expect(store.get(`app/${EV}/other@example.com.json`).payment).toBe("not_required");
     expect(store.get(`app/chaos/${LEAD}.json`).round).toBeUndefined();
   });
 
@@ -135,5 +142,14 @@ describe("setShortlisted", () => {
 
   it("answers null for a team nobody registered", async () => {
     expect(await lib.setShortlisted({ code: "NOSUCHTEAM01", by: "c@example.com", shortlisted: true })).toBeNull();
+  });
+});
+
+describe("migrateToFreeEntry", () => {
+  it("leaves a shortlisted team's round fee alone", async () => {
+    await lib.setShortlisted({ code: CODE, by: "c@example.com", shortlisted: true });
+    await lib.migrateToFreeEntry();
+    expect(read(LEAD).payment).toBe("awaiting");
+    expect(read(LEAD).fee).toBe("Rs. 200/-");
   });
 });

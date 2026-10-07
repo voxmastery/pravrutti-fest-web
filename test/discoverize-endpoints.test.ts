@@ -117,8 +117,9 @@ describe("POST /api/dashboard/discoverize (shortlisting)", () => {
     const res = await desk({ action: "shortlist", code: CODE });
     expect(res.status).toBe(200);
     expect(read(LEAD).round.shortlistedBy).toBe("coord@example.com");
-    /* Free event: going through asks nobody for money. */
-    expect(read(LEAD).payment).toBe("not_required");
+    /* Going through puts the team's ₹200 on the lead alone. */
+    expect(read(LEAD).payment).toBe("awaiting");
+    expect(read(LEAD).fee).toBe("Rs. 200/-");
     expect(read(MATE).payment).toBe("not_required");
   });
 

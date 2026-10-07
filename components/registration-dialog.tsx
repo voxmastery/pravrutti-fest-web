@@ -25,7 +25,7 @@ import { PALETTE } from "@/lib/palette";
 import { JUNO_PAYMENT_URL } from "@/lib/juno";
 import { portalOpening, openPortal, type PortalKind } from "@/lib/payment-window";
 import { afterYesPressed } from "@/lib/reference-nudge";
-import { isDiscoverize, ABSTRACT_FORM_URL } from "@/lib/discoverize";
+import { isDiscoverize, ABSTRACT_FORM_URL, DISCOVERIZE_SHORTLIST_CONGRATS } from "@/lib/discoverize";
 import { ApplicationReviewCard } from "@/components/application-review-card";
 import { TeamRosterPanel } from "@/components/team-roster-panel";
 
@@ -118,6 +118,7 @@ export function RegistrationDialog({
   seatsLeft,
   resumeAtReference = false,
   resumeWithReferenceField = false,
+  resumeAtPayment = false,
 }: {
   event: Event | null;
   onClose: () => void;
@@ -133,6 +134,11 @@ export function RegistrationDialog({
   resumeAtReference?: boolean;
   /** With resumeAtReference: they came to add the optional transaction ID. */
   resumeWithReferenceField?: boolean;
+  /** A Discoverize team the coordinators shortlisted, opening the dialog to
+      pay the team's Rs. 200/-. They are already registered, so this pays an
+      existing entry rather than creating one: straight to the JUNO hand-off,
+      and the reference attaches to the registration they have. */
+  resumeAtPayment?: boolean;
 }) {
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [form, setForm] = useState<FormState>(emptyForm);
@@ -223,14 +229,20 @@ export function RegistrationDialog({
   }, [event, payPhase, portalMode]);
 
   useEffect(() => {
-    if (!event || !resumeAtReference) return;
+    if (!event || !(resumeAtReference || resumeAtPayment)) return;
     setStep(3);
+    /* Paying starts at the portal hand-off; adding a reference starts after
+       it, because that visit to the portal has already happened. */
+    if (resumeAtPayment) {
+      setPayPhase("confirm");
+      return;
+    }
     setPayPhase("reference");
     /* They are back by definition — there is no window to wait on. */
     setBackFromPortal(true);
     /* Opened to add the ID: show the field rather than the link to it. */
     if (resumeWithReferenceField) setShowRefField(true);
-  }, [event, resumeAtReference, resumeWithReferenceField]);
+  }, [event, resumeAtReference, resumeWithReferenceField, resumeAtPayment]);
 
   useEffect(() => {
     if (!event) return;
@@ -297,8 +309,13 @@ export function RegistrationDialog({
   /* Discoverize enters free and pays only past the shortlist, so this dialog
      never sends one of its teams to the portal — see lib/discoverize.ts. */
   const discoverize = event ? isDiscoverize(eventId(event.name)) : false;
+  /* Opened to pay a shortlisted Discoverize team's round fee: the portal
+     hand-off is shown, and the submit attaches to the registration they
+     already have. */
+  const payingRound = discoverize && resumeAtPayment;
+  const payingExisting = resumeAtReference || payingRound;
 
-  const applicantFee = discoverize ? "Free" : formatFee(1);
+  const applicantFee = discoverize && !payingRound ? "Free" : formatFee(1);
   const teamCap = createdTeam?.maxMembers ?? verifiedTeam?.maxMembers ?? event?.teamSize.max ?? MAX_TEAM_SIZE;
   const joining = teamPane === "join" || teamPane === "verified";
   /* 21 of 24 events are team-only. Both the copy and the Continue gate read
@@ -502,7 +519,7 @@ export function RegistrationDialog({
     if (!event || startingPayment) return;
     /* Discoverize is free at every stage, so it never hands anybody to the
        portal — its confirm screen has no "Proceed to payment" at all. */
-    if (discoverize) return;
+    if (discoverize && !payingRound) return;
     setError(null);
     setStartingPayment(true);
 
@@ -519,7 +536,9 @@ export function RegistrationDialog({
       }
     }
 
-    try {
+    /* A shortlisted Discoverize team already has its registration; there is
+       no intent row to write, only the portal to open. */
+    if (!payingRound) try {
       const res = await fetch("/api/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -559,7 +578,7 @@ export function RegistrationDialog({
        them from the desk, which is the failure we are actually fixing. */
     /* Nothing was charged, so there is no receipt to quote: a free entry
        (Discoverize before its shortlist) is never asked for a reference. */
-    if (!discoverize && !joining && !refUnavailable && !isValidPaymentRef(form.paymentRef)) {
+    if ((!discoverize || payingRound) && !joining && !refUnavailable && !isValidPaymentRef(form.paymentRef)) {
       return fail(PAYMENT_REF_HINT);
     }
     setSubmitting(true);
@@ -573,7 +592,7 @@ export function RegistrationDialog({
            college that this screen never collected, and refuse them over a
            field they cannot see. */
         body: JSON.stringify(
-          resumeAtReference
+          payingExisting
             ? {
                 stage: "reference",
                 eventId: eventId(event.name),
@@ -749,7 +768,9 @@ export function RegistrationDialog({
               <DialogHeader className="text-left space-y-0 mb-5">
                 <DialogDescription className="text-[13px] text-white/45 truncate">
                   {event.name} ·{" "}
-                  {discoverize
+                  {payingRound
+                    ? `₹${FEE_PER_HEAD} per team · shortlisted`
+                    : discoverize
                     ? "free to enter"
                     : joining
                       ? "no payment"
@@ -1184,7 +1205,17 @@ export function RegistrationDialog({
                 <div className="space-y-3 animate-step">
                   {/* The summary belongs to the confirm screen; the reference
                       screen is deliberately about one thing. */}
-                  {payPhase === "confirm" && (
+                  {payPhase === "confirm" && payingRound && (
+                  <div className={`${card} p-4 space-y-2`}>
+                    <div className="flex items-baseline justify-between">
+                      <span className="text-[13px] text-white/50">Presentation round fee</span>
+                      <span className="font-semibold text-lg text-white">{applicantFee}</span>
+                    </div>
+                    <p className="text-[12px] text-white/40">For the team, paid once by the lead.</p>
+                    <p className="text-xs font-semibold text-emerald-400">{DISCOVERIZE_SHORTLIST_CONGRATS}</p>
+                  </div>
+                  )}
+                  {payPhase === "confirm" && !payingRound && (
                   <div className={`${card} p-4 space-y-3`}>
                     <div className="flex items-baseline justify-between">
                       <span className="text-[13px] text-white/50">Entry fee</span>
@@ -1245,7 +1276,7 @@ export function RegistrationDialog({
                   </div>
                   )}
 
-                  {payPhase === "confirm" && discoverize ? (
+                  {payPhase === "confirm" && discoverize && !payingRound ? (
                     <>
                       {/* Free to enter, so there is nothing to hand off to the
                           portal — just the one thing teams get wrong about this
@@ -1512,7 +1543,14 @@ export function RegistrationDialog({
 
                       {errorBox}
 
-                      {confirmCancel ? (
+                      {payingRound ? (
+                        /* No cancel here: it would withdraw the team's
+                           Discoverize registration, not just this payment. */
+                        <p className="text-[12px] text-white/45 leading-relaxed">
+                          Your place in the presentation round is held while you pay. We check every
+                          payment against the college&apos;s statement before your ticket is issued.
+                        </p>
+                      ) : confirmCancel ? (
                         <div className="rounded-xl border border-danger-strong/30 bg-danger-strong/[0.07] p-3.5 space-y-3">
                           <p className="text-[13px] text-white/80 leading-relaxed">
                             Cancel this registration? It releases the place being held for you. If the
@@ -1562,7 +1600,7 @@ export function RegistrationDialog({
               <DialogTitle className="sr-only">Application under review</DialogTitle>
               <DialogDescription className="sr-only">{result.eventName}</DialogDescription>
               <ApplicationReviewCard
-                result={discoverize ? { ...result, abstractUrl: ABSTRACT_FORM_URL } : result}
+                result={discoverize && !payingRound ? { ...result, abstractUrl: ABSTRACT_FORM_URL } : result}
                 copied={copied}
                 onCopyCode={handleCopyCode}
                 onClose={close}

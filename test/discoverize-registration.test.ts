@@ -98,14 +98,51 @@ describe("the fee gate", () => {
     expect(res.status).toBeGreaterThanOrEqual(400);
   });
 
-  /* Discoverize is free even past the shortlist, so there is no stage at
-     which a reference is taken for it. */
-  it("refuses one even from a shortlisted team", async () => {
+  /* Shortlisted in the free era, with nothing put on the row: no fee is
+     owed, so no reference is taken. */
+  it("refuses one from a shortlisted team that owes nothing", async () => {
     registered({
       round: { abstractSubmittedAt: "x", shortlistedAt: "y", shortlistedBy: "coord@example.com" },
     });
     const res = await post({ stage: "reference", eventId: EV, email: ME, paymentRef: "JIDCWIOOPNU1QEV" });
     expect(res.status).toBeGreaterThanOrEqual(400);
     expect(store.get(KEY).paymentRef).toBeNull();
+  });
+
+  /* Shortlisted on the desk, so the lead owes the team's ₹200: the reference
+     is taken, and the team goes back to review — not confirmed. */
+  it("takes one from a shortlisted team that owes the fee, and leaves it in review", async () => {
+    registered({
+      payment: "awaiting", fee: "Rs. 200/-",
+      round: { abstractSubmittedAt: "x", shortlistedAt: "y", shortlistedBy: "coord@example.com" },
+    });
+    const res = await post({ stage: "reference", eventId: EV, email: ME, paymentRef: "JIDCWIOOPNU1QEV" });
+    expect(res.status).toBe(200);
+    const saved = store.get(KEY);
+    expect(saved.paymentRef).toBe("JIDCWIOOPNU1QEV");
+    expect(saved.status).toBe("pending");
+    expect(saved.payment).toBe("awaiting");
+    expect(saved.round.paymentSubmittedAt).toBeTruthy();
+  });
+
+  /* On the coordinators' list in code (lib/discoverize-shortlist): payable
+     before anybody has touched the row. */
+  it("takes one from a payer on the coordinators' shortlist", async () => {
+    const listed = "nayanasree1906@gmail.com";
+    const key = `app/${EV}/${listed}.json`;
+    store.set(key, {
+      ticketId: "PRV-L", eventId: EV, eventName: "Discoverize (Research Paper Presentation)",
+      status: "pending", payment: "not_required", fee: "Free",
+      name: "Listed", email: listed, phone: "9876543210", college: "RUAS",
+      teamName: null, teamCode: null, paymentRef: null, appliedAt: "2026-10-01T09:00:00.000Z",
+    });
+    const res = await post({ stage: "reference", eventId: EV, email: listed, refUnavailable: true });
+    expect(res.status).toBe(200);
+    const saved = store.get(key);
+    expect(saved.status).toBe("pending");
+    expect(saved.payment).toBe("awaiting");
+    expect(saved.fee).toBe("Rs. 200/-");
+    expect(saved.round.shortlistedAt).toBeTruthy();
+    expect(saved.round.paymentSubmittedAt).toBeTruthy();
   });
 });

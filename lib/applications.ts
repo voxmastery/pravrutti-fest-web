@@ -155,6 +155,10 @@ export type Application = {
     shortlistedAt?: string;
     /** Who shortlisted them — a coordinator or an organiser, by email. */
     shortlistedBy?: string;
+    /** When the shortlisted team's payer answered the pay step, with or
+        without a JUNO reference. Back in review from here until an organiser
+        verifies the money. */
+    paymentSubmittedAt?: string;
   };
   /** Set once when an organiser scans this ticket. Never overwritten —
       a second scan reports the original time rather than replacing it. */

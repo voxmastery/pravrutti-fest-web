@@ -3,6 +3,7 @@ import { applicationPath, readJsonByPath } from "@/lib/blob-store";
 import { isLiveApplication, type Application, type AppStatus } from "@/lib/applications";
 import { resolveEmail } from "@/lib/identity";
 import { resolveRole, canViewEvent } from "@/lib/roles";
+import { withDiscoverizeShortlist } from "@/lib/discoverize-shortlist";
 
 export type EventAccess = {
   /** True when this viewer may see the private details of this event. */
@@ -57,7 +58,11 @@ export async function resolveEventAccess(slug: string): Promise<EventAccess> {
     return { entitled: true, registered: true, reason: "staff", status: null, awaitingReference: false, unanswered: false, round: null, payment: null };
   }
 
-  const record = (await readJsonByPath(applicationPath(slug, email))) as Application | null;
+  const stored = (await readJsonByPath(applicationPath(slug, email))) as Application | null;
+  /* A Discoverize team on the coordinators' shortlist reads as shortlisted —
+     and its payer as owing the round fee — before its row is ever written
+     that way (lib/discoverize-shortlist). Every other row is unchanged. */
+  const record = stored ? await withDiscoverizeShortlist(stored) : null;
   const status = record?.status ?? null;
   const registered = isLiveApplication(status);
   const awaitingReference =

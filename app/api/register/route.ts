@@ -27,6 +27,7 @@ import { resolveEmail, authRequired } from "@/lib/identity";
 import { resolveRole, resolveRoleFor } from "@/lib/roles";
 import { staffBlocksApplication, STAFF_CANNOT_APPLY } from "@/lib/staff-cockpit";
 import { isDiscoverize, mayPay } from "@/lib/discoverize";
+import { withDiscoverizeShortlist } from "@/lib/discoverize-shortlist";
 import {
   listAll,
   readPrivate,
@@ -158,7 +159,10 @@ export async function POST(req: Request) {
     if (!event) return NextResponse.json({ error: "That event doesn't exist." }, { status: 400 });
     if (!email) return NextResponse.json({ error: "Sign in to add your transaction ID." }, { status: 401 });
 
-    const prior = (await readJsonByPath(applicationPath(evId, email))) as Application | null;
+    const stored = (await readJsonByPath(applicationPath(evId, email))) as Application | null;
+    /* A Discoverize payer on the coordinators' shortlist owes the round fee
+       even before their row says so (lib/discoverize-shortlist). */
+    const prior = stored ? await withDiscoverizeShortlist(stored) : null;
     if (!prior)
       return NextResponse.json(
         { error: "We can't find a registration for you on this event." },
@@ -209,7 +213,22 @@ export async function POST(req: Request) {
     }
 
     /* Answering — with a reference or without — is what closes the intent. */
-    const updated: Application = { ...prior, paymentRef: ref, stage: undefined };
+    const updated: Application = {
+      ...prior,
+      paymentRef: ref,
+      stage: undefined,
+      /* Discoverize: the shortlisted team has answered the pay step, so its
+         ticket reads "Payment submitted" — in review, like every other
+         event's paid entry — until an organiser verifies the money. */
+      ...(isDiscoverize(evId)
+        ? {
+            round: {
+              ...prior.round,
+              paymentSubmittedAt: prior.round?.paymentSubmittedAt ?? new Date().toISOString(),
+            },
+          }
+        : {}),
+    };
     try {
       await putJson(applicationPath(evId, email), updated, true);
     } catch (e) {
