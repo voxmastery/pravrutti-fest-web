@@ -117,6 +117,14 @@ describe("setShortlisted", () => {
     expect(read(LEAD).round.shortlistedAt).toBe("y");
   });
 
+  it("refuses to un-shortlist a team that has been confirmed", async () => {
+    store.set(`app/${EV}/${LEAD}.json`, { ...read(LEAD), status: "confirmed", payment: "paid", fee: "Rs. 200/-", round: { shortlistedAt: "y" } });
+    const out = await lib.setShortlisted({ code: CODE, by: "c@example.com", shortlisted: false });
+    expect(out && "error" in out).toBe(true);
+    expect(read(LEAD).status).toBe("confirmed");
+    expect(read(LEAD).round.shortlistedAt).toBe("y");
+  });
+
   it("leaves other teams and other events alone", async () => {
     store.set(`app/${EV}/other@example.com.json`, { eventId: EV, email: "other@example.com", status: "pending", payment: "not_required", teamCode: "OTHERTEAM001" });
     store.set(`app/chaos/${LEAD}.json`, { eventId: "chaos", email: LEAD, status: "pending", payment: "awaiting", teamCode: CODE });

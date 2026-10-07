@@ -51,6 +51,12 @@ const FILTERS: { id: Filter; label: string }[] = [
 const when = (iso?: string | null) =>
   iso ? new Date(iso).toLocaleString("en-IN", { day: "numeric", month: "short", hour: "numeric", minute: "2-digit" }) : "—";
 
+/** Paid or confirmed: Remove shortlist stays on screen and does nothing. */
+const shortlistLocked = (t: Team) =>
+  t.state === "payment_successful" ||
+  t.state === "final_round_confirmed" ||
+  t.members.some((m) => m.payment === "paid" || m.status === "confirmed");
+
 export default function DiscoverizeDeskPage() {
   const dash = useDashboardRole();
   const [teams, setTeams] = useState<Team[] | null>(null);
@@ -85,6 +91,7 @@ export default function DiscoverizeDeskPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           action,
+          eventId: DISCOVERIZE_EVENT_ID,
           code: team.teamCode,
           email: team.teamCode ? undefined : team.members[0]?.email,
         }),
@@ -202,6 +209,12 @@ export default function DiscoverizeDeskPage() {
                         {DISCOVERIZE_STATE_LABEL[t.state]}
                       </span>
 
+                      {t.shortlistedAt && (
+                        <span className="rounded-full border border-emerald-400/40 bg-emerald-400/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-widest text-emerald-300">
+                          Shortlisted
+                        </span>
+                      )}
+
                       {!t.abstractSubmittedAt && (
                         <ConfirmAction
                           title="Mark the abstract as received?"
@@ -216,22 +229,34 @@ export default function DiscoverizeDeskPage() {
                       )}
 
                       {t.shortlistedAt ? (
-                        <ConfirmAction
-                          title={`Take ${t.teamName ?? "this team"} off the shortlist?`}
-                          description="The ₹200 comes back off the lead's ticket and they stop being asked to pay. A team that has already paid cannot be taken off this way."
-                          confirmLabel="Remove"
-                          destructive
-                          onConfirm={() => act(t, "unshortlist")}
-                        >
-                          <Button size="sm" variant="subtle" disabled={busy !== null} className="h-8 rounded-lg px-3 text-xs text-white/70">
-                            {busy === t.key + "unshortlist" ? <Loader2 className="animate-spin" /> : <X />} Shortlisted
+                        shortlistLocked(t) ? (
+                          <Button
+                            size="sm"
+                            variant="subtle"
+                            disabled
+                            title="This team has already paid or been confirmed."
+                            className="h-8 rounded-lg px-3 text-xs text-white/70"
+                          >
+                            <X /> Remove shortlist
                           </Button>
-                        </ConfirmAction>
+                        ) : (
+                          <ConfirmAction
+                            title={`Take ${t.teamName ?? "this team"} off the shortlist?`}
+                            description="The ₹200 comes back off the lead's ticket and they stop being asked to pay. A team that has already paid or been confirmed cannot be taken off this way."
+                            confirmLabel="Remove shortlist"
+                            destructive
+                            onConfirm={() => act(t, "unshortlist")}
+                          >
+                            <Button size="sm" variant="subtle" disabled={busy !== null} className="h-8 rounded-lg px-3 text-xs text-white/70">
+                              {busy === t.key + "unshortlist" ? <Loader2 className="animate-spin" /> : <X />} Remove shortlist
+                            </Button>
+                          </ConfirmAction>
+                        )
                       ) : (
                         <ConfirmAction
                           title={`Shortlist ${t.teamName ?? "this team"}?`}
-                          description="They go through to the presentation round, and ₹200 appears on the lead's ticket — for the team, paid once."
-                          confirmLabel="Shortlist"
+                          description="They go through to the presentation round, and ₹200 appears on the lead's ticket — for the team, paid once. The congratulations line and Pay button show on their event page and My tickets."
+                          confirmLabel="Mark shortlisted"
                           onConfirm={() => act(t, "shortlist")}
                         >
                           <Button
@@ -239,7 +264,7 @@ export default function DiscoverizeDeskPage() {
                             disabled={busy !== null}
                             className="h-8 rounded-lg bg-champagne-gold/90 px-3 text-xs font-semibold text-midnight-navy hover:bg-champagne-gold"
                           >
-                            {busy === t.key + "shortlist" ? <Loader2 className="animate-spin" /> : <Star />} Shortlist
+                            {busy === t.key + "shortlist" ? <Loader2 className="animate-spin" /> : <Star />} Mark shortlisted
                           </Button>
                         </ConfirmAction>
                       )}

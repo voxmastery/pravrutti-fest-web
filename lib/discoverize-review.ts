@@ -3,6 +3,7 @@ import { isLiveApplication } from "@/lib/applications";
 import { listAll, readPrivate, readJsonByPath, putJson, applicationPath, teamPath } from "@/lib/blob-store";
 import { DISCOVERIZE_EVENT_ID, DISCOVERIZE_FREE_FEE, DISCOVERIZE_ROUND_FEE } from "@/lib/discoverize";
 import { withDiscoverizeShortlist } from "@/lib/discoverize-shortlist";
+import { putShortlistFlag } from "@/lib/discoverize-shortlist-flags";
 import type { Team } from "@/lib/teams";
 
 /**
@@ -113,10 +114,21 @@ export async function setShortlisted(args: {
   if (!rows) return null;
   const payer = await payerOf(rows);
 
-  if (!args.shortlisted && payer.payment === "paid")
-    return { error: "That team has already paid for the final round. Decline it instead if they are out." };
+  /* Paid or already confirmed: the fee landed, or an organiser has cleared
+     the team. Taking the shortlist off would disagree with both. */
+  if (!args.shortlisted && rows.some((r) => r.payment === "paid" || r.status === "confirmed"))
+    return { error: "That team has already paid or been confirmed for the final round. Decline it instead if they are out." };
 
   const at = new Date().toISOString();
+  /* The flag is the decision the desk made. Written before the rows so a
+     failed save can be retried, and a removal is what the view believes
+     even if a row still carries an older mark. Who, and when, stay on it. */
+  await putShortlistFlag(
+    payer.email,
+    args.shortlisted,
+    args.shortlisted ? (payer.round?.shortlistedBy ?? args.by) : args.by,
+    args.shortlisted ? (payer.round?.shortlistedAt ?? at) : at,
+  );
   const applications = await Promise.all(
     rows.map((r) => {
       const isPayer = r.email.toLowerCase() === payer.email.toLowerCase();

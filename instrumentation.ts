@@ -15,6 +15,14 @@ export async function register() {
       import("@/lib/demo-cleanup").then((m) => m.runDemoCleanup()).catch((e) => console.error("[demo-cleanup]", e));
     }, 10_000);
 
+  /* Creates the Discoverize shortlist table if it is missing, and seeds the
+     first set of leads. Idempotent. Never allowed to stop the server. */
+  setTimeout(() => {
+    import("@/lib/discoverize-shortlist")
+      .then((m) => m.ensureDiscoverizeShortlistSeed())
+      .catch((e) => console.error("[discoverize-shortlist] seed", e));
+  }, 12_000);
+
   const g = globalThis as typeof globalThis & { __pravruttiReminders?: boolean };
   if (g.__pravruttiReminders) return;
   const { schedulerEnabled, startReminderScheduler } = await import("@/lib/reference-reminder-scheduler");

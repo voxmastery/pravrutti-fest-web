@@ -109,3 +109,17 @@ export async function sqlPutJson(path: string, data: unknown, overwrite: boolean
 export async function sqlDeleteJson(path: string) {
   await getPool().execute(`DELETE FROM \`${TABLE}\` WHERE path = ?`, [path]);
 }
+
+/**
+ * Parameterised statements, and plain queries for DDL.
+ *
+ * mysql2's prepared-statement protocol rejects some DDL, so a CREATE TABLE
+ * goes through `query`. Everything that binds values uses `execute`.
+ */
+export async function sqlExecute(sql: string, params: unknown[] = []) {
+  return getPool().execute(sql, params);
+}
+
+export async function sqlQuery(sql: string, params: unknown[] = []) {
+  return getPool().query(sql, params);
+}

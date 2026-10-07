@@ -1,24 +1,25 @@
 import "server-only";
 import type { Application } from "@/lib/applications";
 import { readJsonByPath, teamPath } from "@/lib/blob-store";
-import { DISCOVERIZE_ROUND_FEE, isDiscoverize } from "@/lib/discoverize";
+import { DISCOVERIZE_FREE_FEE, DISCOVERIZE_ROUND_FEE, isDiscoverize } from "@/lib/discoverize";
+import { readShortlistFlag, seedListedLeads, type ShortlistFlag } from "@/lib/discoverize-shortlist-flags";
 import { normalizeTeamCode, type Team } from "@/lib/teams";
 
 /**
- * The Discoverize teams the coordinators have shortlisted, named by the email
- * of whoever carries the team's fee — the team lead, or a solo entrant.
+ * The first Discoverize teams the coordinators shortlisted, named by the
+ * email of whoever carries the team's fee — the team lead, or a solo entrant.
  *
- * In code rather than in the database because the coordinators send the
- * shortlist as a list, and a list in a commit is one line per team to append,
- * reviewable, and live on the next deploy with nobody needing the desk. The
- * shortlist desk (/dashboard/discoverize) still works alongside it: a team
- * shortlisted there is written as shortlisted and owing, and is just as
- * payable.
+ * Kept here so that set is shortlisted even when the database flag has not
+ * been written yet. A coordinator adds the next team from the screening desk
+ * (/dashboard/discoverize), which stores a flag (lib/discoverize-shortlist-flags).
+ * A team is shortlisted when either names it. An explicit removal in the
+ * database wins over this list, so taking a team off the desk actually
+ * takes them off.
  *
  * Server-only on purpose: these are students' addresses, and nothing that
  * reaches the browser may import this file.
  *
- * Lowercase. To add the next set, append below.
+ * Lowercase. The desk is how the next team is added; this list is the first set.
  */
 export const DISCOVERIZE_SHORTLIST: readonly string[] = [
   /* First set — Aailyah, 6 Oct 2026. Every address checked against the live
@@ -48,6 +49,30 @@ export const SHORTLIST_LIST_BY = "coordinators' shortlist (lib/discoverize-short
 export const onDiscoverizeShortlist = (email: string | null | undefined) =>
   LISTED.has(String(email ?? "").trim().toLowerCase());
 
+/**
+ * Seeds the first set into the shortlist table. Idempotent, and safe to run
+ * on every boot: a lead already toggled is left exactly as the desk left them.
+ */
+export async function ensureDiscoverizeShortlistSeed() {
+  await seedListedLeads(DISCOVERIZE_SHORTLIST, SHORTLIST_LIST_BY, SHORTLIST_LIST_AT);
+}
+
+const norm = (email: string | null | undefined) => String(email ?? "").trim().toLowerCase();
+
+/**
+ * Whether this address is on the shortlist right now.
+ *
+ * A stored flag answers first. No flag means the hardcoded list, which is
+ * how the first set stays shortlisted before the table is seeded and after
+ * a read of it fails. A flag that says removed answers no, list or not.
+ */
+async function namedShortlisted(email: string | null): Promise<{ yes: boolean; flag: ShortlistFlag | null }> {
+  if (!email) return { yes: false, flag: null };
+  const flag = await readShortlistFlag(email);
+  if (flag) return { yes: flag.shortlisted, flag };
+  return { yes: onDiscoverizeShortlist(email), flag: null };
+}
+
 /** The lead of this row's team, if it has one and the team record can be read. */
 async function leadOf(a: Application): Promise<string | null> {
   const code = normalizeTeamCode(String(a.teamCode ?? ""));
@@ -72,23 +97,53 @@ async function leadOf(a: Application): Promise<string | null> {
  * ticket, the register route's reference step, the payment verification
  * guard, the shortlist desk, and the registrations desk.
  *
- * Any other row — another event, a Discoverize team not on the list, a
+ * Shortlisted means the hardcoded list or a database flag says so. An
+ * explicit removal is neither, so the row comes back as stored.
+ *
+ * Any other row — another event, a Discoverize team nobody shortlisted, a
  * withdrawn or declined entry — comes back exactly as it went in.
  */
 export async function withDiscoverizeShortlist(a: Application): Promise<Application> {
   if (!a || !isDiscoverize(a.eventId)) return a;
   if (a.status !== "pending" && a.status !== "confirmed") return a;
 
-  /* The list names payers, so a listed address is the one that pays. A
-     teammate is shortlisted through their lead. */
-  const isPayer = onDiscoverizeShortlist(a.email);
-  const listed = isPayer || onDiscoverizeShortlist(await leadOf(a));
-  if (!listed) return a;
+  /* The list and the flags name payers. A teammate is shortlisted through
+     their lead; only that payer owes the fee. */
+  const leadEmail = await leadOf(a);
+  const payerEmail = leadEmail || norm(a.email);
+  const decision = await namedShortlisted(payerEmail);
+  const isPayer = norm(a.email) === payerEmail;
+
+  if (!decision.yes) {
+    /* An explicit removal wins over a mark already stored on the row, so
+       Remove shortlist undoes the pay step even for a lead the list names.
+       Paid and confirmed rows are never rewritten here. */
+    if (
+      decision.flag &&
+      !decision.flag.shortlisted &&
+      a.status === "pending" &&
+      a.payment !== "paid" &&
+      (a.round?.shortlistedAt || (isPayer && a.payment === "awaiting"))
+    ) {
+      const round = { ...a.round };
+      delete round.shortlistedAt;
+      delete round.shortlistedBy;
+      delete round.paymentSubmittedAt;
+      return {
+        ...a,
+        round: Object.keys(round).length ? round : undefined,
+        ...(isPayer && a.payment === "awaiting"
+          ? { payment: "not_required" as const, fee: DISCOVERIZE_FREE_FEE }
+          : {}),
+      };
+    }
+    return a;
+  }
 
   const round = {
     ...a.round,
-    shortlistedAt: a.round?.shortlistedAt ?? SHORTLIST_LIST_AT,
-    shortlistedBy: a.round?.shortlistedBy ?? SHORTLIST_LIST_BY,
+    shortlistedAt: a.round?.shortlistedAt ?? decision.flag?.at ?? SHORTLIST_LIST_AT,
+    shortlistedBy: a.round?.shortlistedBy ?? decision.flag?.by ?? SHORTLIST_LIST_BY,
   };
   /* Only the payer owes, and only while nothing has been settled: a row
      already awaiting or paid keeps the money state it has. */

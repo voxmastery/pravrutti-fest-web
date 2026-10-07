@@ -24,6 +24,9 @@ vi.mock("@/lib/identity", () => ({ resolveEmail: async () => role.email }));
 
 let ABSTRACT: typeof import("@/app/api/discoverize/abstract/route");
 let DESK: typeof import("@/app/api/dashboard/discoverize/route");
+let discoverizeState: typeof import("@/lib/discoverize").discoverizeState;
+let maySubmitAbstract: typeof import("@/lib/discoverize").maySubmitAbstract;
+let shortlistFlagPath: typeof import("@/lib/discoverize-shortlist-flags").shortlistFlagPath;
 let token: string;
 beforeAll(async () => {
   process.env.ADMIN_KEY = "test-admin-key";
@@ -31,6 +34,8 @@ beforeAll(async () => {
   token = abstractWebhookToken()!;
   ABSTRACT = await import("@/app/api/discoverize/abstract/route");
   DESK = await import("@/app/api/dashboard/discoverize/route");
+  ({ discoverizeState, maySubmitAbstract } = await import("@/lib/discoverize"));
+  ({ shortlistFlagPath } = await import("@/lib/discoverize-shortlist-flags"));
 });
 
 const EV = "discoverize-research-paper-presentation";
@@ -121,6 +126,45 @@ describe("POST /api/dashboard/discoverize (shortlisting)", () => {
     expect(read(LEAD).payment).toBe("awaiting");
     expect(read(LEAD).fee).toBe("Rs. 200/-");
     expect(read(MATE).payment).toBe("not_required");
+    /* The pay step replaces the abstract, for the lead and for a teammate. */
+    expect(discoverizeState(read(LEAD))).toBe("payment_pending");
+    expect(maySubmitAbstract(read(LEAD))).toBe(false);
+    expect(discoverizeState(read(MATE))).toBe("shortlisted");
+    expect(maySubmitAbstract(read(MATE))).toBe(false);
+    expect(store.get(shortlistFlagPath(LEAD))).toMatchObject({
+      shortlisted: true, by: "coord@example.com", eventId: EV,
+    });
+  });
+
+  it("rejects a shortlist aimed at another event, even from an organiser", async () => {
+    role.value = { kind: "organiser" }; role.email = "org@example.com";
+    const res = await desk({ action: "shortlist", code: CODE, eventId: "chaos" });
+    expect(res.status).toBe(403);
+    expect(res.body.error).toMatch(/Discoverize/);
+    expect(read(LEAD).round).toBeUndefined();
+    expect(read(LEAD).payment).toBe("not_required");
+    expect(store.get(shortlistFlagPath(LEAD))).toBeUndefined();
+  });
+
+  it("refuses to unshortlist a team that has already paid", async () => {
+    role.value = { kind: "coordinator", eventIds: [EV] }; role.email = "coord@example.com";
+    expect((await desk({ action: "shortlist", code: CODE })).status).toBe(200);
+    store.set(`app/${EV}/${LEAD}.json`, { ...read(LEAD), payment: "paid", fee: "Rs. 200/-" });
+    const res = await desk({ action: "unshortlist", code: CODE, eventId: EV });
+    expect(res.status).toBe(409);
+    expect(read(LEAD).round.shortlistedAt).toBeTruthy();
+    expect(read(LEAD).payment).toBe("paid");
+    expect(store.get(shortlistFlagPath(LEAD)).shortlisted).toBe(true);
+  });
+
+  it("refuses to unshortlist a team that has been confirmed", async () => {
+    role.value = { kind: "organiser" }; role.email = "org@example.com";
+    expect((await desk({ action: "shortlist", code: CODE })).status).toBe(200);
+    store.set(`app/${EV}/${LEAD}.json`, { ...read(LEAD), status: "confirmed" });
+    const res = await desk({ action: "unshortlist", code: CODE });
+    expect(res.status).toBe(409);
+    expect(read(LEAD).status).toBe("confirmed");
+    expect(read(LEAD).round.shortlistedAt).toBeTruthy();
   });
 
   it("lets an organiser un-shortlist, which clears the mark", async () => {

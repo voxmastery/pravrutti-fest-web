@@ -24,10 +24,16 @@ vi.mock("@/lib/confirmation-email", () => ({
 let sl: typeof import("@/lib/discoverize-shortlist");
 let verifyPayment: typeof import("@/lib/payment-review").verifyPayment;
 let discoverizeState: typeof import("@/lib/discoverize").discoverizeState;
+let maySubmitAbstract: typeof import("@/lib/discoverize").maySubmitAbstract;
+let putShortlistFlag: typeof import("@/lib/discoverize-shortlist-flags").putShortlistFlag;
+let shortlistFlagPath: typeof import("@/lib/discoverize-shortlist-flags").shortlistFlagPath;
+let TABLE_SQL: string;
 beforeAll(async () => {
   sl = await import("@/lib/discoverize-shortlist");
   ({ verifyPayment } = await import("@/lib/payment-review"));
-  ({ discoverizeState } = await import("@/lib/discoverize"));
+  ({ discoverizeState, maySubmitAbstract } = await import("@/lib/discoverize"));
+  ({ putShortlistFlag, shortlistFlagPath, DISCOVERIZE_SHORTLIST_TABLE_SQL: TABLE_SQL } =
+    await import("@/lib/discoverize-shortlist-flags"));
 });
 
 const EV = "discoverize-research-paper-presentation";
@@ -53,6 +59,11 @@ describe("the list itself", () => {
   it("is lowercase, trimmed and has no duplicates", () => {
     for (const e of sl.DISCOVERIZE_SHORTLIST) expect(e).toBe(e.trim().toLowerCase());
     expect(new Set(sl.DISCOVERIZE_SHORTLIST).size).toBe(sl.DISCOVERIZE_SHORTLIST.length);
+  });
+
+  it("keeps the shortlist table additive", () => {
+    expect(TABLE_SQL).toMatch(/CREATE TABLE IF NOT EXISTS/i);
+    expect(TABLE_SQL).not.toMatch(/\b(DROP|ALTER)\b/i);
   });
 
   it("matches regardless of case and spaces", () => {
@@ -113,6 +124,56 @@ describe("withDiscoverizeShortlist", () => {
     store.set(`app/${EV}/${LISTED_LEAD}.json`, row(LISTED_LEAD));
     await sl.withDiscoverizeShortlist(store.get(`app/${EV}/${LISTED_LEAD}.json`));
     expect(store.get(`app/${EV}/${LISTED_LEAD}.json`).payment).toBe("not_required");
+  });
+
+  it("shortlists a lead named only by a stored flag, and takes the abstract away", async () => {
+    await putShortlistFlag(STRANGER, true, "aaliyahaijaz2006@gmail.com", "2026-10-07T12:00:00.000Z");
+    const a = await sl.withDiscoverizeShortlist(row(STRANGER, { teamCode: null, teamName: null }));
+    expect(a.round?.shortlistedBy).toBe("aaliyahaijaz2006@gmail.com");
+    expect(a.payment).toBe("awaiting");
+    expect(a.fee).toBe("Rs. 200/-");
+    expect(discoverizeState(a)).toBe("payment_pending");
+    expect(maySubmitAbstract(a)).toBe(false);
+  });
+
+  it("shortlists that lead's teammate without charging them", async () => {
+    store.set(`team/${EV}/${CODE}.json`, { code: CODE, eventId: EV, name: "Recharge", createdByEmail: STRANGER, members: [] });
+    await putShortlistFlag(STRANGER, true, "aaliyahaijaz2006@gmail.com", "2026-10-07T12:00:00.000Z");
+    const a = await sl.withDiscoverizeShortlist(row(MATE));
+    expect(a.payment).toBe("not_required");
+    expect(discoverizeState(a)).toBe("shortlisted");
+    expect(maySubmitAbstract(a)).toBe(false);
+  });
+
+  it("an explicit removal beats the hardcoded list", async () => {
+    await putShortlistFlag(LISTED_LEAD, false, "coord@example.com", "2026-10-07T12:00:00.000Z");
+    const r = row(LISTED_LEAD);
+    expect(await sl.withDiscoverizeShortlist(r)).toEqual(r);
+    expect(maySubmitAbstract(r)).toBe(true);
+  });
+
+  it("an explicit removal takes the pay step back off a row that was already marked", async () => {
+    await putShortlistFlag(LISTED_LEAD, false, "coord@example.com", "2026-10-07T12:00:00.000Z");
+    const a = await sl.withDiscoverizeShortlist(row(LISTED_LEAD, {
+      payment: "awaiting", fee: "Rs. 200/-",
+      round: { shortlistedAt: "y", shortlistedBy: "list", abstractSubmittedAt: "abs" },
+    }));
+    expect(a.round?.shortlistedAt).toBeUndefined();
+    expect(a.round?.abstractSubmittedAt).toBe("abs");
+    expect(a.payment).toBe("not_required");
+    expect(a.fee).toBe("Free");
+    expect(discoverizeState(a)).toBe("abstract_submitted");
+    expect(maySubmitAbstract(a)).toBe(false);
+  });
+});
+
+describe("seeding the first set", () => {
+  it("inserts the hardcoded leads and does not put a removal back", async () => {
+    await putShortlistFlag(LISTED_LEAD, false, "coord@example.com", "2026-10-07T12:00:00.000Z");
+    await sl.ensureDiscoverizeShortlistSeed();
+    expect(store.get(shortlistFlagPath(LISTED_LEAD)).shortlisted).toBe(false);
+    expect(store.get(shortlistFlagPath(LISTED_SOLO)).shortlisted).toBe(true);
+    expect(sl.DISCOVERIZE_SHORTLIST.every((e) => store.has(shortlistFlagPath(e)))).toBe(true);
   });
 });
 

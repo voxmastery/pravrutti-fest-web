@@ -36,6 +36,21 @@ await pool.execute(
    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`
 );
 
+// Discoverize's shortlist flag. Additive, and also created at startup
+// (lib/discoverize-shortlist-flags.ts) because this script does not re-run
+// against the database that is already live. `query` rather than `execute`:
+// prepared statements reject some DDL.
+await pool.query(
+  `CREATE TABLE IF NOT EXISTS discoverize_shortlist (
+     lead_email VARCHAR(191) NOT NULL,
+     event_id VARCHAR(80) NOT NULL,
+     shortlisted TINYINT(1) NOT NULL,
+     toggled_by VARCHAR(191) NULL,
+     toggled_at VARCHAR(40) NULL,
+     PRIMARY KEY (event_id, lead_email)
+   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`
+);
+
 const all = [];
 let cursor;
 do {

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { resolveRole, canViewEvent } from "@/lib/roles";
 import { resolveEmail } from "@/lib/identity";
-import { DISCOVERIZE_EVENT_ID, discoverizeState } from "@/lib/discoverize";
+import { DISCOVERIZE_EVENT_ID, discoverizeState, isDiscoverize } from "@/lib/discoverize";
 import { setShortlisted, markAbstractSubmitted, discoverizeRoster, migrateToFreeEntry } from "@/lib/discoverize-review";
 
 export const runtime = "nodejs";
@@ -61,6 +61,11 @@ export async function POST(req: Request) {
 
   const body = await req.json().catch(() => ({}));
   const action = String(body?.action ?? "");
+
+  /* This desk is Discoverize's. A body that names another event is refused
+     even for an organiser — shortlisting must not be aimed anywhere else. */
+  if (body?.eventId != null && !isDiscoverize(String(body.eventId)))
+    return fail("Shortlisting is only for Discoverize.", 403);
 
   /* One-off, and safe to repeat: clears the entry fee off rows written
      before Discoverize entry went free. Shortlisted rows are skipped — their
