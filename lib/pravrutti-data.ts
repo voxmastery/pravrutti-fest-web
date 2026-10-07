@@ -49,6 +49,9 @@ export interface Event {
       call (5 Oct 2026: CHAOS, AI Escape Room, Line Follower). */
   unlisted?: boolean;
   full?: boolean;
+  /** Shown under Request to join. Set only where the organisers asked for a
+      note on the registration itself. */
+  registerNote?: string;
   /** ISO instant this event stops taking registrations, when it closes
       earlier than the fest-wide FEST.registrationCloses. Every gate reads it
       through festFor(), so the event page, the forms and the API agree. */
@@ -468,10 +471,11 @@ export const events: Event[] = [
        61 holding places. Entry is only the abstract round — the judges'
        shortlist decides who presents — so the field need not be limited. */
     capacityUnit: "participants",
-    /* Registrations closed on 6 Oct, organisers' call: no new entries. Teams
-       already in keep their places, and screening and the shortlist carry on
-       at /dashboard/discoverize. */
-    full: true,
+    /* Closed on 6 Oct, then reopened on 7 Oct at the organisers' request,
+       still with no limit. Teams already in keep their places, and screening
+       and the shortlist carry on at /dashboard/discoverize. */
+    registerNote:
+      "Anyone joining on or after 7 Oct must join the WhatsApp group immediately and contact Aaliyah at 8197092607 for updates.",
     duration: "3 hours",
     eligibility: "Diploma, UG, PG and Ph.D. students",
     coordinators: {

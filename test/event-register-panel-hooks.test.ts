@@ -60,3 +60,14 @@ describe("the in-review line", () => {
     expect(src).toMatch(/countTeams\s*\?\s*`\$\{waitingTeams\} \$\{waitingTeams === 1 \? "team" : "teams"\} in review`/);
   });
 });
+
+/* An organiser note belongs under the join button, and nowhere else on the
+   card — it is for someone about to request a place. */
+describe("the register note", () => {
+  it("renders under Request to join", () => {
+    const join = src.indexOf("Request to join");
+    const note = src.indexOf("event.registerNote");
+    expect(join).toBeGreaterThan(-1);
+    expect(note).toBeGreaterThan(join);
+  });
+});

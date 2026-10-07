@@ -97,10 +97,24 @@ describe("RC-X", () => {
   });
 });
 
-/* Closed on 6 Oct; its teams already in carry on through screening. */
+/* Closed on 6 Oct, reopened on 7 Oct at the organisers' request, still with
+   no cap. Late joiners are told to reach the WhatsApp group and Aaliyah. */
 describe("Discoverize", () => {
-  it("takes no new entries", () => {
-    expect(isFull(ev("Discoverize (Research Paper Presentation)"), { people: 0, teams: 0 })).toBe(true);
+  it("takes entries again, with no capacity", () => {
+    const e = ev("Discoverize (Research Paper Presentation)");
+    expect(e.full).toBeFalsy();
+    expect(e.capacity).toBeUndefined();
+    expect(e.maxTeams).toBeUndefined();
+    expect(isFull(e, { people: 0, teams: 0 })).toBe(false);
+    expect(listedEvents).toContain(e);
+  });
+
+  it("is the only event with a note under Request to join", () => {
+    const noted = events.filter((e) => e.registerNote).map((e) => e.name);
+    expect(noted).toEqual(["Discoverize (Research Paper Presentation)"]);
+    expect(ev("Discoverize (Research Paper Presentation)").registerNote).toBe(
+      "Anyone joining on or after 7 Oct must join the WhatsApp group immediately and contact Aaliyah at 8197092607 for updates.",
+    );
   });
 });
 

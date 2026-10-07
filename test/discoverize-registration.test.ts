@@ -23,9 +23,9 @@ vi.mock("@/lib/blob-store", () => ({
 }));
 vi.mock("@/lib/identity", () => ({ resolveEmail: async () => null, authRequired: () => false }));
 vi.mock("@/lib/roles", () => ({ resolveRole: async () => ({ kind: "none" }), resolveRoleFor: async () => ({ kind: "none" }) }));
-/* How a Discoverize registration works, tested against the event as it was
-   while open: registration closed on 6 Oct 2026 and now refuses new entries,
-   which is tested in deadline-and-closed-events. */
+/* How a Discoverize registration works, tested while the event is open.
+   Registrations reopened on 7 Oct 2026 with no cap; forcing full off keeps
+   this about the fee, not about whether the door happens to be shut. */
 vi.mock("@/lib/pravrutti-data", async (o) => {
   const actual = await o<typeof import("@/lib/pravrutti-data")>();
   return {

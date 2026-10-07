@@ -322,12 +322,19 @@ export function EventRegisterPanel({
           </div>
 
           {showApply && (
-            <Button
-              onClick={() => setRegistering(true)}
-              className="w-full h-12 rounded-xl font-display text-xs font-black uppercase tracking-widest text-white arcade-btn-magenta border-cyber-pink cursor-pointer" >
-              <Ticket className="w-4 h-4 mr-2" aria-hidden="true" />
-              {full ? "Apply · join the queue" : "Request to join"}
-            </Button>
+            <div className="space-y-2">
+              <Button
+                onClick={() => setRegistering(true)}
+                className="w-full h-12 rounded-xl font-display text-xs font-black uppercase tracking-widest text-white arcade-btn-magenta border-cyber-pink cursor-pointer" >
+                <Ticket className="w-4 h-4 mr-2" aria-hidden="true" />
+                {full ? "Apply · join the queue" : "Request to join"}
+              </Button>
+              {event.registerNote ? (
+                <p className="text-xs leading-relaxed text-pearl-white/80">
+                  {event.registerNote}
+                </p>
+              ) : null}
+            </div>
           )}
           {showJoinOnly && (
             <div className="space-y-2">
