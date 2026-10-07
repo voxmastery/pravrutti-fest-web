@@ -54,55 +54,45 @@ export async function GET(req: Request) {
   const slug = new URL(req.url).searchParams.get("event");
   const blobs = await listAll("app/");
 
-  const confirmed: Record<string, number> = {};
-  const pending: Record<string, number> = {};
   const records = await Promise.all(blobs.map((b) => readPrivate(b.url)));
 
   /* Only registrations that actually hold a place — see heldRows.
      An unpaid, withdrawn or declined attempt is an incomplete registration and
      must not occupy a seat in any of these figures. */
   /* Judged per team (heldRows): a teammate's place stands or falls with
-     their lead's, so a team whose lead never paid fills no seat here. */
+     their lead's, so a team whose lead never paid fills no seat here.
+     The same countRegistrations the dashboard uses, so "in review" on the
+     event page and In review on the desk are one number. */
   const all = records.filter(Boolean) as Application[];
   const holding = heldRows(all);
   const valid = all.filter((r) => holding.has(r));
-  for (const r of valid) {
-    if (r.status === "confirmed") confirmed[r.eventId] = (confirmed[r.eventId] ?? 0) + 1;
-    else if (r.status === "pending") pending[r.eventId] = (pending[r.eventId] ?? 0) + 1;
+  const byEvent = countRegistrationsByEvent(all);
+  const confirmed: Record<string, number> = {};
+  const pending: Record<string, number> = {};
+  const confirmedTeams: Record<string, number> = {};
+  const pendingTeams: Record<string, number> = {};
+  for (const [id, c] of byEvent) {
+    if (c.confirmedPeople) confirmed[id] = c.confirmedPeople;
+    if (c.pendingPeople) pending[id] = c.pendingPeople;
+    if (c.confirmedTeams) confirmedTeams[id] = c.confirmedTeams;
+    if (c.pendingTeams) pendingTeams[id] = c.pendingTeams;
   }
-
-  /* The same registrations counted as teams, for the events whose field is
-     stated in teams. There is one application per person, so a four-person
-     team is four records — counting rows would report four teams. Distinct
-     team codes, plus one for each entry with no team, is the real figure. */
-  const addTeam = (bucket: Record<string, Set<string>>, r: Application) => {
-    (bucket[r.eventId] ??= new Set()).add(r.teamCode ? `t:${r.teamCode}` : `s:${r.email}`);
-  };
-  const confirmedTeamSets: Record<string, Set<string>> = {};
-  const pendingTeamSets: Record<string, Set<string>> = {};
-  for (const r of valid) {
-    if (r.status === "confirmed") addTeam(confirmedTeamSets, r);
-    else if (r.status === "pending") addTeam(pendingTeamSets, r);
-  }
-  const countSets = (b: Record<string, Set<string>>) =>
-    Object.fromEntries(Object.entries(b).map(([k, v]) => [k, v.size]));
 
   const body: any = {
     confirmed,
     pending,
-    confirmedTeams: countSets(confirmedTeamSets),
-    pendingTeams: countSets(pendingTeamSets),
+    confirmedTeams,
+    pendingTeams,
     open: effectiveRegistrationOpen(),
   };
 
   /* Which events are taking no new teams — switched to full, or holding
      places up to their cap (lib/event-full). The event page reads this to
      say "Full" up front rather than let someone fill in the form first. */
-  const held = countRegistrationsByEvent(records.filter(Boolean) as Application[]);
   body.full = Object.fromEntries(
     events.map((e) => {
       const id = eventId(e.name);
-      return [id, isFull(e, held.get(id) ?? { people: 0, teams: 0 })];
+      return [id, isFull(e, byEvent.get(id) ?? { people: 0, teams: 0 })];
     }),
   );
 

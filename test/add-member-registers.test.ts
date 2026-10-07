@@ -15,6 +15,7 @@ import { describe, it, expect, vi, beforeEach, beforeAll } from "vitest";
 const store = new Map<string, any>();
 const who = vi.hoisted(() => ({ email: null as string | null }));
 const invitesSent: string[] = [];
+const tickets: string[] = [];
 
 vi.mock("@/lib/blob-store", () => ({
   listAll: async (prefix: string) =>
@@ -45,7 +46,9 @@ vi.mock("@/lib/invite-email", () => ({
   inviteUrl: (t: string) => `https://x/invite/${t}`,
   sendInviteEmail: async (a: any) => { invitesSent.push(a.to); return { sent: true }; },
 }));
-vi.mock("@/lib/confirmation-email", () => ({ sendConfirmationEmail: async () => ({ sent: true }) }));
+vi.mock("@/lib/confirmation-email", () => ({
+  sendConfirmationEmail: async (a: { email?: string }) => { tickets.push(String(a?.email ?? "")); return { sent: true }; },
+}));
 
 let POST: typeof import("@/app/api/teams/route").POST;
 beforeAll(async () => { ({ POST } = await import("@/app/api/teams/route")); });
@@ -73,7 +76,7 @@ const mateApp = () => store.get(`app/${EV}/${MATE}.json`);
 const mateMember = () => store.get(`member/${EV}/${MATE}.json`)?.member;
 
 beforeEach(() => {
-  store.clear(); invitesSent.length = 0;
+  store.clear(); invitesSent.length = 0; tickets.length = 0;
   who.email = LEAD;
   store.set(`team/${EV}/${CODE}.json`, {
     code: CODE, eventId: EV, name: "Robo Drift", bio: "", createdByEmail: LEAD, members: [], createdAt: AT,
@@ -92,15 +95,19 @@ describe("a lead adding a teammate", () => {
     expect(mateApp().ticketId).toMatch(/^PRV-[0-9A-F]{16}$/);
   });
 
-  it("leaves them in review while the team is", async () => {
+  it("leaves them in review while the team is, with no ticket email", async () => {
     await add();
     expect(mateApp().status).toBe("pending");
+    expect(tickets).toEqual([]);
+    expect(mateApp().confirmationEmailAt).toBeUndefined();
   });
 
-  it("confirms them when the team already is", async () => {
+  it("confirms them and emails a ticket when the team already is", async () => {
     leadRow({ status: "confirmed", payment: "paid" });
     await add();
     expect(mateApp().status).toBe("confirmed");
+    expect(tickets).toEqual([MATE]);
+    expect(mateApp().confirmationEmailAt).toBeTruthy();
   });
 
   it("puts them on the roster as joined, not waiting on an invite", async () => {

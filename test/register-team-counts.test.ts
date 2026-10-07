@@ -76,6 +76,23 @@ describe("GET /api/register — team counts", () => {
   });
 
   /* A cancelled or declined entry frees its place, so it must not be counted. */
+  /* A confirmed lead with a teammate still waiting is one confirmed team.
+     Counting that team as in review as well is how the event page and the
+     desk disagreed about Pitch at Mach. */
+  it("does not list a confirmed team as in review too", async () => {
+    put(app("lead@e.com", "CODEAAAAAAAA", "confirmed"));
+    store.set(`app/${EV}/mate@e.com.json`, {
+      ...app("mate@e.com", "CODEAAAAAAAA", "pending"),
+      payment: "not_required", fee: "Covered by team lead",
+    });
+    put(app("wait@e.com", "CODEBBBBBBBB", "pending"));
+    const d = await counts();
+    expect(d.confirmedTeams[EV]).toBe(1);
+    expect(d.pendingTeams[EV]).toBe(1);
+    expect(d.pending[EV]).toBe(2);
+    expect(d.confirmed[EV]).toBe(1);
+  });
+
   it("ignores entries that are neither confirmed nor pending", async () => {
     put(app("a@e.com", "CODEAAAAAAAA", "cancelled"));
     put(app("b@e.com", "CODEBBBBBBBB", "declined"));

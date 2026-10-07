@@ -7,8 +7,8 @@ import { describe, it, expect, vi, beforeEach, beforeAll } from "vitest";
  * clicked their invite, and most invites never arrived: 379 sat as "Invite
  * not accepted", 169 on confirmed teams. The organisers' call is that the
  * lead adding them was enough, so this registers them as the add itself now
- * does — covered by the lead, confirmed if the team is — without sending a
- * flood of mail through a mailbox already at its limit.
+ * does — covered by the lead, confirmed if the team is. A confirmed teammate
+ * is emailed their ticket. Someone still in review is not.
  */
 
 const store = new Map<string, any>();
@@ -96,9 +96,21 @@ describe("POST /api/admin/reconcile { action: add_invited }", () => {
     expect(member("chitra@x.com").inviteToken).toBeUndefined();
   });
 
-  it("sends no email", async () => {
+  it("emails a confirmed teammate and not one still in review", async () => {
     await run();
-    expect(mailed).toEqual([]);
+    expect(mailed).toEqual(["chitra@x.com"]);
+    expect(app("chitra@x.com").confirmationEmailAt).toBeTruthy();
+    expect(app("hitha@x.com").confirmationEmailAt).toBeUndefined();
+  });
+
+  it("can be limited to one event", async () => {
+    const other = "the-logic-circuit";
+    store.set(`team/${other}/LOGIC0000001.json`, { code: "LOGIC0000001", eventId: other, name: "Puzzlers", bio: "", createdByEmail: "leadm@x.com", members: [], createdAt: "2026-10-01T00:00:00Z" });
+    store.set(`app/${other}/leadm@x.com.json`, { ticketId: "PRV-M", eventId: other, eventName: "The Logic Circuit", status: "confirmed", payment: "paid", fee: "Rs. 200/-", name: "Lead", email: "leadm@x.com", phone: "9000000000", college: "RUAS", teamName: "Puzzlers", teamCode: "LOGIC0000001", members: null, appliedAt: "2026-10-01T00:00:00Z" });
+    store.set(`team-member/${other}/other@x.com.json`, { code: "LOGIC0000001", eventId: other, member: { name: "other", email: "other@x.com", phone: "9222222222", college: "RUAS", joinedAt: "", invitedAt: "2026-10-02T00:00:00Z", inviteToken: "u".repeat(64) } });
+    const res = await run({ eventId: EV });
+    expect(res.body.added.map((a: { email: string }) => a.email).sort()).toEqual(["chitra@x.com", "hitha@x.com"]);
+    expect(store.get(`app/${other}/other@x.com.json`)).toBeUndefined();
   });
 
   it("leaves alone anyone who already has a registration at the event", async () => {

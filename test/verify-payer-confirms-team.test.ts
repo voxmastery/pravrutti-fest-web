@@ -26,6 +26,13 @@ vi.mock("@/lib/blob-store", () => ({
   readPrivate: async (url: string) => store.get(url.slice(4)) ?? null,
   readJsonByPath: async (p: string) => store.get(p) ?? null,
   applicationPath: (e: string, m: string) => `app/${e}/${m}.json`,
+  teamPath: (e: string, c: string) => `team/${e}/${c}.json`,
+  teamMemberPath: (e: string, m: string) => `team-member/${e}/${m}.json`,
+  invitePath: (t: string) => `invite/${t}.json`,
+  listTeamMembers: async (eventId: string, code: string) =>
+    [...store.entries()]
+      .filter(([k, v]) => k.startsWith(`team-member/${eventId}/`) && v?.code === code && v?.member)
+      .map(([, v]) => v.member),
   paymentRefPath: (ref: string) => "payment-ref/" + ref.trim().toLowerCase() + ".json",
   putJson: async (p: string, d: unknown) => { store.set(p, d); },
 }));
@@ -139,6 +146,93 @@ describe("verifying the payer's money", () => {
     const res = await verify(PAYER);
     expect(read(PAYER).status).toBe("confirmed");
     expect(res.body.teammates).toEqual([]);
+  });
+});
+
+describe("an invited teammate with no application", () => {
+  const INVITED = "jayanti@x.com";
+  const token = "ab".repeat(32);
+
+  beforeEach(() => {
+    store.set(`team/${EV}/${CODE}.json`, {
+      code: CODE, eventId: EV, name: "Code crews", bio: "", createdByEmail: PAYER, members: [], createdAt: "2026-10-01T00:00:00.000Z",
+    });
+    store.set(`team-member/${EV}/${INVITED}.json`, {
+      code: CODE, eventId: EV,
+      member: {
+        name: "Jayanti R Naik", email: INVITED, phone: "9000000001", college: "RUAS",
+        joinedAt: "", invitedAt: "2026-10-02T00:00:00.000Z", inviteToken: token,
+      },
+    });
+    store.set(`invite/${token}.json`, { token, eventId: EV, code: CODE, email: INVITED });
+  });
+
+  it("registers them as confirmed and emails a ticket when the payer is verified", async () => {
+    const res = await verify(PAYER);
+    expect(res.status).toBe(200);
+    expect(read(INVITED)).toMatchObject({ status: "confirmed", payment: "not_required", fee: "Covered by team lead", addedByLead: true });
+    expect(read(INVITED).confirmationEmailAt).toBeTruthy();
+    expect(mailed).toContain(INVITED);
+    expect(res.body.teammates.map((t: { email: string }) => t.email)).toContain(INVITED);
+    expect(store.get(`team-member/${EV}/${INVITED}.json`).member.acceptedAt).toBeTruthy();
+  });
+
+  it("can be done from the team button after the lead is already confirmed", async () => {
+    read(PAYER).status = "confirmed";
+    read(PAYER).payment = "paid";
+    read(MATE).status = "confirmed";
+    mailed.length = 0;
+    const res = await POST(new Request("http://t/api/dashboard/applications", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ action: "enroll_invited", eventId: EV, teamCode: CODE }),
+    }));
+    const body = await res.json();
+    expect(res.status).toBe(200);
+    expect(body.applications.map((a: { email: string }) => a.email)).toEqual([INVITED]);
+    expect(read(INVITED).status).toBe("confirmed");
+    expect(mailed).toEqual([INVITED]);
+    expect(read(PAYER).confirmationEmailAt).toBeUndefined();
+  });
+});
+
+describe("removing a teammate from the desk", () => {
+  it("cancels their registration and takes them off the roster", async () => {
+    store.set(`team/${EV}/${CODE}.json`, {
+      code: CODE, eventId: EV, name: "Code crews", bio: "", createdByEmail: PAYER, members: [], createdAt: "2026-10-01T00:00:00.000Z",
+    });
+    store.set(`team-member/${EV}/${MATE}.json`, {
+      code: CODE, eventId: EV,
+      member: { name: "Skanda", email: MATE, phone: "9876543210", college: "RUAS", joinedAt: "2026-10-01T00:00:00.000Z" },
+    });
+    const res = await POST(new Request("http://t/api/dashboard/applications", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ action: "remove_member", eventId: EV, email: MATE, teamCode: CODE }),
+    }));
+    const body = await res.json();
+    expect(res.status).toBe(200);
+    expect(body.alreadyGone).toBe(false);
+    expect(read(MATE).status).toBe("cancelled");
+    expect(store.get(`team-member/${EV}/${MATE}.json`).code).toBe("");
+    expect(read(PAYER).status).toBe("pending");
+  });
+
+  it("refuses to remove the current lead", async () => {
+    store.set(`team/${EV}/${CODE}.json`, {
+      code: CODE, eventId: EV, name: "Code crews", bio: "", createdByEmail: PAYER, members: [], createdAt: "2026-10-01T00:00:00.000Z",
+    });
+    store.set(`team-member/${EV}/${PAYER}.json`, {
+      code: CODE, eventId: EV,
+      member: { name: "Gopinath", email: PAYER, phone: "9876543210", college: "RUAS", joinedAt: "2026-10-01T00:00:00.000Z" },
+    });
+    const res = await POST(new Request("http://t/api/dashboard/applications", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ action: "remove_member", eventId: EV, email: PAYER }),
+    }));
+    expect(res.status).toBe(409);
+    expect(read(PAYER).status).toBe("pending");
   });
 });
 

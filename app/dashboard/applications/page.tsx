@@ -26,6 +26,8 @@ import {
   QrCode,
   RefreshCw,
   Search,
+  UserMinus,
+  UserPlus,
   X,
 } from "lucide-react";
 
@@ -140,9 +142,15 @@ export default function ApplicationsDeskPage() {
   /** A whole team changed in one action. */
   const patchMany = (updated: Application[]) => {
     const byKey = new Map(updated.map((u) => [key(u), u]));
-    setFeed((f) =>
-      f ? { ...f, applications: f.applications.map((a) => byKey.get(key(a)) ?? a) } : f
-    );
+    setFeed((f) => {
+      if (!f) return f;
+      const seen = new Set(f.applications.map(key));
+      const added = updated.filter((u) => u?.email && !seen.has(key(u)));
+      return {
+        ...f,
+        applications: [...added, ...f.applications.map((a) => byKey.get(key(a)) ?? a)],
+      };
+    });
   };
 
   const rows = useMemo(() => {
@@ -419,7 +427,7 @@ function Row({
   const [copied, setCopied] = useState(false);
 
   const act = async (
-    action: "verify_payment" | "unverify_payment" | "decline" | "resend_confirmation"
+    action: "verify_payment" | "unverify_payment" | "decline" | "resend_confirmation" | "remove_member"
   ) => {
     setBusy(action);
     setError(null);
@@ -432,6 +440,15 @@ function Row({
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "That didn't go through.");
+      if (action === "remove_member") {
+        if (data.application) onChanged(data.application);
+        setFlash(
+          data.alreadyGone
+            ? "Already off that team."
+            : `Removed from ${data.teamName || "the team"}. Their ticket is cancelled.`,
+        );
+        return;
+      }
       const teammates: Application[] = Array.isArray(data.teammates) ? data.teammates : [];
       if (teammates.length && onChangedMany) onChangedMany([data.application, ...teammates]);
       else onChanged(data.application);
@@ -621,6 +638,22 @@ function Row({
                 </Button>
               </Hint>
 
+              {a.teamCode &&
+                a.payment === "not_required" &&
+                (a.status === "pending" || a.status === "confirmed") && (
+                <ConfirmAction
+                  title={`Remove ${a.name} from ${a.teamName || "their team"}?`}
+                  description="They leave the roster, their invite link stops working, and a live ticket is cancelled. The lead stays, and so does the team's payment. The current lead cannot be removed this way."
+                  confirmLabel="Remove from team"
+                  destructive
+                  onConfirm={() => act("remove_member")}
+                >
+                  <Button variant="subtle" size="default" disabled={working} className="text-white/50">
+                    {spin("remove_member", UserMinus)} Remove from team
+                  </Button>
+                </ConfirmAction>
+              )}
+
               {a.status !== "declined" && (
                 <ConfirmAction
                   title={`Decline ${a.name}?`}
@@ -707,7 +740,7 @@ function TeamBlock({
   const payer = live.find((a) => a.payment !== "not_required") ?? null;
   const hidden = live.length - group.shown.filter((a) => a.status !== "cancelled" && a.status !== "declined").length;
 
-  const act = async (action: "verify_team" | "decline_team") => {
+  const act = async (action: "verify_team" | "decline_team" | "enroll_invited") => {
     setBusy(action);
     setError(null);
     setFlash(null);
@@ -721,7 +754,18 @@ function TeamBlock({
       if (!res.ok) throw new Error(data.error ?? "That didn't go through.");
       const changed = (data.applications ?? []) as Application[];
       onChangedMany(changed);
+      const mails = (data.mails ?? []) as ({ sent?: boolean; skipped?: boolean; error?: string } | null)[];
 
+      if (action === "enroll_invited") {
+        const n = changed.length;
+        const sentNow = mails.filter((m) => m?.sent).length;
+        const failed = mails.filter((m) => m?.error).length;
+        if (failed) setError(`Registered, but ${failed} ticket ${failed === 1 ? "email" : "emails"} failed to send. Use Email ticket on the row to retry.`);
+        else if (n === 0) setFlash("No invited teammates left to register.");
+        else if (sentNow) setFlash(`Registered ${n} invited ${n === 1 ? "teammate" : "teammates"} — ${sentNow} ${sentNow === 1 ? "ticket" : "tickets"} emailed.`);
+        else setFlash(`Registered ${n} invited ${n === 1 ? "teammate" : "teammates"}. Tickets go out when the team's payment is verified.`);
+        return;
+      }
       if (action === "decline_team") {
         const refunded = changed.filter((a) => a.payment === "refunded").length;
         setFlash(
@@ -729,7 +773,6 @@ function TeamBlock({
         );
         return;
       }
-      const mails = (data.mails ?? []) as ({ sent?: boolean; skipped?: boolean; error?: string } | null)[];
       const sent = mails.filter((m) => m?.sent).length;
       const failed = mails.filter((m) => m?.error).length;
       if (failed) setError(`Confirmed, but ${failed} ticket ${failed === 1 ? "email" : "emails"} failed to send.`);
@@ -757,6 +800,22 @@ function TeamBlock({
             {payer && ` · ${payer.payment === "paid" ? "fee verified" : `${payer.fee} due`}`}
           </span>
         </span>
+
+        <ConfirmAction
+          title={`Register invited teammates on ${group.name}?`}
+          description="People the lead added who never accepted have no registration and no ticket. This registers them. If the team is already confirmed, each one is confirmed and emailed a ticket. If the team is still in review, they join that review and the ticket waits until you confirm the team. Check the college's payment sheet before confirming a fee."
+          confirmLabel="Register invited"
+          onConfirm={() => act("enroll_invited")}
+        >
+          <Button
+            size="sm"
+            variant="subtle"
+            disabled={busy !== null}
+            className="h-8 rounded-lg px-3 text-xs font-semibold text-white/70 hover:text-white"
+          >
+            {busy === "enroll_invited" ? <Loader2 className="animate-spin" /> : <UserPlus />} Register invited
+          </Button>
+        </ConfirmAction>
 
         {waiting.length > 0 && (
           <ConfirmAction

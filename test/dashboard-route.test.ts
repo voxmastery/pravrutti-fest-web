@@ -114,7 +114,8 @@ describe("GET /api/dashboard/event/[eventId]", () => {
   it("counts the field in teams and in students", async () => {
     const body = await (await get("robo-climb")).json();
     expect(body.counts).toEqual({
-      registered: 3, teams: 2, confirmed: 2, confirmedTeams: 1, checkedIn: 1, notArrived: 1,
+      registered: 3, teams: 2, confirmed: 2, confirmedTeams: 1,
+      inReview: 1, inReviewTeams: 1, checkedIn: 1, notArrived: 1,
     });
   });
 

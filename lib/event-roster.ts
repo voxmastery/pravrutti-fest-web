@@ -186,6 +186,11 @@ export async function buildEventRoster(eventId: string, view: RosterView) {
       teams: counts.teams,
       confirmed: counts.confirmedPeople,
       confirmedTeams: counts.confirmedTeams,
+      /* The event page's "in review" line, in both units. pendingPeople is
+         every held registration that is not confirmed; pendingTeams is only
+         the teams among them with nobody confirmed yet. */
+      inReview: counts.pendingPeople,
+      inReviewTeams: counts.pendingTeams,
       checkedIn: counts.checkedIn,
       notArrived: counts.notArrived,
     },
