@@ -45,3 +45,19 @@ export async function leadIsRegistered(evId: string, team: Team | null): Promise
   const app = (await readJsonByPath(applicationPath(evId, lead))) as Application | null;
   return isLiveApplication(app?.status);
 }
+
+/**
+ * Whether this lead may add a teammate, as far as the registration window goes.
+ *
+ * Closing the window — the fest-wide date, or an event's own earlier one —
+ * stops new teams. It does not freeze a team that is already in.
+ * `leadRegistered` is that: the lead holds a live registration, in review or
+ * confirmed. A full roster, someone who is not the lead, and a duplicate
+ * email are refused on their own; this only answers the window.
+ *
+ * Ganesh, 7 Oct 2026. Hacktivate had closed on 1 Oct and confirmed leads
+ * still had empty seats, with no way to fill them.
+ */
+export function leadMayInvite(args: { registrationOpen: boolean; leadRegistered: boolean }): boolean {
+  return args.registrationOpen || args.leadRegistered;
+}

@@ -74,9 +74,11 @@ export type TeamPreview = {
   /** Whether the person who asked leads this team. Only set where the viewer
       is known — the team-by-code lookup has no viewer and omits it. */
   isLead?: boolean;
-  /** Whether a lead can still add somebody, i.e. registration is open. Set
-      alongside isLead, so the ticket page can say why rather than offering a
-      button the server would refuse. */
+  /** Whether a lead can still add somebody. True while registration is open,
+      and still true after it closes when this team's lead already holds a
+      live registration — growing a team that is in, not starting one.
+      Set alongside isLead, so the ticket page can offer the button only
+      where the server would accept it. */
   canInvite?: boolean;
   /** The signed-in viewer is already on this team's list — the lead added
       them — so a full team still has their place. Without it, an invited

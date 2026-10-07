@@ -15,14 +15,17 @@ import { Check, Copy, Loader2, Trash2 } from "lucide-react";
  * only place that could be done was the registration dialog, which a
  * registered lead can no longer reach, so both rules dead-ended.
  *
- * Removing somebody cancels their application and frees them to join another
- * team, which is why it is offered plainly rather than buried: it is the one
- * action that gets a teammate unstuck.
+ * Remove and Make lead sit on the ticket, labeled. They used to live behind
+ * a muted "Manage team" link, and leads (and the coordinators helping them)
+ * reported they had no way to remove someone or change the lead — the
+ * controls were there, one quiet tap down, and nobody found them. Make lead
+ * is still only for a teammate who has joined, not one who was only invited.
  *
- * Adding somebody sits outside the disclosure, not in it. A lead with a place
- * still free needs it far more often than they need to remove anyone, and
- * while it was only in the registration dialog — unreachable once they had
- * submitted — reading the code out was the only way to grow a registered team.
+ * Adding somebody stays its own block, not folded into those rows. A lead
+ * with a place still free needs it far more often than they need to remove
+ * anyone. It follows canInvite: hidden when the server would refuse, which
+ * includes a closed window only when this team is not already in. A full
+ * roster keeps the button, disabled, so the lead can see why.
  */
 export function TeamManage({
   eventId,
@@ -38,12 +41,11 @@ export function TeamManage({
   viewerEmail: string;
   /** Named in the invite email. The server falls back to their registration. */
   leadName?: string;
-  /** False where the registration itself is over — withdrawn, or not confirmed
-      — so there is no team left to add anybody to. */
+  /** False when this registration no longer holds a place — withdrawn or
+      declined — so there is no team left to add anybody to. */
   canAdd: boolean;
   onChanged: () => void;
 }) {
-  const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -102,8 +104,8 @@ export function TeamManage({
 
   if (!team.isLead) return null;
 
-  /* Registration closed nationally, or this registration is no longer live:
-     an invite would be refused, so the button is not offered. */
+  /* canInvite is the server's answer, including a team already in after the
+     window has closed. canAdd is this registration still holding a place. */
   const inviting = canAdd && team.canInvite !== false;
 
   const addBlock = inviting ? (
@@ -159,119 +161,90 @@ export function TeamManage({
     </ul>
   ) : null;
 
-  if (!open)
-    return (
-      <div className="mt-2 space-y-2">
-        {addBlock}
-        {warningBlock}
-        {error && (
-          <p className="rounded-lg border border-danger-strong/30 bg-danger-strong/[0.07] px-3 py-2 text-[12px] text-white/80">
-            {error}
-          </p>
-        )}
-        {linkBlock}
-        <button
-          type="button"
-          onClick={() => setOpen(true)}
-          className="text-xs text-white/35 hover:text-white/70 underline underline-offset-2 cursor-pointer"
-        >
-          Manage team
-        </button>
-      </div>
-    );
-
   return (
     <div className="mt-2 space-y-2">
       {addBlock}
       {warningBlock}
       {linkBlock}
-      <div className="rounded-xl border border-white/[0.1] bg-white/[0.03] p-3 space-y-2.5">
-      <div className="flex items-center justify-between gap-3">
-        <p className="text-[11px] uppercase tracking-wider text-white/40">Manage {team.name}</p>
-        <button
-          type="button"
-          onClick={() => { setOpen(false); setError(null); setConfirmDelete(false); }}
-          className="text-xs text-white/35 hover:text-white/70 cursor-pointer"
-        >
-          Done
-        </button>
-      </div>
-
-      {others.length === 0 ? (
-        <p className="text-[12px] text-white/45 leading-relaxed">
-          Nobody else is on this team yet.
-        </p>
-      ) : (
-        <ul className="space-y-1.5">
-          {others.map((m) => (
-            <li key={m.email} className="flex items-center gap-2.5 rounded-lg bg-white/[0.05] px-3 py-2">
-              <span className="min-w-0 flex-1 truncate text-[13px] text-white">{m.name}</span>
-              <span className="shrink-0 text-[10px] uppercase tracking-wider text-white/35">
-                {m.status === "joined" ? "Joined" : "Invited"}
-              </span>
-              {/* Handing over is for someone actually on the team. */}
-              {m.status === "joined" && (
-                <button
-                  type="button"
-                  onClick={() => { setHandingTo({ email: m.email, name: m.name }); setError(null); }}
-                  disabled={busy !== null}
-                  className="shrink-0 text-[11px] text-white/45 hover:text-champagne-gold underline underline-offset-2 transition-colors cursor-pointer disabled:opacity-50"
-                >
-                  Make lead
-                </button>
-              )}
-              <button
-                type="button"
-                onClick={() => call({ action: "remove_member", memberEmail: m.email }, m.email)}
-                disabled={busy !== null}
-                aria-label={`Remove ${m.name}`}
-                className="shrink-0 text-white/35 hover:text-danger-strong transition-colors cursor-pointer disabled:opacity-50"
-              >
-                {busy === m.email ? (
-                  <Loader2 className="w-3.5 h-3.5 animate-spin" aria-hidden="true" />
-                ) : (
-                  <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
-                )}
-              </button>
-            </li>
-          ))}
-        </ul>
-      )}
-
-      {handingTo && (
-        <div className="rounded-lg border border-champagne-gold/30 bg-champagne-gold/[0.06] p-2.5 space-y-2">
-          <p className="text-[12px] text-white/75 leading-relaxed">
-            Make {handingTo.name} the lead of {team.name}? They&apos;ll manage the team from now on —
-            adding and removing members. If you&apos;ve paid, your payment stays recorded against you; if
-            you haven&apos;t paid yet, {handingTo.name} pays instead.
-          </p>
-          <div className="flex gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setHandingTo(null)}
-              disabled={busy !== null}
-              className="h-[34px] rounded-2xl border border-white/[0.08] bg-white/[0.04] text-white/70 hover:bg-white/[0.08] hover:text-white font-medium text-sm px-4 cursor-pointer"
-            >
-              Cancel
-            </Button>
-            <Button
-              type="button"
-              onClick={() => call({ action: "transfer_lead", memberEmail: handingTo.email }, "lead")}
-              disabled={busy !== null}
-              className="h-[34px] rounded-2xl bg-cyber-pink text-white hover:bg-electric-magenta font-medium text-sm px-4 cursor-pointer"
-            >
-              {busy === "lead" ? <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" /> : `Make ${handingTo.name} lead`}
-            </Button>
-          </div>
-        </div>
-      )}
-
-      {/* Removing is what frees somebody, so say so where it is decided. */}
       {others.length > 0 && (
-        <p className="text-[11px] text-white/35 leading-relaxed">
-          Removing someone cancels their entry for this event and lets them join another team.
-        </p>
+        <div className="rounded-xl border border-white/[0.1] bg-white/[0.03] p-3 space-y-2.5">
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-white/70">
+            Remove or change lead
+          </p>
+          <ul className="space-y-1.5">
+            {others.map((m) => (
+              <li key={m.email} className="rounded-lg bg-white/[0.05] px-3 py-2.5 space-y-2">
+                <div className="flex items-center gap-2.5">
+                  <span className="min-w-0 flex-1 truncate text-[13px] text-white">{m.name}</span>
+                  <span className="shrink-0 text-[10px] uppercase tracking-wider text-white/35">
+                    {m.status === "joined" ? "Joined" : "Invited"}
+                  </span>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {/* Handing over is for someone actually on the team. */}
+                  {m.status === "joined" ? (
+                    <button
+                      type="button"
+                      onClick={() => { setHandingTo({ email: m.email, name: m.name }); setError(null); }}
+                      disabled={busy !== null}
+                      className="h-8 rounded-xl border border-champagne-gold/40 bg-champagne-gold/10 px-3 text-xs font-medium text-champagne-gold hover:bg-champagne-gold/20 transition-colors cursor-pointer disabled:opacity-50"
+                    >
+                      Make lead
+                    </button>
+                  ) : null}
+                  <button
+                    type="button"
+                    onClick={() => call({ action: "remove_member", memberEmail: m.email }, m.email)}
+                    disabled={busy !== null}
+                    aria-label={`Remove ${m.name}`}
+                    className="inline-flex items-center gap-1.5 h-8 rounded-xl border border-white/15 bg-white/[0.06] px-3 text-xs font-medium text-white/85 hover:border-danger-strong/50 hover:text-danger-strong transition-colors cursor-pointer disabled:opacity-50"
+                  >
+                    {busy === m.email ? (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" aria-hidden="true" />
+                    ) : (
+                      <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
+                    )}
+                    Remove
+                  </button>
+                </div>
+              </li>
+            ))}
+          </ul>
+
+          {handingTo && (
+            <div className="rounded-lg border border-champagne-gold/30 bg-champagne-gold/[0.06] p-2.5 space-y-2">
+              <p className="text-[12px] text-white/75 leading-relaxed">
+                Make {handingTo.name} the lead of {team.name}? They&apos;ll manage the team from now on —
+                adding and removing members. If you&apos;ve paid, your payment stays recorded against you; if
+                you haven&apos;t paid yet, {handingTo.name} pays instead.
+              </p>
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setHandingTo(null)}
+                  disabled={busy !== null}
+                  className="h-[34px] rounded-2xl border border-white/[0.08] bg-white/[0.04] text-white/70 hover:bg-white/[0.08] hover:text-white font-medium text-sm px-4 cursor-pointer"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="button"
+                  onClick={() => call({ action: "transfer_lead", memberEmail: handingTo.email }, "lead")}
+                  disabled={busy !== null}
+                  className="h-[34px] rounded-2xl bg-cyber-pink text-white hover:bg-electric-magenta font-medium text-sm px-4 cursor-pointer"
+                >
+                  {busy === "lead" ? <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" /> : `Make ${handingTo.name} lead`}
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {/* Removing is what frees somebody, so say so where it is decided. */}
+          <p className="text-[11px] text-white/35 leading-relaxed">
+            Removing someone cancels their entry for this event and lets them join another team.
+          </p>
+        </div>
       )}
 
       {error && (
@@ -315,7 +288,6 @@ export function TeamManage({
           Delete this team
         </button>
       )}
-      </div>
     </div>
   );
 }
