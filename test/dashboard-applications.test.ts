@@ -8,6 +8,7 @@ vi.mock("@/lib/blob-store", () => ({
   listAll: async () => apps.map((_, i) => ({ pathname: `p${i}`, url: `u${i}` })),
   readPrivate: async (url: string) => apps[Number(url.slice(1))],
   applicationPath: (evId: string, email: string) => `app/${evId}/${email}.json`,
+  teamPath: (evId: string, code: string) => `team/${evId}/${code}.json`,
   paymentRefPath: (ref: string) => "payment-ref/" + ref.trim().toLowerCase() + ".json",
   readJsonByPath: async (p: string) => store.get(p) ?? null,
   putJson: async (p: string, data: unknown) => {
@@ -108,6 +109,85 @@ describe("GET /api/dashboard/applications", () => {
   it("refuses a coordinator — this desk holds every event's money fields", async () => {
     role.current = { kind: "coordinator" };
     expect((await get()).status).toBe(403);
+  });
+
+  /* The coordinators' shortlist lives in code, not on the row. A listed
+     Discoverize lead is still stored as a free registration; this desk has
+     to read that view or the row stays "Approve" and never appears under
+     Payment due. A teammate is shortlisted and still owes nothing. An
+     unlisted Discoverize team, and the same address on another event, stay
+     exactly as stored — and the store itself is not written. */
+  it("shows a shortlisted Discoverize lead as Rs. 200/- due and leaves everyone else free", async () => {
+    const DISC = "discoverize-research-paper-presentation";
+    const LISTED = "kssambavi06@gmail.com";
+    const MATE = "agna.nelson682@gmail.com";
+    const STRANGER = "not.shortlisted@example.com";
+    const CODE = "RECHARGE0001";
+    const disc = (email: string, over: Record<string, unknown> = {}) => ({
+      ticketId: "PRV-D",
+      eventId: DISC,
+      eventName: "Discoverize (Research Paper Presentation)",
+      status: "pending",
+      payment: "not_required",
+      fee: "Free",
+      name: email.split("@")[0],
+      email,
+      phone: "9876543210",
+      college: "RUAS",
+      teamName: "Recharge",
+      teamCode: CODE,
+      members: null,
+      appliedAt: "2026-10-02T09:00:00.000Z",
+      ...over,
+    });
+    const listed = disc(LISTED);
+    const mate = disc(MATE, { fee: "Covered by team lead" });
+    const stranger = disc(STRANGER, { teamCode: null, teamName: null });
+    const otherEvent = disc(LISTED, {
+      eventId: "chaos",
+      eventName: "CHAOS",
+      teamCode: null,
+      teamName: null,
+      ticketId: "PRV-C",
+    });
+    apps.push(listed, mate, stranger, otherEvent);
+    store.set(`team/${DISC}/${CODE}.json`, {
+      code: CODE,
+      eventId: DISC,
+      name: "Recharge",
+      createdByEmail: LISTED,
+      members: [],
+    });
+    store.set(`app/${DISC}/${LISTED}.json`, { ...listed });
+
+    const body = await (await get()).json();
+    const by = (eventId: string, email: string) =>
+      body.applications.find((a: { eventId: string; email: string }) => a.eventId === eventId && a.email === email);
+
+    const lead = by(DISC, LISTED);
+    expect(lead.payment).toBe("awaiting");
+    expect(lead.fee).toBe("Rs. 200/-");
+    expect(lead.round?.shortlistedAt).toBeTruthy();
+    expect(lead.paymentRef).toBeNull();
+
+    const teammate = by(DISC, MATE);
+    expect(teammate.payment).toBe("not_required");
+    expect(teammate.fee).toBe("Covered by team lead");
+    expect(teammate.round?.shortlistedAt).toBeTruthy();
+
+    const unlisted = by(DISC, STRANGER);
+    expect(unlisted.payment).toBe("not_required");
+    expect(unlisted.fee).toBe("Free");
+    expect(unlisted.round).toBeUndefined();
+
+    const chaos = by("chaos", LISTED);
+    expect(chaos.payment).toBe("not_required");
+    expect(chaos.fee).toBe("Free");
+    expect(chaos.round).toBeUndefined();
+
+    expect(body.totals.awaitingPayment).toBe(2);
+    expect(store.get(`app/${DISC}/${LISTED}.json`).payment).toBe("not_required");
+    expect(store.get(`app/${DISC}/${LISTED}.json`).fee).toBe("Free");
   });
 });
 

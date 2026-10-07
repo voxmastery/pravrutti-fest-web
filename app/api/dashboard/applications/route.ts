@@ -19,6 +19,7 @@ import {
   setPaymentRef,
   resendConfirmation,
 } from "@/lib/payment-review";
+import { withDiscoverizeShortlist } from "@/lib/discoverize-shortlist";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -54,9 +55,16 @@ export async function GET(req: Request) {
 
   const blobs = await listAll("app/");
   const raw = (await Promise.all(blobs.map((b) => readPrivate(b.url)))) as (Application | null)[];
-  const applications = raw
-    .filter((a): a is Application => !!a?.eventId)
-    .map((a) => ({ ...a, paymentRef: a.paymentRef ?? null }));
+  /* The shortlist is a view, not a stored column (lib/discoverize-shortlist).
+     The listed Discoverize leads are still free rows on disk; reading them
+     through here is what puts Rs. 200/- due, the Payment due filter, and
+     Verify payment & approve on this desk. Unlisted Discoverize teams and
+     every other event come back unchanged, and nothing is written. */
+  const applications = (
+    await Promise.all(
+      raw.filter((a): a is Application => !!a?.eventId).map((a) => withDiscoverizeShortlist(a)),
+    )
+  ).map((a) => ({ ...a, paymentRef: a.paymentRef ?? null }));
 
   applications.sort((a, b) => String(b.appliedAt).localeCompare(String(a.appliedAt)));
 

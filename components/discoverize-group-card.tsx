@@ -53,7 +53,7 @@ export function DiscoverizeGroupCard({ compact = false }: { compact?: boolean })
             Join the Discoverize WhatsApp group
           </p>
           <p className="text-[12px] text-white/60 leading-relaxed">
-            Every update about the abstract, the screening and the presentation round goes here first.
+            Every Discoverize update, including the presentation round, goes here first.
           </p>
         </div>
       </div>

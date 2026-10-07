@@ -47,7 +47,7 @@ export const DISCOVERIZE_STATE_LABEL: Record<DiscoverizeState, string> = {
   registered: "Registered",
   abstract_submitted: "Abstract submitted",
   shortlisted: "Shortlisted",
-  payment_pending: "Shortlisted · payment pending",
+  payment_pending: "Shortlisted · proceed with payment",
   payment_submitted: "Payment submitted · in review",
   payment_successful: "Payment successful",
   final_round_confirmed: "Final round confirmed",

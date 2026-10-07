@@ -70,7 +70,7 @@ async function leadOf(a: Application): Promise<string | null> {
  * this view) or an organiser verifies the payment. Every path that decides
  * what a Discoverize team may do reads rows through here: the event page and
  * ticket, the register route's reference step, the payment verification
- * guard, and the shortlist desk.
+ * guard, the shortlist desk, and the registrations desk.
  *
  * Any other row — another event, a Discoverize team not on the list, a
  * withdrawn or declined entry — comes back exactly as it went in.
