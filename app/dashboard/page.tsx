@@ -15,6 +15,7 @@ import { AccessPanel } from "@/components/dashboard/access-panel";
 import { DISCOVERIZE_EVENT_ID } from "@/lib/discoverize";
 import { downloadXlsx, exportFileName, exportRows } from "@/lib/roster-export";
 import { deskStage, type DeskStage } from "@/lib/desk-stage";
+import { events } from "@/lib/pravrutti-data";
 import { AlertTriangle, Check, ChevronDown, ClipboardList, Download, FileSpreadsheet, Star } from "lucide-react";
 
 type Counts = {
@@ -221,7 +222,7 @@ export default function DashboardPage() {
   // before the fest, how full are we; during it, who has turned up.
   const headline = during
     ? { n: totals.checkedIn, of: totals.confirmed, label: "arrived", sub: "of confirmed registrations" }
-    : { n: totals.registered, of: totals.capacity, label: "places filled", sub: "across all 24 arenas" };
+    : { n: totals.registered, of: totals.capacity, label: "places filled", sub: `across all ${events.length} arenas` };
 
   const pct = headline.of > 0 ? Math.round((headline.n / headline.of) * 100) : 0;
 

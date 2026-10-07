@@ -23,6 +23,9 @@ import { PALETTE } from "@/lib/palette";
    and hand-typed dates, which are right only until the data moves. */
 const HUD_DATES = FEST.dates.toUpperCase().replace(/([A-Z]{3})[A-Z]+/, "$1");
 const HUD_VENUE = FEST.venue.split(",")[0].trim().toUpperCase().replace(/\s+/g, "_");
+/* Same figure as the "Tech Events" badge, which prints events.length. A
+   literal here is how the strapline stayed on 24 after a 25th arena landed. */
+const HERO_TAGLINE = `3 DAYS · ${events.length} ARENAS · ONE NATIONAL STAGE`;
 
 /* ───────────────────── Neon Flicker Text ───────────────────── */
 function NeonFlickerText({ text, className = "" }: { text: string; className?: string }) {
@@ -62,8 +65,6 @@ export function HeroSection() {
   const parallaxOffset = useParallax(0.15);
   const mouse = useMousePosition(logoRef);
 
-  const fullTagline = "3 DAYS · 24 ARENAS · ONE NATIONAL STAGE";
-
   useEffect(() => {
     const t = setTimeout(() => setIsLoaded(true), 300);
     return () => clearTimeout(t);
@@ -75,8 +76,8 @@ export function HeroSection() {
     let i = 0;
     const id = setInterval(() => {
       i++;
-      setTypedText(fullTagline.slice(0, i));
-      if (i >= fullTagline.length) clearInterval(id);
+      setTypedText(HERO_TAGLINE.slice(0, i));
+      if (i >= HERO_TAGLINE.length) clearInterval(id);
     }, 60);
     return () => clearInterval(id);
   }, [isLoaded]);

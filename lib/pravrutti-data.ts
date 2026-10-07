@@ -1099,7 +1099,7 @@ export const PRESENTER = {
   name: FEST.name,
   org: "Institution Innovation Council · Ramaiah University of Applied Sciences",
   blurb:
-    "The annual inter-college technical fest of Ramaiah University of Applied Sciences \u2014 25 events across engineering, research, code and enterprise, run by 16 student clubs.",
+    `The annual inter-college technical fest of Ramaiah University of Applied Sciences \u2014 ${events.length} events across engineering, research, code and enterprise, run by 16 student clubs.`,
   email: contacts.email,
 };
 

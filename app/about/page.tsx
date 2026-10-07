@@ -4,7 +4,7 @@ import { Navigation } from "@/components/landing/navigation";
 import { FooterSection } from "@/components/landing/footer-section";
 import { Users, Zap, Target } from "lucide-react";
 import { useEffect, useState } from "react";
-import { formatINR, ANNOUNCED_PRIZE_POOL } from "@/lib/pravrutti-data";
+import { formatINR, ANNOUNCED_PRIZE_POOL, events } from "@/lib/pravrutti-data";
 
 export default function AboutPage() {
   const [isVisible, setIsVisible] = useState(false);
@@ -90,7 +90,7 @@ export default function AboutPage() {
                 { k: "Edition", v: "Pravrutti 2.0" },
                 { k: "Dates", v: "14–16 October 2026" },
                 { k: "Venue", v: "Ramaiah Technology Campus, Bengaluru" },
-                { k: "Events", v: "24 technical arenas" },
+                { k: "Events", v: `${events.length} technical arenas` },
                 { k: "Prize Pool", v: formatINR(ANNOUNCED_PRIZE_POOL), accent: true },
               ].map((row) => (
                 <div key={row.k} className="flex items-baseline justify-between gap-4 px-5 py-3.5">
@@ -119,7 +119,7 @@ export default function AboutPage() {
             {
               icon: Zap,
               title: "INNOVATION",
-              description: "Featuring 24 events that curates innovation in every braincell." },
+              description: `Featuring ${events.length} events that curates innovation in every braincell.` },
             {
               icon: Target,
               title: "OPPORTUNITY",

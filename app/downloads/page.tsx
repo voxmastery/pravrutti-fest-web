@@ -58,7 +58,7 @@ export default function DownloadsPage() {
             DOWNLOAD <span className="text-stroke">RULEBOOKS</span>
           </h1>
           <p className="text-base md:text-xl text-pearl-white/70 leading-relaxed max-w-2xl mx-auto">
-            Access detailed stage specifications, rules parameters, and level controls for all 24 events.
+            Access detailed stage specifications, rules parameters, and level controls for all {events.length} events.
           </p>
         </div>
 

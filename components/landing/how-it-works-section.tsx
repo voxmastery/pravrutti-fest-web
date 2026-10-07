@@ -6,13 +6,14 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { useScrollReveal, useMousePosition } from "@/hooks/use-animations";
 import { PALETTE } from "@/lib/palette";
+import { events } from "@/lib/pravrutti-data";
 
 const steps = [
   {
     number: "01",
     title: "CHOOSE YOUR ARENA",
     icon: Compass,
-    description: "Browse 24 technical challenges across Engineering & Design, Code & Compute, Research & Presentation, and Enterprise & Expression.",
+    description: `Browse ${events.length} technical challenges across Engineering & Design, Code & Compute, Research & Presentation, and Enterprise & Expression.`,
     color: PALETTE.cyberPink,
   },
   {
