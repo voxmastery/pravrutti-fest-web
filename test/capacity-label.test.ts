@@ -53,9 +53,19 @@ describe("capacityLabel", () => {
     ).toBe("50 participants");
   });
 
-  it("Robo War reads 16 teams on the real data", () => {
+  it("Robo War reads 15 teams on the real data", () => {
     const e = events.find((x) => x.name === "KURUKSHETRA - THE ROBO WAR")!;
-    expect(capacityLabel(e)).toBe("16 teams");
+    expect(capacityLabel(e)).toBe("15 teams");
+    expect(e.maxTeams).toBe(15);
+    expect(e.capacity).toBe(60);
+  });
+
+  it("RC-X reads 19 teams on the real data", () => {
+    const e = events.find((x) => x.name === "RC-X")!;
+    expect(capacityLabel(e)).toBe("19 teams");
+    expect(e.maxTeams).toBe(19);
+    expect(e.capacity).toBe(76);
+    expect(e.full).toBe(true);
   });
 });
 
