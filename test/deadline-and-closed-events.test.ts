@@ -66,6 +66,28 @@ describe("the four closed events", () => {
   });
 });
 
+/* Closed on 7 Oct at 15 teams. The desk held fewer than 16, so the cap
+   could come down from 16 without cutting a team already in. Still listed,
+   struck through — closing is enough. RC-X is the aircraft event, not this
+   combat one, and stays open. */
+describe("Kurukshetra – The Robo War", () => {
+  it("is capped at 15 teams, takes no new teams, and stays on the list", () => {
+    const e = ev("KURUKSHETRA - THE ROBO WAR");
+    expect(e.maxTeams).toBe(15);
+    expect(e.capacity).toBe(60);
+    expect(isFull(e, { people: 0, teams: 0 })).toBe(true);
+    expect(e.unlisted).toBeFalsy();
+    expect(listedEvents).toContain(e);
+  });
+
+  it("leaves RC-X open", () => {
+    const e = ev("RC-X");
+    expect(e.full).toBeFalsy();
+    expect(isFull(e, { people: 0, teams: 0 })).toBe(false);
+    expect(listedEvents).toContain(e);
+  });
+});
+
 /* Closed on 6 Oct; its teams already in carry on through screening. */
 describe("Discoverize", () => {
   it("takes no new entries", () => {

@@ -139,8 +139,8 @@ export function capacityInPeople(e: Event): number | null {
  * The capacity as a reader should see it.
  *
  * `capacity` is a head count, but for a team event the coordinators think in
- * teams — Robo War's 64 is "16 teams of 4". Printing the raw number beside the
- * word "teams" therefore claimed 64 teams, four times the real field, so the
+ * teams — Robo War's 60 is "15 teams of 4". Printing the raw number beside the
+ * word "teams" therefore claimed 60 teams, four times the real field, so the
  * team count is derived here instead of trusting the unit as a label.
  *
  * Order: an explicit `maxTeams` wins, then the head count divided by the team
@@ -384,8 +384,15 @@ export const events: Event[] = [
     fee: "Rs. 200/-",
     prizes: [15000, 10000, 7000],
     teamSize: { min: 2, max: 4, soloAllowed: false },
-    capacity: 64,
+    /* Capped at 15 teams and closed on 7 Oct, Rathan's call. The desk held
+       8 confirmed teams and 4 in review (at most 12 holding places), under
+       the old 16, so the lower cap cuts nobody already in. capacity is the
+       head count at four a team. Listed and struck through, as a closed
+       event is shown. RC-X is the separate aircraft event and stays open. */
+    capacity: 60,
     capacityUnit: "teams",
+    maxTeams: 15,
+    full: true,
     duration: "3 hours",
     coordinators: {
       faculty: [],
