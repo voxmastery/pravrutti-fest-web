@@ -903,8 +903,16 @@ export const events: Event[] = [
     fee: "Rs. 200/-",
     prizes: [7000, 5000, 3000],
     teamSize: { min: 1, max: 4, soloAllowed: true },
-    capacity: 280,
+    /* Capped at 60 teams on 7 Oct. The desk held 53 confirmed teams and 4
+       in review (57 holding places; 146 confirmed people and 10 pending),
+       under the old 70 (280 heads), so the cap cuts nobody already in.
+       capacity is the head count at four a team. No hand switch: it takes
+       new teams until this cap or the fest deadline. The gate counts
+       entries — distinct teams, plus one per solo entrant — the same
+       figure the desk uses. */
+    capacity: 240,
     capacityUnit: "teams",
+    maxTeams: 60,
     duration: "3 hours",
     eligibility: "Open to all UG and PG students. Cross-department and cross-year teams are welcome. Working professionals may not enter.",
     coordinators: {

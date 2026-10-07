@@ -67,6 +67,14 @@ describe("capacityLabel", () => {
     expect(e.capacity).toBe(76);
     expect(e.full).toBe(true);
   });
+
+  it("Pitch Pulse reads 60 teams on the real data", () => {
+    const e = events.find((x) => x.name === "Pitch Pulse")!;
+    expect(capacityLabel(e)).toBe("60 teams");
+    expect(e.maxTeams).toBe(60);
+    expect(e.capacity).toBe(240);
+    expect(e.full).toBeFalsy();
+  });
 });
 
 describe("capacityLabel — an explicit team cap", () => {
