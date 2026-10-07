@@ -235,6 +235,15 @@ export const sponsors: Sponsor[] = [
     website: "https://elevenlabs.io/",
     wordmark: true,
   },
+  {
+    /* CHAOS's partner, 7 Oct 2026. Solid-white bubble logo from the
+       gen.xyz/files kit (xyz-logos-2019/xyz-logo-white.svg). Their guidelines
+       say the mark is white on a dark ground. */
+    name: ".xyz",
+    logo: "/sponsors/xyz.svg",
+    website: "https://gen.xyz",
+    wordmark: true,
+  },
 ];
 
 export const clubs: Club[] = [
@@ -738,6 +747,14 @@ export const events: Event[] = [
     /* Registrations full, organisers' call, 2 Oct. Switched to full by hand —
        CHAOS has no stated cap — so it stays shut until this is removed. */
     full: true,
+    sponsorPerks: {
+      sponsor: ".xyz",
+      logo: "/sponsors/xyz.svg",
+      website: "https://gen.xyz",
+      perks: [
+        "Free first-year .xyz domains for CHAOS participants",
+      ],
+    },
     duration: "8 hours",
     coordinators: {
       faculty: [],

@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { sponsors } from "@/lib/pravrutti-data";
-import { Rocket, CircuitBoard, Building2, ArrowUpRight } from "lucide-react";
+import { Rocket, CircuitBoard, Building2, Globe, ArrowUpRight } from "lucide-react";
 import { useScrollReveal } from "@/hooks/use-animations";
 
 /* One line each. The old copy ran to ~90 characters, which wrapped to six
@@ -12,6 +12,7 @@ const sponsorMeta: Record<string, { icon: typeof Rocket; desc: string }> = {
   "PCB Cupid": { icon: CircuitBoard, desc: "Modular electronics and dev boards for makers" },
   "IEEE Smart Cities": { icon: Building2, desc: "IEEE's global smart-city technology initiative" },
   ElevenLabs: { icon: Rocket, desc: "AI voice and audio — Hacktivate's partner" },
+  ".xyz": { icon: Globe, desc: "Free first-year .xyz domains for CHAOS participants" },
 };
 
 function SponsorCard({ sponsor, index }: { sponsor: (typeof sponsors)[0]; index: number }) {
