@@ -388,7 +388,7 @@ export const events: Event[] = [
        8 confirmed teams and 4 in review (at most 12 holding places), under
        the old 16, so the lower cap cuts nobody already in. capacity is the
        head count at four a team. Listed and struck through, as a closed
-       event is shown. RC-X is the separate aircraft event and stays open. */
+       event is shown. RC-X, the aircraft event, was left open here. */
     capacity: 60,
     capacityUnit: "teams",
     maxTeams: 15,
@@ -600,8 +600,15 @@ export const events: Event[] = [
     fee: "Rs. 200/-",
     prizes: [10000, 7000, 5000],
     teamSize: { min: 3, max: 4, soloAllowed: false },
-    capacity: 100,
+    /* Capped at 19 teams and closed on 7 Oct, Rathan's call. The desk held
+       14 confirmed teams and 5 in review (19 holding places; 50 confirmed
+       people and 12 pending), under the old 25 (100 heads), so the cap cuts
+       nobody already in. capacity is the head count at four a team. Listed
+       and struck through, as a closed event is shown. */
+    capacity: 76,
     capacityUnit: "teams",
+    maxTeams: 19,
+    full: true,
     duration: "3 hours",
     coordinators: {
       faculty: [],

@@ -59,6 +59,14 @@ describe("capacityLabel", () => {
     expect(e.maxTeams).toBe(15);
     expect(e.capacity).toBe(60);
   });
+
+  it("RC-X reads 19 teams on the real data", () => {
+    const e = events.find((x) => x.name === "RC-X")!;
+    expect(capacityLabel(e)).toBe("19 teams");
+    expect(e.maxTeams).toBe(19);
+    expect(e.capacity).toBe(76);
+    expect(e.full).toBe(true);
+  });
 });
 
 describe("capacityLabel — an explicit team cap", () => {
