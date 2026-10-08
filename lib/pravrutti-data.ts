@@ -588,6 +588,11 @@ export const events: Event[] = [
     prizes: [10000, 7000, 5000],
     teamSize: { min: 2, max: 2, soloAllowed: false },
     capacityUnit: "teams",
+    /* Closed on 8 Oct, Rathan's call. Glide-X has no stated cap to lower,
+       so it is switched to full by hand — the same shut as RC-X. Listed and
+       struck through. No new team; teams already in keep their tickets,
+       payment, and manage-team actions. Remove `full` to reopen. */
+    full: true,
     duration: "3 hours",
     coordinators: {
       faculty: [],

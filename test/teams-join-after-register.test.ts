@@ -39,11 +39,19 @@ vi.mock("@/lib/roles", async (importOriginal) => ({
   resolveRole: async () => role.current,
 }));
 
-vi.mock("@/lib/pravrutti-data", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("@/lib/pravrutti-data")>()),
-  registrationOpen: () => true,
-  effectiveRegistrationOpen: () => true,
-}));
+vi.mock("@/lib/pravrutti-data", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/pravrutti-data")>();
+  return {
+    ...actual,
+    registrationOpen: () => true,
+    effectiveRegistrationOpen: () => true,
+    /* Glide-X is the two-person roster this file fills. Closing it on the
+       live data must not change what that roster test is proving. */
+    events: actual.events.map((e) =>
+      actual.eventId(e.name) === "glide-x" ? { ...e, full: false } : e,
+    ),
+  };
+});
 
 let teamsPost: typeof import("@/app/api/teams/route").POST;
 let teamsGet: typeof import("@/app/api/teams/route").GET;

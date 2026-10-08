@@ -84,6 +84,21 @@ describe("Kurukshetra – The Robo War", () => {
   });
 });
 
+/* Closed on 8 Oct, Rathan's call. No stated cap, so the hand switch is
+   the shut — listed and struck through, the same way as RC-X. */
+describe("Glide-X", () => {
+  it("takes no new teams and stays on the list", () => {
+    const e = ev("Glide-X");
+    expect(eventId(e.name)).toBe("glide-x");
+    expect(e.full).toBe(true);
+    expect(e.capacity).toBeUndefined();
+    expect(e.maxTeams).toBeUndefined();
+    expect(isFull(e, { people: 0, teams: 0 })).toBe(true);
+    expect(e.unlisted).toBeFalsy();
+    expect(listedEvents).toContain(e);
+  });
+});
+
 /* Closed on 7 Oct at 19 teams: listed and struck through, not taken off
    the list. The desk held 14 confirmed and 5 in review, so 19 is the
    whole field and cuts nobody already in. */
