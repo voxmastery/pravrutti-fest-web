@@ -59,6 +59,8 @@ describe("the list itself", () => {
   it("is lowercase, trimmed and has no duplicates", () => {
     for (const e of sl.DISCOVERIZE_SHORTLIST) expect(e).toBe(e.trim().toLowerCase());
     expect(new Set(sl.DISCOVERIZE_SHORTLIST).size).toBe(sl.DISCOVERIZE_SHORTLIST.length);
+    /* First 14 on 6 Oct, second 7 on 8 Oct. */
+    expect(sl.DISCOVERIZE_SHORTLIST).toHaveLength(21);
   });
 
   it("keeps the shortlist table additive", () => {

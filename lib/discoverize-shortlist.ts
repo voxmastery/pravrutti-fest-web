@@ -19,7 +19,7 @@ import { normalizeTeamCode, type Team } from "@/lib/teams";
  * Server-only on purpose: these are students' addresses, and nothing that
  * reaches the browser may import this file.
  *
- * Lowercase. The desk is how the next team is added; this list is the first set.
+ * Lowercase. The desk is how the next team is added; this list is the named sets.
  */
 export const DISCOVERIZE_SHORTLIST: readonly string[] = [
   /* First set — Aailyah, 6 Oct 2026. Every address checked against the live
@@ -38,6 +38,15 @@ export const DISCOVERIZE_SHORTLIST: readonly string[] = [
   "kavanamallesh2006@gmail.com", // Kavana B M
   "manipisahith@gmail.com", // Binco
   "nayanasree1906@gmail.com", // Nayanasree (solo)
+  /* Second set — Aailyah, 8 Oct 2026. Matched to the live roster: team name
+     plus lead, or the solo entrant's name where the roster has no team name. */
+  "arjun.ft1953@gmail.com", // Cosmiks (solo)
+  "manyarajen1234@gmail.com", // Bizwizards
+  "saikiran.m.nijaguli@gmail.com", // FactFinders
+  "poojaumamagesh2007@gmail.com", // Genesis
+  "abhinavnair.sv1@gmail.com", // Abhinav V (solo)
+  "vk.personal27@gmail.com", // VIMAL KANTH (solo)
+  "vkirananath@gmail.com", // Innovexa
 ];
 
 const LISTED = new Set(DISCOVERIZE_SHORTLIST.map((e) => e.trim().toLowerCase()));
