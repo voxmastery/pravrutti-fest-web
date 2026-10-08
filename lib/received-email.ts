@@ -89,8 +89,8 @@ function html(a: Application, ticketUrl: string) {
       </a>
 
       <p style="margin:18px 0 0;color:rgba(247,238,228,.5);font-size:12px;line-height:1.6;">
-        Once your payment is verified we will email your ticket and entry QR. If the event fills up before
-        then, your fee comes back to you in full. Nothing more is needed from you right now.
+        Once your payment is verified we will email your ticket and entry QR. Registration fees are
+        non-refundable. Nothing more is needed from you right now.
       </p>
     </td></tr>
     <tr><td style="padding-top:14px;color:rgba(247,238,228,.35);font-size:11px;text-align:center;">
@@ -111,8 +111,8 @@ function text(a: Application, ticketUrl: string) {
     ``,
     `Track it: ${ticketUrl}`,
     ``,
-    `Once your payment is verified we will email your ticket and entry QR. If the`,
-    `event fills up before then, your fee comes back to you in full.`,
+    `Once your payment is verified we will email your ticket and entry QR.`,
+    `Registration fees are non-refundable.`,
     ``,
     `${FEST.name} — ${FEST.venue}`,
   ];

@@ -288,6 +288,10 @@ export const faqs = [
     answer: "Yes — ₹200 per team, paid online by the team lead (or by you if you enter solo). Teammates who join with a code do not pay."
   },
   {
+    question: "Are registration fees refundable?",
+    answer: "No. Registration fees are non-refundable, and no refunds will be provided for any of the events."
+  },
+  {
     question: "What is the last date for registration?",
     answer: "The last date to register for all events is 9th October 2026, 11:59 PM IST."
   },

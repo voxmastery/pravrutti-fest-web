@@ -252,7 +252,7 @@ export const STATUS_COPY: Record<AppStatus, { label: string; blurb: string }> = 
   },
   declined: {
     label: "Not confirmed",
-    blurb: "This event filled up. Your fee is refunded in full.",
+    blurb: "This event filled up. Registration fees are non-refundable.",
   },
 };
 
@@ -263,7 +263,7 @@ export const STATUS_COPY: Record<AppStatus, { label: string; blurb: string }> = 
 export const EVENT_PAGE_STATUS: Record<AppStatus, string> = {
   pending: "Registration pending approval",
   confirmed: "You\u2019re going",
-  declined: "Not confirmed \u00b7 fee refunded in full",
+  declined: "Not confirmed \u00b7 fee non-refundable",
   cancelled: "Registration cancelled",
 };
 

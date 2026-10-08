@@ -1265,7 +1265,7 @@ export function RegistrationDialog({
                         { icon: ShieldCheck, text: "If confirmed, your ticket and QR unlock straight away." },
                         {
                           icon: RotateCcw,
-                          text: "If it fills up first, the full fee comes back to you.",
+                          text: "Registration fees are non-refundable.",
                         },
                       ].map(({ icon: Icon, text }, i) => (
                         <div key={i} className="flex gap-2.5 items-start">
