@@ -421,8 +421,13 @@ export const events: Event[] = [
     fee: "Rs. 200/-",
     prizes: [5000, 3000, 2000],
     teamSize: { min: 2, max: 4, soloAllowed: false },
-    capacity: 100,
+    /* Raised from 25 to 30 teams on 8 Oct, Rathan and Aryan's ask. It had
+       filled at 25 (23 confirmed, 2 in review), so this reopens five places.
+       capacity is the head count at four a team. No hand switch: it takes
+       new teams until this cap or the fest deadline. */
+    capacity: 120,
     capacityUnit: "teams",
+    maxTeams: 30,
     duration: "3 hours",
     coordinators: {
       faculty: [],

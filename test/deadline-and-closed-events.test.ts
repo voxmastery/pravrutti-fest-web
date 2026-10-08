@@ -136,6 +136,27 @@ describe("Pitch Pulse", () => {
   });
 });
 
+/* Raised from 25 to 30 teams on 8 Oct, Rathan and Aryan's ask. It had
+   filled at 25 (23 confirmed, 2 in review), so five places reopen. No
+   hand switch: new teams are taken until 30 or the fest deadline. */
+describe("Terraform: The System Awakens", () => {
+  it("closes on its own at 30 teams and stays open below that", () => {
+    const e = ev("Terraform: The System Awakens");
+    expect(eventId(e.name)).toBe("terraform-the-system-awakens");
+    expect(e.name).toBe("Terraform: The System Awakens");
+    expect(e.maxTeams).toBe(30);
+    expect(e.capacity).toBe(120);
+    expect(e.full).toBeFalsy();
+    expect(e.unlisted).toBeFalsy();
+    expect(capOf(e)).toEqual({ limit: 30, unit: "teams" });
+    expect(capacityLabel(e)).toBe("30 teams");
+    expect(isFull(e, { people: 77, teams: 25 })).toBe(false);
+    expect(isFull(e, { people: 0, teams: 29 })).toBe(false);
+    expect(isFull(e, { people: 0, teams: 30 })).toBe(true);
+    expect(listedEvents).toContain(e);
+  });
+});
+
 /* Closed again on 8 Oct, Aailyah's request. Not switched to full: the
    events list says "Registrations closed", and teams already in — including
    the shortlist — keep their places. */

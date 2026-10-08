@@ -75,6 +75,14 @@ describe("capacityLabel", () => {
     expect(e.capacity).toBe(240);
     expect(e.full).toBeFalsy();
   });
+
+  it("Terraform reads 30 teams on the real data", () => {
+    const e = events.find((x) => x.name === "Terraform: The System Awakens")!;
+    expect(capacityLabel(e)).toBe("30 teams");
+    expect(e.maxTeams).toBe(30);
+    expect(e.capacity).toBe(120);
+    expect(e.full).toBeFalsy();
+  });
 });
 
 describe("capacityLabel — an explicit team cap", () => {
