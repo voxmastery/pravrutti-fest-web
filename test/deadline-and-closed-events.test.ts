@@ -121,14 +121,18 @@ describe("Pitch Pulse", () => {
   });
 });
 
-/* Closed on 6 Oct, reopened on 7 Oct at the organisers' request, still with
-   no cap. Late joiners are told to reach the WhatsApp group and Aaliyah. */
+/* Closed again on 8 Oct, Aailyah's request. Not switched to full: the
+   events list says "Registrations closed", and teams already in — including
+   the shortlist — keep their places. */
 describe("Discoverize", () => {
-  it("takes entries again, with no capacity", () => {
+  it("is closed on its own date, with no capacity and still on the list", () => {
     const e = ev("Discoverize (Research Paper Presentation)");
     expect(e.full).toBeFalsy();
     expect(e.capacity).toBeUndefined();
     expect(e.maxTeams).toBeUndefined();
+    expect(e.registrationCloses).toBe("2026-10-08T01:30:00.000Z");
+    expect(registrationState(Date.parse("2026-10-08T01:29:00.000Z"), festFor(e))).toBe("open");
+    expect(registrationState(Date.parse("2026-10-08T01:30:00.000Z"), festFor(e))).toBe("closed");
     expect(isFull(e, { people: 0, teams: 0 })).toBe(false);
     expect(listedEvents).toContain(e);
   });

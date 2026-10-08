@@ -152,7 +152,12 @@ export async function POST(req: Request) {
      for those again from a screen that does not show them — the answer came
      back "enter a 10-digit mobile number" with no field to put it in, and the
      registration could not be completed at all. This updates the one thing
-     that is actually missing. */
+     that is actually missing.
+
+     This returns before the registration-window and full-event checks below.
+     Closing Discoverize (registrationCloses) stops a new sign-up. It must
+     not stop a shortlisted team paying the ₹200 and attaching the JUNO
+     reference afterwards. */
   if (body?.stage === "reference") {
     const evId = String(body?.eventId ?? "").trim();
     const event = events.find((e) => eventId(e.name) === evId);
