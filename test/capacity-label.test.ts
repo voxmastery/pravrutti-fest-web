@@ -76,6 +76,14 @@ describe("capacityLabel", () => {
     expect(e.full).toBe(true);
   });
 
+  it("Robo Race reads 45 teams on the real data", () => {
+    const e = events.find((x) => x.name === "ROBO RACE")!;
+    expect(capacityLabel(e)).toBe("45 teams");
+    expect(e.maxTeams).toBe(45);
+    expect(e.capacity).toBe(180);
+    expect(e.full).toBeFalsy();
+  });
+
   it("Terraform reads 30 teams on the real data", () => {
     const e = events.find((x) => x.name === "Terraform: The System Awakens")!;
     expect(capacityLabel(e)).toBe("30 teams");

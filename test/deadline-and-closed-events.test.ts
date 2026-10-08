@@ -27,6 +27,24 @@ const HIDDEN = ["CHAOS", "AI ESCAPE ROOM", "LINE FOLLOWER"];
 const ev = (name: string) => events.find((e) => e.name === name)!;
 const AFTER_OLD_DEADLINE = Date.parse("2026-10-07T06:00:00.000Z"); // 7 Oct, 11:30 AM IST
 
+/* Raised from 40 to 45 teams on 8 Oct. It had filled at 40 (38 confirmed,
+   2 in review). No hand switch, so 40 holding places is open and 45 is full. */
+describe("ROBO RACE", () => {
+  it("is open below 45 teams and stays on the list", () => {
+    const e = ev("ROBO RACE");
+    expect(eventId(e.name)).toBe("robo-race");
+    expect(e.maxTeams).toBe(45);
+    expect(e.capacity).toBe(180);
+    expect(e.full).toBeFalsy();
+    expect(capOf(e)).toEqual({ limit: 45, unit: "teams" });
+    expect(capacityLabel(e)).toBe("45 teams");
+    expect(isFull(e, { people: 0, teams: 40 })).toBe(false);
+    expect(isFull(e, { people: 0, teams: 44 })).toBe(false);
+    expect(isFull(e, { people: 0, teams: 45 })).toBe(true);
+    expect(listedEvents).toContain(e);
+  });
+});
+
 describe("the fest-wide deadline", () => {
   it("is 9 October, 11:59 PM IST", () => {
     expect(FEST.registrationCloses).toBe("2026-10-09T18:29:59.000Z");
