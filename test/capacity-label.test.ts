@@ -73,7 +73,7 @@ describe("capacityLabel", () => {
     expect(capacityLabel(e)).toBe("60 teams");
     expect(e.maxTeams).toBe(60);
     expect(e.capacity).toBe(240);
-    expect(e.full).toBeFalsy();
+    expect(e.full).toBe(true);
   });
 
   it("Terraform reads 30 teams on the real data", () => {

@@ -114,24 +114,21 @@ describe("RC-X", () => {
   });
 });
 
-/* Capped at 60 teams on 7 Oct. The desk held 57 (53 confirmed, 4 in review),
-   under the old 70, so it stays open until that cap and cuts nobody already
-   in. Counted as entries: distinct teams, plus one per solo entrant — not
-   the 156 people those entries are made of. Not Pitch at Mach. */
+/* Closed by hand on 8 Oct, the same shut as RC-X and Robo War. The 60-team
+   cap stays, so confirmed and in-review teams are not cut. full keeps it
+   shut even with room under that cap. Listed, not taken off the list. */
 describe("Pitch Pulse", () => {
-  it("closes on its own at 60 teams and stays open below that", () => {
+  it("takes no new teams and stays on the list", () => {
     const e = ev("Pitch Pulse");
     expect(eventId(e.name)).toBe("pitch-pulse");
     expect(e.name).toBe("Pitch Pulse");
     expect(e.maxTeams).toBe(60);
     expect(e.capacity).toBe(240);
-    expect(e.full).toBeFalsy();
+    expect(e.full).toBe(true);
     expect(e.unlisted).toBeFalsy();
     expect(capOf(e)).toEqual({ limit: 60, unit: "teams" });
     expect(capacityLabel(e)).toBe("60 teams");
-    expect(isFull(e, { people: 156, teams: 57 })).toBe(false);
-    expect(isFull(e, { people: 0, teams: 59 })).toBe(false);
-    expect(isFull(e, { people: 0, teams: 60 })).toBe(true);
+    expect(isFull(e, { people: 0, teams: 0 })).toBe(true);
     expect(listedEvents).toContain(e);
   });
 });
