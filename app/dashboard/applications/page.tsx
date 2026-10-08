@@ -6,6 +6,14 @@ import Image from "next/image";
 import { useIdentity } from "@/lib/identity-context";
 import { useDashboardRole } from "@/hooks/use-dashboard-role";
 import { readPaymentRef, type Application, type AppStatus } from "@/lib/applications";
+import {
+  bucketForTeam,
+  collegeBucket,
+  holdsLocationPlace,
+  LOCATION_BUCKETS,
+  locationLabel,
+  type LocationBucket,
+} from "@/lib/college-location";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
@@ -47,6 +55,7 @@ type Feed = {
 };
 
 type StatusFilter = "all" | AppStatus | "awaiting_payment";
+type LocationFilter = "all" | LocationBucket;
 
 const STATUS_FILTERS: { id: StatusFilter; label: string }[] = [
   { id: "all", label: "All" },
@@ -60,6 +69,9 @@ const key = (a: Application) => `${a.eventId}:${a.email}`;
 /** A team is a code on one event — the same code can exist on two events
     after a team is moved, and those are not the same team. */
 const teamKey = (a: Application) => `${a.eventId}#${String(a.teamCode).toUpperCase()}`;
+/** Solos have no code, so each one is their own entry. */
+const placeKey = (a: Application) =>
+  a.teamCode ? teamKey(a) : `${a.eventId}#solo#${a.email.toLowerCase()}`;
 
 type Group =
   | { kind: "solo"; key: string; a: Application }
@@ -110,6 +122,7 @@ export default function ApplicationsDeskPage() {
   const [query, setQuery] = useState("");
   const [event, setEvent] = useState("all");
   const [status, setStatus] = useState<StatusFilter>("all");
+  const [place, setPlace] = useState<LocationFilter>("all");
   const [open, setOpen] = useState<string | null>(null);
 
   const load = useCallback(async () => {
@@ -153,11 +166,45 @@ export default function ApplicationsDeskPage() {
     });
   };
 
+  /* One bucket per team, from the lead's college. Declined and refunded
+     rows do not decide it and are not counted. */
+  const placeOf = useMemo(() => {
+    const groups = new Map<string, Application[]>();
+    for (const a of feed?.applications ?? []) {
+      const k = placeKey(a);
+      groups.set(k, [...(groups.get(k) ?? []), a]);
+    }
+    const out = new Map<string, LocationBucket>();
+    for (const [k, members] of groups) out.set(k, bucketForTeam(members));
+    return out;
+  }, [feed]);
+
+  const countPlaces = useCallback((eventId: string) => {
+    const seen = new Set<string>();
+    const counts: Record<LocationBucket, number> = { bengaluru: 0, karnataka: 0, outside: 0, unknown: 0 };
+    for (const a of feed?.applications ?? []) {
+      if (eventId !== "all" && a.eventId !== eventId) continue;
+      if (!holdsLocationPlace(a)) continue;
+      const k = placeKey(a);
+      if (seen.has(k)) continue;
+      seen.add(k);
+      counts[placeOf.get(k) ?? "unknown"] += 1;
+    }
+    return counts;
+  }, [feed, placeOf]);
+
+  const placeCounts = useMemo(() => countPlaces(event), [countPlaces, event]);
+  const placeCountsAll = useMemo(() => countPlaces("all"), [countPlaces]);
+
   const rows = useMemo(() => {
     if (!feed) return [];
     const q = query.trim().toLowerCase();
     return feed.applications.filter((a) => {
       if (event !== "all" && a.eventId !== event) return false;
+      if (place !== "all") {
+        if (!holdsLocationPlace(a)) return false;
+        if ((placeOf.get(placeKey(a)) ?? "unknown") !== place) return false;
+      }
       if (status === "awaiting_payment" && a.payment !== "awaiting") return false;
       if (status !== "all" && status !== "awaiting_payment" && a.status !== status) return false;
       if (!q) return true;
@@ -165,7 +212,7 @@ export default function ApplicationsDeskPage() {
         .filter(Boolean)
         .some((v) => String(v).toLowerCase().includes(q));
     });
-  }, [feed, query, event, status]);
+  }, [feed, query, event, status, place, placeOf]);
 
   /* Counted here rather than taken from the response: an action patches rows
      in place, and tiles still quoting the numbers the server sent on page
@@ -222,13 +269,14 @@ export default function ApplicationsDeskPage() {
   const exportCsv = () => {
     const head = [
       "ticketId", "event", "status", "payment", "paymentRef", "fee", "name", "email",
-      "phone", "college", "teamName", "teamCode", "members", "appliedAt",
+      "phone", "college", "location", "teamName", "teamCode", "members", "appliedAt",
       "paymentVerifiedBy", "paymentVerifiedAt", "confirmationEmailAt",
     ];
     const body = rows.map((r) =>
       [
         r.ticketId, r.eventName, r.status, r.payment, r.paymentRef ?? "", r.fee, r.name,
-        r.email, r.phone, r.college, r.teamName ?? "", r.teamCode ?? "",
+        r.email, r.phone, r.college, locationLabel(placeOf.get(placeKey(r)) ?? collegeBucket(r.college)),
+        r.teamName ?? "", r.teamCode ?? "",
         readMembers(r.members).join(" | "), r.appliedAt, r.paymentVerifiedBy ?? "",
         r.paymentVerifiedAt ?? "", r.confirmationEmailAt ?? "",
       ]
@@ -353,6 +401,34 @@ export default function ApplicationsDeskPage() {
           <div className="mb-4 flex flex-wrap items-center gap-1.5">
             <FilterGroup value={status} options={STATUS_FILTERS} onChange={setStatus} label="Filter by status" />
             <span className="ml-auto self-center text-xs tabular-nums text-white/35">{rows.length} shown</span>
+          </div>
+
+          <div className="mb-4">
+            <FilterGroup
+              value={place}
+              options={[
+                { id: "all", label: "All locations" },
+                ...LOCATION_BUCKETS.map((b) => ({
+                  id: b.id,
+                  label: `${b.label} · ${placeCounts[b.id]}`,
+                })),
+              ]}
+              onChange={setPlace}
+              label="Filter by location"
+            />
+            <p className="mt-2 text-xs text-white/40">
+              {placeCounts.bengaluru + placeCounts.karnataka + placeCounts.outside + placeCounts.unknown} teams
+              confirmed or in review
+              {event === "all" ? " across the fest" : " for this event"}. A team is counted once, from its lead&apos;s
+              college. Declined and refunded teams are left out.
+              {event !== "all" && (
+                <>
+                  {" "}
+                  All events: Bengaluru {placeCountsAll.bengaluru}, Karnataka {placeCountsAll.karnataka}, outside{" "}
+                  {placeCountsAll.outside}, unknown {placeCountsAll.unknown}.
+                </>
+              )}
+            </p>
           </div>
 
           <Card className="gap-0 overflow-hidden rounded-2xl border-royal-wine/70 bg-cosmic-purple/40 py-0 shadow-none">
@@ -536,7 +612,10 @@ function Row({
             <Detail k="Phone">
               <a href={`tel:${a.phone}`} className="text-champagne-gold hover:underline">{a.phone}</a>
             </Detail>
-            <Detail k="College">{a.college}</Detail>
+            <Detail k="College">
+              {a.college}
+              <span className="ml-2 text-white/40">{locationLabel(collegeBucket(a.college))}</span>
+            </Detail>
             <Detail k="Fee">{a.fee}</Detail>
             {a.teamName && <Detail k="Team">{a.teamName}</Detail>}
             {a.teamCode && <Detail k="Team code">{a.teamCode}</Detail>}
@@ -794,7 +873,8 @@ function TeamBlock({
             <span className="ml-2 font-normal tracking-wider text-white/35">{group.code}</span>
           </span>
           <span className="block truncate text-xs text-white/40">
-            {group.eventName} · {live.length} {live.length === 1 ? "member" : "members"}
+            {group.eventName} · {locationLabel(bucketForTeam(group.all))} · {live.length}{" "}
+            {live.length === 1 ? "member" : "members"}
             {waiting.length > 0 && ` · ${waiting.length} in review`}
             {confirmed.length > 0 && ` · ${confirmed.length} confirmed`}
             {payer && ` · ${payer.payment === "paid" ? "fee verified" : `${payer.fee} due`}`}
