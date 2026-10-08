@@ -54,7 +54,7 @@ describe("desk access (lib/dashboard-access)", () => {
         )
       )
       .map((e) => e.name);
-    expect(granted).toEqual([]);
+    expect(granted).toEqual(["Discoverize (Research Paper Presentation)"]);
   });
 });
 
@@ -106,9 +106,12 @@ describe("roleForEmail", () => {
     });
   });
 
-  it("does not treat roppashreeganesh@gmail.com as a coordinator until an event is assigned", () => {
+  it("gives roppashreeganesh@gmail.com only the Discoverize desk", () => {
     process.env.ORGANISER_EMAILS = "voxmastery@gmail.com";
-    expect(roleForEmail("roppashreeganesh@gmail.com")).toEqual({ kind: "none" });
+    expect(roleForEmail("roppashreeganesh@gmail.com")).toEqual({
+      kind: "coordinator",
+      eventIds: expectedEvents(["discoverize-research-paper-presentation"]),
+    });
   });
 });
 

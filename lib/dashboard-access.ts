@@ -21,7 +21,7 @@ export const DESK_ACCESS: Record<string, string[]> = {
   "kurukshetra-the-robo-war": ["arbharaath@gmail.com", "rathannraj1@gmail.com"],
   "terraform-the-system-awakens": ["sambalagarwal@gmail.com", "radheofficial11@gmail.com"],
   "electroxcape": ["meghahemanna@gmail.com", "sachinmowgli@gmail.com"],
-  "discoverize-research-paper-presentation": ["aaliyahaijaz2006@gmail.com", "gnaneshwarign15@gmail.com"],
+  "discoverize-research-paper-presentation": ["aaliyahaijaz2006@gmail.com", "gnaneshwarign15@gmail.com", "roppashreeganesh@gmail.com"],
   "fault-x-load": ["bhauthikfirefly@gmail.com", "vimalkanth411@gmail.com"],
   "campus-innovators-2-0": ["akshayworkofficial01@gmail.com", "nikhita.n0601@gmail.com"],
   "beyond-the-blueprint-2-0": ["akshayworkofficial01@gmail.com", "nikhita.n0601@gmail.com"],
