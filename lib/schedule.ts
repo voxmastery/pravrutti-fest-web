@@ -65,7 +65,9 @@ export const scheduleDays: ScheduleDay[] = [
         entries: [
           { track: 1, eventId: "pitch-at-mach", label: "Pitch at Mach", host: "AeSI" },
           { track: 2, eventId: "discoverize-research-paper-presentation", label: "Discoverize — Research Paper", host: "ISTE" },
-          { track: 4, eventId: "pitch-pulse", label: "Pitch Pulse", host: "IIC", time: "2:00 PM – 8:00 PM" },
+          /* Track 3, spanning to 8:00 PM. Track 4 is empty from 2 PM — Rathan's
+             sheet, 8 Oct. */
+          { track: 3, eventId: "pitch-pulse", label: "Pitch Pulse", host: "IIC", time: "2:00 PM – 8:00 PM" },
         ],
       },
       {
@@ -100,14 +102,6 @@ export const scheduleDays: ScheduleDay[] = [
           { track: 2, eventId: "beyond-the-blueprint-2-0", label: "Beyond the Blueprint", host: "TSS" },
           { track: 3, eventId: "zero-hour", label: "Zero Hour", host: "Cynergy" },
         ],
-      },
-      /* Moved here from 14 Oct, 2:00 PM on 6 Oct, organisers' call. Its own
-         row because every column is taken at 2:30 — Hammer's runs on until
-         3:00 and carries down into it. */
-      {
-        kind: "tracks",
-        time: "2:30 PM – 5:30 PM",
-        entries: [{ track: 1, eventId: "dent-innovate", label: "Dent Innovate", host: "IIC" }],
       },
       { kind: "banner", time: "3:00 PM – 7:00 PM", label: "Under25" },
     ],
@@ -197,6 +191,15 @@ export const longRunning: { date: string; time: string; eventId: string; label: 
     eventId: "chaos",
     label: "Chaos",
     host: "IEEE",
+  },
+  /* Below the track grid with Hacktivate and Chaos, not in the 15 Oct
+     columns — Rathan's sheet, 8 Oct. Still 2:30 PM that day. */
+  {
+    date: "15 October",
+    time: "2:30 PM – 5:30 PM",
+    eventId: "dent-innovate",
+    label: "Dent Innovate",
+    host: "IIC",
   },
 ];
 

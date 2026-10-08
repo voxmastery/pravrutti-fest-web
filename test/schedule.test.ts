@@ -144,14 +144,14 @@ describe("row spans", () => {
   it("carries Pitch Pulse down into the 5 PM row", () => {
     const blocks = day(1).blocks;
     const i = blocks.findIndex((b) => b.kind === "tracks" && b.time === "2:00 PM – 5:00 PM");
-    expect(entryRowSpan(day(1), i, 4)).toBe(2);
+    expect(entryRowSpan(day(1), i, 3)).toBe(2);
   });
 
   it("carries Hammer and Kurukshetra down too", () => {
     const d2 = day(2).blocks.findIndex((b) => b.kind === "tracks" && b.time === "9:00 AM – 12:00 PM");
-    /* Hammer runs to 3:00 PM: through the noon row, and into the 2:30 PM row
-       Dent Innovate opened on 15 Oct. */
-    expect(entryRowSpan(day(2), d2, 4)).toBe(3);
+    /* Hammer runs to 3:00 PM, through the noon row. The next row is the
+       Under25 banner, so the span stops there. */
+    expect(entryRowSpan(day(2), d2, 4)).toBe(2);
     const d3 = day(3).blocks.findIndex((b) => b.kind === "tracks" && b.time === "9:00 AM – 12:00 PM");
     expect(entryRowSpan(day(3), d3, 4)).toBe(2);
   });
@@ -195,20 +195,37 @@ describe("row spans", () => {
     const i = blocks.findIndex((b) => b.kind === "tracks" && b.time === "2:00 PM – 5:00 PM");
     const b = blocks[i];
     if (b.kind !== "tracks") throw new Error("expected tracks");
-    expect(b.entries.find((e) => e.track === 4)!.time).toBe("2:00 PM – 8:00 PM");
-    expect(entryRowSpan(day(1), i, 4)).toBe(2);
+    const pulse = b.entries.find((e) => e.eventId === "pitch-pulse")!;
+    expect(pulse.track).toBe(3);
+    expect(pulse.time).toBe("2:00 PM – 8:00 PM");
+    expect(b.entries.find((e) => e.track === 4)).toBeUndefined();
+    expect(entryRowSpan(day(1), i, 3)).toBe(2);
+    const evening = blocks.find((x) => x.kind === "tracks" && x.time === "5:00 PM – 8:00 PM");
+    if (evening?.kind !== "tracks") throw new Error("expected tracks");
+    expect(evening.entries.find((e) => e.track === 3 || e.track === 4)).toBeUndefined();
   });
 });
 
-/* Moved on 6 Oct 2026 from 14 Oct, 2:00 PM to 15 Oct, 2:30 PM, organisers'
-   call. The timetable, the event page and the event's own rules must agree. */
+/* Moved on 6 Oct 2026 from 14 Oct, 2:00 PM to 15 Oct, 2:30 PM, then out of
+   the track grid on 8 Oct into the alongside rows with Hacktivate and Chaos.
+   The timetable, the event page and the event's own rules must agree. */
 describe("DENT - INNOVATE's slot", () => {
-  const where = scheduleDays.flatMap((d) =>
-    d.blocks.flatMap((b) => (b.kind === "tracks" && b.entries.some((e) => e.eventId === "dent-innovate") ? [{ date: d.date, time: b.time }] : [])),
-  );
-
-  it("is 15 October, from 2:30 PM, and nowhere else", () => {
-    expect(where).toEqual([{ date: "15 October 2026", time: "2:30 PM – 5:30 PM" }]);
+  it("runs alongside on 15 October from 2:30 PM, not inside a track", () => {
+    const inTracks = scheduleDays.flatMap((d) =>
+      d.blocks.flatMap((b) =>
+        b.kind === "tracks" && b.entries.some((e) => e.eventId === "dent-innovate") ? [d.date] : [],
+      ),
+    );
+    expect(inTracks).toEqual([]);
+    expect(longRunning.filter((l) => l.eventId === "dent-innovate")).toEqual([
+      {
+        date: "15 October",
+        time: "2:30 PM – 5:30 PM",
+        eventId: "dent-innovate",
+        label: "Dent Innovate",
+        host: "IIC",
+      },
+    ]);
   });
 
   it("is what its event page says", () => {
