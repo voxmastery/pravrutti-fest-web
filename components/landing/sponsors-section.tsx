@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState } from "react";
 import { sponsors, type Sponsor } from "@/lib/pravrutti-data";
-import { useScrollReveal } from "@/hooks/use-animations";
 
 /* Presentation only. The sponsor records (name, logo, website) stay in
    pravrutti-data; this is how the homepage groups and captions them.
@@ -37,7 +36,7 @@ const groups: { id: string; label: string; note: string; names: string[] }[] = [
   },
 ];
 
-function SponsorCard({ sponsor, index }: { sponsor: Sponsor; index: number }) {
+function SponsorCard({ sponsor }: { sponsor: Sponsor }) {
   const meta = sponsorMeta[sponsor.name] ?? { event: "Partners", role: "" };
   const [broken, setBroken] = useState(false);
   const img = useRef<HTMLImageElement>(null);
@@ -57,8 +56,11 @@ function SponsorCard({ sponsor, index }: { sponsor: Sponsor; index: number }) {
       href={sponsor.website}
       target="_blank"
       rel="noopener noreferrer"
-      style={{ transitionDelay: `${index * 60}ms` }}
-      className="reveal-up group flex h-full min-h-[11.25rem] flex-col items-center justify-between rounded-2xl border border-royal-wine/80 bg-cosmic-purple/30 px-6 py-6 text-center transition-[transform,border-color,background-color,box-shadow] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] hover:-translate-y-1 hover:border-champagne-gold/40 hover:bg-cosmic-purple/55 hover:shadow-[0_18px_40px_-24px_rgba(242,210,174,0.45)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyber-pink motion-reduce:transition-none motion-reduce:hover:translate-y-0 motion-reduce:hover:shadow-none"
+      /* No reveal-up. That class paints opacity 0 until an
+         IntersectionObserver adds .revealed, so with no JS, before the
+         observer fires, and in a headless capture, the card is invisible.
+         The mark has to be on the page in the default stylesheet. */
+      className="group flex h-full min-h-[11.25rem] flex-col items-center justify-between rounded-2xl border border-royal-wine/80 bg-deep-plum px-6 py-6 text-center transition-[transform,border-color,box-shadow] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] hover:-translate-y-1 hover:border-champagne-gold/40 hover:shadow-[0_18px_40px_-24px_rgba(242,210,174,0.45)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyber-pink motion-reduce:transition-none motion-reduce:hover:translate-y-0 motion-reduce:hover:shadow-none"
     >
       <span className="flex min-h-16 w-full items-center justify-center">
         {showLogo ? (
@@ -70,13 +72,12 @@ function SponsorCard({ sponsor, index }: { sponsor: Sponsor; index: number }) {
             onError={() => setBroken(true)}
             /* One well for every mark. Wide wordmarks share a height; the
                .xyz bubble is short and square, so it is taller or it reads
-               as a speck next to ElevenLabs. Resting state is the white
-               mark; hover only brightens it — these files have no separate
-               colour version that still reads on this ground. */
+               as a speck next to ElevenLabs. They are full-white on the plum
+               card; hover only brightens them. */
             className={
               compact
-                ? "h-14 w-auto max-w-[8.5rem] object-contain opacity-90 transition duration-300 group-hover:opacity-100 group-hover:brightness-125 motion-reduce:transition-none"
-                : "h-10 w-auto max-w-full object-contain opacity-90 transition duration-300 group-hover:opacity-100 group-hover:brightness-125 motion-reduce:transition-none sm:h-11"
+                ? "h-14 w-auto max-w-[8.5rem] object-contain opacity-100 transition duration-300 group-hover:brightness-125 motion-reduce:transition-none"
+                : "h-10 w-auto max-w-full object-contain opacity-100 transition duration-300 group-hover:brightness-125 motion-reduce:transition-none sm:h-11"
             }
           />
         ) : (
@@ -100,7 +101,6 @@ function SponsorCard({ sponsor, index }: { sponsor: Sponsor; index: number }) {
 }
 
 export function SponsorsSection() {
-  const headerRef = useScrollReveal();
   const byName = new Map(sponsors.map((s) => [s.name, s]));
   const placed = new Set(groups.flatMap((g) => g.names));
   const rows = groups.map((g) => ({
@@ -112,14 +112,12 @@ export function SponsorsSection() {
     rows.push({ id: "partners", label: "Partners", note: "", names: rest.map((s) => s.name), sponsors: rest });
   }
 
-  let cardIndex = 0;
-
   return (
     <section className="relative overflow-hidden border-t border-royal-wine/40 bg-black py-28 lg:py-36">
       <div className="pointer-events-none absolute left-1/2 top-0 h-[280px] w-[640px] -translate-x-1/2 rounded-full bg-neon-purple/10 blur-[140px]" />
 
       <div className="relative z-10 mx-auto max-w-[1200px] px-6">
-        <div ref={headerRef} className="reveal-up mx-auto mb-16 max-w-3xl text-center lg:mb-20">
+        <div className="mx-auto mb-16 max-w-3xl text-center lg:mb-20">
           <span className="mb-6 inline-flex items-center gap-3 text-xs uppercase tracking-[0.28em] text-cyber-pink md:text-sm">
             <span className="h-px w-10 bg-neon-purple" />
             PARTNERS
@@ -153,10 +151,7 @@ export function SponsorsSection() {
                     : "grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 sm:max-lg:[&>*:last-child:nth-child(odd)]:col-span-2 sm:max-lg:[&>*:last-child:nth-child(odd)]:mx-auto sm:max-lg:[&>*:last-child:nth-child(odd)]:w-[calc(50%-0.5rem)]"
                 }
               >
-                {row.sponsors.map((s) => {
-                  const index = cardIndex;
-                  cardIndex += 1;
-                  return (
+                {row.sponsors.map((s) => (
                     <div
                       key={s.name}
                       className={
@@ -165,10 +160,9 @@ export function SponsorsSection() {
                           : "h-full"
                       }
                     >
-                      <SponsorCard sponsor={s} index={index} />
+                      <SponsorCard sponsor={s} />
                     </div>
-                  );
-                })}
+                  ))}
               </div>
             </div>
           ))}
