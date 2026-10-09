@@ -239,3 +239,29 @@ describe("DENT - INNOVATE's slot", () => {
     expect(dent.description).not.toMatch(/begin at 2:00 pm/);
   });
 });
+
+/* The sheet has the event windows and no separate freeze clock. Judging
+   times live in the event copy and have to sit inside those windows. */
+describe("hackathon judging", () => {
+  it("puts Hacktivate judging inside the overnight window, freeze when called", () => {
+    expect(longRunning.find((l) => l.eventId === "hacktivate")).toMatchObject({
+      date: "14 October",
+      time: "11:00 AM – 11:00 AM (next day)",
+    });
+    const hk = events.find((e) => e.name === "Hacktivate")!;
+    expect(hk.description).toContain(
+      "Final judging is on 15 October 2026, 9:00–11:00 AM. Each team powers on and demos its build live, then Q&A. Judging rounds run 9:00–11:00 AM on 15 Oct; the build window is 14 Oct 11:00 AM to 15 Oct 11:00 AM, and the code/hardware freeze applies when your team is called.",
+    );
+  });
+
+  it("puts CHAOS judging inside the 11:30 AM–7:30 PM event, live demos only", () => {
+    expect(longRunning.find((l) => l.eventId === "chaos")).toMatchObject({
+      date: "15 October",
+      time: "11:30 AM – 7:30 PM",
+    });
+    const chaos = events.find((e) => e.name === "CHAOS")!;
+    expect(chaos.description).toContain(
+      "Judging is on 15 October 2026, 5:00–7:30 PM, live demos only (no slides or recordings), within the 11:30 AM–7:30 PM event.",
+    );
+  });
+});
