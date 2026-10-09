@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { existsSync } from "node:fs";
-import { sponsors } from "@/lib/pravrutti-data";
+import { events, sponsors } from "@/lib/pravrutti-data";
 
 /**
  * A logo path with no file behind it.
@@ -25,5 +25,21 @@ describe("sponsor logos", () => {
 
   it("gives every sponsor a working website", () => {
     for (const s of sponsors) expect(s.website).toMatch(/^https:\/\/\S+$/);
+  });
+
+  it("event partner-perk logos resolve, and Seeed's Hacktivate award is listed", () => {
+    for (const e of events) {
+      for (const p of e.sponsorPerks ?? []) {
+        expect(existsSync(`public${p.logo}`), `${e.name}: missing ${p.logo}`).toBe(true);
+        expect(p.website).toMatch(/^https:\/\/\S+$/);
+      }
+    }
+    const seeed = events
+      .find((e) => e.name === "Hacktivate")
+      ?.sponsorPerks?.find((p) => p.sponsor === "Seeed Studio");
+    expect(seeed?.website).toBe("https://www.seeedstudio.com");
+    expect(seeed?.perks).toContain(
+      "Best Voice AI Project, prize by reSpeaker (Seeed Studio)",
+    );
   });
 });

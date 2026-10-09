@@ -61,9 +61,10 @@ export interface Event {
       through festFor(), so the event page, the forms and the API agree. */
   registrationCloses?: string;
   /** A sponsor's perks for this event's participants, shown under the
-      prizes — ElevenLabs on Hacktivate. The logo follows the sponsor's own
+      prizes — one card per sponsor (ElevenLabs and Seeed Studio on
+      Hacktivate, .xyz on CHAOS). The logo follows the sponsor's own
       brand guidelines: their white wordmark, on our dark ground. */
-  sponsorPerks?: { sponsor: string; logo: string; website: string; perks: string[] };
+  sponsorPerks?: { sponsor: string; logo: string; website: string; perks: string[] }[];
   /** How long the event runs, e.g. "3 hours", "24 hours". */
   duration?: string;
   /** Entry restriction, where one exists (year, branch, team make-up). */
@@ -242,6 +243,16 @@ export const sponsors: Sponsor[] = [
     name: ".xyz",
     logo: "/sponsors/xyz.svg",
     website: "https://gen.xyz",
+    wordmark: true,
+  },
+  {
+    /* Hacktivate's hardware sponsor, 9 Oct 2026. The file they sent for
+       dark grounds is a dark wordmark on white, which would vanish on this
+       near-black section, so it is knocked out to a white wordmark — the
+       same treatment as ElevenLabs and .xyz. */
+    name: "Seeed Studio",
+    logo: "/sponsors/seeed.webp",
+    website: "https://www.seeedstudio.com",
     wordmark: true,
   },
 ];
@@ -767,14 +778,16 @@ export const events: Event[] = [
     /* Registrations full, organisers' call, 2 Oct. Switched to full by hand —
        CHAOS has no stated cap — so it stays shut until this is removed. */
     full: true,
-    sponsorPerks: {
-      sponsor: ".xyz",
-      logo: "/sponsors/xyz.svg",
-      website: "https://gen.xyz",
-      perks: [
-        "Free first-year .xyz domains for CHAOS participants",
-      ],
-    },
+    sponsorPerks: [
+      {
+        sponsor: ".xyz",
+        logo: "/sponsors/xyz.svg",
+        website: "https://gen.xyz",
+        perks: [
+          "Free first-year .xyz domains for CHAOS participants",
+        ],
+      },
+    ],
     duration: "8 hours",
     coordinators: {
       faculty: [],
@@ -794,16 +807,26 @@ export const events: Event[] = [
     capacityUnit: "teams",
     /* Closes early: 11:59 PM IST on 1 October, organisers' call. */
     registrationCloses: "2026-10-01T18:29:59.000Z",
-    sponsorPerks: {
-      sponsor: "ElevenLabs",
-      logo: "/sponsors/elevenlabs.svg",
-      website: "https://elevenlabs.io/",
-      perks: [
-        "Every participant: 1 month of ElevenLabs Creator, free",
-        "Overall winning team: 3 months of ElevenLabs Pro for each member",
-        "Best project built with ElevenLabs: 3 months of ElevenLabs Scale for each member",
-      ],
-    },
+    sponsorPerks: [
+      {
+        sponsor: "ElevenLabs",
+        logo: "/sponsors/elevenlabs.svg",
+        website: "https://elevenlabs.io/",
+        perks: [
+          "Every participant: 1 month of ElevenLabs Creator, free",
+          "Overall winning team: 3 months of ElevenLabs Pro for each member",
+          "Best project built with ElevenLabs: 3 months of ElevenLabs Scale for each member",
+        ],
+      },
+      {
+        sponsor: "Seeed Studio",
+        logo: "/sponsors/seeed.webp",
+        website: "https://www.seeedstudio.com",
+        perks: [
+          "Best Voice AI Project, prize by reSpeaker (Seeed Studio)",
+        ],
+      },
+    ],
     duration: "24 hours",
     coordinators: {
       faculty: [],
