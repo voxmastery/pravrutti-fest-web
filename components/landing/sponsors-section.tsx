@@ -5,12 +5,12 @@ import { sponsors, type Sponsor } from "@/lib/pravrutti-data";
 
 /* Presentation only. Every name here sponsors the fest, not one arena.
    Event pages keep their own partner-perk copy. */
-const sponsorMeta: Record<string, { role: string; mark?: "compact" }> = {
-  ElevenLabs: { role: "AI voice and audio" },
-  "Seeed Studio": { role: "Hardware" },
-  "PCB Cupid": { role: "Components" },
-  ".xyz": { role: "Domains", mark: "compact" },
-  "IEEE Smart Cities": { role: "Smart cities" },
+const sponsorMeta: Record<string, { event: string; role: string; mark?: "compact" }> = {
+  ElevenLabs: { event: "Hacktivate", role: "AI voice and audio" },
+  "Seeed Studio": { event: "Hacktivate", role: "Hardware" },
+  "PCB Cupid": { event: "Hacktivate", role: "Components" },
+  ".xyz": { event: "CHAOS", role: "Domains", mark: "compact" },
+  "IEEE Smart Cities": { event: "Community", role: "Smart cities" },
 };
 
 /** The order on the wall. Anyone added to the data list and missing here
@@ -71,9 +71,18 @@ function SponsorCard({ sponsor }: { sponsor: Sponsor }) {
           </span>
         )}
       </span>
-      {meta?.role && (
-        <span className="block text-sm leading-snug text-pearl-white/60">
-          {meta.role}
+      {(meta?.event || meta?.role) && (
+        <span className="block">
+          {meta?.event && (
+            <span className="block font-display text-[10px] font-bold uppercase tracking-[0.24em] text-champagne-gold">
+              {meta.event}
+            </span>
+          )}
+          {meta?.role && (
+            <span className="mt-1.5 block text-sm leading-snug text-pearl-white/60">
+              {meta.role}
+            </span>
+          )}
         </span>
       )}
     </a>
