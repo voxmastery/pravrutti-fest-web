@@ -5,10 +5,12 @@ import { sponsors, type Sponsor } from "@/lib/pravrutti-data";
 
 /* Presentation only. Every name here sponsors the fest, not one arena.
    Event pages keep their own partner-perk copy. */
-const sponsorMeta: Record<string, { event: string; role: string; mark?: "compact" }> = {
+const sponsorMeta: Record<string, { event: string; role: string; mark?: "compact" | "display" }> = {
   ElevenLabs: { event: "Hacktivate", role: "AI voice and audio" },
   "Seeed Studio": { event: "Hacktivate", role: "Hardware" },
-  "PCB Cupid": { event: "Hacktivate", role: "Components" },
+  /* No artwork yet, so the name is the mark. At the shared wordmark height
+     it sat a size down from ElevenLabs and Seeed; this scale is only theirs. */
+  "PCB Cupid": { event: "Hacktivate", role: "Components", mark: "display" },
   ".xyz": { event: "CHAOS", role: "Domains", mark: "compact" },
   "IEEE Smart Cities": { event: "Community", role: "Smart cities" },
 };
@@ -37,6 +39,7 @@ function SponsorCard({ sponsor }: { sponsor: Sponsor }) {
 
   const showLogo = !!sponsor.logo && !broken;
   const compact = meta?.mark === "compact";
+  const display = meta?.mark === "display";
 
   return (
     <a
@@ -62,11 +65,19 @@ function SponsorCard({ sponsor }: { sponsor: Sponsor }) {
             className={
               compact
                 ? "h-14 w-auto max-w-[8.5rem] object-contain opacity-100 transition duration-300 group-hover:brightness-125 motion-reduce:transition-none"
-                : "h-10 w-auto max-w-full object-contain opacity-100 transition duration-300 group-hover:brightness-125 motion-reduce:transition-none sm:h-11"
+                : display
+                  ? "h-14 w-auto max-w-full object-contain opacity-100 transition duration-300 group-hover:brightness-125 motion-reduce:transition-none sm:h-16"
+                  : "h-10 w-auto max-w-full object-contain opacity-100 transition duration-300 group-hover:brightness-125 motion-reduce:transition-none sm:h-11"
             }
           />
         ) : (
-          <span className="text-balance font-display text-base font-bold uppercase leading-tight tracking-[0.12em] text-pearl-white sm:text-lg">
+          <span
+            className={
+              display
+                ? "whitespace-nowrap font-display text-[2.15rem] font-bold uppercase leading-none tracking-[0.04em] text-pearl-white sm:text-[2.55rem]"
+                : "text-balance font-display text-base font-bold uppercase leading-tight tracking-[0.12em] text-pearl-white sm:text-lg"
+            }
+          >
             {sponsor.name}
           </span>
         )}
