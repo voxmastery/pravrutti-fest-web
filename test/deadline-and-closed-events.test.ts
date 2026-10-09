@@ -9,7 +9,7 @@ import { capOf, isFull } from "@/lib/event-full";
 import { registerNoteText } from "@/lib/register-note";
 
 /**
- * The deadline moved to 9 October; four events are closed and hidden.
+ * The deadline moved to 11 October; events shut on purpose stay shut.
  *
  * On 5 Oct 2026 the organisers extended registration from 5 to 9 October,
  * and took CHAOS, Hacktivate, AI Escape Room and Line Follower out of it:
@@ -46,14 +46,23 @@ describe("ROBO RACE", () => {
 });
 
 describe("the fest-wide deadline", () => {
-  it("is 9 October, 11:59 PM IST", () => {
-    expect(FEST.registrationCloses).toBe("2026-10-09T18:29:59.000Z");
+  it("is 11 October, 11:59 PM IST", () => {
+    expect(FEST.registrationCloses).toBe("2026-10-11T18:29:00.000Z");
+    expect(Date.parse(FEST.registrationCloses!)).toBe(Date.parse("2026-10-11T23:59:00+05:30"));
   });
 
   it("is the date the FAQ gives", () => {
     const answer = faqs.find((f) => /last date/i.test(f.question))?.answer ?? "";
-    expect(REGISTRATION_CLOSES_LONG).toMatch(/^9th October/);
+    expect(REGISTRATION_CLOSES_LONG).toMatch(/^11th October/);
     expect(answer).toContain(REGISTRATION_CLOSES_LONG);
+    expect(answer).toContain("11:59 PM IST");
+  });
+
+  it("keeps an ordinary event open after the old 9 October date", () => {
+    const afterNine = Date.parse("2026-10-10T06:00:00.000Z");
+    expect(registrationState(afterNine, festFor(ev("ROBO RACE")))).toBe("open");
+    expect(registrationState(afterNine, festFor(ev("Campus Innovators 2.0")))).toBe("open");
+    expect(registrationState(Date.parse("2026-10-11T18:29:00.000Z"), festFor(ev("Campus Innovators 2.0")))).toBe("closed");
   });
 
   it("keeps an ordinary event open after the old 5 October date", () => {
@@ -214,6 +223,37 @@ describe("DENT - INNOVATE", () => {
     expect(ev("DENT - INNOVATE").full).toBeFalsy();
     expect(isFull(ev("DENT - INNOVATE"), { people: 0, teams: 0 })).toBe(false);
     expect(listedEvents).toContain(ev("DENT - INNOVATE"));
+  });
+});
+
+/* After 9 Oct and before 11 Oct 11:59 PM IST. Anything still shut here was
+   shut on purpose, not by the fest-wide date. */
+const DURING_EXTENSION = Date.parse("2026-10-10T06:00:00.000Z");
+const STAYS_SHUT = [
+  "CHAOS",
+  "Hacktivate",
+  "AI ESCAPE ROOM",
+  "LINE FOLLOWER",
+  "Pitch Pulse",
+  "Glide-X",
+  "RC-X",
+  "Discoverize (Research Paper Presentation)",
+];
+
+describe("the extension", () => {
+  it("reopens every event the old deadline had shut, and no deliberate closure", () => {
+    const shut = events
+      .filter((e) => e.full || registrationState(DURING_EXTENSION, festFor(e)) !== "open")
+      .map((e) => e.name)
+      .sort();
+    expect(shut).toEqual([...STAYS_SHUT].sort());
+  });
+
+  it("leaves the Robo Race and Terraform caps where they are", () => {
+    expect(ev("ROBO RACE").maxTeams).toBe(45);
+    expect(ev("ROBO RACE").full).toBeFalsy();
+    expect(ev("Terraform: The System Awakens").maxTeams).toBe(30);
+    expect(ev("Terraform: The System Awakens").full).toBeFalsy();
   });
 });
 

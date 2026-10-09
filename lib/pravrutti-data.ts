@@ -304,7 +304,7 @@ export const faqs = [
   },
   {
     question: "What is the last date for registration?",
-    answer: "The last date to register for all events is 9th October 2026, 11:59 PM IST."
+    answer: "The last date to register for all events is 11th October 2026, 11:59 PM IST."
   },
   {
     question: "Can I participate in multiple events?",
@@ -1009,10 +1009,11 @@ export const FEST = {
   startUtc: "20261014T033000Z", // 09:00 IST, 14 Oct
   endUtc: "20261016T123000Z",   // 18:00 IST, 16 Oct
   /** ISO instant registration closes, or null for no announced deadline.
-      9 October 2026, 11:59:59 PM IST (extended from 5 October on 5 Oct,
-      organisers' call). After it the site stops taking applications on its
-      own; nothing else needs changing. */
-  registrationCloses: "2026-10-09T18:29:59.000Z" as string | null,
+      11 October 2026, 11:59:00 PM IST (2026-10-11T23:59:00+05:30; extended
+      from 9 October on 9 Oct). Events with their own earlier
+      registrationCloses, or marked full, stay shut. After this instant the
+      site stops taking applications on its own. */
+  registrationCloses: "2026-10-11T18:29:00.000Z" as string | null,
   /** ISO instant registration opens. null until the committee announces it,
       which the site renders as "Opening soon" and refuses applications. */
   registrationOpens: "2026-09-16T00:00:00.000Z" as string | null,

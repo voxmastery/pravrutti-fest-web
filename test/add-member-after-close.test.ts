@@ -71,7 +71,7 @@ const CODE = "HACKTIVATE01";
 const LEAD = "rayhaan@example.com";
 const MATE = "prithvin@example.com";
 const AFTER_HACKTIVATE = Date.parse("2026-10-07T06:00:00.000Z"); // 7 Oct, fest still open
-const AFTER_FEST = Date.parse("2026-10-10T06:00:00.000Z"); // 10 Oct, fest closed too
+const AFTER_FEST = Date.parse("2026-10-12T06:00:00.000Z"); // 12 Oct, fest closed too
 
 const post = async (b: any): Promise<Response> =>
   (await POST(new Request("http://t/api/teams", { method: "POST", body: JSON.stringify(b) }))) as Response;

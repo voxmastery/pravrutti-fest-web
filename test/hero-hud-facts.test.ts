@@ -12,12 +12,12 @@ import {
    hero quoting the old one. */
 
 describe("REGISTRATION_CLOSES_DISPLAY", () => {
-  /* The deadline is 9 October, 11:59 PM IST — 18:29:59Z (extended from the
-     5th on 5 Oct). Read in UTC that is still the 9th, but the helper must shift to IST first so a later edit to a
-     time after 18:30Z cannot show the wrong day. */
+  /* The deadline is 11 October, 11:59 PM IST — 18:29:00Z. The helper must
+     shift to IST first so a later edit to a time after 18:30Z cannot show
+     the wrong day. */
   it("shows the announced deadline as an IST date", () => {
-    expect(FEST.registrationCloses).toBe("2026-10-09T18:29:59.000Z");
-    expect(REGISTRATION_CLOSES_DISPLAY).toBe("09 OCT 2026");
+    expect(FEST.registrationCloses).toBe("2026-10-11T18:29:00.000Z");
+    expect(REGISTRATION_CLOSES_DISPLAY).toBe("11 OCT 2026");
   });
 
   it("never renders a broken date", () => {
