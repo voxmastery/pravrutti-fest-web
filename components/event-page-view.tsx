@@ -23,6 +23,7 @@ import { useCoordinatorPhones } from "@/hooks/use-coordinator-phones";
 import { Event, FEST, formatINR, teamLabel, capacityLabel } from "@/lib/pravrutti-data";
 import { COVER_GRADIENTS } from "@/lib/event-covers";
 import { EventDescription } from "@/components/event-description";
+import { PrizeGstNote } from "@/components/prize-gst-note";
 
 /** 1st / 2nd / 3rd … as far as the event actually awards. */
 const PLACES = ["1st", "2nd", "3rd", "4th", "5th"];
@@ -238,6 +239,7 @@ export function EventPageView({ event, slug }: { event: Event; slug: string }) {
                 </div>
               ))}
             </div>
+            <PrizeGstNote />
           </section>
 
           {event.sponsorPerks && event.sponsorPerks.length > 0 && (

@@ -5,6 +5,7 @@ import { Navigation } from "@/components/landing/navigation";
 import { FooterSection } from "@/components/landing/footer-section";
 import Link from "next/link";
 import { events, Event, FEST, clubFor, eventId, eventWhen, formatINR, prizePool, teamLabel } from "@/lib/pravrutti-data";
+import { PrizeGstNote } from "@/components/prize-gst-note";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { EventPoster } from "@/components/event-poster";
@@ -212,15 +213,18 @@ export default function EventsPage() {
                                 <MapPin className="w-3.5 h-3.5 shrink-0 mt-0.5" aria-hidden="true" />
                                 <span className="min-w-0 break-words">{FEST.venue}</span>
                               </p>
-                              <div className="mt-auto pt-3 flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-white/[0.07]">
-                                <span className="flex items-center gap-1.5 text-sm text-white/60">
-                                  <Trophy className="w-3.5 h-3.5 text-champagne-gold shrink-0" aria-hidden="true" />
-                                  {pool}
-                                </span>
-                                <span className="flex items-center gap-1.5 text-sm text-white/60">
-                                  <Users className="w-3.5 h-3.5 text-cyber-pink shrink-0" aria-hidden="true" />
-                                  {teamLabel(event)}
-                                </span>
+                              <div className="mt-auto pt-3 border-t border-white/[0.07]">
+                                <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+                                  <span className="flex items-center gap-1.5 text-sm text-white/60">
+                                    <Trophy className="w-3.5 h-3.5 text-champagne-gold shrink-0" aria-hidden="true" />
+                                    {pool}
+                                  </span>
+                                  <span className="flex items-center gap-1.5 text-sm text-white/60">
+                                    <Users className="w-3.5 h-3.5 text-cyber-pink shrink-0" aria-hidden="true" />
+                                    {teamLabel(event)}
+                                  </span>
+                                </div>
+                                <PrizeGstNote className="mt-1" />
                               </div>
                             </div>
                           </>

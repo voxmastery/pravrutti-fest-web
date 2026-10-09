@@ -5,6 +5,7 @@ import { FooterSection } from "@/components/landing/footer-section";
 import { Users, Zap, Target } from "lucide-react";
 import { useEffect, useState } from "react";
 import { formatINR, ANNOUNCED_PRIZE_POOL, events } from "@/lib/pravrutti-data";
+import { PrizeGstNote } from "@/components/prize-gst-note";
 
 export default function AboutPage() {
   const [isVisible, setIsVisible] = useState(false);
@@ -102,6 +103,9 @@ export default function AboutPage() {
                       row.accent ? "text-champagne-gold font-bold text-xl sm:text-2xl font-display" : "text-pearl-white" }`}
                   >
                     {row.v}
+                    {row.k === "Prize Pool" && (
+                      <PrizeGstNote className="mt-0.5 text-right" />
+                    )}
                   </dd>
                 </div>
               ))}

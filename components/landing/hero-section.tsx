@@ -17,6 +17,7 @@ import {
 } from "@/lib/pravrutti-data";
 import { FEE_PER_HEAD } from "@/lib/applications";
 import { PALETTE } from "@/lib/palette";
+import { PrizeGstNote } from "@/components/prize-gst-note";
 
 /* The HUD panels speak in terminal case, but every value is derived from the
    fest data rather than retyped: the old panels carried a literal arena count
@@ -206,6 +207,7 @@ export function HeroSection() {
           )}
           <div>ENTRY: <span className="text-champagne-gold/70">₹{FEE_PER_HEAD}/TEAM</span></div>
           <div>PRIZE_POOL: <span className="text-champagne-gold/90">{formatINR(ANNOUNCED_PRIZE_POOL)}</span></div>
+          <PrizeGstNote className="text-right text-[9px]" />
         </div>
       </div>
 
@@ -306,7 +308,8 @@ export function HeroSection() {
               }}
             />
             <div className="absolute inset-0 crt-scanlines opacity-[0.07] pointer-events-none hidden xl:block" />
-            <div className="relative flex flex-row items-center justify-center gap-2.5 xl:gap-9">
+            <div className="relative flex flex-col items-center">
+            <div className="flex flex-row items-center justify-center gap-2.5 xl:gap-9">
               {/* Prize pool — dominant */}
               <div className="text-left min-w-0">
                 <div className="flex items-center justify-start gap-1 xl:gap-2 mb-0 xl:mb-1.5">
@@ -336,6 +339,8 @@ export function HeroSection() {
                   Tech Events
                 </span>
               </div>
+            </div>
+            <PrizeGstNote className="mt-1 whitespace-nowrap text-center text-[9px] xl:mt-2 xl:text-[11px]" />
             </div>
           </div>
         </div>
