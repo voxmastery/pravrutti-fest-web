@@ -1,105 +1,99 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { sponsors } from "@/lib/pravrutti-data";
-import { Rocket, CircuitBoard, Building2, Globe, Cpu, ArrowUpRight } from "lucide-react";
+import { sponsors, type Sponsor } from "@/lib/pravrutti-data";
 import { useScrollReveal } from "@/hooks/use-animations";
 
-/* One line each. The old copy ran to ~90 characters, which wrapped to six
-   lines of mono text inside a 220px column — sponsor credits are scanned, not
-   read, so each is now a single clause that fits on two lines at any width. */
-const sponsorMeta: Record<string, { icon: typeof Rocket; desc: string }> = {
-  "PCB Cupid": { icon: CircuitBoard, desc: "Modular electronics and dev boards for makers" },
-  "IEEE Smart Cities": { icon: Building2, desc: "IEEE's global smart-city technology initiative" },
-  ElevenLabs: { icon: Rocket, desc: "AI voice and audio — Hacktivate's partner" },
-  ".xyz": { icon: Globe, desc: "Free first-year .xyz domains for CHAOS participants" },
-  "Seeed Studio": { icon: Cpu, desc: "Hardware sponsor — Hacktivate" },
+/* Presentation only. The sponsor records (name, logo, website) stay in
+   pravrutti-data; this is how the homepage groups and captions them.
+   Hacktivate's page already names PCB Cupid as its component partner, so
+   they sit with that arena. IEEE Smart Cities is not tied to one event. */
+const sponsorMeta: Record<string, { event: string; role: string; mark?: "compact" }> = {
+  ElevenLabs: { event: "Hacktivate", role: "AI voice and audio" },
+  "Seeed Studio": { event: "Hacktivate", role: "Hardware sponsor" },
+  "PCB Cupid": { event: "Hacktivate", role: "Component partner" },
+  ".xyz": { event: "CHAOS", role: "Free first-year domains", mark: "compact" },
+  "IEEE Smart Cities": { event: "Community", role: "Smart-city initiative" },
 };
 
-function SponsorCard({ sponsor, index }: { sponsor: (typeof sponsors)[0]; index: number }) {
-  const meta = sponsorMeta[sponsor.name] ?? { icon: Rocket, desc: "" };
-  const Icon = meta.icon;
+const groups: { id: string; label: string; note: string; names: string[] }[] = [
+  {
+    id: "hacktivate",
+    label: "Hacktivate",
+    note: "Predictive systems",
+    names: ["ElevenLabs", "Seeed Studio", "PCB Cupid"],
+  },
+  {
+    id: "chaos",
+    label: "CHAOS",
+    note: "Software hackathon",
+    names: [".xyz"],
+  },
+  {
+    id: "community",
+    label: "Community",
+    note: "Across the fest",
+    names: ["IEEE Smart Cities"],
+  },
+];
+
+function SponsorCard({ sponsor, index }: { sponsor: Sponsor; index: number }) {
+  const meta = sponsorMeta[sponsor.name] ?? { event: "Partners", role: "" };
   const [broken, setBroken] = useState(false);
   const img = useRef<HTMLImageElement>(null);
 
-  /* onError alone is not enough. The markup is server-rendered, so a missing
-     file 404s while the page is still HTML and the handler is attached only
-     at hydration — by which point the error has already been and gone. This
-     asks the element directly once it exists: complete with no intrinsic
-     width is a load that failed. */
+  /* onError alone misses a 404 that happened during SSR, before hydration
+     attached the handler. A complete image with no width is that failure. */
   useEffect(() => {
     const el = img.current;
     if (el && el.complete && el.naturalWidth === 0) setBroken(true);
   }, []);
 
-  /* A wordmark is the name, so it takes the name's place at a size it can
-     be read at; the square box is for square marks. If the file fails, the
-     card falls back to the ordinary icon-and-name layout. */
-  const showWordmark = !!sponsor.wordmark && !!sponsor.logo && !broken;
+  const showLogo = !!sponsor.logo && !broken;
+  const compact = meta.mark === "compact";
 
   return (
     <a
       href={sponsor.website}
-      target="_blank" rel="noopener noreferrer" style={{ transitionDelay: `${index * 70}ms` }}
-      /* Row, not a tall card: the name sits beside the mark instead of under
-         it, so "RUAS Incubator (RTBI)" and "GeeksforGeeks" stop wrapping to
-         three lines. Whole row is the target — Fitts's Law. */
-      /* h-full so a two-line description (KASSIA) doesn't leave its row
-         taller than the others — consistent sizing within a tier is what
-         stops a sponsor wall reading as ragged. */
-      className="reveal-up group flex h-full items-start gap-4 rounded-2xl border border-royal-wine bg-cosmic-purple/40 p-5 transition-colors hover:border-cyber-pink/50 hover:bg-cosmic-purple/70 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyber-pink" >
-      {/* The real mark when we have been given one, the category icon when we
-          have not. Several sponsors point at logo files that were never
-          shipped, and a broken image is worse than a clean glyph — so a file
-          that fails to load falls back rather than leaving a torn box. */}
-      {!showWordmark && (
-      <span className="grid h-12 w-12 shrink-0 place-items-center overflow-hidden rounded-xl bg-neon-purple/20 transition-colors group-hover:bg-cyber-pink/20">
-        {sponsor.logo && !broken ? (
+      target="_blank"
+      rel="noopener noreferrer"
+      style={{ transitionDelay: `${index * 60}ms` }}
+      className="reveal-up group flex h-full min-h-[11.25rem] flex-col items-center justify-between rounded-2xl border border-royal-wine/80 bg-cosmic-purple/30 px-6 py-6 text-center transition-[transform,border-color,background-color,box-shadow] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] hover:-translate-y-1 hover:border-champagne-gold/40 hover:bg-cosmic-purple/55 hover:shadow-[0_18px_40px_-24px_rgba(242,210,174,0.45)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyber-pink motion-reduce:transition-none motion-reduce:hover:translate-y-0 motion-reduce:hover:shadow-none"
+    >
+      <span className="flex min-h-16 w-full items-center justify-center">
+        {showLogo ? (
           /* eslint-disable-next-line @next/next/no-img-element */
           <img
             ref={img}
             src={sponsor.logo}
-            alt=""
+            alt={sponsor.name}
             onError={() => setBroken(true)}
-            className="h-full w-full object-contain p-1.5"
+            /* One well for every mark. Wide wordmarks share a height; the
+               .xyz bubble is short and square, so it is taller or it reads
+               as a speck next to ElevenLabs. Resting state is the white
+               mark; hover only brightens it — these files have no separate
+               colour version that still reads on this ground. */
+            className={
+              compact
+                ? "h-14 w-auto max-w-[8.5rem] object-contain opacity-90 transition duration-300 group-hover:opacity-100 group-hover:brightness-125 motion-reduce:transition-none"
+                : "h-10 w-auto max-w-full object-contain opacity-90 transition duration-300 group-hover:opacity-100 group-hover:brightness-125 motion-reduce:transition-none sm:h-11"
+            }
           />
         ) : (
-          <Icon className="h-5 w-5 text-champagne-gold transition-colors group-hover:text-cyber-pink" />
-        )}
-      </span>
-      )}
-
-      <span className="min-w-0 flex-1">
-        {/* at 500, not Orbitron 900. The display face is 40% wider per
-            glyph and was the reason the longer names broke. */}
-        <span className="flex items-center gap-1.5">
-          {showWordmark ? (
-            /* eslint-disable-next-line @next/next/no-img-element */
-            <img
-              ref={img}
-              src={sponsor.logo}
-              alt={sponsor.name}
-              onError={() => setBroken(true)}
-              /* The shared wordmark height is sized for a wide name like
-                 ElevenLabs. The .xyz bubble is only ~1.7:1, so that height
-                 renders it as a speck; twice the height, width following
-                 the file, keeps the ratio and stays inside the card. */
-              className={
-                sponsor.name === ".xyz"
-                  ? "h-10 w-auto max-w-[75%] object-contain object-left"
-                  : "h-5 w-auto max-w-[75%] object-contain object-left"
-              }
-            />
-          ) : (
-          <span className="truncate text-[17px] font-semibold text-pearl-white transition-colors group-hover:text-champagne-gold">
+          <span className="text-balance font-display text-base font-bold uppercase leading-tight tracking-[0.12em] text-pearl-white/90 transition-colors duration-300 group-hover:text-champagne-gold motion-reduce:transition-none sm:text-lg">
             {sponsor.name}
           </span>
-          )}
-          <ArrowUpRight className="h-4 w-4 shrink-0 text-pearl-white/25 transition-all group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-cyber-pink" />
+        )}
+      </span>
+      <span className="mt-4 block">
+        <span className="block font-display text-[10px] font-bold uppercase tracking-[0.24em] text-champagne-gold">
+          {meta.event}
         </span>
-        <span className="mt-1 block text-sm leading-snug text-pearl-white/55">
-          {meta.desc}
-        </span>
+        {meta.role && (
+          <span className="mt-1.5 block text-sm leading-snug text-pearl-white/55">
+            {meta.role}
+          </span>
+        )}
       </span>
     </a>
   );
@@ -107,30 +101,75 @@ function SponsorCard({ sponsor, index }: { sponsor: (typeof sponsors)[0]; index:
 
 export function SponsorsSection() {
   const headerRef = useScrollReveal();
+  const byName = new Map(sponsors.map((s) => [s.name, s]));
+  const placed = new Set(groups.flatMap((g) => g.names));
+  const rows = groups.map((g) => ({
+    ...g,
+    sponsors: g.names.map((n) => byName.get(n)).filter((s): s is Sponsor => !!s),
+  }));
+  const rest = sponsors.filter((s) => !placed.has(s.name));
+  if (rest.length) {
+    rows.push({ id: "partners", label: "Partners", note: "", names: rest.map((s) => s.name), sponsors: rest });
+  }
+
+  let cardIndex = 0;
 
   return (
-    <section className="relative py-28 lg:py-36 bg-black overflow-hidden border-t border-royal-wine/40">
-      <div className="absolute bottom-0 right-1/4 w-[500px] h-[300px] bg-neon-purple/5 rounded-full blur-[150px] pointer-events-none" />
+    <section className="relative overflow-hidden border-t border-royal-wine/40 bg-black py-28 lg:py-36">
+      <div className="pointer-events-none absolute left-1/2 top-0 h-[280px] w-[640px] -translate-x-1/2 rounded-full bg-neon-purple/10 blur-[140px]" />
 
-      <div className="relative z-10 max-w-[1200px] mx-auto px-6">
-        <div ref={headerRef} className="reveal-up text-center max-w-3xl mx-auto mb-16">
-          <span className="inline-flex items-center gap-3 text-xs md:text-sm tracking-[0.28em] uppercase text-cyber-pink mb-6">
-            <span className="w-10 h-px bg-neon-purple" />
+      <div className="relative z-10 mx-auto max-w-[1200px] px-6">
+        <div ref={headerRef} className="reveal-up mx-auto mb-16 max-w-3xl text-center lg:mb-20">
+          <span className="mb-6 inline-flex items-center gap-3 text-xs uppercase tracking-[0.28em] text-cyber-pink md:text-sm">
+            <span className="h-px w-10 bg-neon-purple" />
             PARTNERS
-            <span className="w-10 h-px bg-neon-purple" />
+            <span className="h-px w-10 bg-neon-purple" />
           </span>
-          <h2 className="text-4xl md:text-6xl font-display font-black tracking-wider">
+          <h2 className="font-display text-4xl font-black tracking-wider md:text-6xl">
             OUR <span className="text-stroke">SPONSORS</span>
           </h2>
+          <p className="mx-auto mt-6 max-w-xl text-base text-pearl-white/70 md:text-lg">
+            The companies and communities backing Hacktivate, CHAOS, and the fest.
+          </p>
         </div>
 
-        {/* Two sponsors: two cards side by side, centred, capped so they do not
-            stretch into thin bars on a wide screen. flex-wrap still centres a
-            short last row if more are added. */}
-        <div className="flex flex-wrap justify-center gap-4">
-          {sponsors.map((s, i) => (
-            <div key={s.name} className="w-full sm:w-[calc(50%-8px)] sm:max-w-[440px]">
-              <SponsorCard sponsor={s} index={i} />
+        <div className="space-y-14 lg:space-y-16">
+          {rows.map((row) => (
+            <div key={row.id}>
+              <div className="mb-5 flex items-end justify-between gap-4 border-b border-royal-wine/50 pb-3">
+                <h3 className="font-display text-sm font-bold uppercase tracking-[0.28em] text-pearl-white">
+                  {row.label}
+                </h3>
+                {row.note && (
+                  <p className="text-right text-xs uppercase tracking-[0.18em] text-pearl-white/40">
+                    {row.note}
+                  </p>
+                )}
+              </div>
+              <div
+                className={
+                  row.sponsors.length === 1
+                    ? "flex justify-center"
+                    : "grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 sm:max-lg:[&>*:last-child:nth-child(odd)]:col-span-2 sm:max-lg:[&>*:last-child:nth-child(odd)]:mx-auto sm:max-lg:[&>*:last-child:nth-child(odd)]:w-[calc(50%-0.5rem)]"
+                }
+              >
+                {row.sponsors.map((s) => {
+                  const index = cardIndex;
+                  cardIndex += 1;
+                  return (
+                    <div
+                      key={s.name}
+                      className={
+                        row.sponsors.length === 1
+                          ? "w-full sm:w-[calc(50%-0.5rem)] lg:w-[calc((100%-2rem)/3)]"
+                          : "h-full"
+                      }
+                    >
+                      <SponsorCard sponsor={s} index={index} />
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           ))}
         </div>
@@ -138,4 +177,5 @@ export function SponsorsSection() {
     </section>
   );
 }
+
 export default SponsorsSection;
