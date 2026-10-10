@@ -104,9 +104,14 @@ export function TeamManage({
 
   if (!team.isLead) return null;
 
-  /* canInvite is the server's answer, including a team already in after the
-     window has closed. canAdd is this registration still holding a place. */
+  /* canInvite is the server's answer. canAdd is this registration still
+     holding a place. A closed window keeps the button, disabled, with the
+     reason — hiding it is what made leads think they had no way to add. */
   const inviting = canAdd && team.canInvite !== false;
+  const blockedReason =
+    canAdd && team.canInvite === false && !team.isFull
+      ? team.inviteBlockedReason || "Registration closed. New members can't be added."
+      : null;
 
   const addBlock = inviting ? (
     <TeamAddMember
@@ -130,6 +135,17 @@ export function TeamManage({
       ghostBtn="h-10 rounded-xl border border-white/[0.1] bg-white/[0.04] text-white/70 hover:bg-white/[0.08] hover:text-white font-medium text-sm cursor-pointer"
       primaryBtn="h-10 rounded-xl bg-cyber-pink text-white hover:bg-electric-magenta font-medium text-sm cursor-pointer"
     />
+  ) : blockedReason ? (
+    <div className="space-y-1.5">
+      <button
+        type="button"
+        disabled
+        className="h-11 w-full rounded-xl bg-white/[0.06] text-sm font-medium text-white/40 cursor-not-allowed"
+      >
+        Add a member
+      </button>
+      <p className="text-[12px] leading-relaxed text-white/55">{blockedReason}</p>
+    </div>
   ) : null;
 
   const warningBlock = mailWarning ? (

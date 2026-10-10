@@ -138,19 +138,19 @@ describe("adding a member after the team has registered", () => {
     expect(res.status).toBe(403);
   });
 
-  it("still lets a registered lead add once registration has closed", async () => {
+  it("refuses a registered lead once registration has closed", async () => {
     seedRegisteredTeam();
     open.value = false;
-    expect((await addMate()).status).toBe(200);
-    expect(store.get(`member/${EV}/${MATE}.json`).code).toBe(CODE);
+    expect((await addMate()).status).toBe(409);
+    expect(store.has(`member/${EV}/${MATE}.json`)).toBe(false);
   });
 
-  it("still lets a confirmed lead add once registration has closed", async () => {
+  it("refuses a confirmed lead once registration has closed", async () => {
     seedRegisteredTeam();
     store.get(`app/${EV}/${LEAD}.json`).status = "confirmed";
     store.get(`app/${EV}/${LEAD}.json`).payment = "paid";
     open.value = false;
-    expect((await addMate()).status).toBe(200);
+    expect((await addMate()).status).toBe(409);
   });
 
   /* The window closing is what stops a team that never got in. A lead who
@@ -176,8 +176,8 @@ describe("adding a member after the team has registered", () => {
   });
 });
 
-/* The button is drawn from what `mine` says. A closed window is not, on its
-   own, a reason to hide it: a lead who is already in can still add. */
+/* The button is drawn from what `mine` says. A closed window turns canInvite
+   off and names the reason, including for a lead who is already in. */
 describe("what the ticket page is told about inviting", () => {
   it("says invites are still possible while registration is open", async () => {
     seedRegisteredTeam();
@@ -187,12 +187,13 @@ describe("what the ticket page is told about inviting", () => {
     expect(body.team.canInvite).toBe(true);
   });
 
-  it("still says a registered lead can invite once registration has closed", async () => {
+  it("says a registered lead cannot invite once registration has closed", async () => {
     seedRegisteredTeam();
     identity.email = LEAD;
     open.value = false;
     const body = await (await mine()).json();
-    expect(body.team.canInvite).toBe(true);
+    expect(body.team.canInvite).toBe(false);
+    expect(body.team.inviteBlockedReason).toMatch(/Registration closed/i);
   });
 
   it("says they cannot invite once registration has closed and the lead is not registered", async () => {

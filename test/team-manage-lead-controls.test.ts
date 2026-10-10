@@ -72,12 +72,15 @@ describe("lead controls on the ticket", () => {
     expect(html({ canInvite: true })).toContain("Add a member");
   });
 
-  it("hides Add when the server would refuse, and when this registration is not live", () => {
-    expect(html({ canInvite: false })).not.toContain("Add a member");
+  it("keeps Add visible but disabled when the server would refuse, and hides it when this registration is not live", () => {
+    const closed = html({ canInvite: false, inviteBlockedReason: "Registration closed on 11:59 PM, 01 OCT 2026. New members can't be added." });
+    expect(closed).toContain("Add a member");
+    expect(closed).toContain("Registration closed on 11:59 PM, 01 OCT 2026");
+    expect(closed).toContain("disabled");
     expect(html({ canInvite: true }, false)).not.toContain("Add a member");
     /* Remove stays. A closed window is not what hides it. */
-    expect(html({ canInvite: false })).toMatch(/Remove\s*<\/button>/);
-    expect(html({ canInvite: false })).toMatch(/Make lead\s*<\/button>/);
+    expect(closed).toMatch(/Remove\s*<\/button>/);
+    expect(closed).toMatch(/Make lead\s*<\/button>/);
   });
 
   it("shows a full roster as full, rather than as an open invite", () => {

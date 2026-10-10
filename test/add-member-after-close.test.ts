@@ -3,18 +3,12 @@ import { eventId } from "@/lib/pravrutti-data";
 import { leadMayInvite } from "@/lib/lead-decision";
 
 /**
- * Hacktivate closed at 11:59 PM IST on 1 October. Teams already in — the
- * lead holds a live registration, in review or confirmed — still had empty
- * seats, and no way to fill them: add_member refused because the window
- * had closed.
- *
- * Closing the window still stops a new team and still stops someone joining
- * with a code. It does not stop that lead from adding a teammate. A full
- * roster, a person who is not the lead, and a duplicate email still refuse.
+ * Hacktivate closed at 11:59 PM IST on 1 October. Closing the window stops
+ * a new team, a code join, and a lead adding a teammate. The only post-close
+ * add left is a shortlisted Discoverize lead (see discoverize-closed).
  *
  * The clock is pinned. The real registration dates decide, so a fest-wide
- * extension cannot quietly reopen Hacktivate, and a later fest-wide close
- * cannot quietly freeze a team that is already in.
+ * extension cannot quietly reopen Hacktivate.
  */
 
 const store = new Map<string, any>();
@@ -115,39 +109,48 @@ beforeEach(() => {
 });
 
 describe("leadMayInvite", () => {
-  it("allows an open window, and a closed one only when the lead is already in", () => {
+  it("allows an open window, and a closed one only for a shortlisted Discoverize lead", () => {
     expect(leadMayInvite({ registrationOpen: true, leadRegistered: false })).toBe(true);
     expect(leadMayInvite({ registrationOpen: true, leadRegistered: true })).toBe(true);
-    expect(leadMayInvite({ registrationOpen: false, leadRegistered: true })).toBe(true);
+    expect(leadMayInvite({ registrationOpen: false, leadRegistered: true })).toBe(false);
     expect(leadMayInvite({ registrationOpen: false, leadRegistered: false })).toBe(false);
+    expect(leadMayInvite({
+      registrationOpen: false,
+      leadRegistered: true,
+      discoverizeShortlisted: true,
+    })).toBe(true);
+    expect(leadMayInvite({
+      registrationOpen: false,
+      leadRegistered: false,
+      discoverizeShortlisted: true,
+    })).toBe(false);
   });
 });
 
 describe("Hacktivate after its own close", () => {
-  it("lets a confirmed lead add a teammate", async () => {
+  it("refuses a confirmed lead adding a teammate", async () => {
     seedConfirmed();
     const res = await addMate();
-    expect(res.status).toBe(200);
-    const body = await res.json();
-    expect(body.team.memberCount).toBe(2);
-    expect(store.get(`app/${EV}/${MATE}.json`).status).toBe("confirmed");
-    expect(store.get(`member/${EV}/${MATE}.json`).code).toBe(CODE);
+    expect(res.status).toBe(409);
+    expect((await res.json()).error).toMatch(/Registration closed/i);
+    expect(store.has(`app/${EV}/${MATE}.json`)).toBe(false);
   });
 
-  it("lets a lead who is still in review add a teammate", async () => {
+  it("refuses a lead who is still in review", async () => {
     seedConfirmed();
     store.get(`app/${EV}/${LEAD}.json`).status = "pending";
     store.get(`app/${EV}/${LEAD}.json`).payment = "awaiting";
-    expect((await addMate()).status).toBe(200);
-    expect(store.get(`app/${EV}/${MATE}.json`).status).toBe("pending");
+    expect((await addMate()).status).toBe(409);
+    expect(store.has(`app/${EV}/${MATE}.json`)).toBe(false);
   });
 
-  it("tells My Tickets that this lead can still invite", async () => {
+  it("tells My Tickets that this lead can no longer invite", async () => {
     seedConfirmed();
     identity.email = LEAD;
     const body = await (await mine()).json();
     expect(body.team.isLead).toBe(true);
-    expect(body.team.canInvite).toBe(true);
+    expect(body.team.canInvite).toBe(false);
+    expect(body.team.inviteBlockedReason).toMatch(/Registration closed/i);
   });
 
   it("refuses a new team", async () => {
@@ -183,30 +186,20 @@ describe("Hacktivate after its own close", () => {
     expect(res.status).toBe(403);
   });
 
-  it("refuses a duplicate and a full roster", async () => {
+  it("refuses before it looks at a duplicate or a full roster", async () => {
     seedConfirmed([{ email: MATE, name: "Prithvin Jothinathan" }]);
     const dup = await addMate();
     expect(dup.status).toBe(409);
-    expect((await dup.json()).error).toMatch(/already on this team/i);
-
-    store.clear();
-    seedConfirmed([
-      { email: "a@example.com", name: "Asha Rao" },
-      { email: "b@example.com", name: "Bhavya N" },
-      { email: "c@example.com", name: "Chitra K" },
-    ]);
-    const full = await addMate();
-    expect(full.status).toBe(409);
-    expect((await full.json()).error).toMatch(/full/i);
+    expect((await dup.json()).error).toMatch(/Registration closed/i);
   });
 });
 
 describe("after the fest-wide close as well", () => {
   beforeEach(() => { clock.now = AFTER_FEST; });
 
-  it("still lets a confirmed Hacktivate lead add a teammate", async () => {
+  it("still refuses a confirmed Hacktivate lead adding a teammate", async () => {
     seedConfirmed();
-    expect((await addMate()).status).toBe(200);
+    expect((await addMate()).status).toBe(409);
   });
 
   it("still refuses a new team", async () => {

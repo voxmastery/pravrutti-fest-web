@@ -23,6 +23,7 @@ import { DiscoverizeGroupCard } from "@/components/discoverize-group-card";
 import { DiscoverizeFormTeam } from "@/components/discoverize-form-team";
 import { TeamManage } from "@/components/team-manage";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { TicketValidityNote } from "@/components/ticket-validity-note";
 import { Loader2, CalendarPlus, Hourglass, Check, RotateCcw, LogOut, MapPin, QrCode, ArrowLeft, Copy } from "lucide-react";
 
 type App = {
@@ -269,6 +270,7 @@ export default function TicketPage() {
                 <p className="font-display text-base font-bold text-pearl-white">{focused.name}</p>
                 <p className="text-sm text-pearl-white/50">{me.email}</p>
               </div>
+              <TicketValidityNote eventName={focused.eventName} className="max-w-sm text-center" />
             </>
           ) : (
             <Loader2 className="w-6 h-6 animate-spin text-cyber-pink" />
@@ -402,6 +404,10 @@ export default function TicketPage() {
                             className="block font-semibold text-base text-white hover:text-champagne-gold transition-colors leading-snug" >
                             {a.eventName}
                           </a>
+
+                          {(a.status === "confirmed" || a.status === "pending") && (
+                            <TicketValidityNote eventName={a.eventName} />
+                          )}
 
                           <p className="flex items-center gap-1.5 text-sm text-white/50">
                             <MapPin className="w-3.5 h-3.5 shrink-0" />
@@ -565,6 +571,7 @@ export default function TicketPage() {
             <p className="font-medium text-white">{qrFor?.name}</p>
             <p className="text-sm text-white/50">{qrFor?.ticketId}</p>
           </div>
+          {qrFor && <TicketValidityNote eventName={qrFor.eventName} className="text-center" />}
           <p className="text-xs text-white/40 text-center leading-relaxed">
             Show this at the registration desk. {FEST.venue}.
           </p>

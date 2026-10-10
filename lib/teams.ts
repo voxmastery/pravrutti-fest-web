@@ -80,6 +80,9 @@ export type TeamPreview = {
       Set alongside isLead, so the ticket page can offer the button only
       where the server would accept it. */
   canInvite?: boolean;
+  /** Why Add is disabled. Set with canInvite false so the ticket can show
+      the reason instead of hiding the control. Null while adding is allowed. */
+  inviteBlockedReason?: string | null;
   /** The signed-in viewer is already on this team's list — the lead added
       them — so a full team still has their place. Without it, an invited
       teammate whose email bounced and who typed the code instead found their

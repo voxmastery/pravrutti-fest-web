@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { generateTeamCode } from "@/lib/team-code";
-import { events, eventId, capacityFor, statedCapacity, effectiveRegistrationOpen, registrationUnavailableMessage, eventFullMessage, festFor, eventClosedMessage } from "@/lib/pravrutti-data";
+import { events, eventId, capacityFor, statedCapacity, effectiveRegistrationOpen, registrationUnavailableMessage, eventFullMessage, festFor, eventClosedMessage, eventClosesDisplay } from "@/lib/pravrutti-data";
 import {
   Application,
   PHONE_HINT,
@@ -84,14 +84,30 @@ function registrationWindowOpen(event: { registrationCloses?: string } | null | 
   return effectiveRegistrationOpen() && effectiveRegistrationOpen(undefined, festFor(event));
 }
 
-/** Add is allowed while the window is open, and after it closes when the
-    lead already holds a live registration. The registration read is skipped
-    while the window is open, because the answer does not depend on it. */
+/** Add is allowed while the window is open. After it closes, only a
+    shortlisted Discoverize lead who already registered may still add.
+    The registration read is skipped while the window is open. */
+async function discoverizeShortlistedLead(evId: string, team: Team): Promise<boolean> {
+  if (!isDiscoverize(evId)) return false;
+  const email = String(team.createdByEmail ?? "").trim().toLowerCase();
+  if (!email) return false;
+  const app = (await readJsonByPath(applicationPath(evId, email))) as Application | null;
+  if (!app || !isLiveApplication(app.status)) return false;
+  const viewed = await withDiscoverizeShortlist(app);
+  return Boolean(viewed.round?.shortlistedAt);
+}
+
+function closedAddReason(event: { name?: string; registrationCloses?: string }) {
+  return `Registration closed on ${eventClosesDisplay(event)}. New members can't be added.`;
+}
+
 async function mayInviteOnto(evId: string, event: { registrationCloses?: string }, team: Team) {
   const windowOpen = registrationWindowOpen(event);
+  if (windowOpen) return true;
   return leadMayInvite({
-    registrationOpen: windowOpen,
-    leadRegistered: windowOpen ? false : await leadIsRegistered(evId, team),
+    registrationOpen: false,
+    leadRegistered: await leadIsRegistered(evId, team),
+    discoverizeShortlisted: await discoverizeShortlistedLead(evId, team),
   });
 }
 
@@ -199,13 +215,15 @@ async function mineTeam(evId: string, bodyEmail: string) {
     }
     if (!team) return NextResponse.json({ team: null }, { headers: { "cache-control": "no-store" } });
     const members = await listTeamMembers(evId, code);
+    const canInvite = await mayInviteOnto(evId, event, team);
     return NextResponse.json(
       {
         team: {
           ...toTeamPreview(team, members, maxTeamSizeFor(event), true),
           isLead: String(team.createdByEmail).toLowerCase() === who.email.toLowerCase(),
           leadEmail: String(team.createdByEmail ?? "").toLowerCase(),
-          canInvite: await mayInviteOnto(evId, event, team),
+          canInvite,
+          inviteBlockedReason: canInvite ? null : closedAddReason(event),
         },
       },
       { headers: { "cache-control": "no-store" } }
@@ -679,12 +697,11 @@ async function addMember(body: any) {
     if (!team) return jsonError("No team found for that code.", 404);
     if (team.createdByEmail !== who.email)
       return jsonError("Only the team lead can add members.", 403);
-    /* A closed window stops new teams (create and join still check it on
-       their own). A team already in keeps its empty seats: Hacktivate closed
-       on 1 Oct 2026 and confirmed leads were still short of four. */
+    /* A closed window stops adding, except a shortlisted Discoverize lead
+       who already registered. Create and join keep their own checks. */
     if (!(await mayInviteOnto(evId, event, team))) {
       if (!effectiveRegistrationOpen()) return jsonError(registrationUnavailableMessage(), 409);
-      return jsonError(eventClosedMessage(event), 409);
+      return jsonError(closedAddReason(event), 409);
     }
     /* Same rule as joining: growing a team that is already in is fine. */
     if (!(await leadIsRegistered(evId, team)) && (await eventIsFull(event)))

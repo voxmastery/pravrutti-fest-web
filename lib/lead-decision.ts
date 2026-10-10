@@ -50,14 +50,21 @@ export async function leadIsRegistered(evId: string, team: Team | null): Promise
  * Whether this lead may add a teammate, as far as the registration window goes.
  *
  * Closing the window — the fest-wide date, or an event's own earlier one —
- * stops new teams. It does not freeze a team that is already in.
- * `leadRegistered` is that: the lead holds a live registration, in review or
- * confirmed. A full roster, someone who is not the lead, and a duplicate
- * email are refused on their own; this only answers the window.
+ * stops new teams and stops a lead adding teammates. The one exception is a
+ * shortlisted Discoverize lead who already holds a live registration: that
+ * event closed on 8 Oct and those leads still build their team.
  *
- * Ganesh, 7 Oct 2026. Hacktivate had closed on 1 Oct and confirmed leads
- * still had empty seats, with no way to fill them.
+ * Ganesh, 10 Oct 2026. The earlier Hacktivate post-close add is withdrawn.
+ * A full roster, someone who is not the lead, and a duplicate email are
+ * refused on their own; this only answers the window.
  */
-export function leadMayInvite(args: { registrationOpen: boolean; leadRegistered: boolean }): boolean {
-  return args.registrationOpen || args.leadRegistered;
+export function leadMayInvite(args: {
+  registrationOpen: boolean;
+  leadRegistered?: boolean;
+  /** Discoverize only. A shortlisted lead who already registered may still
+      add after Discoverize's own close. No other closed event gets this. */
+  discoverizeShortlisted?: boolean;
+}): boolean {
+  if (args.registrationOpen) return true;
+  return Boolean(args.discoverizeShortlisted && args.leadRegistered);
 }
