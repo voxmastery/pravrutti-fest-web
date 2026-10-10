@@ -45,22 +45,21 @@ describe("ROBO RACE", () => {
   });
 });
 
-/* Raised from 40 to 42 teams on 10 Oct. It had filled at 40 and was
-   holding 41 (35 confirmed, 6 in review). No hand switch, so 41 holding
-   places is open and 42 is full. */
+/* Cap is 52 teams: 42, then exactly 10 more on 10 Oct. No hand switch,
+   so 51 holding places is open and 52 is full. */
 describe("HAMMER", () => {
-  it("is open below 42 teams and stays on the list until the fest close", () => {
+  it("is open below 52 teams and stays on the list until the fest close", () => {
     const e = ev("HAMMER");
     expect(eventId(e.name)).toBe("hammer");
-    expect(e.maxTeams).toBe(42);
-    expect(e.capacity).toBe(168);
+    expect(e.maxTeams).toBe(52);
+    expect(e.capacity).toBe(208);
     expect(e.full).toBeFalsy();
     expect(e.unlisted).toBeFalsy();
     expect(e.registrationCloses).toBeUndefined();
-    expect(capOf(e)).toEqual({ limit: 42, unit: "teams" });
-    expect(capacityLabel(e)).toBe("42 teams");
-    expect(isFull(e, { people: 0, teams: 41 })).toBe(false);
-    expect(isFull(e, { people: 0, teams: 42 })).toBe(true);
+    expect(capOf(e)).toEqual({ limit: 52, unit: "teams" });
+    expect(capacityLabel(e)).toBe("52 teams");
+    expect(isFull(e, { people: 0, teams: 51 })).toBe(false);
+    expect(isFull(e, { people: 0, teams: 52 })).toBe(true);
     expect(listedEvents).toContain(e);
     expect(registrationState(Date.parse("2026-10-12T18:28:00.000Z"), festFor(e))).toBe("open");
     expect(registrationState(Date.parse("2026-10-12T18:29:00.000Z"), festFor(e))).toBe("closed");
