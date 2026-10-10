@@ -24,6 +24,8 @@ import {
 import { inviteUrl, sendInviteEmail } from "@/lib/invite-email";
 import { sendConfirmationEmail } from "@/lib/confirmation-email";
 import { leadIsConfirmed, leadIsRegistered, leadMayInvite } from "@/lib/lead-decision";
+import { isDiscoverize } from "@/lib/discoverize";
+import { withDiscoverizeShortlist } from "@/lib/discoverize-shortlist";
 import { teammateApplication as personApplication } from "@/lib/added-members";
 import { transferLead, paymentHoldsTeam, PAYMENT_HOLDS_TEAM } from "@/lib/lead-transfer";
 import { eventIsFull } from "@/lib/event-full";
@@ -200,29 +202,84 @@ async function mineTeam(evId: string, bodyEmail: string) {
 }
 
 
-async function createTeam(body: any) {
-  if (!effectiveRegistrationOpen()) return jsonError(registrationUnavailableMessage(), 409);
+/**
+ * A Discoverize lead the coordinators have shortlisted, who registered but
+ * has no live team yet — a solo entry, or a team they have since deleted.
+ *
+ * Closing Discoverize stops a new sign-up. It does not stop that lead from
+ * forming the team they will present with. Anyone who is not shortlisted,
+ * or who never registered, is not this.
+ */
+async function shortlistedDiscoverizeMayFormTeam(evId: string, email: string): Promise<Application | null> {
+  if (!isDiscoverize(evId) || !email) return null;
+  const existing = (await readJsonByPath(applicationPath(evId, email))) as Application | null;
+  if (!existing || !isLiveApplication(existing.status)) return null;
+  const viewed = await withDiscoverizeShortlist(existing);
+  if (!viewed.round?.shortlistedAt) return null;
+  if (await liveMembershipCode(evId, email)) return null;
+  const code = normalizeTeamCode(String(existing.teamCode ?? ""));
+  if (isValidTeamCode(code) && (await loadTeam(evId, code))) return null;
+  return existing;
+}
 
+async function createTeam(body: any) {
   const evId = String(body?.eventId ?? "").trim();
   const event = findEvent(evId);
-  if (!event) return jsonError("That event doesn't exist.", 400);
-  /* An event can close before the fest-wide date (Event.registrationCloses). */
-  if (!effectiveRegistrationOpen(undefined, festFor(event))) return jsonError(eventClosedMessage(event), 409);
-  /* A new team is exactly what a full event is not taking. */
-  if (await eventIsFull(event)) return jsonError(eventFullMessage(event.name), 409);
+  if (!event) {
+    /* A closed fest used to answer before the event was looked up. */
+    if (!effectiveRegistrationOpen()) return jsonError(registrationUnavailableMessage(), 409);
+    return jsonError("That event doesn't exist.", 400);
+  }
 
-  const who = await resolveApplicantEmail(String(body?.email ?? ""));
-  if ("error" in who) return who.error;
-  const email = who.email;
+  /* An event can close before the fest-wide date (Event.registrationCloses).
+     Discoverize did, on 8 Oct. A shortlisted lead who already registered may
+     still create the team they don't have; a new person may not. Checked
+     only once we know who is asking — an anonymous call keeps the closed
+     answer, the same one it had before this exception. */
+  const windowOpen = registrationWindowOpen(event);
+  let email = "";
+  let forming: Application | null = null;
+  if (!windowOpen) {
+    const who = await resolveApplicantEmail(String(body?.email ?? ""));
+    if (!("error" in who)) {
+      email = who.email;
+      try {
+        forming = await shortlistedDiscoverizeMayFormTeam(evId, email);
+      } catch (e) {
+        return blobFailed(e, "team create precheck failed");
+      }
+    }
+    if (!forming) {
+      if (!effectiveRegistrationOpen()) return jsonError(registrationUnavailableMessage(), 409);
+      return jsonError(eventClosedMessage(event), 409);
+    }
+  } else {
+    const who = await resolveApplicantEmail(String(body?.email ?? ""));
+    if ("error" in who) return who.error;
+    email = who.email;
+  }
+
+  /* A new team is exactly what a full event is not taking. Forming a team
+     for someone already registered adds no new entry. */
+  if (!forming && (await eventIsFull(event))) return jsonError(eventFullMessage(event.name), 409);
+
   const session = await resolveRole();
   if (staffBlocksApplication(session.kind, (await resolveRoleFor(email)).kind))
     return jsonError(STAFF_CANNOT_APPLY, 403);
 
   const name = String(body?.name ?? "").trim();
   const bio = String(body?.bio ?? "").trim();
-  const leadName = String(body?.leadName ?? "").trim();
-  const phone = normalizePhone(body?.phone);
-  const college = String(body?.college ?? "").trim();
+  /* The ticket page asks only for the team name. The lead's own registration
+     already has the rest, and making them type it again is how this step
+     used to be unreachable after the event had closed. */
+  let leadName = String(body?.leadName ?? "").trim();
+  let phone = normalizePhone(body?.phone);
+  let college = String(body?.college ?? "").trim();
+  if (forming) {
+    if (leadName.length < 2) leadName = String(forming.name ?? "").trim();
+    if (!phone) phone = normalizePhone(forming.phone);
+    if (college.length < 2) college = String(forming.college ?? "").trim();
+  }
 
   if (name.length < 2 || name.length > 80) return jsonError("Enter a team name.", 400);
   if (bio.length > MAX_TEAM_BIO) return jsonError("Team bio is too long.", 400);
@@ -248,9 +305,13 @@ async function createTeam(body: any) {
        or be invited back. The register route has always read it this way. */
     const existingApp = (await readJsonByPath(applicationPath(evId, email))) as Application | null;
     if (existingApp && isLiveApplication(existingApp.status)) {
-      if (!(await teamGoneFor(evId, existingApp)))
+      /* A shortlisted solo already holds a registration and has no team.
+         Creating one attaches that registration to it; it is not a second
+         entry. Everyone else who already applied is still refused. */
+      if (forming) repointApp = existingApp;
+      else if (!(await teamGoneFor(evId, existingApp)))
         return jsonError("You've already applied for this event.", 409);
-      repointApp = existingApp;
+      else repointApp = existingApp;
     }
 
     const existingMembership = await readJsonByPath(teamMemberPath(evId, email));
@@ -337,6 +398,9 @@ async function joinTeam(body: any) {
   const event = findEvent(evId);
   if (!event) return jsonError("That event doesn't exist.", 400);
   /* An event can close before the fest-wide date (Event.registrationCloses). */
+  /* A code join is still a new registration. Discoverize's shortlisted leads
+     add teammates themselves (add_member); sharing the code does not reopen
+     the event to anyone who types it. */
   if (!effectiveRegistrationOpen(undefined, festFor(event))) return jsonError(eventClosedMessage(event), 409);
 
   const who = await resolveApplicantEmail(String(body?.email ?? ""));

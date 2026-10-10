@@ -3,7 +3,10 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { RegistrationDialog } from "@/components/registration-dialog";
-import { TeamInviteCard, useMyTeam } from "@/components/team-invite-card";
+import { TeamInviteCard, useMyTeamState } from "@/components/team-invite-card";
+import { TeamManage } from "@/components/team-manage";
+import { DiscoverizeFormTeam } from "@/components/discoverize-form-team";
+import { useIdentity } from "@/lib/identity-context";
 import { Event, eventId, capacityFor, maxTeamsFor, effectiveRegistrationState, festFor, eventClosesDisplay, type RegistrationState } from "@/lib/pravrutti-data";
 import { FEE_PER_HEAD, isLiveApplication, type AppStatus } from "@/lib/applications";
 import { Clock, IndianRupee, Ticket, UserCheck } from "lucide-react";
@@ -17,6 +20,7 @@ import {
   DISCOVERIZE_STATE_BLURB,
   ABSTRACT_FORM_URL,
   DISCOVERIZE_SHORTLIST_CONGRATS,
+  discoverizeMayFormTeam,
 } from "@/lib/discoverize";
 import { registerNoteText } from "@/lib/register-note";
 
@@ -147,7 +151,13 @@ export function EventRegisterPanel({
      still invite until the event's max size. Confirmed viewers skip the
      registration card, so this fetch is also how they see the code. Pulses so
      a joiner's name appears without a reload. */
-  const mine = useMyTeam(id, live && viewerReady && dash.ready && !staff);
+  const me = useIdentity();
+  const [teamPulse, setTeamPulse] = useState(0);
+  const { team: mine, settled: teamSettled } = useMyTeamState(
+    id,
+    live && viewerReady && dash.ready && !staff,
+    teamPulse,
+  );
 
   const handleRegistered = useCallback(() => {
     load();
@@ -261,8 +271,48 @@ export function EventRegisterPanel({
      open — exactly what joining an approved team now does — rendered two
      fewer hooks than the render before, and the page fell over with "This
      page couldn't load". test/event-register-panel-hooks keeps them here. */
+  /* Shortlisted Discoverize leads still form a team and add teammates after
+     the event's own close. The form waits until the roster has loaded, so a
+     lead who already has a team is not asked to create one. */
+  const mayFormTeam =
+    discoverize &&
+    live &&
+    discoverizeMayFormTeam({
+      status: viewerStatus ?? "pending",
+      payment: viewerPayment ?? "not_required",
+      round: round ?? undefined,
+    });
+  const discoverizeTeam = mayFormTeam ? (
+    mine?.isLead ? (
+      <TeamManage
+        eventId={id}
+        team={mine}
+        viewerEmail={me.email ?? ""}
+        leadName={me.name ?? undefined}
+        canAdd
+        onChanged={() => setTeamPulse((n) => n + 1)}
+      />
+    ) : teamSettled && !mine ? (
+      <DiscoverizeFormTeam
+        eventId={id}
+        email={me.email}
+        onCreated={() => {
+          setTeamPulse((n) => n + 1);
+          onAccessRefresh?.();
+        }}
+      />
+    ) : null
+  ) : null;
+
   if (dash.ready && staff) return null;
-  if (viewerReady && viewerStatus === "confirmed") return invite;
+  if (viewerReady && viewerStatus === "confirmed") {
+    return (
+      <div className="space-y-3">
+        {invite}
+        {discoverizeTeam}
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-3">
@@ -448,7 +498,12 @@ export function EventRegisterPanel({
         </div>
       </section>
 
-      {viewerStatus === "pending" ? invite : null}
+          {viewerStatus === "pending" ? (
+            <div className="space-y-3">
+              {invite}
+              {discoverizeTeam}
+            </div>
+          ) : null}
 
       <RegistrationDialog
         /* Stay open on `open`, not `showApply`. Refreshing access after

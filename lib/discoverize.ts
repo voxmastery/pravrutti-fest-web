@@ -116,3 +116,22 @@ export function mayPay(a: RoundRow): boolean {
 export function maySubmitAbstract(a: RoundRow): boolean {
   return discoverizeState(a) === "registered";
 }
+
+/**
+ * A shortlisted Discoverize registration may still form its team after the
+ * event has closed to new sign-ups. The mark is `round.shortlistedAt` — a
+ * view the shortlist desk and the coordinators' list both produce — not a
+ * separate application status. Confirmed, paid, or still owing all count;
+ * registered-but-not-shortlisted does not.
+ */
+export function discoverizeMayFormTeam(a: RoundRow): boolean {
+  if (!a.round?.shortlistedAt) return false;
+  const s = discoverizeState(a);
+  return (
+    s === "shortlisted" ||
+    s === "payment_pending" ||
+    s === "payment_submitted" ||
+    s === "payment_successful" ||
+    s === "final_round_confirmed"
+  );
+}

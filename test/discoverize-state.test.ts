@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { discoverizeState, mayPay, maySubmitAbstract, isDiscoverize, DISCOVERIZE_EVENT_ID } from "@/lib/discoverize";
+import { discoverizeState, mayPay, maySubmitAbstract, discoverizeMayFormTeam, isDiscoverize, DISCOVERIZE_EVENT_ID } from "@/lib/discoverize";
 
 /* Discoverize charges at the END of its funnel: free to enter, ₹200 only if
    the coordinators shortlist you. Every screen and every endpoint reads the
@@ -70,6 +70,17 @@ describe("what a team is allowed to do", () => {
     expect(maySubmitAbstract(app())).toBe(true);
     expect(maySubmitAbstract(app({ round: { abstractSubmittedAt: "x" } }))).toBe(false);
     expect(maySubmitAbstract(app({ status: "cancelled" }))).toBe(false);
+  });
+
+  it("lets a shortlisted registration form a team, and not one that is only registered", () => {
+    expect(discoverizeMayFormTeam(app())).toBe(false);
+    expect(discoverizeMayFormTeam(app({ round: { abstractSubmittedAt: "x" } }))).toBe(false);
+    expect(discoverizeMayFormTeam(app({ round: { shortlistedAt: "y" } }))).toBe(true);
+    expect(discoverizeMayFormTeam(app({ round: { shortlistedAt: "y" }, payment: "awaiting" }))).toBe(true);
+    expect(discoverizeMayFormTeam(app({ round: { shortlistedAt: "y", paymentSubmittedAt: "z" }, payment: "awaiting" }))).toBe(true);
+    expect(discoverizeMayFormTeam(app({ round: { shortlistedAt: "y" }, payment: "paid", status: "confirmed" }))).toBe(true);
+    expect(discoverizeMayFormTeam(app({ status: "cancelled", round: { shortlistedAt: "y" } }))).toBe(false);
+    expect(discoverizeMayFormTeam(app({ status: "confirmed" }))).toBe(false);
   });
 });
 

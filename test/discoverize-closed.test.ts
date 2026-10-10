@@ -8,10 +8,12 @@ import { isFull } from "@/lib/event-full";
 import { discoverizeState, mayPay } from "@/lib/discoverize";
 
 /**
- * Discoverize closed again on 8 Oct 2026, 7:00 AM IST. New sign-ups and new
- * teams stop. A team already in does not: the shortlist desk still names
- * who presents, a shortlisted lead still attaches the ₹200 JUNO reference,
- * and verifying that payment still confirms them.
+ * Discoverize closed again on 8 Oct 2026, 7:00 AM IST. New sign-ups stop.
+ * A team already in does not: the shortlist desk still names who presents,
+ * a shortlisted lead still attaches the ₹200 JUNO reference, and verifying
+ * that payment still confirms them. A shortlisted lead who registered solo
+ * may still create their team and add teammates, up to four. Anyone who is
+ * not shortlisted still cannot.
  *
  * The clock is pinned after the event's own close and before the fest-wide
  * date, so a fest that is still open cannot quietly reopen Discoverize.
@@ -30,6 +32,7 @@ vi.mock("@/lib/blob-store", () => ({
   paymentRefPath: (ref: string) => "payment-ref/" + ref.trim().toLowerCase() + ".json",
   teamPath: (e: string, c: string) => `team/${e}/${c}.json`,
   teamMemberPath: (e: string, m: string) => `member/${e}/${m}.json`,
+  invitePath: (t: string) => `invite/${t}.json`,
   readJsonByPath: async (p: string) => store.get(p) ?? null,
   putJson: async (p: string, d: unknown, ow?: boolean) => {
     if (store.has(p) && !ow) throw new Error("exists");
@@ -215,5 +218,110 @@ describe("closing the door does not stop a shortlisted team paying", () => {
     const windowCheck = route.indexOf("effectiveRegistrationOpen(undefined, festFor(event))");
     expect(reference).toBeGreaterThan(0);
     expect(windowCheck).toBeGreaterThan(reference);
+  });
+});
+
+describe("a shortlisted Discoverize lead can still form a team", () => {
+  const create = (email: string, name = "Paper Trail") =>
+    postTeams({ action: "create", eventId: EV, email, name });
+
+  const add = (email: string, code: string, memberEmail: string, memberName: string) =>
+    postTeams({
+      action: "add_member", eventId: EV, code, email,
+      memberName, memberEmail, memberPhone: "9876543211",
+    });
+
+  it("lets a listed solo create a team from their registration, without a second entry", async () => {
+    seedRow(LISTED, { name: "Nayanasree" });
+    const res = await create(LISTED);
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.created).toBe(true);
+    expect(body.memberCount).toBe(1);
+    expect(body.maxMembers).toBe(4);
+    const saved = store.get(`app/${EV}/${LISTED}.json`);
+    expect(saved.teamCode).toBe(body.code);
+    expect(saved.teamName).toBe("Paper Trail");
+    expect(saved.status).toBe("pending");
+    expect(saved.payment).toBe("not_required");
+    expect(saved.fee).toBe("Free");
+    expect(store.get(`member/${EV}/${LISTED}.json`).code).toBe(body.code);
+  });
+
+  it("lets that lead add teammates up to four, and refuses a fifth", async () => {
+    seedRow(LISTED, { name: "Nayanasree" });
+    const created = await (await create(LISTED)).json();
+    const mates = [
+      ["a@example.com", "Asha Rao"],
+      ["b@example.com", "Bhavya N"],
+      ["c@example.com", "Chitra K"],
+    ] as const;
+    for (const [memberEmail, memberName] of mates) {
+      const res = await add(LISTED, created.code, memberEmail, memberName);
+      expect(res.status).toBe(200);
+    }
+    const full = await add(LISTED, created.code, "d@example.com", "Deepa S");
+    expect(full.status).toBe(409);
+    expect((await full.json()).error).toMatch(/full/i);
+    expect(store.has(`app/${EV}/d@example.com.json`)).toBe(false);
+
+    const mine = await postTeams({ action: "mine", eventId: EV, email: LISTED });
+    expect(mine.status).toBe(200);
+    expect((await mine.json()).team.canInvite).toBe(true);
+  });
+
+  it("lets a lead the desk shortlisted, who is not on the hardcoded list, create too", async () => {
+    const lead = "payer@example.com";
+    seedRow(lead, {
+      round: { shortlistedAt: "2026-10-08T04:00:00.000Z", shortlistedBy: "desk" },
+    });
+    const res = await create(lead, "Desk Team");
+    expect(res.status).toBe(200);
+    expect(store.get(`app/${EV}/${lead}.json`).teamName).toBe("Desk Team");
+  });
+
+  it("lets a shortlisted lead whose team was deleted make another", async () => {
+    const code = "GONE0001";
+    store.set(`team/${EV}/${code}.json`, {
+      code, eventId: EV, name: "Old", createdByEmail: LISTED, members: [], createdAt: "x",
+      deletedAt: "2026-10-08T02:00:00.000Z",
+    });
+    seedRow(LISTED, { teamName: "Old", teamCode: code });
+    const res = await create(LISTED, "New Name");
+    expect(res.status).toBe(200);
+    expect(store.get(`app/${EV}/${LISTED}.json`).teamName).toBe("New Name");
+    expect(store.get(`app/${EV}/${LISTED}.json`).teamCode).not.toBe(code);
+  });
+
+  it("refuses a Discoverize registration that was not shortlisted", async () => {
+    seedRow("waiting@example.com");
+    const res = await create("waiting@example.com", "Too Soon");
+    expect(res.status).toBe(409);
+    expect((await res.json()).error).toMatch(/closed/i);
+    expect(store.get(`app/${EV}/waiting@example.com.json`).teamCode).toBeNull();
+  });
+
+  it("refuses a shortlisted lead who already has a team, and a code join", async () => {
+    const code = "HAVE0001";
+    store.set(`team/${EV}/${code}.json`, {
+      code, eventId: EV, name: "Already", createdByEmail: LISTED, members: [], createdAt: "x",
+    });
+    store.set(`member/${EV}/${LISTED}.json`, {
+      code, eventId: EV,
+      member: { name: "Nayanasree", email: LISTED, phone: "9876543210", college: "RUAS", joinedAt: "x" },
+    });
+    seedRow(LISTED, { teamName: "Already", teamCode: code });
+    const again = await create(LISTED, "Second");
+    expect(again.status).toBe(409);
+    expect((await again.json()).error).toMatch(/closed/i);
+    expect(store.get(`app/${EV}/${LISTED}.json`).teamCode).toBe(code);
+
+    const joined = await postTeams({
+      action: "join", eventId: EV, code, email: "joiner@example.com",
+      name: "A Joiner", phone: "9876543212", college: "RUAS",
+    });
+    expect(joined.status).toBe(409);
+    expect((await joined.json()).error).toMatch(/closed/i);
+    expect(store.has(`app/${EV}/joiner@example.com.json`)).toBe(false);
   });
 });

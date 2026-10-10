@@ -14,21 +14,29 @@ const ROSTER_MS = 20_000;
  * without a reload. Never call this for a visitor who is not on the team —
  * the route already withholds the roster from verify-by-code.
  */
-export function useMyTeam(
+export function useMyTeamState(
   eventId: string,
   enabled = true,
   /* Bump to re-read immediately — the roster already polls, but a lead who
      has just removed somebody should not watch the old name sit there. */
   refreshKey = 0,
-): TeamPreview | null {
+): { team: TeamPreview | null; settled: boolean } {
   const [team, setTeam] = useState<TeamPreview | null>(null);
+  /* False until the first answer, so a create-team form is not flashed at a
+     lead who already has one while the roster is still loading. */
+  const [settled, setSettled] = useState(false);
 
   useEffect(() => {
     if (!enabled || !eventId) {
       setTeam(null);
+      setSettled(true);
       return;
     }
     let alive = true;
+    /* A new lookup (including the first) has not answered yet. Polls call
+       load() without clearing this, so the form does not vanish every few
+       seconds. */
+    setSettled(false);
     const load = () => {
       fetch(`/api/teams?event=${encodeURIComponent(eventId)}&mine=1`, { cache: "no-store" })
         .then((r) => (r.ok ? r.json() : null))
@@ -36,7 +44,10 @@ export function useMyTeam(
           if (!alive) return;
           setTeam(d?.team?.code ? d.team : null);
         })
-        .catch(() => {});
+        .catch(() => {})
+        .finally(() => {
+          if (alive) setSettled(true);
+        });
     };
     load();
     const onVis = () => {
@@ -51,7 +62,15 @@ export function useMyTeam(
     };
   }, [eventId, enabled, refreshKey]);
 
-  return team;
+  return { team, settled };
+}
+
+export function useMyTeam(
+  eventId: string,
+  enabled = true,
+  refreshKey = 0,
+): TeamPreview | null {
+  return useMyTeamState(eventId, enabled, refreshKey).team;
 }
 
 /**

@@ -14,11 +14,13 @@ import {
   DISCOVERIZE_STATE_BLURB,
   ABSTRACT_FORM_URL,
   DISCOVERIZE_SHORTLIST_CONGRATS,
+  discoverizeMayFormTeam,
 } from "@/lib/discoverize";
 import { downloadEventIcs } from "@/lib/event-calendar";
 import { EventPoster } from "@/components/event-poster";
 import { TeamInviteCard, useMyTeam } from "@/components/team-invite-card";
 import { DiscoverizeGroupCard } from "@/components/discoverize-group-card";
+import { DiscoverizeFormTeam } from "@/components/discoverize-form-team";
 import { TeamManage } from "@/components/team-manage";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Loader2, CalendarPlus, Hourglass, Check, RotateCcw, LogOut, MapPin, QrCode, ArrowLeft, Copy } from "lucide-react";
@@ -408,7 +410,7 @@ export default function TicketPage() {
                               depends on how far through its rounds the team is.
                               Its own block, so no other ticket changes. */}
                           {isDiscoverize(a.eventId) && a.status !== "cancelled" && (
-                            <DiscoverizeRow a={a} />
+                            <DiscoverizeRow a={a} email={me.email} onChanged={() => lookup()} />
                           )}
 
                           {/* Left for the portal and never said how it went —
@@ -573,9 +575,13 @@ export default function TicketPage() {
  * button the server would refuse: "Pay ₹200" appears only for a team the
  * judges shortlisted, and the endpoint behind it checks the same rule again.
  */
-function DiscoverizeRow({ a }: { a: App }) {
-  const state = discoverizeState({ status: a.status, payment: a.payment, round: a.round ?? undefined });
+function DiscoverizeRow({ a, email, onChanged }: { a: App; email: string | null; onChanged: () => void }) {
+  const roundRow = { status: a.status, payment: a.payment, round: a.round ?? undefined };
+  const state = discoverizeState(roundRow);
   if (state === "closed") return null;
+  /* No team yet: a solo the judges shortlisted. The create call is refused
+     for anyone who is not, so the button only renders where it can succeed. */
+  const mayForm = !a.teamCode && (a.status === "pending" || a.status === "confirmed") && discoverizeMayFormTeam(roundRow);
 
   const tone =
     state === "final_round_confirmed"
@@ -613,6 +619,8 @@ function DiscoverizeRow({ a }: { a: App }) {
           <p className="text-xs font-semibold text-emerald-400">{DISCOVERIZE_SHORTLIST_CONGRATS}</p>
         </div>
       )}
+
+      {mayForm && <DiscoverizeFormTeam eventId={a.eventId} email={email} onCreated={onChanged} />}
 
       {/* At every stage, not just the first — a team that has submitted or
           been shortlisted needs the group more, not less. `closed` already

@@ -508,11 +508,12 @@ export const events: Event[] = [
        shortlist decides who presents — so the field need not be limited. */
     capacityUnit: "participants",
     /* Closed on 6 Oct, reopened on 7 Oct, closed again on 8 Oct at
-       Aailyah's request: no new sign-ups and no new teams. The instant is
-       7:00 AM IST that morning, already past, so every gate reads closed
-       without calling the event full — shortlisted teams still pay and get
-       confirmed, and the shortlist desk is untouched. Teams already in keep
-       their places. */
+       Aailyah's request: no new sign-ups. The instant is 7:00 AM IST that
+       morning, already past, so every public gate reads closed without
+       calling the event full — shortlisted teams still pay and get
+       confirmed, and the shortlist desk is untouched. A shortlisted lead
+       may still create their team and add teammates (up to the team size);
+       everyone else cannot. Teams already in keep their places. */
     registrationCloses: "2026-10-08T01:30:00.000Z",
     registerNote:
       "Anyone joining on or after 7 Oct must join the WhatsApp group immediately and contact Aaliyah at {phone} for updates.",
