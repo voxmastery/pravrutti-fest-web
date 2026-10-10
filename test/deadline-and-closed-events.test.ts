@@ -9,7 +9,7 @@ import { capOf, isFull } from "@/lib/event-full";
 import { registerNoteText } from "@/lib/register-note";
 
 /**
- * The deadline moved to 11 October; events shut on purpose stay shut.
+ * The deadline moved to 12 October; events shut on purpose stay shut.
  *
  * On 5 Oct 2026 the organisers extended registration from 5 to 9 October,
  * and took CHAOS, Hacktivate, AI Escape Room and Line Follower out of it:
@@ -46,23 +46,24 @@ describe("ROBO RACE", () => {
 });
 
 describe("the fest-wide deadline", () => {
-  it("is 11 October, 11:59 PM IST", () => {
-    expect(FEST.registrationCloses).toBe("2026-10-11T18:29:00.000Z");
-    expect(Date.parse(FEST.registrationCloses!)).toBe(Date.parse("2026-10-11T23:59:00+05:30"));
+  it("is 12 October, 11:59 PM IST", () => {
+    expect(FEST.registrationCloses).toBe("2026-10-12T18:29:00.000Z");
+    expect(Date.parse(FEST.registrationCloses!)).toBe(Date.parse("2026-10-12T23:59:00+05:30"));
   });
 
   it("is the date the FAQ gives", () => {
     const answer = faqs.find((f) => /last date/i.test(f.question))?.answer ?? "";
-    expect(REGISTRATION_CLOSES_LONG).toMatch(/^11th October/);
+    expect(REGISTRATION_CLOSES_LONG).toMatch(/^12th October/);
     expect(answer).toContain(REGISTRATION_CLOSES_LONG);
     expect(answer).toContain("11:59 PM IST");
   });
 
-  it("keeps an ordinary event open after the old 9 October date", () => {
+  it("keeps an ordinary event open after the old 11 October date", () => {
     const afterNine = Date.parse("2026-10-10T06:00:00.000Z");
     expect(registrationState(afterNine, festFor(ev("ROBO RACE")))).toBe("open");
     expect(registrationState(afterNine, festFor(ev("Campus Innovators 2.0")))).toBe("open");
-    expect(registrationState(Date.parse("2026-10-11T18:29:00.000Z"), festFor(ev("Campus Innovators 2.0")))).toBe("closed");
+    expect(registrationState(Date.parse("2026-10-11T18:29:00.000Z"), festFor(ev("Campus Innovators 2.0")))).toBe("open");
+    expect(registrationState(Date.parse("2026-10-12T18:29:00.000Z"), festFor(ev("Campus Innovators 2.0")))).toBe("closed");
   });
 
   it("keeps an ordinary event open after the old 5 October date", () => {
