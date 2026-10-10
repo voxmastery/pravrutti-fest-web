@@ -324,4 +324,60 @@ describe("a shortlisted Discoverize lead can still form a team", () => {
     expect((await joined.json()).error).toMatch(/closed/i);
     expect(store.has(`app/${EV}/joiner@example.com.json`)).toBe(false);
   });
+
+  it("lets an in-review lead who already submitted the ₹200 add teammates", async () => {
+    const code = "REVIEW0001";
+    store.set(`team/${EV}/${code}.json`, {
+      code, eventId: EV, name: "In Review", createdByEmail: LISTED, members: [], createdAt: "x",
+    });
+    store.set(`member/${EV}/${LISTED}.json`, {
+      code, eventId: EV,
+      member: { name: "Nayanasree", email: LISTED, phone: "9876543210", college: "RUAS", joinedAt: "x" },
+    });
+    seedRow(LISTED, {
+      name: "Nayanasree", teamName: "In Review", teamCode: code,
+      payment: "awaiting", fee: "Rs. 200/-", paymentRef: REF,
+      round: {
+        shortlistedAt: "2026-10-08T04:00:00.000Z",
+        paymentSubmittedAt: "2026-10-08T05:00:00.000Z",
+      },
+    });
+    const mine = await postTeams({ action: "mine", eventId: EV, email: LISTED });
+    const mineBody = await mine.json();
+    expect(mine.status).toBe(200);
+    expect(mineBody.team.isLead).toBe(true);
+    expect(mineBody.team.canInvite).toBe(true);
+    expect(discoverizeState(store.get(`app/${EV}/${LISTED}.json`))).toBe("payment_submitted");
+
+    for (const [memberEmail, memberName] of [
+      ["a@example.com", "Asha Rao"],
+      ["b@example.com", "Bhavya N"],
+      ["c@example.com", "Chitra K"],
+    ] as const) {
+      expect((await add(LISTED, code, memberEmail, memberName)).status).toBe(200);
+    }
+    const full = await add(LISTED, code, "d@example.com", "Deepa S");
+    expect(full.status).toBe(409);
+    expect((await full.json()).error).toMatch(/full/i);
+    expect(store.get(`app/${EV}/${LISTED}.json`).status).toBe("pending");
+    expect(store.get(`app/${EV}/${LISTED}.json`).payment).toBe("awaiting");
+  });
+
+  it("still offers add when the registration names the team but the membership row is missing", async () => {
+    const code = "NOMEM0001";
+    store.set(`team/${EV}/${code}.json`, {
+      code, eventId: EV, name: "On the form", createdByEmail: LISTED, members: [], createdAt: "x",
+    });
+    seedRow(LISTED, {
+      teamName: "On the form", teamCode: code,
+      payment: "awaiting", fee: "Rs. 200/-",
+      round: { shortlistedAt: "2026-10-08T04:00:00.000Z", paymentSubmittedAt: "2026-10-08T05:00:00.000Z" },
+    });
+    const mine = await postTeams({ action: "mine", eventId: EV, email: LISTED });
+    const body = await mine.json();
+    expect(body.team.code).toBe(code);
+    expect(body.team.isLead).toBe(true);
+    expect(body.team.canInvite).toBe(true);
+    expect((await add(LISTED, code, "mate@example.com", "Mate One")).status).toBe(200);
+  });
 });

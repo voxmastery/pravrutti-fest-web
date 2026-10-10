@@ -18,7 +18,7 @@ import {
 } from "@/lib/discoverize";
 import { downloadEventIcs } from "@/lib/event-calendar";
 import { EventPoster } from "@/components/event-poster";
-import { TeamInviteCard, useMyTeam } from "@/components/team-invite-card";
+import { TeamInviteCard, useMyTeam, useMyTeamState } from "@/components/team-invite-card";
 import { DiscoverizeGroupCard } from "@/components/discoverize-group-card";
 import { DiscoverizeFormTeam } from "@/components/discoverize-form-team";
 import { TeamManage } from "@/components/team-manage";
@@ -80,6 +80,7 @@ function TicketTeamBlock({
   viewerEmail,
   viewerName,
   live,
+  showManage = true,
 }: {
   eventId: string;
   fallbackCode: string;
@@ -90,6 +91,10 @@ function TicketTeamBlock({
   /** Whether this registration still holds a place. A withdrawn or declined
       entry has no team left to add anybody to. */
   live: boolean;
+  /** Discoverize draws Add a member inside its own status box, next to
+      "Payment submitted · in review", so the lead does not have to find it
+      under the team code. */
+  showManage?: boolean;
 }) {
   /* Bumped to re-read the roster after the lead removes somebody. */
   const [pulse, setPulse] = useState(0);
@@ -100,14 +105,16 @@ function TicketTeamBlock({
     return (
       <div className="pt-1">
         <TeamInviteCard team={team} />
-        <TeamManage
-          eventId={eventId}
-          team={team}
-          viewerEmail={viewerEmail}
-          leadName={viewerName}
-          canAdd={live}
-          onChanged={() => setPulse((n) => n + 1)}
-        />
+        {showManage ? (
+          <TeamManage
+            eventId={eventId}
+            team={team}
+            viewerEmail={viewerEmail}
+            leadName={viewerName}
+            canAdd={live}
+            onChanged={() => setPulse((n) => n + 1)}
+          />
+        ) : null}
       </div>
     );
   }
@@ -453,6 +460,7 @@ export default function TicketPage() {
                               viewerEmail={me.email ?? ""}
                               viewerName={a.name}
                               live={a.status === "pending" || a.status === "confirmed"}
+                              showManage={!isDiscoverize(a.eventId)}
                             />
                           )}
 
@@ -578,10 +586,19 @@ export default function TicketPage() {
 function DiscoverizeRow({ a, email, onChanged }: { a: App; email: string | null; onChanged: () => void }) {
   const roundRow = { status: a.status, payment: a.payment, round: a.round ?? undefined };
   const state = discoverizeState(roundRow);
+  const live = a.status === "pending" || a.status === "confirmed";
+  const [teamPulse, setTeamPulse] = useState(0);
+  /* In review counts. Confirmed is not required — a shortlisted lead who has
+     submitted the ₹200 is still pending until an organiser verifies it. */
+  const { team, settled } = useMyTeamState(a.eventId, live && state !== "closed", teamPulse);
+  const refreshTeam = () => {
+    setTeamPulse((n) => n + 1);
+    onChanged();
+  };
   if (state === "closed") return null;
-  /* No team yet: a solo the judges shortlisted. The create call is refused
-     for anyone who is not, so the button only renders where it can succeed. */
-  const mayForm = !a.teamCode && (a.status === "pending" || a.status === "confirmed") && discoverizeMayFormTeam(roundRow);
+  const shortlisted = live && discoverizeMayFormTeam(roundRow);
+  const showCreate = shortlisted && settled && !team;
+  const showAdd = shortlisted && !!team?.isLead;
 
   const tone =
     state === "final_round_confirmed"
@@ -620,7 +637,18 @@ function DiscoverizeRow({ a, email, onChanged }: { a: App; email: string | null;
         </div>
       )}
 
-      {mayForm && <DiscoverizeFormTeam eventId={a.eventId} email={email} onCreated={onChanged} />}
+      {showCreate && <DiscoverizeFormTeam eventId={a.eventId} email={email} onCreated={refreshTeam} />}
+
+      {showAdd && team && (
+        <TeamManage
+          eventId={a.eventId}
+          team={team}
+          viewerEmail={email ?? ""}
+          leadName={a.name}
+          canAdd
+          onChanged={refreshTeam}
+        />
+      )}
 
       {/* At every stage, not just the first — a team that has submitted or
           been shortlisted needs the group more, not less. `closed` already

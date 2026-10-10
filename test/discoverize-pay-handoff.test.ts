@@ -117,6 +117,12 @@ describe("Pay ₹200 is wired to that view, then to JUNO", () => {
     expect(control).toContain("?finish=pay");
     expect(control).toContain("<Button asChild");
     expect(control).toContain("<a href={`/events/${a.eventId}?finish=pay`}>");
+    /* In review is enough. Add sits in this box for a shortlisted lead,
+       including payment submitted, and is not held back for confirmed. */
+    const row = ticket.slice(ticket.indexOf("function DiscoverizeRow"));
+    expect(row).toContain('a.status === "pending" || a.status === "confirmed"');
+    expect(row).toContain("showAdd && team");
+    expect(row).not.toMatch(/showAdd && a\.status === "confirmed"/);
     /* A <button> inside the <a> is what dropped the click on this site. */
     expect(control).not.toMatch(/<a[^>]*>\s*<Button/);
   });

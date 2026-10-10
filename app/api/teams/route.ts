@@ -180,9 +180,23 @@ async function mineTeam(evId: string, bodyEmail: string) {
   if ("error" in who) return who.error;
   try {
     const membership = (await readJsonByPath(teamMemberPath(evId, who.email))) as { code?: string } | null;
-    const code = normalizeTeamCode(membership?.code ?? "");
-    if (!isValidTeamCode(code)) return NextResponse.json({ team: null }, { headers: { "cache-control": "no-store" } });
-    const team = await loadTeam(evId, code);
+    let code = normalizeTeamCode(membership?.code ?? "");
+    let team = isValidTeamCode(code) ? await loadTeam(evId, code) : null;
+    /* A Discoverize solo can hold a team code on the registration without a
+       membership row. My Tickets then drew the payment box and nothing else,
+       so an in-review lead had no Add a member control. The code on their
+       own application is theirs when they lead that team. */
+    if (!team && isDiscoverize(evId)) {
+      const app = (await readJsonByPath(applicationPath(evId, who.email))) as Application | null;
+      const fromApp = normalizeTeamCode(String(app?.teamCode ?? ""));
+      if (isValidTeamCode(fromApp)) {
+        const named = await loadTeam(evId, fromApp);
+        if (named && String(named.createdByEmail ?? "").toLowerCase() === who.email.toLowerCase()) {
+          team = named;
+          code = fromApp;
+        }
+      }
+    }
     if (!team) return NextResponse.json({ team: null }, { headers: { "cache-control": "no-store" } });
     const members = await listTeamMembers(evId, code);
     return NextResponse.json(
