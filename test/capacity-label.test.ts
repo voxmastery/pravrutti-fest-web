@@ -84,6 +84,14 @@ describe("capacityLabel", () => {
     expect(e.full).toBeFalsy();
   });
 
+  it("HAMMER reads 42 teams on the real data", () => {
+    const e = events.find((x) => x.name === "HAMMER")!;
+    expect(capacityLabel(e)).toBe("42 teams");
+    expect(e.maxTeams).toBe(42);
+    expect(e.capacity).toBe(168);
+    expect(e.full).toBeFalsy();
+  });
+
   it("Terraform reads 30 teams on the real data", () => {
     const e = events.find((x) => x.name === "Terraform: The System Awakens")!;
     expect(capacityLabel(e)).toBe("30 teams");

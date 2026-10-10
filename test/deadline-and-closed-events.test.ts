@@ -45,6 +45,28 @@ describe("ROBO RACE", () => {
   });
 });
 
+/* Raised from 40 to 42 teams on 10 Oct. It had filled at 40 and was
+   holding 41 (35 confirmed, 6 in review). No hand switch, so 41 holding
+   places is open and 42 is full. */
+describe("HAMMER", () => {
+  it("is open below 42 teams and stays on the list until the fest close", () => {
+    const e = ev("HAMMER");
+    expect(eventId(e.name)).toBe("hammer");
+    expect(e.maxTeams).toBe(42);
+    expect(e.capacity).toBe(168);
+    expect(e.full).toBeFalsy();
+    expect(e.unlisted).toBeFalsy();
+    expect(e.registrationCloses).toBeUndefined();
+    expect(capOf(e)).toEqual({ limit: 42, unit: "teams" });
+    expect(capacityLabel(e)).toBe("42 teams");
+    expect(isFull(e, { people: 0, teams: 41 })).toBe(false);
+    expect(isFull(e, { people: 0, teams: 42 })).toBe(true);
+    expect(listedEvents).toContain(e);
+    expect(registrationState(Date.parse("2026-10-12T18:28:00.000Z"), festFor(e))).toBe("open");
+    expect(registrationState(Date.parse("2026-10-12T18:29:00.000Z"), festFor(e))).toBe("closed");
+  });
+});
+
 describe("the fest-wide deadline", () => {
   it("is 12 October, 11:59 PM IST", () => {
     expect(FEST.registrationCloses).toBe("2026-10-12T18:29:00.000Z");
