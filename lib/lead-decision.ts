@@ -49,12 +49,12 @@ export async function leadIsRegistered(evId: string, team: Team | null): Promise
 /**
  * Whether this lead may add a teammate, as far as the registration window goes.
  *
- * Closing the window — the fest-wide date, or an event's own earlier one —
- * stops new teams and stops a lead adding teammates. The one exception is a
- * shortlisted Discoverize lead who already holds a live registration: that
- * event closed on 8 Oct and those leads still build their team.
+ * An event's own earlier close, or the event being full, stops new teams.
+ * It does not stop a team that is already in from filling its own slots:
+ * the caller treats the fest-wide date as still open for a lead who is in
+ * review or confirmed. Once that fest-wide date has passed, the only add
+ * left is a shortlisted Discoverize lead who already registered.
  *
- * Ganesh, 10 Oct 2026. The earlier Hacktivate post-close add is withdrawn.
  * A full roster, someone who is not the lead, and a duplicate email are
  * refused on their own; this only answers the window.
  */

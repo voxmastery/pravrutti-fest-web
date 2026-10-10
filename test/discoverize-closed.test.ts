@@ -320,9 +320,8 @@ describe("a shortlisted Discoverize lead can still form a team", () => {
       action: "join", eventId: EV, code, email: "joiner@example.com",
       name: "A Joiner", phone: "9876543212", college: "RUAS",
     });
-    expect(joined.status).toBe(409);
-    expect((await joined.json()).error).toMatch(/closed/i);
-    expect(store.has(`app/${EV}/joiner@example.com.json`)).toBe(false);
+    expect(joined.status, JSON.stringify(await joined.clone().json())).toBe(200);
+    expect(store.get(`app/${EV}/joiner@example.com.json`).teamCode).toBe(code);
   });
 
   it("lets an in-review lead who already submitted the ₹200 add teammates", async () => {

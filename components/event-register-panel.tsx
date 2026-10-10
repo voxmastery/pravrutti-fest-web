@@ -7,7 +7,7 @@ import { TeamInviteCard, useMyTeamState } from "@/components/team-invite-card";
 import { TeamManage } from "@/components/team-manage";
 import { DiscoverizeFormTeam } from "@/components/discoverize-form-team";
 import { useIdentity } from "@/lib/identity-context";
-import { Event, eventId, capacityFor, maxTeamsFor, effectiveRegistrationState, festFor, eventClosesDisplay, type RegistrationState } from "@/lib/pravrutti-data";
+import { Event, eventId, capacityFor, maxTeamsFor, effectiveRegistrationOpen, effectiveRegistrationState, festFor, eventClosesDisplay, type RegistrationState } from "@/lib/pravrutti-data";
 import { FEE_PER_HEAD, isLiveApplication, type AppStatus } from "@/lib/applications";
 import { Clock, IndianRupee, Ticket, UserCheck } from "lucide-react";
 import { useDashboardRole } from "@/hooks/use-dashboard-role";
@@ -109,6 +109,11 @@ export function EventRegisterPanel({
      render time disagrees with the build-time HTML the moment the deadline
      passes without a redeploy — a hydration mismatch on the primary button. */
   const [regState, setRegState] = useState<RegistrationState>("open");
+  /* Fest-wide window, separate from this event's own close. Existing teams
+     keep filling until the fest date even after the event has stopped
+     taking new teams. Starts open, same as regState, so the prerendered
+     page does not disagree with the first client paint. */
+  const [festOpen, setFestOpen] = useState(true);
   /* Read on the client only: "tonight" depends on today's date, and this card
      is prerendered, so computing it during render would mismatch hydration. */
   const [closesText, setClosesText] = useState("");
@@ -119,6 +124,7 @@ export function EventRegisterPanel({
        minute so an open tab flips to closed at the deadline. */
     const check = () => {
       setRegState(effectiveRegistrationState(undefined, festFor(event)));
+      setFestOpen(effectiveRegistrationOpen());
       setClosesText(event.registrationCloses ? closesLabel(event.registrationCloses) : "");
     };
     check();
@@ -188,12 +194,14 @@ export function EventRegisterPanel({
      confirmed teams, so on its own it read "37 of 45" while 52 teams already
      held places — and invited more. When the event is closed it says so. */
   const closedFull = !!event.full || serverFull;
-  /* The form reads event.full to drop "Create team" and the fee; an event
-     full by its count has to look the same to it. Memoised so the form's
-     effects, which depend on the event, do not re-run every render. */
+  /* The form reads event.full to drop "Create team" and offer code-join.
+     An event that is full by count, or closed to new teams on its own date,
+     has to look the same to it. Memoised so the form's effects, which depend
+     on the event, do not re-run every render. */
+  const joinOnly = closedFull || regState !== "open";
   const dialogEvent = useMemo(
-    () => (closedFull === !!event.full ? event : { ...event, full: closedFull }),
-    [event, closedFull],
+    () => (!joinOnly ? event : event.full ? event : { ...event, full: true }),
+    [event, joinOnly],
   );
   /* No stated cap (CHAOS, Hacktivate): capacityFor falls back to a placeholder
      100, which put "231 of 100" on the page. With nothing to measure against,
@@ -212,10 +220,10 @@ export function EventRegisterPanel({
   /* The number is not on the event. It arrives with the call-button lookup,
      which is the same moment Request to join is allowed on screen. */
   const note = registerNoteText(event.registerNote, event.registerNoteCoordinator, phones);
-  /* A full event takes no new team, and the public join-by-code link closes
-     with it. The reason stays on the page so the tap does not vanish. */
-  const showJoinOnly = viewerReady && dash.ready && !live && !closed && !staff && closedFull;
-  const showClosed = viewerReady && !live && closed;
+  /* Full, or closed to new teams on its own date. A team already in can
+     still be joined with its code until the fest-wide close. */
+  const showJoinExisting = viewerReady && dash.ready && !live && !staff && festOpen && (closedFull || closed);
+  const showClosed = viewerReady && !live && closed && !festOpen;
   /* Two different people are pending without a reference. One left for the
      portal and never told us how it went — they get the question. The other
      already answered "yes, I've paid" without an ID: that registration is
@@ -282,6 +290,19 @@ export function EventRegisterPanel({
       payment: viewerPayment ?? "not_required",
       round: round ?? undefined,
     });
+  /* Confirmed and in-review leads add from this page. Discoverize draws
+     its own copy inside discoverizeTeam, so it is not drawn twice. */
+  const leadTools =
+    mine?.isLead && !mayFormTeam ? (
+      <TeamManage
+        eventId={id}
+        team={mine}
+        viewerEmail={me.email ?? ""}
+        leadName={me.name ?? undefined}
+        canAdd
+        onChanged={() => setTeamPulse((n) => n + 1)}
+      />
+    ) : null;
   const discoverizeTeam = mayFormTeam ? (
     mine?.isLead ? (
       <TeamManage
@@ -309,6 +330,7 @@ export function EventRegisterPanel({
     return (
       <div className="space-y-3">
         {invite}
+        {leadTools}
         {discoverizeTeam}
       </div>
     );
@@ -410,16 +432,17 @@ export function EventRegisterPanel({
               ) : null}
             </div>
           )}
-          {showJoinOnly && (
+          {showJoinExisting && (
             <div className="space-y-2">
               <Button
-                disabled
-                className="w-full h-12 rounded-xl font-display text-xs font-black uppercase tracking-widest bg-electric-magenta/10 text-electric-magenta/70 border border-electric-magenta/30"
+                onClick={() => setRegistering(true)}
+                className="w-full h-12 rounded-xl font-display text-xs font-black uppercase tracking-widest text-white arcade-btn-magenta border-cyber-pink cursor-pointer"
               >
-                Full · no new teams
+                <Ticket className="w-4 h-4 mr-2" aria-hidden="true" />
+                Join with a team code
               </Button>
               <p className="text-center text-xs leading-relaxed text-pearl-white/60">
-                {event.name} is full. Joining with a team code is closed.
+                {event.name} isn’t taking new teams. A team already in can still be joined with its code.
               </p>
             </div>
           )}
@@ -497,6 +520,7 @@ export function EventRegisterPanel({
           {viewerStatus === "pending" ? (
             <div className="space-y-3">
               {invite}
+              {leadTools}
               {discoverizeTeam}
             </div>
           ) : null}

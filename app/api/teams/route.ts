@@ -87,9 +87,10 @@ function registrationWindowOpen(event: { registrationCloses?: string } | null | 
   return effectiveRegistrationOpen() && effectiveRegistrationOpen(undefined, festFor(event));
 }
 
-/** Add is allowed while the window is open. After it closes, only a
-    shortlisted Discoverize lead who already registered may still add.
-    The registration read is skipped while the window is open. */
+/** Add is allowed while this event is still taking teams. After the event
+    itself has closed, or once the fest-wide date has passed, a lead who is
+    already in (in review or confirmed) may still fill the team until the
+    fest closes. Past that, only a shortlisted Discoverize lead may add. */
 async function discoverizeShortlistedLead(evId: string, team: Team): Promise<boolean> {
   if (!isDiscoverize(evId)) return false;
   const email = String(team.createdByEmail ?? "").trim().toLowerCase();
@@ -105,11 +106,14 @@ function closedAddReason(event: { name?: string; registrationCloses?: string }) 
 }
 
 async function mayInviteOnto(evId: string, event: { registrationCloses?: string }, team: Team) {
-  const windowOpen = registrationWindowOpen(event);
-  if (windowOpen) return true;
+  if (registrationWindowOpen(event)) return true;
+  const leadIn = await leadIsRegistered(evId, team);
+  /* The event is closed to new teams. One that is already in keeps filling
+     its own slots until the fest-wide close, full flag or not. */
+  if (effectiveRegistrationOpen() && leadIn) return true;
   return leadMayInvite({
     registrationOpen: false,
-    leadRegistered: await leadIsRegistered(evId, team),
+    leadRegistered: leadIn,
     discoverizeShortlisted: await discoverizeShortlistedLead(evId, team),
   });
 }
@@ -237,10 +241,10 @@ async function verifyTeam(evId: string, rawCode: string, bodyEmail: string) {
   const event = findEvent(evId);
   if (!evId || !event) return jsonError("That event doesn't exist.", 400);
   if (!isValidTeamCode(code)) return jsonError("Enter a valid team code.", 400);
-  /* Same window as join. A closed event used to verify successfully and then
-     refuse on the next tap, which read as the button doing nothing. */
+  /* The fest-wide date stops every code. An event that has closed to new
+     teams, or filled up, still lets someone look up a code: joining that
+     team is decided in joinTeam, and only a team already in is accepted. */
   if (!effectiveRegistrationOpen()) return jsonError(registrationUnavailableMessage(), 409);
-  if (!effectiveRegistrationOpen(undefined, festFor(event))) return jsonError(eventClosedMessage(event), 409);
   try {
     const team = await loadTeam(evId, code);
     if (!team) return jsonError("No team found for that code.", 404);
@@ -523,12 +527,6 @@ async function joinTeam(body: any) {
   const evId = String(body?.eventId ?? "").trim();
   const event = findEvent(evId);
   if (!event) return jsonError("That event doesn't exist.", 400);
-  /* An event can close before the fest-wide date (Event.registrationCloses). */
-  /* A code join is still a new registration. Discoverize's shortlisted leads
-     add teammates themselves (add_member); sharing the code does not reopen
-     the event to anyone who types it. */
-  if (!effectiveRegistrationOpen(undefined, festFor(event))) return jsonError(eventClosedMessage(event), 409);
-
   const who = await resolveApplicantEmail(String(body?.email ?? ""));
   if ("error" in who) return who.error;
   const email = who.email;
@@ -575,10 +573,14 @@ async function joinTeam(body: any) {
     return blobFailed(e, "team join precheck failed");
   }
 
-  /* A full event still lets people onto a team that is already in it — that
-     adds no team. A team whose lead never registered is not in it and cannot
-     get in now, so joining it would only strand them in review. */
-  if (!(await leadIsRegistered(evId, team)) && (await eventIsFull(event)))
+  /* A full event, or one that closed to new teams on its own date, still
+     lets people onto a team that is already in — that adds no team. A team
+     whose lead never registered is not in it. Joining that one would only
+     strand them, so it stops with the same answer a new team would get. */
+  const leadIn = await leadIsRegistered(evId, team);
+  if (!leadIn && !effectiveRegistrationOpen(undefined, festFor(event)))
+    return jsonError(eventClosedMessage(event), 409);
+  if (!leadIn && (await eventIsFull(event)))
     return jsonError(eventFullMessage(event.name), 409);
 
   const maxMembers = maxTeamSizeFor(event);

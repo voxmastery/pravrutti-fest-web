@@ -19,10 +19,12 @@ describe("why a code join did not go through", () => {
     expect(personNameError("Ann")).toBeNull();
   });
 
-  it("hides the public join link once the event is full", () => {
+  it("keeps code-join on a full event, and gives a confirmed lead Add", () => {
     const panel = read("../components/event-register-panel.tsx");
-    expect(panel).toContain("{event.name} is full. Joining with a team code is closed.");
-    expect(panel).not.toContain("Join it with your team code");
+    expect(panel).toContain("Join with a team code");
+    expect(panel).toContain("can still be joined with its code");
+    expect(panel).not.toContain("Joining with a team code is closed.");
+    expect(panel).toContain("{leadTools}");
   });
 
   it("shows that sentence on the verified team, where the button used to just sit disabled", () => {

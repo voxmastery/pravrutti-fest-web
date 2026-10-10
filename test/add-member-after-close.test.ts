@@ -3,12 +3,14 @@ import { eventId } from "@/lib/pravrutti-data";
 import { leadMayInvite } from "@/lib/lead-decision";
 
 /**
- * Hacktivate closed at 11:59 PM IST on 1 October. Closing the window stops
- * a new team, a code join, and a lead adding a teammate. The only post-close
- * add left is a shortlisted Discoverize lead (see discoverize-closed).
+ * Hacktivate closed at 11:59 PM IST on 1 October. That stops a new team.
+ * A lead who is already in — confirmed or in review — can still add, and a
+ * teammate can still join that team with the code, until the fest-wide
+ * close. Past that close, adding stops. Discoverize's shortlisted-lead
+ * exception is covered in discoverize-closed.
  *
  * The clock is pinned. The real registration dates decide, so a fest-wide
- * extension cannot quietly reopen Hacktivate.
+ * extension cannot quietly reopen Hacktivate to new teams.
  */
 
 const store = new Map<string, any>();
@@ -65,7 +67,7 @@ const CODE = "HACKTIVATE01";
 const LEAD = "rayhaan@example.com";
 const MATE = "prithvin@example.com";
 const AFTER_HACKTIVATE = Date.parse("2026-10-07T06:00:00.000Z"); // 7 Oct, fest still open
-const AFTER_FEST = Date.parse("2026-10-12T06:00:00.000Z"); // 12 Oct, fest closed too
+const AFTER_FEST = Date.parse("2026-10-12T18:30:00.000Z"); // 12 Oct 12:00 AM IST, fest closed
 
 const post = async (b: any): Promise<Response> =>
   (await POST(new Request("http://t/api/teams", { method: "POST", body: JSON.stringify(b) }))) as Response;
@@ -128,29 +130,29 @@ describe("leadMayInvite", () => {
 });
 
 describe("Hacktivate after its own close", () => {
-  it("refuses a confirmed lead adding a teammate", async () => {
+  it("lets a confirmed lead add a teammate", async () => {
     seedConfirmed();
     const res = await addMate();
-    expect(res.status).toBe(409);
-    expect((await res.json()).error).toMatch(/Registration closed/i);
-    expect(store.has(`app/${EV}/${MATE}.json`)).toBe(false);
+    expect(res.status, JSON.stringify(await res.clone().json())).toBe(200);
+    expect(store.get(`app/${EV}/${MATE}.json`).status).toBe("confirmed");
   });
 
-  it("refuses a lead who is still in review", async () => {
+  it("lets a lead who is still in review add a teammate", async () => {
     seedConfirmed();
     store.get(`app/${EV}/${LEAD}.json`).status = "pending";
     store.get(`app/${EV}/${LEAD}.json`).payment = "awaiting";
-    expect((await addMate()).status).toBe(409);
-    expect(store.has(`app/${EV}/${MATE}.json`)).toBe(false);
+    const res = await addMate();
+    expect(res.status).toBe(200);
+    expect(store.get(`app/${EV}/${MATE}.json`).status).toBe("pending");
   });
 
-  it("tells My Tickets that this lead can no longer invite", async () => {
+  it("tells My Tickets that this lead can still invite", async () => {
     seedConfirmed();
     identity.email = LEAD;
     const body = await (await mine()).json();
     expect(body.team.isLead).toBe(true);
-    expect(body.team.canInvite).toBe(false);
-    expect(body.team.inviteBlockedReason).toMatch(/Registration closed/i);
+    expect(body.team.canInvite).toBe(true);
+    expect(body.team.inviteBlockedReason).toBeNull();
   });
 
   it("refuses a new team", async () => {
@@ -162,14 +164,14 @@ describe("Hacktivate after its own close", () => {
     expect((await res.json()).error).toMatch(/Hacktivate closed/i);
   });
 
-  it("refuses joining with a code", async () => {
+  it("lets a teammate join the confirmed lead's team with the code", async () => {
     seedConfirmed();
     const res = await post({
       action: "join", eventId: EV, code: CODE, email: "newcomer@example.com",
       name: "New Comer", phone: "9876543212", college: "RUAS",
     });
-    expect(res.status).toBe(409);
-    expect((await res.json()).error).toMatch(/Hacktivate closed/i);
+    expect(res.status, JSON.stringify(await res.clone().json())).toBe(200);
+    expect(store.get(`app/${EV}/newcomer@example.com.json`).teamCode).toBe(CODE);
   });
 
   it("refuses a lead who is no longer registered", async () => {
@@ -186,11 +188,11 @@ describe("Hacktivate after its own close", () => {
     expect(res.status).toBe(403);
   });
 
-  it("refuses before it looks at a duplicate or a full roster", async () => {
+  it("still refuses an email that is already on the team", async () => {
     seedConfirmed([{ email: MATE, name: "Prithvin Jothinathan" }]);
     const dup = await addMate();
     expect(dup.status).toBe(409);
-    expect((await dup.json()).error).toMatch(/Registration closed/i);
+    expect((await dup.json()).error).toMatch(/already on this team/i);
   });
 });
 
