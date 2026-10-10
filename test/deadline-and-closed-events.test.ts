@@ -27,20 +27,20 @@ const HIDDEN = ["CHAOS", "AI ESCAPE ROOM", "LINE FOLLOWER"];
 const ev = (name: string) => events.find((e) => e.name === name)!;
 const AFTER_OLD_DEADLINE = Date.parse("2026-10-07T06:00:00.000Z"); // 7 Oct, 11:30 AM IST
 
-/* Raised from 40 to 45 teams on 8 Oct. It had filled at 40 (38 confirmed,
-   2 in review). No hand switch, so 40 holding places is open and 45 is full. */
+/* Closed by hand on 10 Oct. Cap stays 45 (the desk held 44). full keeps
+   it shut even with a place left. Listed, not taken off the list. */
 describe("ROBO RACE", () => {
-  it("is open below 45 teams and stays on the list", () => {
+  it("takes no new teams and stays on the list", () => {
     const e = ev("ROBO RACE");
     expect(eventId(e.name)).toBe("robo-race");
     expect(e.maxTeams).toBe(45);
     expect(e.capacity).toBe(180);
-    expect(e.full).toBeFalsy();
+    expect(e.full).toBe(true);
+    expect(e.unlisted).toBeFalsy();
+    expect(e.registrationCloses).toBeUndefined();
     expect(capOf(e)).toEqual({ limit: 45, unit: "teams" });
     expect(capacityLabel(e)).toBe("45 teams");
-    expect(isFull(e, { people: 0, teams: 40 })).toBe(false);
-    expect(isFull(e, { people: 0, teams: 44 })).toBe(false);
-    expect(isFull(e, { people: 0, teams: 45 })).toBe(true);
+    expect(isFull(e, { people: 0, teams: 0 })).toBe(true);
     expect(listedEvents).toContain(e);
   });
 });
@@ -259,6 +259,7 @@ const STAYS_SHUT = [
   "Pitch Pulse",
   "Glide-X",
   "RC-X",
+  "ROBO RACE",
   "Discoverize (Research Paper Presentation)",
 ];
 
@@ -271,9 +272,9 @@ describe("the extension", () => {
     expect(shut).toEqual([...STAYS_SHUT].sort());
   });
 
-  it("leaves the Robo Race and Terraform caps where they are", () => {
+  it("leaves the Robo Race cap and the Terraform cap where they are", () => {
     expect(ev("ROBO RACE").maxTeams).toBe(45);
-    expect(ev("ROBO RACE").full).toBeFalsy();
+    expect(ev("ROBO RACE").full).toBe(true);
     expect(ev("Terraform: The System Awakens").maxTeams).toBe(30);
     expect(ev("Terraform: The System Awakens").full).toBeFalsy();
   });

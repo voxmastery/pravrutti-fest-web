@@ -27,11 +27,19 @@ vi.mock("@/lib/roles", async (importOriginal) => ({
   resolveRole: async () => role.current,
 }));
 
-vi.mock("@/lib/pravrutti-data", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("@/lib/pravrutti-data")>()),
-  registrationOpen: () => true,
-  effectiveRegistrationOpen: () => true,
-}));
+vi.mock("@/lib/pravrutti-data", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/pravrutti-data")>();
+  return {
+    ...actual,
+    registrationOpen: () => true,
+    effectiveRegistrationOpen: () => true,
+    /* Students still create a team here. Closing ROBO RACE on the live
+       data must not change what the staff block is proving. */
+    events: actual.events.map((e) =>
+      actual.eventId(e.name) === "robo-race" ? { ...e, full: false } : e,
+    ),
+  };
+});
 
 let POST: typeof import("@/app/api/teams/route").POST;
 beforeAll(async () => {

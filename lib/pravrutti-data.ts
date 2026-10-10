@@ -372,10 +372,14 @@ export const events: Event[] = [
     /* 30 teams (was 20), coordinators' call on 3 Oct; raised to 40 on 4 Oct
        as it neared 30. Raised to 45 on 8 Oct: it had filled at 40 (38
        confirmed, 2 in review). capacity is the head count at four a team.
-       No hand switch, so teams 41 to 45 can register. */
+       Closed by hand on 10 Oct. The desk held 40 confirmed teams and 4 in
+       review (44 holding places) under this 45, so nobody already in is
+       cut. Listed and struck through. No new team; teams already in keep
+       their places and can still be managed. */
     capacity: 180,
     capacityUnit: "teams",
     maxTeams: 45,
+    full: true,
     duration: "3 hours",
     coordinators: {
       faculty: [],

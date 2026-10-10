@@ -81,7 +81,7 @@ describe("capacityLabel", () => {
     expect(capacityLabel(e)).toBe("45 teams");
     expect(e.maxTeams).toBe(45);
     expect(e.capacity).toBe(180);
-    expect(e.full).toBeFalsy();
+    expect(e.full).toBe(true);
   });
 
   it("HAMMER reads 52 teams on the real data", () => {

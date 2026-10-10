@@ -28,10 +28,18 @@ vi.mock("@/lib/blob-store", () => ({
 }));
 vi.mock("@/lib/identity", () => ({ resolveEmail: async () => null, authRequired: () => false }));
 vi.mock("@/lib/roles", () => ({ resolveRole: async () => ({ kind: "none" }), resolveRoleFor: async () => ({ kind: "none" }) }));
-vi.mock("@/lib/pravrutti-data", async (o) => ({
-  ...(await o<typeof import("@/lib/pravrutti-data")>()),
-  effectiveRegistrationOpen: () => true,
-}));
+vi.mock("@/lib/pravrutti-data", async (o) => {
+  const actual = await o<typeof import("@/lib/pravrutti-data")>();
+  return {
+    ...actual,
+    effectiveRegistrationOpen: () => true,
+    /* One case creates a second team on ROBO RACE. Closing that event on
+       the live data must not change what the lifecycle is proving. */
+    events: actual.events.map((e) =>
+      actual.eventId(e.name) === "robo-race" ? { ...e, full: false } : e,
+    ),
+  };
+});
 vi.mock("@/lib/received-email", () => ({ sendReceivedEmail: async () => ({ sent: true }) }));
 vi.mock("@/lib/invite-email", () => ({ sendInviteEmail: async () => ({ sent: true }), inviteUrl: (t: string) => `https://t/invite/${t}` }));
 

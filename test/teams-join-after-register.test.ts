@@ -45,11 +45,13 @@ vi.mock("@/lib/pravrutti-data", async (importOriginal) => {
     ...actual,
     registrationOpen: () => true,
     effectiveRegistrationOpen: () => true,
-    /* Glide-X is the two-person roster this file fills. Closing it on the
-       live data must not change what that roster test is proving. */
-    events: actual.events.map((e) =>
-      actual.eventId(e.name) === "glide-x" ? { ...e, full: false } : e,
-    ),
+    /* Glide-X is the two-person roster this file fills, and ROBO RACE is
+       the open event the other cases create a team on. Closing either on
+       the live data must not change what that roster test is proving. */
+    events: actual.events.map((e) => {
+      const id = actual.eventId(e.name);
+      return id === "glide-x" || id === "robo-race" ? { ...e, full: false } : e;
+    }),
   };
 });
 
