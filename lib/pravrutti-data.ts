@@ -540,8 +540,14 @@ export const events: Event[] = [
     fee: "Rs. 200/-",
     prizes: [5000, 3000, 2000],
     teamSize: { min: 3, max: 4, soloAllowed: false },
-    capacity: 60,
+    /* Closed itself at 15 teams (60 heads / 4). On 10 Oct it held 14
+       confirmed and 1 in review, so the cap is 16: one more team, then
+       it fills. capacity is the head count at four a team. No full
+       switch, no earlier close, and it stays on the list, so it takes
+       that one team until the fest deadline. */
+    capacity: 64,
     capacityUnit: "teams",
+    maxTeams: 16,
     duration: "3 hours",
     coordinators: {
       faculty: [],

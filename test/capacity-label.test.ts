@@ -84,6 +84,14 @@ describe("capacityLabel", () => {
     expect(e.full).toBe(true);
   });
 
+  it("Fault x Load reads 16 teams on the real data", () => {
+    const e = events.find((x) => x.name === "FAULT x LOAD")!;
+    expect(capacityLabel(e)).toBe("16 teams");
+    expect(e.maxTeams).toBe(16);
+    expect(e.capacity).toBe(64);
+    expect(e.full).toBeFalsy();
+  });
+
   it("HAMMER reads 52 teams on the real data", () => {
     const e = events.find((x) => x.name === "HAMMER")!;
     expect(capacityLabel(e)).toBe("52 teams");

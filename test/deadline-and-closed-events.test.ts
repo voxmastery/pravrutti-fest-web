@@ -66,6 +66,27 @@ describe("HAMMER", () => {
   });
 });
 
+/* Cap is 16 teams: it had shut itself at 15, holding 14 confirmed and 1
+   in review. One more team, then it fills. No hand switch. */
+describe("FAULT x LOAD", () => {
+  it("is open below 16 teams and stays on the list until the fest close", () => {
+    const e = ev("FAULT x LOAD");
+    expect(eventId(e.name)).toBe("fault-x-load");
+    expect(e.maxTeams).toBe(16);
+    expect(e.capacity).toBe(64);
+    expect(e.full).toBeFalsy();
+    expect(e.unlisted).toBeFalsy();
+    expect(e.registrationCloses).toBeUndefined();
+    expect(capOf(e)).toEqual({ limit: 16, unit: "teams" });
+    expect(capacityLabel(e)).toBe("16 teams");
+    expect(isFull(e, { people: 0, teams: 15 })).toBe(false);
+    expect(isFull(e, { people: 0, teams: 16 })).toBe(true);
+    expect(listedEvents).toContain(e);
+    expect(registrationState(Date.parse("2026-10-12T18:28:00.000Z"), festFor(e))).toBe("open");
+    expect(registrationState(Date.parse("2026-10-12T18:29:00.000Z"), festFor(e))).toBe("closed");
+  });
+});
+
 describe("the fest-wide deadline", () => {
   it("is 12 October, 11:59 PM IST", () => {
     expect(FEST.registrationCloses).toBe("2026-10-12T18:29:00.000Z");
