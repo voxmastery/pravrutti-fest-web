@@ -644,7 +644,20 @@ function DiscoverizeRow({ a, email, onChanged }: { a: App; email: string | null;
         </div>
       )}
 
-      {showCreate && <DiscoverizeFormTeam eventId={a.eventId} email={email} onCreated={refreshTeam} />}
+      {settled && !team && live && (
+        <section className="space-y-2 rounded-xl border border-white/[0.1] bg-white/[0.03] p-3">
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-white/70">Your team</p>
+          {showCreate ? (
+            <DiscoverizeFormTeam eventId={a.eventId} email={email} onCreated={refreshTeam} />
+          ) : (
+            <p className="text-[12px] leading-relaxed text-white/55">
+              {a.teamCode
+                ? `No team record loaded for code ${a.teamCode}. Refresh this page.`
+                : "No team on this entry yet. Once you're shortlisted you can name a team here and add teammates."}
+            </p>
+          )}
+        </section>
+      )}
 
       {showAdd && team && (
         <TeamManage

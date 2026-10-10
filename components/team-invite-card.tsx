@@ -130,6 +130,25 @@ export function TeamInviteCard({
             </p>
           </div>
         </div>
+        <div>
+          <div className="mb-1 flex items-center justify-between text-[11px] text-pearl-white/55">
+            <span>Slots</span>
+            <span>{team.memberCount} of {team.maxMembers}</span>
+          </div>
+          <div
+            className="h-1.5 overflow-hidden rounded-full bg-white/10"
+            role="meter"
+            aria-label="Team slots"
+            aria-valuenow={team.memberCount}
+            aria-valuemin={0}
+            aria-valuemax={team.maxMembers}
+          >
+            <div
+              className="h-full rounded-full bg-champagne-gold"
+              style={{ width: `${Math.min(100, Math.round((team.memberCount / Math.max(team.maxMembers, 1)) * 100))}%` }}
+            />
+          </div>
+        </div>
         {/* The code gets its own full-width line. Sharing a row with the Copy
             button left a 12-character code breaking across three lines on a
             phone, which is unreadable and unusable for something meant to be

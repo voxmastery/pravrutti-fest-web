@@ -953,7 +953,7 @@ async function removeFromTeam(body: any, mode: "leave" | "remove") {
       target = normalizeMemberEmail(body?.memberEmail);
       if (!isValidMemberEmail(target)) return jsonError("Pick a member to remove.", 400);
       if (target === team.createdByEmail)
-        return jsonError("You're the team lead. Delete the team instead.", 409);
+        return jsonError("You're the team lead. Hand the team to a teammate first, then you can leave.", 409);
     } else {
       /* Leaving proves itself one of two ways: signed in as that member, or
          holding their invite token. The token is what lets someone leave from
@@ -970,7 +970,7 @@ async function removeFromTeam(body: any, mode: "leave" | "remove") {
         target = who.email;
       }
       if (target === team.createdByEmail)
-        return jsonError("You're the team lead. Delete the team instead.", 409);
+        return jsonError("You're the team lead. Hand the team to a teammate first, then you can leave.", 409);
     }
 
     const record = (await readJsonByPath(teamMemberPath(evId, target))) as

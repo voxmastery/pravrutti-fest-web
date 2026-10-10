@@ -1,7 +1,10 @@
 import { describe, it, expect } from "vitest";
 import { renderToStaticMarkup } from "react-dom/server";
 import { createElement } from "react";
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 import { TeamManage } from "@/components/team-manage";
+import { TeamInviteCard } from "@/components/team-invite-card";
 import type { TeamPreview } from "@/lib/teams";
 
 /**
@@ -65,6 +68,8 @@ describe("lead controls on the ticket", () => {
     expect(joined).toMatch(/Remove\s*<\/button>/);
     expect(joined).toContain("Edit name for Prithvin Jothinathan");
     expect(markup).toContain("Edit name for Rayhaan Backer Shah");
+    expect(markup).toContain("Actions for Prithvin Jothinathan");
+    expect(markup).toContain("Hand the team to a teammate before you can leave.");
     const invited = row(markup, "Invited Pal");
     expect(invited).not.toContain("Make lead");
     expect(invited).toMatch(/Remove\s*<\/button>/);
@@ -99,9 +104,28 @@ describe("lead controls on the ticket", () => {
     expect(markup).not.toContain("Make lead");
     expect(markup).not.toContain("Delete this team");
     expect(markup).not.toContain("Add a member");
+    expect(markup).toContain("Leave team");
   });
 
   it("draws nothing for someone who is not on the roster", () => {
     expect(html({ isLead: false }, true, "stranger@example.com")).toBe("");
+  });
+});
+
+describe("the team card", () => {
+  it("draws a slots meter from the roster size", () => {
+    const markup = renderToStaticMarkup(
+      createElement(TeamInviteCard, { team: team({ memberCount: 3, maxMembers: 4 }) }),
+    );
+    expect(markup).toContain("3 of 4");
+    expect(markup).toContain('role="meter"');
+    expect(markup).toContain('aria-valuenow="3"');
+    expect(markup).toContain('aria-valuemax="4"');
+  });
+
+  it("still shows a team card when a Discoverize entry has no team row", () => {
+    const page = readFileSync(fileURLToPath(new URL("../app/ticket/page.tsx", import.meta.url)), "utf8");
+    expect(page).toContain("No team on this entry yet.");
+    expect(page).toContain("settled && !team && live");
   });
 });

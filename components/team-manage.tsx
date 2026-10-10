@@ -62,6 +62,9 @@ export function TeamManage({
   const [copied, setCopied] = useState<string | null>(null);
   const [editingEmail, setEditingEmail] = useState<string | null>(null);
   const [draft, setDraft] = useState("");
+  /** Remove waits for a yes. The button used to cancel the entry on the first tap. */
+  const [removing, setRemoving] = useState<{ email: string; name: string } | null>(null);
+  const [confirmLeave, setConfirmLeave] = useState(false);
 
   async function copyLink(email: string) {
     const url = links[email];
@@ -95,6 +98,8 @@ export function TeamManage({
       setBusy(null);
       setConfirmDelete(false);
       setHandingTo(null);
+      setRemoving(null);
+      setConfirmLeave(false);
       onChanged();
       return true;
     } catch {
@@ -193,6 +198,39 @@ export function TeamManage({
             </li>
           </ul>
         </div>
+        {confirmLeave ? (
+          <div className="rounded-lg border border-danger-strong/30 bg-danger-strong/[0.07] p-2.5 space-y-2">
+            <p className="text-[12px] text-white/75 leading-relaxed">
+              Leave {team.name}? Your entry for this event is cancelled, and you can join another team.
+            </p>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setConfirmLeave(false)}
+                disabled={busy !== null}
+                className="h-11 rounded-xl border border-white/15 bg-white/[0.06] px-3 text-xs font-medium text-white/85 cursor-pointer disabled:opacity-50"
+              >
+                Stay
+              </button>
+              <button
+                type="button"
+                onClick={() => call({ action: "leave" }, "leave")}
+                disabled={busy !== null}
+                className="h-11 rounded-xl bg-danger-strong/80 px-3 text-xs font-medium text-white cursor-pointer disabled:opacity-50"
+              >
+                {busy === "leave" ? <Loader2 className="w-3.5 h-3.5 animate-spin" aria-hidden="true" /> : "Leave team"}
+              </button>
+            </div>
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={() => { setConfirmLeave(true); setError(null); }}
+            className="h-11 rounded-xl border border-white/15 bg-white/[0.06] px-3 text-xs font-medium text-white/85 cursor-pointer"
+          >
+            Leave team
+          </button>
+        )}
         {errorBlock}
       </div>
     );
@@ -292,41 +330,68 @@ export function TeamManage({
                     {m.status === "joined" ? "Joined" : "Invited"}
                   </span>
                 </div>
-                <div className="flex flex-wrap gap-2">
-                  {editingEmail === m.email ? null : editControl(m)}
-                  {/* Handing over is for someone actually on the team. */}
-                  {!own && m.status === "joined" ? (
-                    <button
-                      type="button"
-                      onClick={() => { setHandingTo({ email: m.email, name: m.name }); setError(null); }}
-                      disabled={busy !== null}
-                      className="h-8 rounded-xl border border-champagne-gold/40 bg-champagne-gold/10 px-3 text-xs font-medium text-champagne-gold hover:bg-champagne-gold/20 transition-colors cursor-pointer disabled:opacity-50"
-                    >
-                      Make lead
-                    </button>
-                  ) : null}
-                  {!own ? (
-                  <button
-                    type="button"
-                    onClick={() => call({ action: "remove_member", memberEmail: m.email }, m.email)}
-                    disabled={busy !== null}
-                    aria-label={`Remove ${m.name}`}
-                    className="inline-flex items-center gap-1.5 h-8 rounded-xl border border-white/15 bg-white/[0.06] px-3 text-xs font-medium text-white/85 hover:border-danger-strong/50 hover:text-danger-strong transition-colors cursor-pointer disabled:opacity-50"
-                  >
-                    {busy === m.email ? (
-                      <Loader2 className="w-3.5 h-3.5 animate-spin" aria-hidden="true" />
-                    ) : (
-                      <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
-                    )}
-                    Remove
-                  </button>
-                  ) : null}
-                </div>
+                <details className="rounded-lg">
+                  <summary className="inline-flex h-11 cursor-pointer list-none items-center rounded-xl border border-white/15 bg-white/[0.06] px-3 text-xs font-medium text-white/85 [&::-webkit-details-marker]:hidden">
+                    Actions for {m.name}
+                  </summary>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {editingEmail === m.email ? null : editControl(m)}
+                    {!own && m.status === "joined" ? (
+                      <button
+                        type="button"
+                        onClick={() => { setHandingTo({ email: m.email, name: m.name }); setRemoving(null); setError(null); }}
+                        disabled={busy !== null}
+                        className="h-11 rounded-xl border border-champagne-gold/40 bg-champagne-gold/10 px-3 text-xs font-medium text-champagne-gold hover:bg-champagne-gold/20 transition-colors cursor-pointer disabled:opacity-50"
+                      >
+                        Make lead
+                      </button>
+                    ) : null}
+                    {!own ? (
+                      <button
+                        type="button"
+                        onClick={() => { setRemoving({ email: m.email, name: m.name }); setHandingTo(null); setError(null); }}
+                        disabled={busy !== null}
+                        aria-label={`Remove ${m.name}`}
+                        className="inline-flex items-center gap-1.5 h-11 rounded-xl border border-white/15 bg-white/[0.06] px-3 text-xs font-medium text-white/85 hover:border-danger-strong/50 hover:text-danger-strong transition-colors cursor-pointer disabled:opacity-50"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
+                        Remove
+                      </button>
+                    ) : null}
+                  </div>
+                </details>
                 {editingEmail === m.email ? editControl(m) : null}
               </li>
               );
             })}
           </ul>
+
+          {removing && (
+            <div className="rounded-lg border border-danger-strong/30 bg-danger-strong/[0.07] p-2.5 space-y-2">
+              <p className="text-[12px] text-white/75 leading-relaxed">
+                Remove {removing.name} from {team.name}? Their entry for this event is cancelled, and they can join another team.
+              </p>
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setRemoving(null)}
+                  disabled={busy !== null}
+                  className="h-[34px] rounded-2xl border border-white/[0.08] bg-white/[0.04] text-white/70 hover:bg-white/[0.08] hover:text-white font-medium text-sm px-4 cursor-pointer"
+                >
+                  Keep them
+                </Button>
+                <Button
+                  type="button"
+                  onClick={() => call({ action: "remove_member", memberEmail: removing.email }, removing.email)}
+                  disabled={busy !== null}
+                  className="h-[34px] rounded-2xl bg-danger-strong/80 text-white hover:bg-danger-strong font-medium text-sm px-4 cursor-pointer"
+                >
+                  {busy === removing.email ? <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" /> : `Remove ${removing.name}`}
+                </Button>
+              </div>
+            </div>
+          )}
 
           {handingTo && (
             <div className="rounded-lg border border-champagne-gold/30 bg-champagne-gold/[0.06] p-2.5 space-y-2">
@@ -359,7 +424,7 @@ export function TeamManage({
 
           {/* Removing is what frees somebody, so say so where it is decided. */}
           <p className="text-[11px] text-white/35 leading-relaxed">
-            Removing someone cancels their entry for this event and lets them join another team.
+            Hand the team to a teammate before you can leave. Removing someone cancels their entry for this event.
           </p>
         </div>
       )}

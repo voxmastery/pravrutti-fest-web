@@ -49,6 +49,13 @@ const create = (email: string, name: string) =>
 beforeEach(() => store.clear());
 
 describe("a lead's team over an afternoon", () => {
+  it("refuses to let the lead leave until they hand the team over", async () => {
+    const a = await create(LEAD, "Bolt");
+    const leave = await post({ action: "leave", eventId: EV, email: LEAD, code: a.body.code });
+    expect(leave.status).toBe(409);
+    expect(leave.body.error).toBe("You're the team lead. Hand the team to a teammate first, then you can leave.");
+  });
+
   it("create → delete → create a different team works, and the new one is what `mine` returns", async () => {
     const a = await create(LEAD, "Bolt");
     expect(a.status).toBe(200);
