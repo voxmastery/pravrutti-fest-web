@@ -49,6 +49,13 @@ describe("parseDescription", () => {
     }
   });
 
+  it("does not say Hacktivate supplies components", () => {
+    const e = events.find((x) => x.name === "Hacktivate")!;
+    expect(e.description).not.toMatch(/on-site stall|sourced on-site|PCB Cupid|component procurement/i);
+    expect(e.description).toContain("Meals, overnight refreshments, and a supervised rest area are provided.");
+    expect(e.brochureUrl).toBe("/hacktivate-rules.pdf");
+  });
+
   it("gives ElectroXcape an intro and one bullet per round", () => {
     const e = events.find((x) => x.name === "ELECTROXCAPE")!;
     const r = parseDescription(e.description);
