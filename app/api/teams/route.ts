@@ -148,6 +148,78 @@ async function teamGoneFor(evId: string, app: Application | null): Promise<boole
   return (await loadTeam(evId, code)) === null;
 }
 
+/**
+ * The lead's own registration, written with the team.
+ *
+ * Creating a team used to store the team and the lead's membership only.
+ * The application waited for the payment form. Anyone who made the team and
+ * never came back — or whose return was lost — had teammates and no row of
+ * their own. This is that row: in review, fee still due, no receipt, and
+ * marked intent so coming back from the portal completes it instead of
+ * colliding with "already applied". Discoverize is not this. A shortlisted
+ * solo already has a registration, and a new fee row would charge them for
+ * entering. Nothing here sends mail.
+ */
+function leadApplicationRecord(args: {
+  event: { name: string; fee: string };
+  evId: string;
+  team: Team;
+  name: string;
+  email: string;
+  phone: string;
+  college: string;
+}): Application {
+  const eventFree = args.event.fee.toLowerCase().startsWith("free");
+  const { payment, fee } = feeForApplicant({
+    eventFree,
+    eventFee: args.event.fee,
+    isJoiner: false,
+  });
+  return {
+    ticketId: newTicketId(),
+    eventId: args.evId,
+    eventName: args.event.name,
+    status: "pending",
+    payment,
+    fee,
+    name: args.name,
+    email: args.email,
+    phone: args.phone,
+    college: args.college,
+    teamName: args.team.name,
+    teamCode: args.team.code,
+    members: null,
+    paymentRef: null,
+    appliedAt: new Date().toISOString(),
+    ...(payment === "awaiting" ? { stage: "intent" as const } : {}),
+  };
+}
+
+/** Writes the lead row when they do not already have a live one. A cancelled
+    row is a place they gave up, so it may be replaced. A live one is left
+    alone — forming a Discoverize team, or paying, updates that row itself. */
+async function ensureLeadApplication(args: {
+  event: { name: string; fee: string };
+  evId: string;
+  team: Team;
+  name: string;
+  email: string;
+  phone: string;
+  college: string;
+}): Promise<boolean> {
+  if (isDiscoverize(args.evId)) return true;
+  const path = applicationPath(args.evId, args.email);
+  const prior = (await readJsonByPath(path)) as Application | null;
+  if (prior && isLiveApplication(prior.status)) return true;
+  try {
+    await putJson(path, leadApplicationRecord(args), prior?.status === "cancelled");
+    return true;
+  } catch (e) {
+    console.error("lead application put failed", e);
+    return false;
+  }
+}
+
 function blobFailed(e: unknown, label: string) {
   console.error(label, e);
   return jsonError("Couldn't reach team storage. Try again in a moment.", 500);
@@ -343,6 +415,26 @@ async function createTeam(body: any) {
        event completely: they could not join another team, create one, rejoin,
        or be invited back. The register route has always read it this way. */
     const existingApp = (await readJsonByPath(applicationPath(evId, email))) as Application | null;
+    const existingMembership = await readJsonByPath(teamMemberPath(evId, email));
+    const liveCode = await liveMembershipCode(evId, email);
+    /* Already leading a live team. Hand that team back, and if the lead row
+       never landed (the old create, or a write that died after the membership),
+       write it now. A second create must not mint a second team. */
+    if (liveCode) {
+      const existing = (await loadTeam(evId, liveCode))!;
+      const members = await listTeamMembers(evId, liveCode);
+      if (!(existingApp && isLiveApplication(existingApp.status))) {
+        const saved = await ensureLeadApplication({
+          event, evId, team: existing, name: leadName, email, phone, college,
+        });
+        if (!saved) return jsonError("Your registration didn't save. Try again in a moment.", 500);
+      }
+      return NextResponse.json({
+        ...toTeamPreview(existing, members, maxTeamSizeFor(event), true),
+        created: false,
+        restored: true,
+      });
+    }
     if (existingApp && isLiveApplication(existingApp.status)) {
       /* A shortlisted solo already holds a registration and has no team.
          Creating one attaches that registration to it; it is not a second
@@ -351,18 +443,6 @@ async function createTeam(body: any) {
       else if (!(await teamGoneFor(evId, existingApp)))
         return jsonError("You've already applied for this event.", 409);
       else repointApp = existingApp;
-    }
-
-    const existingMembership = await readJsonByPath(teamMemberPath(evId, email));
-    const liveCode = await liveMembershipCode(evId, email);
-    if (liveCode) {
-      const existing = (await loadTeam(evId, liveCode))!;
-      const members = await listTeamMembers(evId, liveCode);
-      return NextResponse.json({
-        ...toTeamPreview(existing, members, maxTeamSizeFor(event), true),
-        created: false,
-        restored: true,
-      });
     }
     /* Any membership record with no live team behind it — left, removed, or
        the team deleted — is a tombstone the write below may replace. */
@@ -425,6 +505,13 @@ async function createTeam(body: any) {
          one is a mismatch an organiser can see, not a lost place. */
       console.error("application re-point failed", e);
     }
+  } else {
+    /* Same moment as the membership. A failure here is a 500 they can retry:
+       the retry finds the live team and writes the row then. No mail. */
+    const saved = await ensureLeadApplication({
+      event, evId, team, name: leadName, email, phone, college,
+    });
+    if (!saved) return jsonError("Your registration didn't save. Try again in a moment.", 500);
   }
 
   return NextResponse.json({ ...toTeamPreview(team, [lead], maxTeamSizeFor(event), true), created: true });

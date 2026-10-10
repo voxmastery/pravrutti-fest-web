@@ -471,17 +471,20 @@ export async function POST(req: Request) {
 
   const prior = (await readJsonByPath(applicationPath(evId, email))) as Application | null;
   /* An intent row is this same person mid-payment: what we wrote when they
-     left for the portal, still carrying no reference. Coming back completes
-     it rather than colliding with it, and keeps the ticket they were already
-     given so nothing they have seen changes underneath them. */
-  const completingIntent =
-    stage === "final" &&
-    prior?.status === "pending" &&
-    prior?.payment === "awaiting" &&
-    !prior?.paymentRef;
+     left for the portal — or when they created the team, which now files the
+     same unpaid row — still carrying no reference. Coming back completes it
+     rather than colliding with it, and a second intent write (the portal
+     hand-off) refreshes the name and college they typed. Either way the
+     ticket they were already given stays, so nothing they have seen changes
+     underneath them. */
+  const openIntent =
+    prior?.status === "pending" && prior?.payment === "awaiting" && !prior?.paymentRef;
+  const completingIntent = stage === "final" && openIntent;
+  const refreshingIntent = stage === "intent" && openIntent;
+  const keepingIntent = completingIntent || refreshingIntent;
 
-  const ticketId = completingIntent && prior?.ticketId ? prior.ticketId : newTicketId();
-  const appliedAt = completingIntent && prior?.appliedAt ? prior.appliedAt : new Date().toISOString();
+  const ticketId = keepingIntent && prior?.ticketId ? prior.ticketId : newTicketId();
+  const appliedAt = keepingIntent && prior?.appliedAt ? prior.appliedAt : new Date().toISOString();
 
   const record: Application = {
     ticketId,
@@ -513,7 +516,7 @@ export async function POST(req: Request) {
   const replacingCancelled = prior?.status === "cancelled";
 
   try {
-    await putJson(applicationPath(evId, email), record, replacingCancelled || completingIntent);
+    await putJson(applicationPath(evId, email), record, replacingCancelled || keepingIntent);
   } catch (e: any) {
     if (/exists|overwrite/i.test(String(e?.message)))
       return NextResponse.json({ error: "You've already applied for this event." }, { status: 409 });

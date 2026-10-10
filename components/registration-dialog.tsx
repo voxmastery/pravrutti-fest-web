@@ -912,7 +912,8 @@ export function RegistrationDialog({
                         <div className="rounded-xl border border-soft-gold/20 bg-soft-gold/[0.05] p-3.5 space-y-2.5">
                           <p className="text-[13px] text-white/75 leading-relaxed">
                             You’re on <span className="text-white font-medium">{otherTeams[0].name}</span> for{" "}
-                            {otherTeams[0].eventName}. Use the same team name here?
+                            {otherTeams[0].eventName}. Using that name here creates a separate team for{" "}
+                            <span className="text-white font-medium">{event.name}</span>, with its own code.
                           </p>
                           <div className="flex gap-2">
                             <Button
@@ -927,8 +928,8 @@ export function RegistrationDialog({
                             </Button>
                           </div>
                           <p className="text-[11px] text-white/40 leading-relaxed">
-                            A team is per event, so this makes a new team with a new code — your
-                            teammates join with that code. Or create/join a different team below.
+                            This does not add your {otherTeams[0].eventName} teammates. They join
+                            this event with the new code. Or create/join a different team below.
                           </p>
                         </div>
                       )}

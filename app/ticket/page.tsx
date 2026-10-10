@@ -431,15 +431,18 @@ export default function TicketPage() {
                               they come back to, so it has to lead somewhere. */}
                           {!isDiscoverize(a.eventId) && a.status === "pending" && a.payment === "awaiting" && a.unanswered && (
                             <a
-                              href={`/events/${a.eventId}`}
+                              href={`/events/${a.eventId}?finish=reference`}
                               className="block rounded-xl border border-soft-gold/30 bg-soft-gold/[0.07] px-3 py-2.5 text-[13px] text-white/75 leading-relaxed hover:border-soft-gold/50 transition-colors"
                             >
-                              You left for the payment portal and we haven&apos;t heard back. Your
-                              place is held either way —{" "}
-                              <span className="text-champagne-gold font-medium underline underline-offset-2">
-                                tell us how it went
+                              <span className="block text-champagne-gold font-medium">
+                                Finish registration &amp; pay
                               </span>
-                              .
+                              <span className="block mt-1">
+                                {a.teamName
+                                  ? `${a.teamName} is on this event, but your own registration isn’t finished and the fee (${a.fee}) is still due.`
+                                  : `Your registration isn’t finished and the fee (${a.fee}) is still due.`}{" "}
+                                If you already paid, add the receipt from the same page.
+                              </span>
                             </a>
                           )}
                           {/* Answered without an ID. Registered; the ID is an

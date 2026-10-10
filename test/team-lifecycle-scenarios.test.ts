@@ -82,10 +82,17 @@ describe("a lead's team over an afternoon", () => {
     expect(mine.status === 404 || mine.body === null || mine.body?.team === null || mine.body?.code === undefined, JSON.stringify(mine)).toBe(true);
   });
 
-  it("create → delete → join a friend's team works", async () => {
+  it("create → delete → join a friend's team waits until that registration is withdrawn", async () => {
+    /* Creating the team files the lead's own registration. Deleting the team
+       does not throw that row away, so joining elsewhere is the same refusal
+       a lead who already paid would get. */
     const a = await create(LEAD, "Bolt");
     await post({ action: "delete", eventId: EV, code: a.body.code, email: LEAD });
     const f = await create(FRIEND, "Amp");
+    const blocked = await post({ action: "join", eventId: EV, email: LEAD, code: f.body.code, name: "Lead Person", phone: "9876543210", college: "RUAS" });
+    expect(blocked.status).toBe(409);
+    expect(blocked.body.error).toMatch(/withdraw/i);
+    store.get(`app/${EV}/${LEAD}.json`).status = "cancelled";
     const join = await post({ action: "join", eventId: EV, email: LEAD, code: f.body.code, name: "Lead Person", phone: "9876543210", college: "RUAS" });
     expect(join.status, JSON.stringify(join.body)).toBe(200);
   });
@@ -133,10 +140,14 @@ describe("a lead's team over an afternoon", () => {
     expect(join.body.error).toMatch(/withdraw/i);
   });
 
-  it("a lead can add somebody whose previous team was deleted", async () => {
+  it("a lead can add somebody whose previous team was deleted once that registration is withdrawn", async () => {
     const a = await create(FRIEND, "Amp");
     await post({ action: "delete", eventId: EV, code: a.body.code, email: FRIEND });
     const b = await create(LEAD, "Bolt");
+    const blocked = await post({ action: "add_member", eventId: EV, email: LEAD, code: b.body.code, memberName: "Friend", memberEmail: FRIEND, memberPhone: "9876543211", college: "RUAS" });
+    expect(blocked.status).toBe(409);
+    expect(blocked.body.error).toMatch(/already registered/i);
+    store.get(`app/${EV}/${FRIEND}.json`).status = "cancelled";
     const add = await post({ action: "add_member", eventId: EV, email: LEAD, code: b.body.code, memberName: "Friend", memberEmail: FRIEND, memberPhone: "9876543211", college: "RUAS" });
     expect(add.status, JSON.stringify(add.body)).toBe(200);
   });
