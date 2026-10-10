@@ -212,8 +212,8 @@ export function EventRegisterPanel({
   /* The number is not on the event. It arrives with the call-button lookup,
      which is the same moment Request to join is allowed on screen. */
   const note = registerNoteText(event.registerNote, event.registerNoteCoordinator, phones);
-  /* Full is not shut: someone on a team that is already in still needs a way
-     to join it — Nexovate's members did, the day it filled. */
+  /* A full event takes no new team, and the public join-by-code link closes
+     with it. The reason stays on the page so the tap does not vanish. */
   const showJoinOnly = viewerReady && dash.ready && !live && !closed && !staff && closedFull;
   const showClosed = viewerReady && !live && closed;
   /* Two different people are pending without a reference. One left for the
@@ -418,13 +418,9 @@ export function EventRegisterPanel({
               >
                 Full · no new teams
               </Button>
-              <button
-                type="button"
-                onClick={() => setRegistering(true)}
-                className="block w-full text-center text-xs text-pearl-white/60 hover:text-pearl-white underline underline-offset-2 cursor-pointer"
-              >
-                Already on a registered team? Join it with your team code
-              </button>
+              <p className="text-center text-xs leading-relaxed text-pearl-white/60">
+                {event.name} is full. Joining with a team code is closed.
+              </p>
             </div>
           )}
           {showAnswer && (

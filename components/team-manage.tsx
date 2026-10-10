@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { TeamAddMember, type Invited } from "@/components/team-add-member";
-import type { TeamPreview } from "@/lib/teams";
+import { cleanPersonName, type TeamPreview } from "@/lib/teams";
 import { Check, Copy, Loader2, Trash2 } from "lucide-react";
 
 /**
@@ -26,6 +26,9 @@ import { Check, Copy, Loader2, Trash2 } from "lucide-react";
  * anyone. It follows canInvite: hidden when the server would refuse, which
  * includes a closed window only when this team is not already in. A full
  * roster keeps the button, disabled, so the lead can see why.
+ *
+ * Names are editable here too. The lead can correct anyone on the roster.
+ * A member who is not the lead sees only their own name.
  */
 export function TeamManage({
   eventId,
@@ -57,6 +60,8 @@ export function TeamManage({
   /** Invite links minted this session, so a bounced email is not a dead end. */
   const [links, setLinks] = useState<Record<string, string>>({});
   const [copied, setCopied] = useState<string | null>(null);
+  const [editingEmail, setEditingEmail] = useState<string | null>(null);
+  const [draft, setDraft] = useState("");
 
   async function copyLink(email: string) {
     const url = links[email];
@@ -71,13 +76,8 @@ export function TeamManage({
   }
 
   const roster = team.members ?? [];
-  /* The lead's own row is not removable — leaving is withdrawing, which is a
-     different action with its own warning about payment. */
-  const others = roster.filter(
-    (m) => m.email.toLowerCase() !== viewerEmail.trim().toLowerCase(),
-  );
 
-  async function call(body: Record<string, unknown>, tag: string) {
+  async function call(body: Record<string, unknown>, tag: string): Promise<boolean> {
     setBusy(tag);
     setError(null);
     try {
@@ -90,19 +90,113 @@ export function TeamManage({
       if (!res.ok) {
         setError(data?.error ?? "That didn't work. Try again in a moment.");
         setBusy(null);
-        return;
+        return false;
       }
       setBusy(null);
       setConfirmDelete(false);
       setHandingTo(null);
       onChanged();
+      return true;
     } catch {
       setError("Network dropped. Try again.");
       setBusy(null);
+      return false;
     }
   }
 
-  if (!team.isLead) return null;
+  function startEdit(email: string, name: string) {
+    setEditingEmail(email);
+    setDraft(name);
+    setError(null);
+  }
+
+  async function saveName(email: string) {
+    const name = cleanPersonName(draft);
+    if (name.length < 2 || name.length > 80) {
+      setError("Enter a name (2–80 characters).");
+      return;
+    }
+    const ok = await call({ action: "rename_member", memberEmail: email, name }, `rename:${email}`);
+    if (ok) setEditingEmail(null);
+  }
+
+  function editControl(person: { email: string; name: string }) {
+    if (editingEmail === person.email) {
+      return (
+        <div className="space-y-2">
+          <input
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            maxLength={80}
+            aria-label={`New name for ${person.name}`}
+            className="h-11 w-full rounded-xl border border-white/[0.12] bg-white/[0.04] px-3 text-sm text-white"
+          />
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => saveName(person.email)}
+              disabled={busy !== null}
+              className="inline-flex h-11 items-center rounded-xl bg-cyber-pink px-3 text-xs font-medium text-white hover:bg-electric-magenta cursor-pointer disabled:opacity-50"
+            >
+              {busy === `rename:${person.email}` ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin" aria-hidden="true" />
+              ) : (
+                "Save"
+              )}
+            </button>
+            <button
+              type="button"
+              onClick={() => setEditingEmail(null)}
+              disabled={busy !== null}
+              className="h-11 rounded-xl border border-white/15 bg-white/[0.06] px-3 text-xs font-medium text-white/85 cursor-pointer disabled:opacity-50"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      );
+    }
+    return (
+      <button
+        type="button"
+        onClick={() => startEdit(person.email, person.name)}
+        disabled={busy !== null}
+        aria-label={`Edit name for ${person.name}`}
+        className="h-11 shrink-0 rounded-xl border border-white/15 bg-white/[0.06] px-3 text-xs font-medium text-white/85 hover:text-white cursor-pointer disabled:opacity-50"
+      >
+        Edit name
+      </button>
+    );
+  }
+
+  const me = viewerEmail.trim().toLowerCase();
+  const selfPerson = roster.find((m) => m.email.toLowerCase() === me) ?? null;
+  const errorBlock = error ? (
+    <p className="rounded-lg border border-danger-strong/30 bg-danger-strong/[0.07] px-3 py-2 text-[12px] text-white/80">
+      {error}
+    </p>
+  ) : null;
+
+  if (!team.isLead) {
+    if (!selfPerson) return null;
+    return (
+      <div className="mt-2 space-y-2">
+        <div className="rounded-xl border border-white/[0.1] bg-white/[0.03] p-3 space-y-2.5">
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-white/70">Your name</p>
+          <ul className="space-y-1.5">
+            <li className="rounded-lg bg-white/[0.05] px-3 py-2.5">
+              <div className="flex items-center gap-2.5">
+                <span className="min-w-0 flex-1 truncate text-[13px] text-white">{selfPerson.name}</span>
+                {editingEmail === selfPerson.email ? null : editControl(selfPerson)}
+              </div>
+              {editingEmail === selfPerson.email ? <div className="mt-2">{editControl(selfPerson)}</div> : null}
+            </li>
+          </ul>
+        </div>
+        {errorBlock}
+      </div>
+    );
+  }
 
   /* canInvite is the server's answer. canAdd is this registration still
      holding a place. A closed window keeps the button, disabled, with the
@@ -182,13 +276,15 @@ export function TeamManage({
       {addBlock}
       {warningBlock}
       {linkBlock}
-      {others.length > 0 && (
+      {roster.length > 0 && (
         <div className="rounded-xl border border-white/[0.1] bg-white/[0.03] p-3 space-y-2.5">
           <p className="text-[11px] font-semibold uppercase tracking-wider text-white/70">
             Remove or change lead
           </p>
           <ul className="space-y-1.5">
-            {others.map((m) => (
+            {roster.map((m) => {
+              const own = m.email.toLowerCase() === me;
+              return (
               <li key={m.email} className="rounded-lg bg-white/[0.05] px-3 py-2.5 space-y-2">
                 <div className="flex items-center gap-2.5">
                   <span className="min-w-0 flex-1 truncate text-[13px] text-white">{m.name}</span>
@@ -197,8 +293,9 @@ export function TeamManage({
                   </span>
                 </div>
                 <div className="flex flex-wrap gap-2">
+                  {editingEmail === m.email ? null : editControl(m)}
                   {/* Handing over is for someone actually on the team. */}
-                  {m.status === "joined" ? (
+                  {!own && m.status === "joined" ? (
                     <button
                       type="button"
                       onClick={() => { setHandingTo({ email: m.email, name: m.name }); setError(null); }}
@@ -208,6 +305,7 @@ export function TeamManage({
                       Make lead
                     </button>
                   ) : null}
+                  {!own ? (
                   <button
                     type="button"
                     onClick={() => call({ action: "remove_member", memberEmail: m.email }, m.email)}
@@ -222,9 +320,12 @@ export function TeamManage({
                     )}
                     Remove
                   </button>
+                  ) : null}
                 </div>
+                {editingEmail === m.email ? editControl(m) : null}
               </li>
-            ))}
+              );
+            })}
           </ul>
 
           {handingTo && (

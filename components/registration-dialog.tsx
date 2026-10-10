@@ -19,7 +19,7 @@ import {
   PAYMENT_REF_HINT,
   phoneFieldValue,
 } from "@/lib/applications";
-import { MAX_TEAM_BIO, TEAM_CODE_LENGTH, isValidTeamCode, type TeamPreview } from "@/lib/teams";
+import { MAX_TEAM_BIO, TEAM_CODE_LENGTH, isValidTeamCode, teamFullJoinMessage, type TeamPreview } from "@/lib/teams";
 import { Loader2, ArrowLeft, Pencil, Hourglass, ShieldCheck, RotateCcw, Check, Copy, Users } from "lucide-react";
 import { PALETTE } from "@/lib/palette";
 import { JUNO_PAYMENT_URL } from "@/lib/juno";
@@ -705,7 +705,7 @@ export function RegistrationDialog({
     /* A full team still has a place for someone its lead already added —
        their own invite is what fills it. */
     if (verifiedTeam.isFull && !verifiedTeam.invited)
-      return fail(`This team is full (${verifiedTeam.maxMembers} including the lead).`);
+      return fail(teamFullJoinMessage(verifiedTeam));
     setTeamBusy(true);
     setError(null);
     try {
@@ -1128,9 +1128,15 @@ export function RegistrationDialog({
                           ? "Your team lead has already added you — join to take your place."
                           : `${verifiedTeam.memberCount}/${verifiedTeam.maxMembers} members${verifiedTeam.isFull ? " · full" : ""}`}
                       </p>
-                      <p className="text-[13px] text-white/50 leading-relaxed">
-                        Joining adds you to this team for {event.name}. The team lead covers the fee — you don&apos;t pay.
-                      </p>
+                      {verifiedTeam.isFull && !verifiedTeam.invited ? (
+                        <p className="text-[13px] text-cyber-pink-light border border-cyber-pink/30 bg-cyber-pink/10 rounded-lg px-3 py-2.5 leading-relaxed">
+                          {teamFullJoinMessage(verifiedTeam)}
+                        </p>
+                      ) : (
+                        <p className="text-[13px] text-white/50 leading-relaxed">
+                          Joining adds you to this team for {event.name}. The team lead covers the fee — you don&apos;t pay.
+                        </p>
+                      )}
                       <div className="flex gap-2">
                         <Button
                           type="button" variant="outline" onClick={() => { setError(null); setVerifiedTeam(null); setTeamPane("join"); }}

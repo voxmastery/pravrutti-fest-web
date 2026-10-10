@@ -37,6 +37,9 @@ import {
   isValidTeamCode,
   toTeamPreview,
   maxTeamSizeFor,
+  cleanPersonName,
+  personNameError,
+  teamFullJoinMessage,
 } from "@/lib/teams";
 import { resolveEmail, authRequired } from "@/lib/identity";
 import { resolveRole, resolveRoleFor } from "@/lib/roles";
@@ -162,6 +165,10 @@ async function verifyTeam(evId: string, rawCode: string, bodyEmail: string) {
   const event = findEvent(evId);
   if (!evId || !event) return jsonError("That event doesn't exist.", 400);
   if (!isValidTeamCode(code)) return jsonError("Enter a valid team code.", 400);
+  /* Same window as join. A closed event used to verify successfully and then
+     refuse on the next tap, which read as the button doing nothing. */
+  if (!effectiveRegistrationOpen()) return jsonError(registrationUnavailableMessage(), 409);
+  if (!effectiveRegistrationOpen(undefined, festFor(event))) return jsonError(eventClosedMessage(event), 409);
   try {
     const team = await loadTeam(evId, code);
     if (!team) return jsonError("No team found for that code.", 404);
@@ -494,7 +501,7 @@ async function joinTeam(body: any) {
     return jsonError("You're the team lead — continue to submit your application.", 409);
 
   if (!alreadyMember && roster.length >= maxMembers)
-    return jsonError(`This team is full (${maxMembers} including the lead).`, 409);
+    return jsonError(teamFullJoinMessage({ name: team.name, memberCount: roster.length, maxMembers }), 409);
 
   const joiner: TeamMember = {
     name,
@@ -577,6 +584,7 @@ async function joinTeam(body: any) {
  * POST /api/teams { action: "join" }    -> add member + create their application
  *                                         (allowed after the lead has submitted,
  *                                         until event.teamSize.max is reached)
+ * POST /api/teams { action: "rename_member" } -> lead renames anyone; a member renames themself
  */
 
 /**
@@ -850,6 +858,70 @@ async function handOverLead(body: any) {
 }
 
 /**
+ * A name on the roster, and on the application when they have one.
+ *
+ * The lead can correct anyone on the team. A member can correct only their
+ * own. Invited people who have not accepted yet have no application, so only
+ * the membership row changes. A checked-in name stays as the desk recorded
+ * it. A declined or cancelled entry is locked.
+ */
+async function renameMember(body: any) {
+  const evId = String(body?.eventId ?? "").trim();
+  const event = findEvent(evId);
+  if (!event) return jsonError("That event doesn't exist.", 400);
+  const code = normalizeTeamCode(String(body?.code ?? ""));
+  if (!isValidTeamCode(code)) return jsonError("Enter a valid team code.", 400);
+  const nameError = personNameError(body?.name);
+  if (nameError) return jsonError(nameError, 400);
+  const name = cleanPersonName(body?.name);
+
+  const who = await resolveApplicantEmail(String(body?.email ?? ""));
+  if ("error" in who) return who.error;
+  const target = normalizeMemberEmail(body?.memberEmail ?? who.email);
+  if (!isValidMemberEmail(target)) return jsonError("Pick a member to rename.", 400);
+
+  try {
+    const team = await loadTeam(evId, code);
+    if (!team) return jsonError("No team found for that code.", 404);
+    const isLead = String(team.createdByEmail ?? "").toLowerCase() === who.email;
+    if (!isLead && target !== who.email)
+      return jsonError("You can only change your own name.", 403);
+
+    const record = (await readJsonByPath(teamMemberPath(evId, target))) as
+      | { code?: string; eventId?: string; member?: TeamMember }
+      | null;
+    if (!record?.member || normalizeTeamCode(record.code ?? "") !== code)
+      return jsonError("They're not on this team.", 404);
+
+    const app = (await readJsonByPath(applicationPath(evId, target))) as Application | null;
+    if (app?.checkedInAt) return jsonError("Names lock after check-in.", 409);
+    if (app && (app.status === "declined" || app.status === "cancelled"))
+      return jsonError("Not confirmed: team changes are locked.", 409);
+
+    const now = new Date().toISOString();
+    await putJson(
+      teamMemberPath(evId, target),
+      {
+        ...record,
+        code,
+        eventId: evId,
+        member: { ...record.member, name, renamedBy: who.email, renamedAt: now },
+      },
+      true,
+    );
+    if (app) await putJson(applicationPath(evId, target), { ...app, name }, true);
+
+    const members = await listTeamMembers(evId, code);
+    return NextResponse.json(
+      { ok: true, team: toTeamPreview(team, members, maxTeamSizeFor(event), true) },
+      { headers: { "cache-control": "no-store" } },
+    );
+  } catch (e) {
+    return blobFailed(e, "team rename failed");
+  }
+}
+
+/**
  * Taking someone off a roster — the lead removing them, or the member leaving.
  *
  * One function, because the effects are identical and only the permission
@@ -977,6 +1049,7 @@ export async function POST(req: Request) {
   if (action === "join") return joinTeam(body);
   if (action === "add_member") return addMember(body);
   if (action === "remove_member") return removeFromTeam(body, "remove");
+  if (action === "rename_member") return renameMember(body);
   if (action === "transfer_lead") return handOverLead(body);
   if (action === "leave") return removeFromTeam(body, "leave");
   if (action === "delete") return deleteTeam(body);

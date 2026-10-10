@@ -142,6 +142,6 @@ describe("joining", () => {
     who.email = "someone.else@gmail.com";
     const res = await join();
     expect(res.status).toBe(409);
-    expect(res.body.error).toMatch(/full/i);
+    expect(res.body.error).toBe("Nexovate is full (4/4). Ask the lead to free a slot.");
   });
 });

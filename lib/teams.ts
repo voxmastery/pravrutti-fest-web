@@ -23,6 +23,9 @@ export type TeamMember = {
   /** Single-use secret carried by their invite link. Cleared once spent, so a
       forwarded link cannot be replayed after they have accepted. */
   inviteToken?: string;
+  /** Who last changed this name, and when. The desk can see it was edited. */
+  renamedBy?: string;
+  renamedAt?: string;
 };
 
 /** Where a member stands. "invited" has no ticket yet; "joined" does. */
@@ -116,6 +119,23 @@ export function normalizeTeamCode(raw: string) {
 export function isValidTeamCode(code: string) {
   const n = normalizeTeamCode(code);
   return n.length >= TEAM_CODE_LENGTH_MIN && n.length <= TEAM_CODE_LENGTH;
+}
+
+/** Collapse whitespace. The same rule on the button and on the server. */
+export function cleanPersonName(raw: unknown): string {
+  return String(raw ?? "").trim().replace(/\s+/g, " ");
+}
+
+export function personNameError(raw: unknown): string | null {
+  const name = cleanPersonName(raw);
+  if (name.length < 2 || name.length > 80) return "Enter a name (2–80 characters).";
+  return null;
+}
+
+/** What a stranger sees when the roster has no free slot. An invited member
+    still joins — their place is what fills the team. */
+export function teamFullJoinMessage(team: { name: string; memberCount: number; maxMembers: number }) {
+  return `${team.name} is full (${team.memberCount}/${team.maxMembers}). Ask the lead to free a slot.`;
 }
 
 /** Cap for this event, including the lead. Falls back to the global 4. */

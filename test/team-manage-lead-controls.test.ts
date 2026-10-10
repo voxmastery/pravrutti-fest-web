@@ -35,12 +35,12 @@ function team(over: Partial<TeamPreview> = {}): TeamPreview {
   };
 }
 
-function html(over: Partial<TeamPreview> = {}, canAdd = true) {
+function html(over: Partial<TeamPreview> = {}, canAdd = true, viewerEmail = "lead@example.com") {
   return renderToStaticMarkup(
     createElement(TeamManage, {
       eventId: "hacktivate",
       team: team(over),
-      viewerEmail: "lead@example.com",
+      viewerEmail,
       leadName: "Rayhaan Backer Shah",
       canAdd,
       onChanged: () => {},
@@ -63,6 +63,8 @@ describe("lead controls on the ticket", () => {
     const joined = row(markup, "Prithvin Jothinathan");
     expect(joined).toMatch(/Make lead\s*<\/button>/);
     expect(joined).toMatch(/Remove\s*<\/button>/);
+    expect(joined).toContain("Edit name for Prithvin Jothinathan");
+    expect(markup).toContain("Edit name for Rayhaan Backer Shah");
     const invited = row(markup, "Invited Pal");
     expect(invited).not.toContain("Make lead");
     expect(invited).toMatch(/Remove\s*<\/button>/);
@@ -88,7 +90,18 @@ describe("lead controls on the ticket", () => {
     expect(html({ canInvite: true, isFull: true })).not.toContain("Add a member");
   });
 
-  it("draws nothing for someone who is not the lead", () => {
-    expect(html({ isLead: false })).toBe("");
+  it("lets a member edit only their own name", () => {
+    const markup = html({ isLead: false });
+    expect(markup).toContain("Your name");
+    expect(markup).toContain("Edit name for Rayhaan Backer Shah");
+    expect(markup).not.toContain("Prithvin");
+    expect(markup).not.toContain("Remove");
+    expect(markup).not.toContain("Make lead");
+    expect(markup).not.toContain("Delete this team");
+    expect(markup).not.toContain("Add a member");
+  });
+
+  it("draws nothing for someone who is not on the roster", () => {
+    expect(html({ isLead: false }, true, "stranger@example.com")).toBe("");
   });
 });
