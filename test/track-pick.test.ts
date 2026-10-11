@@ -57,13 +57,15 @@ const baseClaim = {
 };
 
 describe("track copy", () => {
-  it("keeps Track 1's title in config and describes the on-site kit", () => {
+  it("keeps Track 1's title in config and allows own components", () => {
     const track = trackById("01")!;
     expect(track.title).toBe("Seconds Ahead");
     expect(track.theme).toBe("Predict road dangers before they happen, for a road user you are yourself.");
-    expect(track.summary).toBe("Build with the PCB Cupid kit provided on site.");
-    expect(track.summary.toLowerCase()).not.toMatch(/any components/);
-    expect(track.tags.join(" ").toLowerCase()).not.toMatch(/any components/);
+    expect(track.summary).toBe(
+      "Teams may bring and use their own components. A PCB Cupid kit is available on site for Track 1 (Seconds Ahead).",
+    );
+    expect(track.summary.toLowerCase()).not.toMatch(/kit-only|must use|provided on site/);
+    expect(track.tags.join(" ").toLowerCase()).not.toMatch(/kit-only|kit on site/);
     expect(track.problemNote).toBeNull();
     expect(track.pdfHref).toBe("/hacktivate/challenges/seconds-ahead.pdf");
     const label = trackCardLabel(track).toLowerCase();
@@ -79,8 +81,11 @@ describe("track copy", () => {
     }
   });
 
-  it("tells every track to get components ready", () => {
-    for (const track of TRACKS) {
+  it("tells every track to get components ready, and Track 1 that the kit is optional", () => {
+    expect(componentsReadyLine("01")).toBe(
+      "Track 1/3: Teams may bring and use their own components. A PCB Cupid kit is available on site for Track 1 (Seconds Ahead).",
+    );
+    for (const track of TRACKS.filter((t) => t.id !== "01")) {
       expect(componentsReadyLine(track.id)).toBe(
         `Track ${Number(track.id)}/3: get your components ready before the event.`,
       );

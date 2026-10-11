@@ -49,11 +49,22 @@ describe("parseDescription", () => {
     }
   });
 
-  it("does not say Hacktivate supplies components", () => {
+  it("lets Hacktivate teams bring their own components", () => {
     const e = events.find((x) => x.name === "Hacktivate")!;
-    expect(e.description).not.toMatch(/on-site stall|sourced on-site|PCB Cupid|component procurement/i);
+    expect(e.description).toContain(
+      "Teams may bring and use their own components. A PCB Cupid kit is available on site for Track 1 (Seconds Ahead).",
+    );
+    expect(e.description).not.toMatch(/on-site stall|sourced on-site|component procurement|components are provided|kit-only|must use the PCB Cupid kit/i);
     expect(e.description).toContain("Meals, overnight refreshments, and a supervised rest area are provided.");
+    expect(e.description).toContain("Six judges sit, two per track.");
+    expect(e.description).toContain("about five minutes at the table");
+    expect(e.description).toContain("a combined final is held before all six judges");
+    expect(e.description).toContain("The rubric is out of 20, and creativity is the tie-breaker.");
+    expect(e.description).toContain("14 October 2026, 11:00 AM to 15 October 2026, 11:00 AM");
+    expect(e.description).toContain("15 October 2026, 9:00–11:00 AM");
     expect(e.brochureUrl).toBe("/hacktivate-rules.pdf");
+    const seeed = e.sponsorPerks?.find((p) => p.sponsor === "Seeed Studio");
+    expect(seeed?.perks).toContain("Best Voice AI Build, prize by reSpeaker (Seeed Studio)");
   });
 
   it("gives ElectroXcape an intro and one bullet per round", () => {

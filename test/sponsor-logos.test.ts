@@ -39,7 +39,7 @@ describe("sponsor logos", () => {
       ?.sponsorPerks?.find((p) => p.sponsor === "Seeed Studio");
     expect(seeed?.website).toBe("https://www.seeedstudio.com");
     expect(seeed?.perks).toContain(
-      "Best Voice AI Project, prize by reSpeaker (Seeed Studio)",
+      "Best Voice AI Build, prize by reSpeaker (Seeed Studio)",
     );
   });
 });

@@ -38,13 +38,17 @@ export type TrackDef = {
   pdfHref: string | null;
 };
 
+/** The component rule, word for word, on the Track 1 card and the success line. */
+export const OWN_COMPONENTS_RULE =
+  "Teams may bring and use their own components. A PCB Cupid kit is available on site for Track 1 (Seconds Ahead).";
+
 export const TRACKS: readonly TrackDef[] = [
   {
     id: "01",
     title: "Seconds Ahead",
     theme: "Predict road dangers before they happen, for a road user you are yourself.",
-    summary: "Build with the PCB Cupid kit provided on site.",
-    tags: ["Kit on site", "Hardware"],
+    summary: OWN_COMPONENTS_RULE,
+    tags: ["Kit available", "Hardware"],
     problemNote: null,
     pdfHref: "/hacktivate/challenges/seconds-ahead.pdf",
   },
@@ -71,13 +75,17 @@ export const TRACKS: readonly TrackDef[] = [
 
 export const ELEVENLABS_BANNER = {
   title: "ElevenLabs Creator plan for all participants",
-  body: "Every participant in every track gets it. Use voice AI in any track and you're eligible for the Best Voice award.",
+  body: "Every participant in every track gets it. Use voice AI in any track and you're eligible for the Best Voice AI Build (reSpeaker, from Seeed Studio).",
 } as const;
 
-/** Shown on the success card for every track, including Track 1. */
+/**
+ * Shown on the success card for every track.
+ * Track 1 repeats the component rule so the on-site kit is not read as mandatory.
+ */
 export function componentsReadyLine(trackId: string): string {
   const n = Number(trackId);
   const label = Number.isFinite(n) && n > 0 ? String(n) : trackId;
+  if (label === "1") return `Track 1/3: ${OWN_COMPONENTS_RULE}`;
   return `Track ${label}/3: get your components ready before the event.`;
 }
 

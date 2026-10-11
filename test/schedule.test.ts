@@ -250,7 +250,7 @@ describe("hackathon judging", () => {
     });
     const hk = events.find((e) => e.name === "Hacktivate")!;
     expect(hk.description).toContain(
-      "Final judging is on 15 October 2026, 9:00–11:00 AM. Each team powers on and demos its build live, then Q&A. Judging rounds run 9:00–11:00 AM on 15 Oct; the build window is 14 Oct 11:00 AM to 15 Oct 11:00 AM, and the code/hardware freeze applies when your team is called.",
+      "Final judging is on 15 October 2026, 9:00–11:00 AM. Six judges sit, two per track. Each team gets about five minutes at the table, then questions. The judges shortlist teams, and a combined final is held before all six judges. The rubric is out of 20, and creativity is the tie-breaker. The build window is 14 October 2026, 11:00 AM to 15 October 2026, 11:00 AM, and the code/hardware freeze applies when your team is called.",
     );
   });
 

@@ -811,7 +811,7 @@ export const events: Event[] = [
     name: "Hacktivate",
     category: "TECHNOVERSE",
     subCategory: "24-Hour Predictive Systems Hackathon",
-    description: "Hacktivate is a 24-hour overnight hackathon on the theme of Predictive Systems, hosted by the IEEE Student Branch. Teams of 2 to 4 design and build a working hardware and software system that senses real-world data and predicts an outcome — machine failure, demand shifts, anomalies, or early warnings. Teams move through the full development cycle: ideation, circuit and system design with simulation, hardware assembly and sensor integration, and finally layering in the predictive logic. Mentors are available throughout, including overnight. The event closes with a live demonstration — every system must power on and perform in front of the judges. Meals, overnight refreshments, and a supervised rest area are provided. It is a full product build compressed into a single night, and the kind of end-to-end experience few students get before industry. Final judging is on 15 October 2026, 9:00–11:00 AM. Each team powers on and demos its build live, then Q&A. Judging rounds run 9:00–11:00 AM on 15 Oct; the build window is 14 Oct 11:00 AM to 15 Oct 11:00 AM, and the code/hardware freeze applies when your team is called.",
+    description: "Hacktivate is a 24-hour overnight hackathon on the theme of Predictive Systems, hosted by the IEEE Student Branch. Teams of 2 to 4 design and build a working hardware and software system that senses real-world data and predicts an outcome — machine failure, demand shifts, anomalies, or early warnings. Teams move through the full development cycle: ideation, circuit and system design with simulation, hardware assembly and sensor integration, and finally layering in the predictive logic. Teams may bring and use their own components. A PCB Cupid kit is available on site for Track 1 (Seconds Ahead). Mentors are available throughout, including overnight. The event closes with a live demonstration — every system must power on and perform in front of the judges. Meals, overnight refreshments, and a supervised rest area are provided. It is a full product build compressed into a single night, and the kind of end-to-end experience few students get before industry. Final judging is on 15 October 2026, 9:00–11:00 AM. Six judges sit, two per track. Each team gets about five minutes at the table, then questions. The judges shortlist teams, and a combined final is held before all six judges. The rubric is out of 20, and creativity is the tie-breaker. The build window is 14 October 2026, 11:00 AM to 15 October 2026, 11:00 AM, and the code/hardware freeze applies when your team is called.",
     fee: "Rs. 200/-",
     prizes: [20000, 15000, 10000],
     teamSize: { min: 2, max: 4, soloAllowed: false },
@@ -834,7 +834,7 @@ export const events: Event[] = [
         logo: "/sponsors/seeed.webp",
         website: "https://www.seeedstudio.com",
         perks: [
-          "Best Voice AI Project, prize by reSpeaker (Seeed Studio)",
+          "Best Voice AI Build, prize by reSpeaker (Seeed Studio)",
         ],
       },
     ],
@@ -846,8 +846,8 @@ export const events: Event[] = [
       student: [{ name: "Shravanth" }],
     },
     club: "IEEE",
-    /* The Drive copy still told teams to take parts from an on-site stall.
-       This file is that rulebook with those lines taken out. */
+    /* Own components are allowed. A PCB Cupid kit is available on site for
+       Track 1 and is not mandatory. Served from public/, not Drive. */
     brochureUrl: "/hacktivate-rules.pdf",
   },
   {
