@@ -41,12 +41,12 @@ export type TrackDef = {
 export const TRACKS: readonly TrackDef[] = [
   {
     id: "01",
-    title: "PCB Cupid",
-    theme: "Road & Transport (predictive road safety)",
+    title: "Seconds Ahead",
+    theme: "Predict road dangers before they happen, for a road user you are yourself.",
     summary: "PCB Cupid kit available on site, any components allowed.",
     tags: ["Kit on site", "Any components", "Hardware"],
-    problemNote: "Problem statement drops soon",
-    pdfHref: null,
+    problemNote: null,
+    pdfHref: "/hacktivate/challenges/seconds-ahead.pdf",
   },
   {
     id: "02",
@@ -92,7 +92,7 @@ export function isTrackId(id: string): id is TrackId {
   return TRACKS.some((t) => t.id === id);
 }
 
-/** "PCB Cupid: Road & Transport (predictive road safety)" */
+/** "Seconds Ahead: Predict road dangers before they happen…" */
 export function trackFullName(track: Pick<TrackDef, "title" | "theme">): string {
   const theme = track.theme.trim();
   return theme ? `${track.title}: ${theme}` : track.title;

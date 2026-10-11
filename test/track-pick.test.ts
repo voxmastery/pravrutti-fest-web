@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, beforeAll } from "vitest";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import {
   COPY,
   HACKTIVATE_EVENT_ID,
@@ -59,17 +59,23 @@ const baseClaim = {
 describe("track copy", () => {
   it("keeps Track 1's title in config and describes an optional kit", () => {
     const track = trackById("01")!;
-    expect(track.title.length).toBeGreaterThan(0);
-    expect(track.theme).toMatch(/Road & Transport/i);
-    expect(track.theme).toMatch(/predictive road safety/i);
+    expect(track.title).toBe("Seconds Ahead");
+    expect(track.theme).toBe("Predict road dangers before they happen, for a road user you are yourself.");
     expect(track.summary).toMatch(/any components allowed/i);
-    expect(track.summary).toMatch(/kit available on site/i);
-    expect(track.problemNote).toBe("Problem statement drops soon");
+    expect(track.summary).toMatch(/PCB Cupid kit available on site/i);
+    expect(track.problemNote).toBeNull();
+    expect(track.pdfHref).toBe("/hacktivate/challenges/seconds-ahead.pdf");
     const label = trackCardLabel(track).toLowerCase();
-    expect(label).toContain(track.title.toLowerCase());
+    expect(label).toContain("seconds ahead");
     expect(label).toContain("track 01");
-    expect(label).not.toMatch(/kit-only|nothing else/);
+    expect(label).not.toMatch(/kit-only|nothing else|drops soon/);
     expect(track.tags.join(" ").toLowerCase()).not.toMatch(/kit-only/);
+    for (const href of TRACKS.map((t) => t.pdfHref)) {
+      expect(href).toBeTruthy();
+      const file = `public${href}`;
+      expect(existsSync(file), file).toBe(true);
+      expect(readFileSync(file).subarray(0, 5).toString()).toBe("%PDF-");
+    }
   });
 
   it("tells every track to get components ready", () => {
