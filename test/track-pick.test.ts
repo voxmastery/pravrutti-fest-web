@@ -57,12 +57,13 @@ const baseClaim = {
 };
 
 describe("track copy", () => {
-  it("keeps Track 1's title in config and describes an optional kit", () => {
+  it("keeps Track 1's title in config and describes the on-site kit", () => {
     const track = trackById("01")!;
     expect(track.title).toBe("Seconds Ahead");
     expect(track.theme).toBe("Predict road dangers before they happen, for a road user you are yourself.");
-    expect(track.summary).toMatch(/any components allowed/i);
-    expect(track.summary).toMatch(/PCB Cupid kit available on site/i);
+    expect(track.summary).toBe("Build with the PCB Cupid kit provided on site.");
+    expect(track.summary.toLowerCase()).not.toMatch(/any components/);
+    expect(track.tags.join(" ").toLowerCase()).not.toMatch(/any components/);
     expect(track.problemNote).toBeNull();
     expect(track.pdfHref).toBe("/hacktivate/challenges/seconds-ahead.pdf");
     const label = trackCardLabel(track).toLowerCase();
