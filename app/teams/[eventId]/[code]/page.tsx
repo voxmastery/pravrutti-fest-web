@@ -85,7 +85,7 @@ export default async function TeamPage({
             >
               <span>
                 <span className="block font-semibold text-champagne-gold">Pick your track</span>
-                <span className="text-white/55">Opens 11 Oct, 9:30 AM IST. Only the lead can lock it.</span>
+                <span className="text-white/55">Opens 11 Oct, 10:00 AM IST. Only the lead can lock it.</span>
               </span>
             </Link>
           )}

@@ -183,7 +183,7 @@ export function TrackControlScreen() {
           <div className="mt-1 flex flex-wrap items-end justify-between gap-3">
             <div>
               <h1 className="font-display text-3xl font-black">Track Pick Control</h1>
-              <p className="text-sm text-white/55">Opened 11 Oct 2026, 09:30 AM IST · first come, first served · live</p>
+              <p className="text-sm text-white/55">Opened 11 Oct 2026, 10:00 AM IST · first come, first served · live</p>
             </div>
             <div className="flex flex-wrap gap-2">
               <span className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs ${board.paused ? "border-soft-gold/50 text-champagne-gold" : "border-success/40 text-success-soft"}`}>
