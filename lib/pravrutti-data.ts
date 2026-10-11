@@ -598,8 +598,12 @@ export const events: Event[] = [
     fee: "Rs. 200/-",
     prizes: [7000, 5000, 3000],
     teamSize: { min: 3, max: 4, soloAllowed: false },
+    /* Closed by hand on 11 Oct, Ganesh's call. Cap stays the derived 40
+       teams (160 heads at four a team). Listed and struck through. No new
+       team; teams already in keep their places and can still be joined. */
     capacity: 160,
     capacityUnit: "teams",
+    full: true,
     duration: "12+3 hours",
     coordinators: {
       faculty: [],

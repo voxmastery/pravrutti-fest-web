@@ -45,6 +45,25 @@ describe("ROBO RACE", () => {
   });
 });
 
+/* Closed by hand on 11 Oct. Cap stays the derived 40 (160 heads at four
+   a team). full keeps it shut even with room left. Listed, not taken off
+   the list. */
+describe("Respawn", () => {
+  it("takes no new teams and stays on the list", () => {
+    const e = ev("Respawn");
+    expect(eventId(e.name)).toBe("respawn");
+    expect(e.maxTeams).toBeUndefined();
+    expect(e.capacity).toBe(160);
+    expect(e.full).toBe(true);
+    expect(e.unlisted).toBeFalsy();
+    expect(e.registrationCloses).toBeUndefined();
+    expect(capOf(e)).toEqual({ limit: 40, unit: "teams" });
+    expect(capacityLabel(e)).toBe("40 teams");
+    expect(isFull(e, { people: 0, teams: 0 })).toBe(true);
+    expect(listedEvents).toContain(e);
+  });
+});
+
 /* Cap is 52 teams: 42, then exactly 10 more on 10 Oct. No hand switch,
    so 51 holding places is open and 52 is full. */
 describe("HAMMER", () => {
@@ -281,6 +300,7 @@ const STAYS_SHUT = [
   "Glide-X",
   "RC-X",
   "ROBO RACE",
+  "Respawn",
   "Discoverize (Research Paper Presentation)",
 ];
 

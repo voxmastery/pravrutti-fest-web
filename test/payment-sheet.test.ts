@@ -115,14 +115,15 @@ describe("planFromSheet", () => {
   it("approves only as many registrations as the person actually paid for", () => {
     const rows = [
       app({ eventId: "chaos", email: "multi@example.com", appliedAt: "2026-09-16T09:00:00.000Z" }),
-      app({ eventId: "respawn", email: "multi@example.com", appliedAt: "2026-09-16T10:00:00.000Z", ticketId: "PRV-2" }),
+      app({ eventId: "the-logic-circuit", email: "multi@example.com", appliedAt: "2026-09-16T10:00:00.000Z", ticketId: "PRV-2" }),
       app({ eventId: "hammer", email: "multi@example.com", appliedAt: "2026-09-16T11:00:00.000Z", ticketId: "PRV-3" }),
     ];
-    /* Registered for Respawn at 10:00 UTC = 15:30 IST; paid twenty minutes
-       later, which the report writes in IST. */
+    /* Registered for The Logic Circuit at 10:00 UTC = 15:30 IST; paid twenty
+       minutes later, which the report writes in IST. Respawn is full, so the
+       clock-matched place has to be an event that is still open. */
     const plan = planFromSheet([pay("multi@example.com", "T1", "2026-09-16 15:50:00.0")], rows);
     expect(plan.approve).toHaveLength(1);
-    expect(plan.approve[0].eventId).toBe("respawn");
+    expect(plan.approve[0].eventId).toBe("the-logic-circuit");
     expect(plan.short).toEqual([{ email: "multi@example.com", payments: 1, inReview: 3 }]);
     expect(plan.unpaid.map((u) => u.eventId).sort()).toEqual(["chaos", "hammer"]);
   });
@@ -130,10 +131,10 @@ describe("planFromSheet", () => {
   it("covers two registrations when the report shows two payments", () => {
     const rows = [
       app({ eventId: "bridge-it", email: "multi@example.com", appliedAt: "2026-09-16T09:00:00.000Z" }),
-      app({ eventId: "respawn", email: "multi@example.com", appliedAt: "2026-09-16T10:00:00.000Z", ticketId: "PRV-2" }),
+      app({ eventId: "the-logic-circuit", email: "multi@example.com", appliedAt: "2026-09-16T10:00:00.000Z", ticketId: "PRV-2" }),
     ];
     const plan = planFromSheet([pay("multi@example.com", "T1"), pay("multi@example.com", "T2")], rows);
-    expect(plan.approve.map((a) => a.eventId).sort()).toEqual(["bridge-it", "respawn"]);
+    expect(plan.approve.map((a) => a.eventId).sort()).toEqual(["bridge-it", "the-logic-circuit"]);
     expect(plan.short).toEqual([]);
   });
 
