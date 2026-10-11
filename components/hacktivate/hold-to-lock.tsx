@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { HOLD_MS } from "@/lib/track-pick";
 
 /**
@@ -29,6 +29,16 @@ export function HoldToLock({
     raf.current = null;
     if (!done.current) setProgress(0);
   };
+
+  /* Cancel and Escape unmount this button while a finger or key is still down.
+     The frame has to die with the button, or the lock fires after they backed out. */
+  useEffect(() => {
+    return () => {
+      holding.current = false;
+      if (raf.current != null) cancelAnimationFrame(raf.current);
+      raf.current = null;
+    };
+  }, []);
 
   const tick = (t: number) => {
     if (!holding.current || done.current) return;
