@@ -31,6 +31,8 @@ export function isStaffAllowedPath(pathname: string): boolean {
   const p = normalizePath(pathname);
   if (p.startsWith("/api")) return true;
   if (p.startsWith("/dashboard")) return true;
+  /* A coordinator who also leads a Hacktivate team still has to lock a track. */
+  if (p === "/hacktivate/track" || p.startsWith("/hacktivate/")) return true;
   if (p.startsWith("/admin")) return true;
   if (p === "/faculty" || p.startsWith("/faculty/")) return true;
   if (p === "/ticket" || p.startsWith("/ticket/")) return true;

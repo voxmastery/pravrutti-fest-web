@@ -123,3 +123,33 @@ export async function sqlExecute(sql: string, params: unknown[] = []) {
 export async function sqlQuery(sql: string, params: unknown[] = []) {
   return getPool().query(sql, params);
 }
+
+/** A connection inside an open transaction. `execute` matches mysql2's. */
+export type SqlTxConn = {
+  execute: (sql: string, params?: unknown[]) => Promise<[unknown, unknown]>;
+};
+
+/**
+ * BEGIN … COMMIT around `fn`. A throw rolls back.
+ *
+ * DDL must not run in here: MySQL commits implicitly on CREATE TABLE, which
+ * would release the row lock this exists to hold.
+ */
+export async function sqlWithTransaction<T>(fn: (conn: SqlTxConn) => Promise<T>): Promise<T> {
+  const conn = await getPool().getConnection();
+  try {
+    await conn.beginTransaction();
+    const result = await fn(conn);
+    await conn.commit();
+    return result;
+  } catch (err) {
+    try {
+      await conn.rollback();
+    } catch {
+      /* The connection may already be closed. The original error is the one that matters. */
+    }
+    throw err;
+  } finally {
+    conn.release();
+  }
+}

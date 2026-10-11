@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { Navigation } from "@/components/landing/navigation";
 import { FooterSection } from "@/components/landing/footer-section";
 import { events, eventId as slugFor, FEST } from "@/lib/pravrutti-data";
+import { HACKTIVATE_EVENT_ID } from "@/lib/track-pick";
 import { Team, TeamMember, memberStatus, normalizeTeamCode, maxTeamSizeFor } from "@/lib/teams";
 import { readJsonByPath, teamPath, listTeamMembers } from "@/lib/blob-store";
 import { TeamLeaveButton } from "@/components/team-leave-button";
@@ -76,6 +77,18 @@ export default async function TeamPage({
           {team.bio ? (
             <p className="text-sm text-pearl-white/60 leading-relaxed mb-6">{team.bio}</p>
           ) : null}
+
+          {evId === HACKTIVATE_EVENT_ID && (
+            <Link
+              href="/hacktivate/track"
+              className="mb-6 flex items-center justify-between gap-3 rounded-2xl border border-cyber-pink/40 bg-cyber-pink/10 px-4 py-3 text-sm hover:border-cyber-pink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyber-pink"
+            >
+              <span>
+                <span className="block font-semibold text-champagne-gold">Pick your track</span>
+                <span className="text-white/55">Opens 11 Oct, 9:30 AM IST. Only the lead can lock it.</span>
+              </span>
+            </Link>
+          )}
 
           <div className="rounded-2xl border border-royal-wine bg-cosmic-purple/60 p-5 mb-6 space-y-3">
             <div className="flex items-center gap-3 text-sm text-pearl-white/70">
