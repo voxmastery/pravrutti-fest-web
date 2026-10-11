@@ -21,16 +21,24 @@ const GRID: unknown[][] = [
   ["", "", "", "", "", "", "", "", "", ""],
 ];
 
+/* HAMMER is open. CHAOS is marked full, so a default of CHAOS would leave
+   every happy-path approval out of the confirm set. */
 const app = (over: Record<string, unknown> = {}) =>
   ({
-    ticketId: "PRV-1", eventId: "chaos", eventName: "CHAOS", status: "pending", payment: "awaiting",
+    ticketId: "PRV-1", eventId: "hammer", eventName: "HAMMER", status: "pending", payment: "awaiting",
     fee: "Rs. 200/-", name: "Someone", email: "someone@example.com", phone: "9", college: "RUAS",
     teamName: null, teamCode: null, members: null, paymentRef: null, appliedAt: "2026-09-16T09:00:00.000Z",
     ...over,
   }) as any;
 
-const pay = (email: string, transaction = "TXN0000000000001", paidAt = "2026-09-16 12:38:16.0"): SheetPayment => ({
-  name: "N", email, transaction, amount: "200.00292", paidAt,
+const pay = (
+  email: string,
+  transaction = "TXN0000000000001",
+  paidAt = "2026-09-16 12:38:16.0",
+  phone = "",
+  name = "N",
+): SheetPayment => ({
+  name, email, transaction, amount: "200.00292", paidAt, phone,
 });
 
 describe("readSheetRows", () => {
@@ -41,6 +49,7 @@ describe("readSheetRows", () => {
       email: "dhanyaau07@gmail.com",
       transaction: "XSKR2QZ2USANLKE",
       name: "Dhanya umesh",
+      phone: "9980255354",
     });
   });
 
@@ -120,11 +129,11 @@ describe("planFromSheet", () => {
 
   it("covers two registrations when the report shows two payments", () => {
     const rows = [
-      app({ eventId: "chaos", email: "multi@example.com", appliedAt: "2026-09-16T09:00:00.000Z" }),
+      app({ eventId: "bridge-it", email: "multi@example.com", appliedAt: "2026-09-16T09:00:00.000Z" }),
       app({ eventId: "respawn", email: "multi@example.com", appliedAt: "2026-09-16T10:00:00.000Z", ticketId: "PRV-2" }),
     ];
     const plan = planFromSheet([pay("multi@example.com", "T1"), pay("multi@example.com", "T2")], rows);
-    expect(plan.approve.map((a) => a.eventId).sort()).toEqual(["chaos", "respawn"]);
+    expect(plan.approve.map((a) => a.eventId).sort()).toEqual(["bridge-it", "respawn"]);
     expect(plan.short).toEqual([]);
   });
 
@@ -148,6 +157,145 @@ describe("planFromSheet", () => {
   it("matches however the address was capitalised in either place", () => {
     const plan = planFromSheet([pay("Mixed@Example.com".toLowerCase())], [app({ email: "MIXED@example.com" })]);
     expect(plan.approve).toHaveLength(1);
+  });
+
+  /* CHAOS is shut by hand. A match still shows, and it is not in the set the
+     confirm button sends. */
+  it("leaves a full event out of the approve set", () => {
+    const plan = planFromSheet([pay("someone@example.com")], [app({ eventId: "chaos", eventName: "CHAOS" })]);
+    expect(plan.approve).toHaveLength(0);
+    expect(plan.held).toHaveLength(1);
+    expect(plan.held[0].flag).toBe("event full / over cap");
+    expect(plan.unpaid).toHaveLength(0);
+  });
+
+  /* FAULT x LOAD is capped at 16 teams and is not marked full. The 17th
+     confirmed team is the one that would go over. */
+  it("leaves a row out when confirming it would pass the team cap", () => {
+    const confirmed = Array.from({ length: 16 }, (_, i) => app({
+      eventId: "fault-x-load", eventName: "FAULT x LOAD", status: "confirmed", payment: "paid",
+      email: `c${i}@example.com`, ticketId: `C${i}`, teamCode: `T${i}`, teamName: `Team ${i}`,
+    }));
+    const pending = app({
+      eventId: "fault-x-load", eventName: "FAULT x LOAD",
+      email: "new@example.com", ticketId: "NEW", teamCode: "TNEW", teamName: "Apex",
+    });
+    const plan = planFromSheet([pay("new@example.com")], [...confirmed, pending]);
+    expect(plan.approve).toHaveLength(0);
+    expect(plan.held).toHaveLength(1);
+    expect(plan.held[0].flag).toBe("event full / over cap");
+  });
+});
+
+describe("phone fallback", () => {
+  const likith = app({
+    email: "jockergk44@gmail.com", name: "Likith.m.r.", phone: "8884441538",
+    eventId: "zero-hour", eventName: "ZERO HOUR", teamName: "CODE RED", teamCode: "62JN3RM2GRBB",
+  });
+
+  it("approves the one in-review registration when the phone and the name agree", () => {
+    const plan = planFromSheet(
+      [pay("llikith179@gmail.com", "UHC2FLTIL0SVEZS", "2026-10-09 12:00:00.0", "8884441538", "Likith")],
+      [likith],
+    );
+    expect(plan.approve).toHaveLength(1);
+    expect(plan.approve[0]).toMatchObject({
+      email: "jockergk44@gmail.com",
+      eventId: "zero-hour",
+      via: "phone",
+      transaction: "UHC2FLTIL0SVEZS",
+      note: "matched by phone (sheet email llikith179@gmail.com, site email jockergk44@gmail.com)",
+    });
+    expect(plan.unmatched).toHaveLength(0);
+    expect(plan.needsCheck).toHaveLength(0);
+  });
+
+  it("normalises +91, spaces and dashes before comparing", () => {
+    const plan = planFromSheet(
+      [pay("llikith179@gmail.com", "UHC2FLTIL0SVEZS", "2026-10-09 12:00:00.0", "+91 88844-41538", "Likith")],
+      [likith],
+    );
+    expect(plan.approve).toHaveLength(1);
+    expect(plan.approve[0].via).toBe("phone");
+  });
+
+  it("files an already-confirmed person under the other email", () => {
+    const plan = planFromSheet(
+      [pay("23etas012033@msruas.ac.in", "J5N3Z8Y0MUQG1UY", "2026-09-16 16:24:09.0", "9972939918", "R sharvesh")],
+      [app({
+        email: "rsharvesh.2710@gmail.com", name: "Sharvesh R", phone: "9972939918",
+        status: "confirmed", payment: "paid", eventId: "line-follower", eventName: "LINE FOLLOWER",
+        teamName: "TEAM INGENUITY", teamCode: "NLF2HRY278GW",
+      })],
+    );
+    expect(plan.approve).toHaveLength(0);
+    expect(plan.unmatched).toHaveLength(0);
+    expect(plan.confirmedElsewhere).toHaveLength(1);
+    expect(plan.confirmedElsewhere[0].siteEmail).toBe("rsharvesh.2710@gmail.com");
+    expect(plan.confirmedElsewhere[0].events[0]).toMatchObject({ eventName: "LINE FOLLOWER", teamCode: "NLF2HRY278GW" });
+  });
+
+  it("sends a phone that belongs to a different name to manual check", () => {
+    const plan = planFromSheet(
+      [pay("raghavns361@gmail.com", "RVRB596VRSYZ6PY", "2026-10-01 10:00:00.0", "7019238661", "Kumar Raghav")],
+      [app({ email: "grizzy1071@gmail.com", name: "mini s", phone: "7019238661", status: "confirmed", payment: "paid" })],
+    );
+    expect(plan.approve).toHaveLength(0);
+    expect(plan.confirmedElsewhere).toHaveLength(0);
+    expect(plan.needsCheck.map((n) => [n.email, n.reason])).toEqual([
+      ["raghavns361@gmail.com", "phone belongs to a different name"],
+    ]);
+  });
+
+  it("does not pick between two site emails on the same phone", () => {
+    const plan = planFromSheet(
+      [pay("baigt5508@gmail.com", "Z71VG5U2EPGDCX5", "2026-10-01 10:00:00.0", "8050114375", "Talha Baig")],
+      [
+        app({ email: "shaheenbanu178@gmail.com", name: "Talha", phone: "8050114375", status: "confirmed", payment: "not_required", eventId: "rc-x", eventName: "RC-X", teamName: "Miraaj", teamCode: "W8PVBETCKZJ4" }),
+        app({ email: "baig55163@gmail.com", name: "Talha Baig", phone: "8050114375", status: "confirmed", payment: "paid", ticketId: "PRV-2", eventId: "line-follower", eventName: "LINE FOLLOWER", teamName: "Robo Titans", teamCode: "3ZUXTCS6X69Z" }),
+      ],
+    );
+    expect(plan.approve).toHaveLength(0);
+    expect(plan.needsCheck[0].reason).toBe("phone is on more than one site email");
+  });
+
+  it("does not guess an event when two are in review", () => {
+    const plan = planFromSheet(
+      [pay("llikith179@gmail.com", "UHC2FLTIL0SVEZS", "2026-10-09 12:00:00.0", "8884441538", "Likith")],
+      [
+        likith,
+        app({ ...likith, eventId: "hammer", eventName: "HAMMER", ticketId: "PRV-2", teamCode: "OTHER", teamName: "Other" }),
+      ],
+    );
+    expect(plan.approve).toHaveLength(0);
+    expect(plan.needsCheck[0].reason).toBe("more than one event is in review");
+  });
+
+  /* The college address is already in this batch. The gmail payment is the
+     same registration again, so it is flagged and not confirmed twice. */
+  it("flags a payment whose registration this batch already covers", () => {
+    const row = app({
+      email: "4mt25ci027@mite.ac.in", name: "Mohammed Zainuddin Zidan", phone: "9448920298",
+      eventId: "hammer", eventName: "HAMMER", teamName: "Team hyperX", teamCode: "MCNJPPPV52FN",
+    });
+    const plan = planFromSheet([
+      pay("4mt25ci027@mite.ac.in", "YLPY3TOMWL4A38N", "2026-10-08 10:00:00.0", "9448920298", "Mohammed Zainuddin Zidan"),
+      pay("zainuzidan27@gmail.com", "PXWZYBNFNRNICOR", "2026-10-08 11:00:00.0", "9448920298", "Mohammed zainuddin zidan"),
+    ], [row]);
+    expect(plan.approve.map((a) => a.email)).toEqual(["4mt25ci027@mite.ac.in"]);
+    expect(plan.needsCheck).toEqual([
+      expect.objectContaining({ email: "zainuzidan27@gmail.com", reason: "possible duplicate payment" }),
+    ]);
+  });
+
+  it("keeps a short report phone on the unmatched row so someone can call", () => {
+    const plan = planFromSheet(
+      [pay("rakshsriram03@gmail.com", "NILZYNETBGAXKMJ", "2026-10-01 10:00:00.0", "935103197", "Raksha Sriram")],
+      [app({ email: "rakshasriram03@gmail.com", name: "Raksha Sriram", phone: "9535103197", status: "confirmed", payment: "paid" })],
+    );
+    expect(plan.unmatched).toHaveLength(1);
+    expect(plan.unmatched[0].phone).toBe("935103197");
+    expect(plan.confirmedElsewhere).toHaveLength(0);
   });
 });
 

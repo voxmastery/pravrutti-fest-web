@@ -66,7 +66,8 @@ describe("POST /api/dashboard/payment-sheet", () => {
   });
 
   it("plans without writing anything", async () => {
-    row("paid@example.com");
+    /* CHAOS is marked full, so a plan on it would hold the row out of approve. */
+    row("paid@example.com", { eventId: "hammer", eventName: "HAMMER" });
     const res = await post({ action: "plan", rows: GRID });
     expect(res.status).toBe(200);
     expect(res.body.payments).toBe(1);

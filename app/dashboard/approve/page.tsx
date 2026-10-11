@@ -28,11 +28,21 @@ type Planned = {
   eventId: string; eventName: string; email: string; name: string;
   ticketId: string; teamCode: string | null; teamSize: number; transaction: string | null;
   appliedAt: string; paidAt: string | null;
+  via: "email" | "phone";
+  note: string | null;
+  flag: string | null;
 };
 type Plan = {
   payments: number;
   approve: Planned[];
-  unmatched: { name: string; email: string; transaction: string }[];
+  held: Planned[];
+  unmatched: { name: string; email: string; transaction: string; phone: string }[];
+  confirmedElsewhere: {
+    name: string; email: string; phone: string; transaction: string;
+    siteEmail: string; siteName: string;
+    events: { eventName: string; teamName: string | null; teamCode: string | null; status: string }[];
+  }[];
+  needsCheck: { name: string; email: string; phone: string; transaction: string; reason: string; detail: string }[];
   unpaid: { eventId: string; eventName: string; email: string; name: string }[];
   alreadyConfirmed: number;
   short: { email: string; payments: number; inReview: number }[];
@@ -138,9 +148,10 @@ export default function BulkApprovePage() {
       ) : (
         <>
           <p className="mb-5 max-w-2xl text-sm leading-relaxed text-white/50">
-            Upload the college&apos;s payment report and this matches it against everyone in review,
-            by email. Nothing is written until you press confirm — you see who would be approved,
-            which payments match nobody, and who is still waiting.
+            Upload the college&apos;s payment report. It matches by email first, then by mobile number
+            when that email is not on a registration. Nothing is written until you press confirm.
+            An event that is full, or that this approval would push over its cap, is listed and left
+            out of that confirm.
           </p>
 
           <Card className="mb-5 rounded-2xl border-royal-wine/70 bg-cosmic-purple/40 p-5 shadow-none">
@@ -191,10 +202,11 @@ export default function BulkApprovePage() {
 
           {plan && (
             <>
-              <div className="mb-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
-                <StatTile label="Payments in sheet" value={plan.payments} />
+              <div className="mb-5 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
                 <StatTile label="Will be approved" value={plan.approve.length} />
-                <StatTile label="Payments unmatched" value={plan.unmatched.length} />
+                <StatTile label="Already confirmed" value={plan.confirmedElsewhere.length} />
+                <StatTile label="Needs check" value={plan.needsCheck.length} />
+                <StatTile label="Unmatched" value={plan.unmatched.length} />
                 <StatTile label="Still waiting" value={plan.unpaid.length} />
               </div>
 
@@ -243,18 +255,46 @@ export default function BulkApprovePage() {
                           registered {shortTime(a.appliedAt)}
                           {a.paidAt ? ` · paid ${shortTime(a.paidAt)}` : ""}
                         </span>
+                        {a.note && (
+                          <span className="w-full text-[11px] text-cyber-pink">{a.note}</span>
+                        )}
                       </div>
                     ))}
                   </div>
                 )}
               </Card>
 
+              {plan.held.length > 0 && (
+                <Card className="mb-5 gap-0 overflow-hidden rounded-2xl border-royal-wine/70 bg-cosmic-purple/40 py-0 shadow-none">
+                  <div className="border-b border-royal-wine/60 bg-white/[0.04] px-4 py-2.5">
+                    <span className="font-display text-xs font-black uppercase tracking-widest text-white/55">
+                      Left out — event full / over cap
+                    </span>
+                    <span className="ml-2 text-xs tabular-nums text-white/40">{plan.held.length}</span>
+                  </div>
+                  <p className="border-b border-royal-wine/40 px-4 py-2 text-xs text-white/45">
+                    These matched a payment, and they are not in the confirm below. The event is full, or confirming them would go over its cap.
+                  </p>
+                  <div className="max-h-56 divide-y divide-royal-wine/40 overflow-y-auto">
+                    {plan.held.map((a) => (
+                      <div key={`${a.eventId}:${a.email}`} className="px-4 py-2 text-xs">
+                        <span className="text-white/70">{a.name}</span>
+                        <span className="text-white/35"> · {a.email} · {a.eventName}</span>
+                        <span className="mt-0.5 block text-[11px] text-white/45">{a.flag}</span>
+                        {a.note && <span className="block text-[11px] text-cyber-pink">{a.note}</span>}
+                      </div>
+                    ))}
+                  </div>
+                </Card>
+              )}
+
               {plan.approve.length > 0 && (
                 <ConfirmAction
                   title={`Approve ${plan.approve.length} ${plan.approve.length === 1 ? "registration" : "registrations"}?`}
                   description={
                     `Every one of them is confirmed and emailed their ticket and QR, teammates included. ` +
-                    `The reference from the report is recorded against whoever paid. This cannot be undone in bulk.`
+                    `The reference from the report is recorded against whoever paid. ` +
+                    `Full events, and anything that would go over a cap, are not in this list. This cannot be undone in bulk.`
                   }
                   confirmLabel="Approve them"
                   onConfirm={approveAll}
@@ -268,18 +308,69 @@ export default function BulkApprovePage() {
                 </ConfirmAction>
               )}
 
+              {plan.confirmedElsewhere.length > 0 && (
+                <Card className="mt-5 gap-0 overflow-hidden rounded-2xl border-royal-wine/70 bg-cosmic-purple/40 py-0 shadow-none">
+                  <div className="border-b border-royal-wine/60 bg-white/[0.04] px-4 py-2.5">
+                    <span className="font-display text-xs font-black uppercase tracking-widest text-white/55">
+                      Paid, already confirmed (different email)
+                    </span>
+                    <span className="ml-2 text-xs tabular-nums text-white/40">{plan.confirmedElsewhere.length}</span>
+                  </div>
+                  <div className="max-h-64 divide-y divide-royal-wine/40 overflow-y-auto">
+                    {plan.confirmedElsewhere.map((u) => (
+                      <div key={u.email} className="px-4 py-2 text-xs">
+                        <span className="text-white/70">{u.name || u.email}</span>
+                        <span className="text-white/35"> · sheet {u.email} · {u.phone} · {u.transaction}</span>
+                        <span className="mt-0.5 block text-white/55">
+                          {u.siteName} · {u.siteEmail}
+                        </span>
+                        {u.events.map((ev, i) => (
+                          <span key={i} className="block text-[11px] text-white/40">
+                            {ev.eventName}
+                            {ev.teamName ? ` · ${ev.teamName}` : ""}
+                            {ev.teamCode ? ` (${ev.teamCode})` : ""}
+                            {" · "}{ev.status}
+                          </span>
+                        ))}
+                      </div>
+                    ))}
+                  </div>
+                </Card>
+              )}
+
+              {plan.needsCheck.length > 0 && (
+                <Card className="mt-5 gap-0 overflow-hidden rounded-2xl border-royal-wine/70 bg-cosmic-purple/40 py-0 shadow-none">
+                  <div className="border-b border-royal-wine/60 bg-white/[0.04] px-4 py-2.5">
+                    <span className="font-display text-xs font-black uppercase tracking-widest text-white/55">
+                      Needs manual check
+                    </span>
+                    <span className="ml-2 text-xs tabular-nums text-white/40">{plan.needsCheck.length}</span>
+                  </div>
+                  <div className="max-h-64 divide-y divide-royal-wine/40 overflow-y-auto">
+                    {plan.needsCheck.map((u) => (
+                      <div key={`${u.email}:${u.transaction}`} className="px-4 py-2 text-xs">
+                        <span className="text-white/70">{u.name || u.email}</span>
+                        <span className="text-white/35"> · {u.email} · {u.phone} · {u.transaction}</span>
+                        <span className="mt-0.5 block text-[11px] uppercase tracking-wider text-cyber-pink">{u.reason}</span>
+                        {u.detail && <span className="mt-0.5 block text-[11px] text-white/40">{u.detail}</span>}
+                      </div>
+                    ))}
+                  </div>
+                </Card>
+              )}
+
               {plan.unmatched.length > 0 && (
                 <Card className="mt-5 gap-0 overflow-hidden rounded-2xl border-royal-wine/70 bg-cosmic-purple/40 py-0 shadow-none">
                   <div className="border-b border-royal-wine/60 bg-white/[0.04] px-4 py-2.5">
                     <span className="font-display text-xs font-black uppercase tracking-widest text-white/55">
-                      Paid, but no registration in review
+                      Paid, but no registration
                     </span>
                   </div>
                   <div className="max-h-56 divide-y divide-royal-wine/40 overflow-y-auto">
                     {plan.unmatched.map((u) => (
                       <div key={u.email} className="px-4 py-2 text-xs">
                         <span className="text-white/70">{u.name || u.email}</span>
-                        <span className="text-white/35"> · {u.email} · {u.transaction}</span>
+                        <span className="text-white/35"> · {u.email} · {u.phone || "no phone on the sheet"} · {u.transaction}</span>
                       </div>
                     ))}
                   </div>
