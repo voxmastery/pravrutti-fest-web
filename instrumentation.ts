@@ -23,6 +23,14 @@ export async function register() {
       .catch((e) => console.error("[discoverize-shortlist] seed", e));
   }, 12_000);
 
+  /* Hacktivate track-pick tables. Additive, and also created on first use.
+     Never allowed to stop the server. */
+  setTimeout(() => {
+    import("@/lib/track-pick-db")
+      .then((m) => m.ensureTrackPickTables())
+      .catch((e) => console.error("[track-pick] schema", e));
+  }, 8_000);
+
   const g = globalThis as typeof globalThis & { __pravruttiReminders?: boolean };
   if (g.__pravruttiReminders) return;
   const { schedulerEnabled, startReminderScheduler } = await import("@/lib/reference-reminder-scheduler");

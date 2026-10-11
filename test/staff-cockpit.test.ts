@@ -43,6 +43,7 @@ describe("staffCockpitRedirect", () => {
     "/dashboard",
     "/dashboard/applications",
     "/dashboard/scan",
+    "/hacktivate/track",
     "/admin",
     "/admin/scan",
     "/faculty",

@@ -24,7 +24,8 @@ import { DiscoverizeFormTeam } from "@/components/discoverize-form-team";
 import { TeamManage } from "@/components/team-manage";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { TicketValidityNote } from "@/components/ticket-validity-note";
-import { Loader2, CalendarPlus, Hourglass, Check, RotateCcw, LogOut, MapPin, QrCode, ArrowLeft, Copy } from "lucide-react";
+import { HACKTIVATE_EVENT_ID } from "@/lib/track-pick";
+import { Loader2, CalendarPlus, Hourglass, Check, RotateCcw, LogOut, MapPin, QrCode, ArrowLeft, Copy, Cpu } from "lucide-react";
 
 type App = {
   ticketId: string;
@@ -460,6 +461,21 @@ export default function TicketPage() {
                                 Have your Juno transaction ID? Add it (optional)
                               </a>
                             )}
+
+                          {a.eventId === HACKTIVATE_EVENT_ID && (a.status === "confirmed" || a.status === "pending") && (
+                            <a
+                              href="/hacktivate/track"
+                              className="flex items-center justify-between gap-3 rounded-xl border border-cyber-pink/40 bg-cyber-pink/10 px-3 py-2.5 transition-colors hover:border-cyber-pink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyber-pink"
+                            >
+                              <span>
+                                <span className="block text-sm font-semibold text-champagne-gold">Pick your track</span>
+                                <span className="mt-0.5 block text-[12px] leading-snug text-white/60">
+                                  Opens 11 Oct, 9:30 AM IST. Your lead locks one track for the team.
+                                </span>
+                              </span>
+                              <Cpu className="h-4 w-4 shrink-0 text-cyber-pink" aria-hidden="true" />
+                            </a>
+                          )}
 
                           {a.teamCode && a.status !== "declined" && (
                             <TicketTeamBlock

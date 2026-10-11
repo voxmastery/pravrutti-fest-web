@@ -51,6 +51,57 @@ await pool.query(
    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`
 );
 
+// Hacktivate track pick. Same statements as lib/track-pick-db.ts. This script
+// does not re-run against the live database, so the app also creates them on
+// first use. Additive only: no DROP, no ALTER of existing tables.
+await pool.query(
+  `CREATE TABLE IF NOT EXISTS track_picks (
+     event_id VARCHAR(80) NOT NULL,
+     team_code VARCHAR(32) NOT NULL,
+     track_id VARCHAR(8) NOT NULL,
+     seat_no INT NOT NULL,
+     picked_at VARCHAR(40) NOT NULL,
+     picked_by VARCHAR(191) NOT NULL,
+     team_name VARCHAR(191) NOT NULL,
+     lead_name VARCHAR(191) NOT NULL,
+     lead_email VARCHAR(191) NOT NULL,
+     lead_phone VARCHAR(32) NOT NULL,
+     PRIMARY KEY (event_id, team_code),
+     UNIQUE KEY track_seat (event_id, track_id, seat_no),
+     KEY track_lookup (event_id, track_id)
+   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`
+);
+await pool.query(
+  `CREATE TABLE IF NOT EXISTS track_pick_state (
+     event_id VARCHAR(80) NOT NULL PRIMARY KEY,
+     paused TINYINT(1) NOT NULL DEFAULT 0,
+     paused_by VARCHAR(191) NULL,
+     paused_at VARCHAR(40) NULL
+   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`
+);
+await pool.query(
+  `CREATE TABLE IF NOT EXISTS track_pick_audit (
+     id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+     event_id VARCHAR(80) NOT NULL,
+     team_code VARCHAR(32) NOT NULL,
+     action VARCHAR(16) NOT NULL,
+     from_track VARCHAR(8) NULL,
+     to_track VARCHAR(8) NULL,
+     from_seat INT NULL,
+     to_seat INT NULL,
+     actor_email VARCHAR(191) NOT NULL,
+     actor_name VARCHAR(191) NOT NULL,
+     reason VARCHAR(500) NOT NULL,
+     at VARCHAR(40) NOT NULL,
+     KEY event_at (event_id, id)
+   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`
+);
+await pool.query(
+  `CREATE TABLE IF NOT EXISTS track_pick_lock (
+     event_id VARCHAR(80) NOT NULL PRIMARY KEY
+   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`
+);
+
 const all = [];
 let cursor;
 do {

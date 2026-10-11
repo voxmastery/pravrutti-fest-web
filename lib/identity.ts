@@ -45,6 +45,28 @@ export async function resolveEmail(): Promise<string | null> {
 }
 
 /**
+ * Display name from the signed-in session, when the provider has one.
+ * Dev impersonation has an email and no name — callers fall back themselves.
+ */
+export async function resolveDisplayName(): Promise<string | null> {
+  if (clerkEnabled) {
+    const { currentUser } = await import("@clerk/nextjs/server");
+    const user = await currentUser().catch(() => null);
+    const name = [user?.firstName, user?.lastName].filter(Boolean).join(" ").trim();
+    return name || null;
+  }
+
+  if (googleAuthEnabled) {
+    const { getServerSession } = await import("next-auth");
+    const session = await getServerSession(authOptions).catch(() => null);
+    const name = session?.user?.name?.trim();
+    return name || null;
+  }
+
+  return null;
+}
+
+/**
  * True when some sign-in mechanism is configured at all.
  *
  * The Vercel test site is the exception: its identity provider reports auth as
