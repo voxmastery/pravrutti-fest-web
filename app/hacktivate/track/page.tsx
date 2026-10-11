@@ -6,7 +6,7 @@ export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Pick your track · Hacktivate · Pravrutti 2.0",
-  description: "Confirmed Hacktivate teams lock one track. Opens 11 Oct 2026, 9:30 AM IST.",
+  description: "Confirmed Hacktivate teams lock one track. Opens 11 Oct 2026, 10:00 AM IST.",
 };
 
 export default function HacktivateTrackPage() {

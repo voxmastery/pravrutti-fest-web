@@ -470,7 +470,7 @@ export default function TicketPage() {
                               <span>
                                 <span className="block text-sm font-semibold text-champagne-gold">Pick your track</span>
                                 <span className="mt-0.5 block text-[12px] leading-snug text-white/60">
-                                  Opens 11 Oct, 9:30 AM IST. Your lead locks one track for the team.
+                                  Opens 11 Oct, 10:00 AM IST. Your lead locks one track for the team.
                                 </span>
                               </span>
                               <Cpu className="h-4 w-4 shrink-0 text-cyber-pink" aria-hidden="true" />

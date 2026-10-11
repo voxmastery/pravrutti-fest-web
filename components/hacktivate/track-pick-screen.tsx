@@ -278,7 +278,7 @@ function stepChip(screen: ScreenId, confirm: boolean, raced: boolean) {
   if (raced) return { n: "05", label: "FULL / RACE" };
   if (screen === "ineligible" || screen === "no_team") return { n: "06a", label: screen === "no_team" ? "NO TEAM" : "IN REVIEW" };
   if (screen === "member") return { n: "06b", label: "NON-LEAD" };
-  if (screen === "countdown") return { n: "01", label: "BEFORE 9:30" };
+  if (screen === "countdown") return { n: "01", label: "BEFORE 10:00" };
   if (screen === "paused") return { n: "02", label: "PAUSED" };
   return { n: "02", label: "OPEN PICKER" };
 }
@@ -594,7 +594,7 @@ function TrackCard({
         {lockedLook ? (
           <Lock className="h-4 w-4 shrink-0 text-white/40" aria-label="Locked" />
         ) : opens ? (
-          <span className="shrink-0 font-display text-[10px] tracking-[0.14em] text-champagne-gold">OPENS 9:30</span>
+          <span className="shrink-0 font-display text-[10px] tracking-[0.14em] text-champagne-gold">OPENS 10:00</span>
         ) : canSelect || track.full || mode === "picker" || mode === "paused" ? (
           <button
             type="button"

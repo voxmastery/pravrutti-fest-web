@@ -7,17 +7,17 @@ import type { Role } from "@/lib/roles";
  * `title` (the big name) and `theme` (the line under it). The card, the
  * confirm dialog, the success card and Track Control all read this list.
  *
- * Opening instant: 9:30 AM IST on 11 Oct 2026. Override with
- * `TRACK_PICK_OPENS_AT` (ISO-8601, e.g. `2026-10-11T04:00:00.000Z` or
- * `2026-10-11T09:30:00+05:30`). A value that does not parse is ignored and
+ * Opening instant: 10:00 AM IST on 11 Oct 2026. Override with
+ * `TRACK_PICK_OPENS_AT` (ISO-8601, e.g. `2026-10-11T04:30:00.000Z` or
+ * `2026-10-11T10:00:00+05:30`). A value that does not parse is ignored and
  * the official instant is used — a typo must not open picking early.
  * The server reads this on every request. Restart the app after changing it.
  */
 
 export const HACKTIVATE_EVENT_ID = "hacktivate";
 
-/** 9:30 AM IST on 11 Oct 2026. */
-export const TRACK_PICK_OPEN_UTC = "2026-10-11T04:00:00.000Z";
+/** 10:00 AM IST on 11 Oct 2026. */
+export const TRACK_PICK_OPEN_UTC = "2026-10-11T04:30:00.000Z";
 
 export const TRACK_CAP = 20;
 export const HOLD_MS = 2000;

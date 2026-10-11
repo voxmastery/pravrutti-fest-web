@@ -100,10 +100,11 @@ describe("track copy", () => {
     }
   });
 
-  it("opens at 9:30 AM IST on 11 Oct 2026 unless a valid override is set", () => {
+  it("opens at 10:00 AM IST on 11 Oct 2026 unless a valid override is set", () => {
+    expect(TRACK_PICK_OPEN_UTC).toBe("2026-10-11T04:30:00.000Z");
     expect(trackPickOpensAt({})).toBe(OPEN);
     expect(trackPickOpensAt({ TRACK_PICK_OPENS_AT: "not-a-date" })).toBe(OPEN);
-    expect(trackPickOpensAt({ TRACK_PICK_OPENS_AT: "2026-10-11T09:30:00+05:30" })).toBe(OPEN);
+    expect(trackPickOpensAt({ TRACK_PICK_OPENS_AT: "2026-10-11T10:00:00+05:30" })).toBe(OPEN);
     expect(trackPickOpensAt({ TRACK_PICK_OPENS_AT: "2020-01-01T00:00:00.000Z" })).toBe(Date.parse("2020-01-01T00:00:00.000Z"));
   });
 
@@ -141,13 +142,13 @@ describe("eligibility", () => {
     expect(d.message).toBe(COPY.notLead);
   });
 
-  it("shows a countdown to a confirmed lead before 9:30 IST and refuses the pick", () => {
+  it("shows a countdown to a confirmed lead before 10:00 IST and refuses the pick", () => {
     const d = gate({ facts: facts(), now: BEFORE, opensAt: OPEN, paused: false, picked: false });
     expect(d.screen).toBe("countdown");
     expect(d.canPick).toBe(false);
   });
 
-  it("opens the picker for the confirmed lead at 9:30 and after", () => {
+  it("opens the picker for the confirmed lead at 10:00 and after", () => {
     expect(gate({ facts: facts(), now: OPEN, opensAt: OPEN, paused: false, picked: false }).canPick).toBe(true);
     expect(gate({ facts: facts(), ...open }).screen).toBe("picker");
   });
