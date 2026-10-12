@@ -25,9 +25,9 @@ beforeAll(async () => {
   ({ GET } = await import("@/app/api/register/route"));
 });
 
-const EV = "robo-race";
+const EV = "electroxcape";
 const app = (email: string, teamCode: string | null, status = "confirmed") => ({
-  ticketId: `PRV-${email}`, eventId: EV, eventName: "ROBO RACE",
+  ticketId: `PRV-${email}`, eventId: EV, eventName: "ELECTROXCAPE",
   status, payment: "paid", fee: "Rs. 200/-",
   name: email, email, phone: "9876543210", college: "C",
   teamName: teamCode ? "T" : null, teamCode, members: null,

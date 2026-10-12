@@ -193,10 +193,10 @@ describe("the roster judges a teammate by their lead", () => {
   const seed = (leadOver: Record<string, unknown>) => {
     apps.length = 0;
     apps.push(
-      { eventId: "pitch-at-mach", name: "Sonika M", college: "NMIT", email: "sonika@x.com",
+      { eventId: "electroxcape", name: "Sonika M", college: "NMIT", email: "sonika@x.com",
         phone: "9000000011", status: "pending", payment: "awaiting", fee: "Rs. 200/-",
         teamCode: "ASB255Z3RQCH", teamName: "Avianova", paymentRef: null, stage: "intent", ...leadOver },
-      { eventId: "pitch-at-mach", name: "Ranjitha", college: "NMIT", email: "ranjitha@x.com",
+      { eventId: "electroxcape", name: "Ranjitha", college: "NMIT", email: "ranjitha@x.com",
         phone: "9000000012", status: "pending", payment: "not_required", fee: "Covered by team lead",
         teamCode: "ASB255Z3RQCH", teamName: "Avianova" },
     );
@@ -205,7 +205,7 @@ describe("the roster judges a teammate by their lead", () => {
 
   it("says which one is the lead", async () => {
     seed({});
-    const body = await (await get("pitch-at-mach")).json();
+    const body = await (await get("electroxcape")).json();
     expect(by(body, "Sonika M").role).toBe("lead");
     expect(by(body, "Ranjitha").role).toBe("member");
   });
@@ -214,7 +214,7 @@ describe("the roster judges a teammate by their lead", () => {
      may have paid on Juno, so the whole team is in review and counted. */
   it("puts the whole team in review with a lead who never came back from paying", async () => {
     seed({});
-    const body = await (await get("pitch-at-mach")).json();
+    const body = await (await get("electroxcape")).json();
     expect(by(body, "Sonika M").live).toBe(true);
     expect(by(body, "Ranjitha").live).toBe(true);
     expect(body.counts.registered).toBe(2);
@@ -223,14 +223,14 @@ describe("the roster judges a teammate by their lead", () => {
 
   it("holds no place for a teammate whose lead withdrew", async () => {
     seed({ status: "cancelled" });
-    const body = await (await get("pitch-at-mach")).json();
+    const body = await (await get("electroxcape")).json();
     expect(by(body, "Ranjitha").live).toBe(false);
     expect(body.counts.registered).toBe(0);
   });
 
   it("puts the teammate in review alongside a lead who is in review", async () => {
     seed({ paymentRef: "J5N3Z8Y0MUQG1UY", stage: undefined });
-    const body = await (await get("pitch-at-mach")).json();
+    const body = await (await get("electroxcape")).json();
     expect(by(body, "Ranjitha").live).toBe(true);
     expect(by(body, "Sonika M").live).toBe(true);
     expect(body.counts.registered).toBe(2);

@@ -17,7 +17,7 @@ import { deskStage } from "@/lib/desk-stage";
  */
 
 const row = (over: Record<string, unknown> = {}) => ({
-  eventId: "line-follower", name: "A", email: "a@x.com", phone: "9000000000",
+  eventId: "electroxcape", name: "A", email: "a@x.com", phone: "9000000000",
   college: "RUAS", status: "confirmed", payment: "paid", teamCode: null,
   ...over,
 }) as never;
@@ -240,7 +240,7 @@ describe("a teammate stands where their lead stands", () => {
   /* Teams are per event: a lead registered for one event does not carry a
      teammate on another that happens to share the code after a move. */
   it("does not let a lead on another event carry a teammate", () => {
-    const l = lead({ eventId: "chaos" }), m = mate(1);
+    const l = lead({ eventId: "dent-innovate" }), m = mate(1);
     const held = heldRows([l, m]);
     expect(held.has(l)).toBe(true);
     expect(held.has(m)).toBe(false);

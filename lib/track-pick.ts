@@ -234,7 +234,7 @@ export const COPY = {
   noTeam: "Track pick follows the team your lead registered. Sign in with that Google account, or ask your lead to use theirs.",
   ineligibleTitle: "Not eligible for track pick",
   ineligible:
-    "Track pick is only open to confirmed teams. All 60 seats are reserved for confirmed teams, so teams still in review won't get a seat this time.",
+    "Track pick is only open to confirmed teams. All 60 seats are reserved for confirmed teams, so teams that were not confirmed won't get a seat.",
   ineligibleHelp: "Questions? Reach out to the organisers.",
   notLead: "Only your team lead can pick.",
   notOpen: "Picking is not open yet.",

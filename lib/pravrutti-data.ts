@@ -427,6 +427,10 @@ export const events: Event[] = [
        or this cap. RC-X stays closed. */
     capacity: 64,
     capacityUnit: "teams",
+    /* Closed by hand on 12 Oct: every event but DENT - INNOVATE and
+       ELECTROXCAPE. full keeps it shut; teams already in keep their
+       tickets, payment, and manage-team actions. */
+    full: true,
     duration: "3 hours",
     coordinators: {
       faculty: [],
@@ -568,6 +572,10 @@ export const events: Event[] = [
     teamSize: { min: 2, max: 4, soloAllowed: false },
     capacity: 240,
     capacityUnit: "teams",
+    /* Closed by hand on 12 Oct: every event but DENT - INNOVATE and
+       ELECTROXCAPE. full keeps it shut; teams already in keep their
+       tickets, payment, and manage-team actions. */
+    full: true,
     duration: "3 hours",
     coordinators: {
       faculty: [],
@@ -585,6 +593,10 @@ export const events: Event[] = [
     teamSize: { min: 2, max: 4, soloAllowed: false },
     capacity: 160,
     capacityUnit: "teams",
+    /* Closed by hand on 12 Oct: every event but DENT - INNOVATE and
+       ELECTROXCAPE. full keeps it shut; teams already in keep their
+       tickets, payment, and manage-team actions. */
+    full: true,
     duration: "3 hours",
     coordinators: {
       faculty: [],
@@ -628,6 +640,10 @@ export const events: Event[] = [
     prizes: [10000, 7000, 5000],
     teamSize: { min: 2, max: 2, soloAllowed: false },
     capacityUnit: "teams",
+    /* Closed by hand on 12 Oct: every event but DENT - INNOVATE and
+       ELECTROXCAPE. full keeps it shut; teams already in keep their
+       tickets, payment, and manage-team actions. */
+    full: true,
     /* Reopened 12 Oct. No cap and no earlier close, so it takes new teams
        until the fest-wide deadline. Listed. */
     duration: "3 hours",
@@ -699,6 +715,10 @@ export const events: Event[] = [
        the head count at four a team. */
     capacity: 160,
     capacityUnit: "teams",
+    /* Closed by hand on 12 Oct: every event but DENT - INNOVATE and
+       ELECTROXCAPE. full keeps it shut; teams already in keep their
+       tickets, payment, and manage-team actions. */
+    full: true,
     maxTeams: 40,
     /* 135 minutes end to end in the rulebook's timeline, briefing and prize
        distribution included. */
@@ -901,6 +921,10 @@ export const events: Event[] = [
     teamSize: { min: 3, max: 4, soloAllowed: false },
     capacity: 60,
     capacityUnit: "teams",
+    /* Closed by hand on 12 Oct: every event but DENT - INNOVATE and
+       ELECTROXCAPE. full keeps it shut; teams already in keep their
+       tickets, payment, and manage-team actions. */
+    full: true,
     duration: "3 hours",
     coordinators: {
       faculty: [],
@@ -968,6 +992,10 @@ export const events: Event[] = [
     teamSize: { min: 2, max: 4, soloAllowed: false },
     capacity: 210,
     capacityUnit: "teams",
+    /* Closed by hand on 12 Oct: every event but DENT - INNOVATE and
+       ELECTROXCAPE. full keeps it shut; teams already in keep their
+       tickets, payment, and manage-team actions. */
+    full: true,
     /* 210 is 70 teams of three, the only whole reading — dividing by the max of
        four gives 52.5, which is why this used to fall back to counting heads. */
     maxTeams: 70,

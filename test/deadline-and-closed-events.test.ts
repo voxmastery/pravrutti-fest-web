@@ -155,34 +155,39 @@ describe("the four closed events", () => {
 /* Closed at 15 on 7 Oct, reopened the same day. Back to the pre-close
    field of 16 teams, listed, and taking new teams until that cap. */
 describe("Kurukshetra – The Robo War", () => {
-  it("is open at 16 teams and stays on the list", () => {
+  /* Closed by hand on 12 Oct; the 16-team cap stays. */
+  it("is closed at its 16-team cap and stays on the list", () => {
     const e = ev("KURUKSHETRA - THE ROBO WAR");
     expect(e.maxTeams).toBeUndefined();
     expect(e.capacity).toBe(64);
-    expect(e.full).toBeFalsy();
-    expect(isFull(e, { people: 0, teams: 0 })).toBe(false);
-    expect(isFull(e, { people: 0, teams: 15 })).toBe(false);
-    expect(isFull(e, { people: 0, teams: 16 })).toBe(true);
+    expect(e.full).toBe(true);
+    expect(isFull(e, { people: 0, teams: 0 })).toBe(true);
     expect(e.unlisted).toBeFalsy();
     expect(listedEvents).toContain(e);
   });
 });
 
-/* Reopened 12 Oct. No cap and no date of its own, so it follows the fest
-   deadline and stays on the list. */
+/* Reopened 12 Oct, then closed by hand the same day with every event but
+   DENT - INNOVATE and ELECTROXCAPE. Stays on the list. */
 describe("Glide-X", () => {
-  it("takes new teams until the fest deadline and stays on the list", () => {
+  it("takes no new teams and stays on the list", () => {
     const e = ev("Glide-X");
     expect(eventId(e.name)).toBe("glide-x");
-    expect(e.full).toBeFalsy();
+    expect(e.full).toBe(true);
     expect(e.unlisted).toBeFalsy();
-    expect(e.registrationCloses).toBeUndefined();
-    expect(e.capacity).toBeUndefined();
-    expect(e.maxTeams).toBeUndefined();
-    expect(isFull(e, { people: 0, teams: 0 })).toBe(false);
-    expect(registrationState(Date.parse("2026-10-12T18:28:00.000Z"), festFor(e))).toBe("open");
-    expect(registrationState(Date.parse("2026-10-12T18:29:00.000Z"), festFor(e))).toBe("closed");
+    expect(isFull(e, { people: 0, teams: 0 })).toBe(true);
     expect(listedEvents).toContain(e);
+  });
+});
+
+/* 12 Oct: only these two still take new teams. */
+describe("the two events left open", () => {
+  it("are DENT - INNOVATE and ELECTROXCAPE", () => {
+    const open = events
+      .filter((e) => !e.full && registrationState(Date.parse("2026-10-12T12:00:00.000Z"), festFor(e)) === "open")
+      .map((e) => e.name)
+      .sort();
+    expect(open).toEqual(["DENT - INNOVATE", "ELECTROXCAPE"]);
   });
 });
 
@@ -338,6 +343,14 @@ const STAYS_SHUT = [
   "The Logic Circuit",
   "HAMMER",
   "Terraform: The System Awakens",
+  /* 12 Oct: every event but DENT - INNOVATE and ELECTROXCAPE. */
+  "KURUKSHETRA - THE ROBO WAR",
+  "Campus Innovators 2.0",
+  "Beyond the Blueprint 2.0",
+  "Glide-X",
+  "LEADS Innovation Challenge",
+  "Bracket blitz",
+  "TRIATHLON",
 ];
 
 describe("the extension", () => {

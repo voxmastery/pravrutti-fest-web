@@ -57,7 +57,7 @@ describe("capacityLabel", () => {
     const e = events.find((x) => x.name === "KURUKSHETRA - THE ROBO WAR")!;
     expect(capacityLabel(e)).toBe("16 teams");
     expect(e.capacity).toBe(64);
-    expect(e.full).toBeFalsy();
+    expect(e.full).toBe(true);
   });
 
   it("RC-X reads 19 teams on the real data", () => {

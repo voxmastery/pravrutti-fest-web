@@ -23,7 +23,7 @@ beforeAll(async () => {
   ({ GET } = await import("@/app/api/admin/roster/route"));
 });
 
-const EV = "line-follower";
+const EV = "electroxcape";
 const get = async (query: string, key: string | null = "test-admin-key") => {
   const headers: Record<string, string> = {};
   if (key) headers["x-admin-key"] = key;
@@ -32,7 +32,7 @@ const get = async (query: string, key: string | null = "test-admin-key") => {
 };
 const app = (email: string, over: Record<string, unknown>) =>
   store.set(`app/${EV}/${email}.json`, {
-    ticketId: "PRV-1", eventId: EV, eventName: "LINE FOLLOWER", name: email.split("@")[0], email,
+    ticketId: "PRV-1", eventId: EV, eventName: "ELECTROXCAPE", name: email.split("@")[0], email,
     phone: "9000000000", college: "RUAS", members: null, appliedAt: "2026-10-01T00:00:00.000Z",
     teamName: "Beetle", teamCode: "BEETLE000001", ...over,
   });
