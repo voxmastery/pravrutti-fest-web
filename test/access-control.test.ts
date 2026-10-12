@@ -55,6 +55,27 @@ describe("applyAccess", () => {
   it("leaves a stranger with nothing", () => {
     expect(applyAccess({ kind: "none" }, "nobody@example.com", granted("other@example.com"))).toEqual({ kind: "none" });
   });
+
+  it("promotes a desk volunteer from a registration grant", () => {
+    const access = base({
+      registration: [{ email: "desk@example.com", addedBy: "boss@example.com", addedAt: "2026-10-12T00:00:00.000Z" }],
+    });
+    expect(applyAccess({ kind: "none" }, "desk@example.com", access)).toEqual({ kind: "registration" });
+  });
+
+  it("never demotes an organiser or coordinator to registration", () => {
+    const access = base({
+      registration: [{ email: "boss@example.com", addedBy: "x@y.com", addedAt: "t" }],
+    });
+    expect(applyAccess({ kind: "organiser" }, "boss@example.com", access).kind).toBe("organiser");
+    const coordAccess = base({
+      coordinatorsEnabled: true,
+      registration: [{ email: "c@example.com", addedBy: "x@y.com", addedAt: "t" }],
+    });
+    expect(
+      applyAccess({ kind: "coordinator", eventIds: ["robo-race"] }, "c@example.com", coordAccess)
+    ).toEqual({ kind: "coordinator", eventIds: ["robo-race"] });
+  });
 });
 
 describe("coordinatorDashboardOn", () => {
@@ -120,6 +141,24 @@ describe("applyAction", () => {
     }
     expect(acc.coordinatorsDisabledEventIds).toEqual(["chaos"]);
   });
+
+  it("adds and removes a registration desk volunteer", () => {
+    const added = applyAction(DEFAULT_ACCESS, { type: "add_registration", email: " Desk@Example.com " }, "boss@example.com");
+    expect("access" in added).toBe(true);
+    if (!("access" in added)) return;
+    expect(added.access.registration[0]).toMatchObject({ email: "desk@example.com", addedBy: "boss@example.com" });
+    const removed = applyAction(added.access, { type: "remove_registration", email: "desk@example.com" }, "boss@example.com");
+    expect("access" in removed && removed.access.registration).toEqual([]);
+  });
+
+  it("refuses a duplicate desk grant", () => {
+    const access = base({
+      registration: [{ email: "desk@example.com", addedBy: "b", addedAt: "t" }],
+    });
+    expect(
+      applyAction(access, { type: "add_registration", email: "desk@example.com" }, "boss@example.com")
+    ).toHaveProperty("error");
+  });
 });
 
 describe("readAccess", () => {
@@ -137,6 +176,10 @@ describe("readAccess", () => {
 
   it("treats a missing coordinator switch as off", () => {
     expect(readAccess({ organisers: [] }).coordinatorsEnabled).toBe(false);
+  });
+
+  it("reads an older record without a registration list", () => {
+    expect(readAccess({ organisers: [] }).registration).toEqual([]);
   });
 });
 

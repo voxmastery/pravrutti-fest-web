@@ -31,6 +31,8 @@ export type AccessConfig = {
       Deliberately not a Role: it grants no write anywhere, so no existing
       route's permission check has to learn about it. */
   faculty: OrganiserGrant[];
+  /** Registration-desk volunteers — check-in scanner + search only (/desk). */
+  registration: OrganiserGrant[];
 };
 
 /**
@@ -42,6 +44,7 @@ export const DEFAULT_ACCESS: AccessConfig = {
   coordinatorsEnabled: false,
   coordinatorsDisabledEventIds: [],
   faculty: [],
+  registration: [],
 };
 
 export const normEmail = (s: unknown) => String(s ?? "").trim().toLowerCase();
@@ -73,6 +76,7 @@ export function readAccess(raw: unknown): AccessConfig {
       ? r.coordinatorsDisabledEventIds.map((s) => String(s)).filter(Boolean)
       : [],
     faculty: readGrants(r.faculty),
+    registration: readGrants(r.registration),
   };
 }
 
@@ -102,8 +106,9 @@ export function coordinatorDashboardOn(access: AccessConfig, evId: string): bool
 /**
  * The role a person actually holds, once stored grants are applied.
  *
- * A stored grant can only ever ADD organiser rights; it never takes away what
- * env or the event roster already gave, so a bad write cannot lock anyone out.
+ * A stored grant can only ever ADD rights; it never takes away what env or the
+ * event roster already gave, so a bad write cannot lock anyone out. Registration
+ * is the lowest staff tier — it never demotes an organiser or coordinator.
  */
 export function applyAccess(base: Role, email: string | null, access: AccessConfig): Role {
   if (base.kind === "organiser") return base;
@@ -114,6 +119,8 @@ export function applyAccess(base: Role, email: string | null, access: AccessConf
   if (base.kind === "coordinator")
     return { kind: "coordinator", eventIds: base.eventIds.filter((id) => coordinatorDashboardOn(access, id)) };
 
+  if (who && access.registration.some((g) => g.email === who)) return { kind: "registration" };
+
   return base;
 }
 
@@ -123,7 +130,9 @@ export type AccessAction =
   | { type: "set_coordinators"; enabled: boolean }
   | { type: "set_event_coordinator"; eventId: string; enabled: boolean }
   | { type: "add_faculty"; email: string }
-  | { type: "remove_faculty"; email: string };
+  | { type: "remove_faculty"; email: string }
+  | { type: "add_registration"; email: string }
+  | { type: "remove_registration"; email: string };
 
 export type ActionResult = { access: AccessConfig } | { error: string };
 
@@ -184,6 +193,29 @@ export function applyAction(access: AccessConfig, action: AccessAction, by: stri
       if (!access.faculty.some((g) => g.email === email))
         return { error: "That address was granted outside the dashboard and cannot be removed here." };
       return { access: { ...access, faculty: access.faculty.filter((g) => g.email !== email) } };
+    }
+    case "add_registration": {
+      const email = normEmail(action.email);
+      if (!isValidEmail(email)) return { error: "Enter a valid email address." };
+      if (access.registration.some((g) => g.email === email))
+        return { error: "That address already has registration-desk access." };
+      return {
+        access: {
+          ...access,
+          registration: [
+            ...access.registration,
+            { email, addedBy: normEmail(by), addedAt: new Date().toISOString() },
+          ],
+        },
+      };
+    }
+    case "remove_registration": {
+      const email = normEmail(action.email);
+      if (!access.registration.some((g) => g.email === email))
+        return { error: "That address does not have registration-desk access." };
+      return {
+        access: { ...access, registration: access.registration.filter((g) => g.email !== email) },
+      };
     }
     default:
       return { error: "Unknown action." };

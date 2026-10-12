@@ -8,7 +8,7 @@ import { Menu, X, Ticket, LogIn, LogOut, LayoutDashboard, ScanLine, Users } from
 import { useIdentity } from "@/lib/identity-context";
 import { useDashboardRole, dashboardLabel } from "@/hooks/use-dashboard-role";
 import { isDev, setDevLogin } from "@/lib/dev-identity";
-import { isStaffRole, staffCockpitRedirect } from "@/lib/staff-cockpit";
+import { isStaffRole, staffCockpitRedirect, staffHomeFor } from "@/lib/staff-cockpit";
 import { SignInModal } from "@/components/sign-in-modal";
 import {
   DropdownMenu,
@@ -34,13 +34,17 @@ export function Navigation() {
   const me = useIdentity();
   const dash = useDashboardRole();
   const staff = dash.ready && isStaffRole(dash.role);
-  const homeHref = staff ? "/dashboard" : "/";
+  const homeHref = staff ? staffHomeFor(dash.role) : "/";
+  const deskOnly = dash.ready && dash.role === "registration";
   /* Organisers stay in the cockpit. Coordinators still need Events so they
-     can open the public page for the event they run (they cannot apply). */
+     can open the public page for the event they run (they cannot apply).
+     Desk volunteers land on /desk only. */
   const shownNav =
-    dash.ready && dash.role === "organiser" ? []
+    dash.ready && (dash.role === "organiser" || dash.role === "registration") ? []
       : dash.ready && dash.role === "coordinator" ? navLinks.filter((l) => l.href === "/events")
         : navLinks;
+  const scanHref = deskOnly ? "/desk" : "/dashboard/scan";
+  const cockpitHref = deskOnly ? "/desk" : "/dashboard";
 
   useEffect(() => {
     if (!dash.ready) return;
@@ -169,7 +173,7 @@ export function Navigation() {
                       doesn't flash in and then vanish. */}
                   {dash.ready && dash.role !== "none" && (
                     <DropdownMenuItem className="focus:bg-neon-purple/30 focus:text-champagne-gold rounded-lg cursor-pointer">
-                      <Link href="/dashboard" className="flex items-center gap-2 w-full text-xs tracking-wider py-1.5">
+                      <Link href={cockpitHref} className="flex items-center gap-2 w-full text-xs tracking-wider py-1.5">
                         <LayoutDashboard className="w-4 h-4 text-cyber-pink" />
                         {dashboardLabel(dash)}
                       </Link>
@@ -182,9 +186,9 @@ export function Navigation() {
                       </Link>
                     </DropdownMenuItem>
                   )}
-                  {staff && (
+                  {staff && !deskOnly && (
                     <DropdownMenuItem className="focus:bg-neon-purple/30 focus:text-champagne-gold rounded-lg cursor-pointer">
-                      <Link href="/dashboard/scan" className="flex items-center gap-2 w-full text-xs tracking-wider py-1.5">
+                      <Link href={scanHref} className="flex items-center gap-2 w-full text-xs tracking-wider py-1.5">
                         <ScanLine className="w-4 h-4 text-cyber-pink" /> Check-in scanner
                       </Link>
                     </DropdownMenuItem>
@@ -283,7 +287,7 @@ export function Navigation() {
                       event from a phone, so this is the likelier surface. */}
                   {dash.ready && dash.role !== "none" && (
                     <Link
-                      href="/dashboard" onClick={() => setIsMobileMenuOpen(false)}
+                      href={cockpitHref} onClick={() => setIsMobileMenuOpen(false)}
                       className="flex items-center justify-center gap-2 w-full rounded-xl font-display text-base py-4 font-black tracking-wider text-midnight-navy bg-cyber-pink active:bg-electric-magenta" >
                       <LayoutDashboard className="w-4 h-4" /> {dashboardLabel(dash).toUpperCase()}
                     </Link>
@@ -295,9 +299,9 @@ export function Navigation() {
                       <Users className="w-4 h-4" /> FACULTY BOARD
                     </Link>
                   )}
-                  {staff && (
+                  {staff && !deskOnly && (
                     <Link
-                      href="/dashboard/scan" onClick={() => setIsMobileMenuOpen(false)}
+                      href={scanHref} onClick={() => setIsMobileMenuOpen(false)}
                       className="flex items-center justify-center gap-2 w-full rounded-xl font-display text-base py-4 font-black tracking-wider text-champagne-gold border border-royal-wine active:bg-neon-purple/25" >
                       <ScanLine className="w-4 h-4" /> CHECK-IN SCANNER
                     </Link>

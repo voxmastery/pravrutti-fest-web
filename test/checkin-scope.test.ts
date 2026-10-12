@@ -31,6 +31,12 @@ describe("who may admit to which event", () => {
     expect(canViewEvent(nobody, "robo-race")).toBe(false);
   });
 
+  it("lets a registration desk volunteer see every event for check-in", () => {
+    const desk: Role = { kind: "registration" };
+    expect(canViewEvent(desk, "robo-race")).toBe(true);
+    expect(canViewEvent(desk, "hacktivate")).toBe(true);
+  });
+
   it("is not fooled by a near-miss event id", () => {
     // Guards against a prefix or substring check creeping in later.
     expect(canViewEvent(coordinator, "robo-race-2")).toBe(false);

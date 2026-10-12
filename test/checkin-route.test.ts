@@ -93,6 +93,21 @@ describe("POST /api/checkin", () => {
     expect((await res.json()).name).toBe("Asha");
   });
 
+  it("lets a registration desk volunteer admit across events", async () => {
+    role.current = { kind: "registration" };
+    const res = await POST(
+      new Request("http://t/api/checkin", {
+        method: "POST",
+        body: JSON.stringify({
+          payload: "PRV-AAAA1111|robo-climb|asha@example.com",
+          eventId: "robo-climb",
+        }),
+      })
+    );
+    expect(res.status).toBe(200);
+    expect((await res.json()).name).toBe("Asha");
+  });
+
   it("rejects a coordinator admitting to an event they don't run", async () => {
     role.current = { kind: "coordinator", eventIds: ["chaos"] };
     const res = await post("PRV-AAAA1111|robo-climb|asha@example.com");
@@ -292,6 +307,34 @@ describe("gate and lookup", () => {
       body: JSON.stringify({ payload: "PRV-AAAA1111|robo-climb|asha@example.com" }),
     }));
     expect(res.status).toBe(403);
+  });
+
+  it("refuses a registration desk volunteer at the gate", async () => {
+    role.current = { kind: "registration" };
+    const res = await GATE(new Request("http://t/api/checkin/gate", {
+      method: "POST",
+      body: JSON.stringify({ payload: "PRV-AAAA1111|robo-climb|asha@example.com" }),
+    }));
+    expect(res.status).toBe(403);
+  });
+
+  it("lets a registration desk volunteer search any event", async () => {
+    store.get("app/robo-climb/asha@example.com.json").phone = "9876543210";
+    store.set("app/chaos/asha@example.com.json", {
+      ticketId: "PRV-CHAOS1",
+      eventId: "chaos",
+      eventName: "Chaos",
+      status: "confirmed",
+      payment: "verified",
+      name: "Asha",
+      email: "asha@example.com",
+      phone: "9876543210",
+    });
+    role.current = { kind: "registration" };
+    const res = await SEARCH(new Request("http://t/api/checkin/search?q=9876543210"));
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.results.map((r: { eventId: string }) => r.eventId).sort()).toEqual(["chaos", "robo-climb"]);
   });
 
   it("searches by phone and hides other events from a coordinator", async () => {

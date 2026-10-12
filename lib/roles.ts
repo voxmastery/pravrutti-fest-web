@@ -4,6 +4,7 @@ import { deskEmailsFor } from "@/lib/dashboard-access";
 export type Role =
   | { kind: "organiser" }
   | { kind: "coordinator"; eventIds: string[] }
+  | { kind: "registration" }
   | { kind: "none" };
 
 const norm = (s: string) => s.trim().toLowerCase();
@@ -60,6 +61,9 @@ export async function resolveRoleFor(email: string | null): Promise<Role> {
 
 export function canViewEvent(role: Role, evId: string): boolean {
   if (role.kind === "organiser") return true;
+  /* Desk volunteers check people in across the fest, same as organisers for
+     scan/search/counts — they still cannot open gate, payments, or admin. */
+  if (role.kind === "registration") return true;
   if (role.kind === "coordinator") return role.eventIds.includes(evId);
   return false;
 }

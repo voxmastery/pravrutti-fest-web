@@ -9,7 +9,7 @@ export async function GET() {
   const [role, faculty] = await Promise.all([resolveRole(), resolveFacultyAccess()]);
 
   const visible =
-    role.kind === "organiser"
+    role.kind === "organiser" || role.kind === "registration"
       ? events
       : role.kind === "coordinator"
       ? events.filter((e) => role.eventIds.includes(eventId(e.name)))

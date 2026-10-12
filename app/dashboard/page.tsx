@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useIdentity } from "@/lib/identity-context";
 import { useDashboardRole } from "@/hooks/use-dashboard-role";
 import { Card } from "@/components/ui/card";
@@ -90,6 +91,7 @@ const SORTS: { id: Sort; label: string }[] = [
 export default function DashboardPage() {
   const me = useIdentity();
   const dash = useDashboardRole();
+  const router = useRouter();
 
   const [overview, setOverview] = useState<Overview | null>(null);
   const [sort, setSort] = useState<Sort>("fill");
@@ -97,8 +99,13 @@ export default function DashboardPage() {
 
   // Organisers land on the fest overview; a coordinator goes straight to
   // their event, because with one or two events an overview is a detour.
+  // Desk volunteers belong on /desk — bounce them out of organiser tools.
   useEffect(() => {
     if (!dash.ready) return;
+    if (dash.role === "registration") {
+      router.replace("/desk");
+      return;
+    }
     if (dash.role === "organiser") {
       fetch("/api/dashboard/overview")
         .then((r) => (r.ok ? r.json() : null))
@@ -107,7 +114,7 @@ export default function DashboardPage() {
     } else if (dash.role === "coordinator" && dash.events.length > 0) {
       setOpen(dash.events[0].eventId);
     }
-  }, [dash.ready, dash.role, dash.events]);
+  }, [dash.ready, dash.role, dash.events, router]);
 
   if (me.ready && !me.signedIn)
     return (

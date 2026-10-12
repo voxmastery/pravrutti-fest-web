@@ -7,8 +7,8 @@ export type DashboardEvent = { eventId: string; name: string };
 
 export type DashboardRole = {
   /** Resolved server-side from the signed-in Google address. */
-  role: "organiser" | "coordinator" | "none";
-  /** Every event for an organiser; just their own for a coordinator. */
+  role: "organiser" | "coordinator" | "registration" | "none";
+  /** Every event for an organiser or desk volunteer; just their own for a coordinator. */
   events: DashboardEvent[];
   /** Whether the read-only faculty board (/faculty) is open to them. */
   faculty: boolean;
@@ -62,6 +62,7 @@ export function useDashboardRole(): DashboardRole {
 /** Menu wording, so organisers and coordinators aren't told the same thing. */
 export function dashboardLabel(r: DashboardRole): string {
   if (r.role === "organiser") return "Organiser dashboard";
+  if (r.role === "registration") return "Registration desk";
   if (r.events.length > 1) return "My events";
   return "My event dashboard";
 }

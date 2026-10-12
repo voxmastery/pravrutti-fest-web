@@ -3,17 +3,20 @@ import { roleForEmail } from "@/lib/roles";
 import {
   emailFromSessionClaims,
   isPublicEventPath,
+  isRegistrationAllowedPath,
   isStaffAllowedPath,
   isStaffRole,
   staffCockpitRedirect,
   staffEmailFromCookieHeader,
+  staffHomeFor,
 } from "@/lib/staff-cockpit";
 import { DEV_LOGIN_COOKIE } from "@/lib/dev-identity";
 
 describe("isStaffRole", () => {
-  it("treats organisers and coordinators as staff", () => {
+  it("treats organisers, coordinators, and desk volunteers as staff", () => {
     expect(isStaffRole("organiser")).toBe(true);
     expect(isStaffRole("coordinator")).toBe(true);
+    expect(isStaffRole("registration")).toBe(true);
   });
 
   it("does not treat students or signed-out visitors as staff", () => {
@@ -80,6 +83,18 @@ describe("staffCockpitRedirect", () => {
     }
   });
 
+  it("sends a registration desk volunteer to /desk from marketing and organiser tools", () => {
+    for (const path of [...marketing, ...eventSurfaces, "/dashboard", "/dashboard/scan", "/admin", "/faculty"]) {
+      expect(staffCockpitRedirect(path, "registration"), path).toBe("/desk");
+    }
+  });
+
+  it("lets a registration desk volunteer stay on /desk and auth callbacks", () => {
+    expect(staffCockpitRedirect("/desk", "registration")).toBeNull();
+    expect(staffCockpitRedirect("/sso-callback", "registration")).toBeNull();
+    expect(staffCockpitRedirect("/api/checkin", "registration")).toBeNull();
+  });
+
   it("never traps a student or visitor on the cockpit", () => {
     for (const path of [...marketing, ...eventSurfaces, ...keep]) {
       expect(staffCockpitRedirect(path, "none"), path).toBeNull();
@@ -89,6 +104,20 @@ describe("staffCockpitRedirect", () => {
   it("leaves a student on a public event page they have not registered for", () => {
     expect(staffCockpitRedirect("/events/robo-climb", "none")).toBeNull();
     expect(staffCockpitRedirect("/events", "none")).toBeNull();
+  });
+});
+
+describe("staffHomeFor / registration paths", () => {
+  it("homes desk volunteers on /desk", () => {
+    expect(staffHomeFor("registration")).toBe("/desk");
+    expect(staffHomeFor("organiser")).toBe("/dashboard");
+  });
+
+  it("allows /desk for staff and restricts desk volunteers off the organiser cockpit", () => {
+    expect(isStaffAllowedPath("/desk")).toBe(true);
+    expect(isRegistrationAllowedPath("/desk")).toBe(true);
+    expect(isRegistrationAllowedPath("/dashboard")).toBe(false);
+    expect(isRegistrationAllowedPath("/admin")).toBe(false);
   });
 });
 

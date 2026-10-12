@@ -26,6 +26,7 @@ export function AccessPanel() {
   const [note, setNote] = useState<string | null>(null);
   const [email, setEmail] = useState("");
   const [facultyEmail, setFacultyEmail] = useState("");
+  const [deskEmail, setDeskEmail] = useState("");
 
   useEffect(() => {
     fetch("/api/admin/access")
@@ -68,6 +69,7 @@ export function AccessPanel() {
   const { access, permanentOrganisers, events } = data;
   const permanentFaculty = data.permanentFaculty ?? [];
   const faculty = access.faculty ?? [];
+  const registration = access.registration ?? [];
   const disabled = new Set(access.coordinatorsDisabledEventIds);
 
   return (
@@ -150,6 +152,73 @@ export function AccessPanel() {
           ))}
           {permanentOrganisers.length === 0 && access.organisers.length === 0 && (
             <li className="text-[13px] text-pearl-white/40">No organisers listed.</li>
+          )}
+        </ul>
+      </div>
+
+      {/* Registration desk */}
+      <div className={`${card} p-4 space-y-3`}>
+        <div>
+          <p className="font-display text-[12px] font-bold uppercase tracking-[0.16em] text-pearl-white/60">
+            Registration desk
+          </p>
+          <p className="text-[12px] text-pearl-white/45 mt-0.5">
+            Desk volunteers open /desk — QR scanner, manual lookup, and live check-in counts.
+            They cannot edit events, payments, caps, exports, or emails.
+          </p>
+        </div>
+
+        <div className="flex flex-col sm:flex-row gap-2">
+          <input
+            type="email"
+            value={deskEmail}
+            onChange={(e) => setDeskEmail(e.target.value)}
+            placeholder="desk@example.com"
+            aria-label="New registration desk email"
+            className="flex-1 h-10 rounded-lg border border-transparent bg-white/[0.08] px-3 text-sm text-pearl-white placeholder:text-pearl-white/25 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cyber-pink/70"
+          />
+          <button
+            type="button"
+            disabled={busy || !deskEmail.trim()}
+            onClick={() =>
+              act(
+                { type: "add_registration", email: deskEmail },
+                `${deskEmail.trim().toLowerCase()} can now use the registration desk.`
+              ).then(() => setDeskEmail(""))
+            }
+            className="h-10 px-4 rounded-lg bg-cyber-pink text-white text-sm font-medium inline-flex items-center justify-center gap-2 hover:bg-electric-magenta disabled:opacity-50 cursor-pointer"
+          >
+            <UserPlus className="w-4 h-4" /> Add
+          </button>
+        </div>
+
+        <ul className="space-y-1.5">
+          {registration.map((g) => (
+            <li key={g.email} className="flex items-center justify-between gap-3 rounded-lg bg-white/[0.04] px-3 py-2">
+              <span className="min-w-0">
+                <span className="block text-[13px] text-pearl-white truncate">{g.email}</span>
+                <span className="block text-[11px] text-pearl-white/40 truncate">
+                  added by {g.addedBy || "unknown"}
+                </span>
+              </span>
+              <button
+                type="button"
+                disabled={busy}
+                onClick={() =>
+                  act(
+                    { type: "remove_registration", email: g.email },
+                    `${g.email} no longer has registration-desk access.`
+                  )
+                }
+                className="shrink-0 rounded-lg p-2 text-pearl-white/40 hover:text-danger hover:bg-danger-strong/10 disabled:opacity-50 cursor-pointer"
+                aria-label={`Remove ${g.email}`}
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            </li>
+          ))}
+          {registration.length === 0 && (
+            <li className="text-[13px] text-pearl-white/40">No desk volunteers added yet.</li>
           )}
         </ul>
       </div>

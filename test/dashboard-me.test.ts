@@ -47,6 +47,13 @@ describe("GET /api/dashboard/me", () => {
     expect(body.events.length).toBe(events.length);
   });
 
+  it("returns every event for a registration desk volunteer", async () => {
+    role.current = { kind: "registration" };
+    const body = await (await meGET()).json();
+    expect(body.role).toBe("registration");
+    expect(body.events.length).toBe(events.length);
+  });
+
   it("returns no events for a roleless account", async () => {
     role.current = { kind: "none" };
     const body = await (await meGET()).json();
