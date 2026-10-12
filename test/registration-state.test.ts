@@ -52,10 +52,11 @@ describe("registrationState", () => {
     expect(registrationOpen(closes + 1, fest)).toBe(false);
   });
 
-  /* Registration is live, so the site must not be telling anyone otherwise. */
-  it("is currently open", () => {
-    expect(registrationState()).toBe("open");
+  /* Fest-wide registration closed 2026-10-12 18:29 UTC — keep the live clock honest. */
+  it("is currently closed", () => {
+    expect(registrationState()).toBe("closed");
     expect(FEST.registrationOpens).toBeTruthy();
+    expect(FEST.registrationCloses).toBeTruthy();
   });
 
   it("explains why applications are refused, per state", () => {
