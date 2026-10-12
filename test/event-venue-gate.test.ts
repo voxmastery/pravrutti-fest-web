@@ -35,12 +35,12 @@ const get = (slug: string) =>
   GET(new Request(`http://t/api/events/coordinators?event=${encodeURIComponent(slug)}`));
 
 /** An event with a hall on file, so "no venue" means gated rather than unset. */
-const EVENT = "line-follower";
-const HALL = "C BLOCK";
+const EVENT = "electroxcape";
+const HALL = "Labs";
 const KEY = `app/${EVENT}/asha@example.com.json`;
 
 const applied = (status: string) => ({
-  ticketId: "PRV-1", eventId: EVENT, eventName: "Line Follower",
+  ticketId: "PRV-1", eventId: EVENT, eventName: "ELECTROXCAPE",
   status, payment: status === "confirmed" ? "paid" : "awaiting",
   name: "Asha", email: "asha@example.com", appliedAt: "2026-09-01T00:00:00.000Z",
 });

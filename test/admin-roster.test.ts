@@ -23,7 +23,7 @@ beforeAll(async () => {
   ({ GET } = await import("@/app/api/admin/roster/route"));
 });
 
-const EV = "line-follower";
+const EV = "electroxcape";
 const get = async (query: string, key: string | null = "test-admin-key") => {
   const headers: Record<string, string> = {};
   if (key) headers["x-admin-key"] = key;
@@ -32,7 +32,7 @@ const get = async (query: string, key: string | null = "test-admin-key") => {
 };
 const app = (email: string, over: Record<string, unknown>) =>
   store.set(`app/${EV}/${email}.json`, {
-    ticketId: "PRV-1", eventId: EV, eventName: "LINE FOLLOWER", name: email.split("@")[0], email,
+    ticketId: "PRV-1", eventId: EV, eventName: "ELECTROXCAPE", name: email.split("@")[0], email,
     phone: "9000000000", college: "RUAS", members: null, appliedAt: "2026-10-01T00:00:00.000Z",
     teamName: "Beetle", teamCode: "BEETLE000001", ...over,
   });
@@ -71,5 +71,16 @@ describe("GET /api/admin/roster", () => {
     const { body } = await get(`eventId=${EV}`);
     expect(body.organiser.counts.teams).toBe(1);
     expect(body.coordinator.counts.teams).toBe(1);
+  });
+
+  it("shows a coordinator confirmed teams only", async () => {
+    /* A lead whose payment is in review holds a place, and an organiser
+       sees them — a coordinator does not, nor any in-review number. */
+    app("pending@x.com", { status: "pending", payment: "paid", fee: "Rs. 200/-", teamName: "Wasp", teamCode: "WASP00000001" });
+    const { body } = await get(`eventId=${EV}`);
+    expect(body.organiser.roster.map((r: any) => r.email)).toContain("pending@x.com");
+    expect(body.organiser.counts.inReviewTeams).toBe(1);
+    expect(body.coordinator.roster.every((r: any) => r.status === "confirmed")).toBe(true);
+    expect(body.coordinator.counts).toMatchObject({ teams: 1, registered: 2, inReview: 0, inReviewTeams: 0 });
   });
 });

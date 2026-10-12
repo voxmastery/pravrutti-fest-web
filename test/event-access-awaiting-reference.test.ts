@@ -20,7 +20,7 @@ vi.mock("@/lib/roles", () => ({
 let resolveEventAccess: typeof import("@/lib/event-access").resolveEventAccess;
 beforeAll(async () => { ({ resolveEventAccess } = await import("@/lib/event-access")); });
 
-const EV = "the-logic-circuit";
+const EV = "electroxcape";
 const app = (over: Record<string, unknown>) => {
   store.set(`app/${EV}/student@example.com.json`, {
     ticketId: "PRV-1", eventId: EV, email: "student@example.com",

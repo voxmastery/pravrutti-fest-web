@@ -25,7 +25,7 @@ const GRID: unknown[][] = [
    would leave every happy-path approval out of the confirm set. */
 const app = (over: Record<string, unknown> = {}) =>
   ({
-    ticketId: "PRV-1", eventId: "glide-x", eventName: "Glide-X", status: "pending", payment: "awaiting",
+    ticketId: "PRV-1", eventId: "electroxcape", eventName: "ELECTROXCAPE", status: "pending", payment: "awaiting",
     fee: "Rs. 200/-", name: "Someone", email: "someone@example.com", phone: "9", college: "RUAS",
     teamName: null, teamCode: null, members: null, paymentRef: null, appliedAt: "2026-09-16T09:00:00.000Z",
     ...over,
@@ -115,26 +115,26 @@ describe("planFromSheet", () => {
   it("approves only as many registrations as the person actually paid for", () => {
     const rows = [
       app({ eventId: "chaos", email: "multi@example.com", appliedAt: "2026-09-16T09:00:00.000Z" }),
-      app({ eventId: "triathlon", email: "multi@example.com", appliedAt: "2026-09-16T10:00:00.000Z", ticketId: "PRV-2" }),
-      app({ eventId: "glide-x", email: "multi@example.com", appliedAt: "2026-09-16T11:00:00.000Z", ticketId: "PRV-3" }),
+      app({ eventId: "dent-innovate", email: "multi@example.com", appliedAt: "2026-09-16T10:00:00.000Z", ticketId: "PRV-2" }),
+      app({ eventId: "electroxcape", email: "multi@example.com", appliedAt: "2026-09-16T11:00:00.000Z", ticketId: "PRV-3" }),
     ];
     /* Registered for TRIATHLON at 10:00 UTC = 15:30 IST; paid twenty minutes
        later, which the report writes in IST. The clock-matched place has to
        be an event that is still open. */
     const plan = planFromSheet([pay("multi@example.com", "T1", "2026-09-16 15:50:00.0")], rows);
     expect(plan.approve).toHaveLength(1);
-    expect(plan.approve[0].eventId).toBe("triathlon");
+    expect(plan.approve[0].eventId).toBe("dent-innovate");
     expect(plan.short).toEqual([{ email: "multi@example.com", payments: 1, inReview: 3 }]);
-    expect(plan.unpaid.map((u) => u.eventId).sort()).toEqual(["chaos", "glide-x"]);
+    expect(plan.unpaid.map((u) => u.eventId).sort()).toEqual(["chaos", "electroxcape"]);
   });
 
   it("covers two registrations when the report shows two payments", () => {
     const rows = [
-      app({ eventId: "glide-x", email: "multi@example.com", appliedAt: "2026-09-16T09:00:00.000Z" }),
-      app({ eventId: "triathlon", email: "multi@example.com", appliedAt: "2026-09-16T10:00:00.000Z", ticketId: "PRV-2" }),
+      app({ eventId: "electroxcape", email: "multi@example.com", appliedAt: "2026-09-16T09:00:00.000Z" }),
+      app({ eventId: "dent-innovate", email: "multi@example.com", appliedAt: "2026-09-16T10:00:00.000Z", ticketId: "PRV-2" }),
     ];
     const plan = planFromSheet([pay("multi@example.com", "T1"), pay("multi@example.com", "T2")], rows);
-    expect(plan.approve.map((a) => a.eventId).sort()).toEqual(["glide-x", "triathlon"]);
+    expect(plan.approve.map((a) => a.eventId).sort()).toEqual(["dent-innovate", "electroxcape"]);
     expect(plan.short).toEqual([]);
   });
 
@@ -191,7 +191,7 @@ describe("planFromSheet", () => {
 describe("phone fallback", () => {
   const likith = app({
     email: "jockergk44@gmail.com", name: "Likith.m.r.", phone: "8884441538",
-    eventId: "glide-x", eventName: "Glide-X", teamName: "CODE RED", teamCode: "62JN3RM2GRBB",
+    eventId: "electroxcape", eventName: "ELECTROXCAPE", teamName: "CODE RED", teamCode: "62JN3RM2GRBB",
   });
 
   it("approves the one in-review registration when the phone and the name agree", () => {
@@ -202,7 +202,7 @@ describe("phone fallback", () => {
     expect(plan.approve).toHaveLength(1);
     expect(plan.approve[0]).toMatchObject({
       email: "jockergk44@gmail.com",
-      eventId: "glide-x",
+      eventId: "electroxcape",
       via: "phone",
       transaction: "UHC2FLTIL0SVEZS",
       note: "matched by phone (sheet email llikith179@gmail.com, site email jockergk44@gmail.com)",
@@ -265,7 +265,7 @@ describe("phone fallback", () => {
       [pay("llikith179@gmail.com", "UHC2FLTIL0SVEZS", "2026-10-09 12:00:00.0", "8884441538", "Likith")],
       [
         likith,
-        app({ ...likith, eventId: "triathlon", eventName: "TRIATHLON", ticketId: "PRV-2", teamCode: "OTHER", teamName: "Other" }),
+        app({ ...likith, eventId: "dent-innovate", eventName: "DENT - INNOVATE", ticketId: "PRV-2", teamCode: "OTHER", teamName: "Other" }),
       ],
     );
     expect(plan.approve).toHaveLength(0);
@@ -277,7 +277,7 @@ describe("phone fallback", () => {
   it("flags a payment whose registration this batch already covers", () => {
     const row = app({
       email: "4mt25ci027@mite.ac.in", name: "Mohammed Zainuddin Zidan", phone: "9448920298",
-      eventId: "glide-x", eventName: "Glide-X", teamName: "Team hyperX", teamCode: "MCNJPPPV52FN",
+      eventId: "electroxcape", eventName: "ELECTROXCAPE", teamName: "Team hyperX", teamCode: "MCNJPPPV52FN",
     });
     const plan = planFromSheet([
       pay("4mt25ci027@mite.ac.in", "YLPY3TOMWL4A38N", "2026-10-08 10:00:00.0", "9448920298", "Mohammed Zainuddin Zidan"),

@@ -32,10 +32,10 @@ beforeAll(async () => {
   ({ POST } = await import("@/app/api/admin/reference-reminders/route"));
 });
 
-const EV = "the-logic-circuit";
+const EV = "electroxcape";
 const row = (email: string, over: Record<string, unknown> = {}) => {
   store.set(`app/${EV}/${email}.json`, {
-    ticketId: "PRV-1", eventId: EV, eventName: "The Logic Circuit", email, name: "A Student",
+    ticketId: "PRV-1", eventId: EV, eventName: "ELECTROXCAPE", email, name: "A Student",
     status: "pending", payment: "awaiting", paymentRef: null, fee: "Rs. 200/-",
     appliedAt: "2026-09-19T09:00:00.000Z", ...over,
   });
@@ -149,5 +149,16 @@ describe("POST /api/admin/reference-reminders", () => {
     expect(body.due).toEqual([{ eventId: EV, email: "owes@example.com", unanswered: false }]);
     expect(sent).toHaveLength(0);
     expect(store.get(`app/${EV}/owes@example.com.json`).referenceReminderCount).toBeUndefined();
+  });
+
+  /* 12 Oct: review closed on every event but DENT - INNOVATE and
+     ELECTROXCAPE — nobody there is asked to pay any more. */
+  it("does not chase anyone on an event whose review has closed", async () => {
+    store.set("app/glide-x/owes.json", {
+      ticketId: "PRV-G", eventId: "glide-x", eventName: "Glide-X", email: "owes@example.com",
+      name: "A Student", status: "pending", payment: "awaiting", fee: "Rs. 200/-",
+    });
+    const body = await (await post({ dryRun: true })).json();
+    expect(body.due).toEqual([]);
   });
 });
