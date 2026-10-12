@@ -12,7 +12,6 @@ import { BrowserQRCodeReader } from "@zxing/browser";
 import { useIdentity } from "@/lib/identity-context";
 import { useDashboardRole } from "@/hooks/use-dashboard-role";
 import { isDev, setDevLogin } from "@/lib/dev-identity";
-import { FilterGroup } from "@/components/dashboard/filter-group";
 
 type Tone = "ok" | "warn" | "err";
 
@@ -96,11 +95,9 @@ export default function DeskPage() {
   const controlsRef = useRef<CamControls | null>(null);
   const audioRef = useRef<AudioContext | null>(null);
   const busy = useRef(false);
-  const modeRef = useRef<string | null>(null);
   const holdRef = useRef(false);
   const lastReq = useRef<{ url: string; body: unknown } | null>(null);
 
-  const [mode, setMode] = useState<string | null>(null);
   const [result, setResult] = useState<Result | null>(null);
   const [counts, setCounts] = useState<Counts | null>(null);
   const [cameraOn, setCameraOn] = useState(false);
@@ -117,13 +114,7 @@ export default function DeskPage() {
   const allowed =
     dash.ready && (dash.role === "registration" || dash.role === "organiser" || dash.role === "coordinator");
 
-  modeRef.current = mode;
   holdRef.current = searchOpen;
-
-  useEffect(() => {
-    if (!dash.ready || mode !== null) return;
-    if (dash.events[0]?.eventId) setMode(dash.events[0].eventId);
-  }, [dash.ready, dash.events, mode]);
 
   useEffect(() => {
     const on = () => setOffline(false);
@@ -287,17 +278,7 @@ export default function DeskPage() {
     return res;
   }
 
-  function applyDesk(status: number, b: Record<string, any>, eventId: string) {
-    if (b.code === "wrong_event") {
-      setResult({
-        kind: "banner",
-        tone: "err",
-        title: "WRONG DESK",
-        detail: b.error ?? "This ticket is for another event.",
-      });
-      beep("err");
-      return;
-    }
+  function applyDesk(status: number, b: Record<string, any>, eventId?: string) {
     if (status >= 400 || b.ok === false) {
       const tone: Tone = b.tone === "warn" ? "warn" : "err";
       const title =
@@ -317,9 +298,9 @@ export default function DeskPage() {
         kind: "desk",
         tone: "warn",
         title: "ALREADY IN",
-        detail: `${b.name} · ${clock(b.at)}${b.by ? ` · ${b.by}` : ""}`,
+        detail: `${b.name} · ${b.eventName ?? ""}${b.at ? ` · ${clock(b.at)}` : ""}${b.by ? ` · ${b.by}` : ""}`,
         name: b.name,
-        eventId: b.eventId ?? eventId,
+        eventId: b.eventId ?? eventId ?? "",
         eventName: b.eventName,
         email: b.email,
         teamName: b.teamName ?? null,
@@ -333,7 +314,7 @@ export default function DeskPage() {
       title: "ADMITTED",
       detail: `${b.name} · ${b.eventName}${b.teamName ? ` · ${b.teamName}` : ""}`,
       name: b.name,
-      eventId: b.eventId ?? eventId,
+      eventId: b.eventId ?? eventId ?? "",
       eventName: b.eventName,
       email: b.email,
       teamName: b.teamName ?? null,
@@ -343,11 +324,10 @@ export default function DeskPage() {
   }
 
   async function handleScan(text: string) {
-    const active = modeRef.current;
-    if (!active) return;
-    const res = await send("/api/checkin", { payload: text, eventId: active });
+    /* Omit eventId so the ticket QR picks the event — desk volunteers admit any fest. */
+    const res = await send("/api/checkin", { payload: text });
     if (!res) return;
-    applyDesk(res.status, res.json, active);
+    applyDesk(res.status, res.json);
   }
 
   async function checkInRow(eventId: string, email: string) {
@@ -403,9 +383,6 @@ export default function DeskPage() {
     (acc, e) => ({ checkedIn: acc.checkedIn + e.checkedIn, confirmed: acc.confirmed + e.confirmed }),
     { checkedIn: 0, confirmed: 0 }
   );
-  const activeCount = counts?.events.find((e) => e.eventId === mode);
-  const desks = dash.events.map((e) => ({ id: e.eventId, label: e.name }));
-  const deskName = desks.find((d) => d.id === mode)?.label ?? "Check-in";
 
   if (!me.ready || !dash.ready) {
     return (
@@ -443,66 +420,40 @@ export default function DeskPage() {
   };
 
   return (
-    <main className="min-h-screen bg-midnight-navy text-white flex flex-col max-w-lg mx-auto w-full">
+    <main className="min-h-screen bg-midnight-navy text-white flex flex-col max-w-lg mx-auto w-full overflow-x-hidden">
       {offline && (
-        <p className="bg-danger text-midnight-navy text-center text-sm font-semibold py-2 px-3">
+        <p className="bg-danger text-midnight-navy text-center text-sm font-semibold py-2 px-3 break-words">
           No network. Scans will not be saved until you are back online.
         </p>
       )}
 
-      <div className="p-3 flex items-center justify-between gap-2 border-b border-white/10">
-        <div className="min-w-0">
+      <div className="p-3 flex items-center justify-between gap-2 border-b border-white/10 min-w-0">
+        <div className="min-w-0 overflow-hidden">
           <p className="font-display text-[10px] font-bold tracking-[0.18em] text-champagne-gold/80">REGISTRATION</p>
-          <h1 className="font-display font-black text-sm tracking-wide truncate">{deskName}</h1>
+          <h1 className="font-display font-black text-sm tracking-wide truncate">Check-in</h1>
         </div>
         <button
           type="button"
           onClick={signOut}
-          className="h-10 px-3 inline-flex items-center gap-1.5 rounded-lg text-sm text-white/60 hover:text-white hover:bg-white/[0.06]"
+          className="h-10 px-3 shrink-0 inline-flex items-center gap-1.5 rounded-lg text-sm text-white/60 hover:text-white hover:bg-white/[0.06]"
           aria-label="Sign out"
         >
           <LogOut className="w-4 h-4" />
         </button>
       </div>
 
-      {/* Live counters — overall + active desk */}
-      <div className="px-3 py-2.5 border-b border-white/10 grid grid-cols-2 gap-2">
-        <div className="rounded-xl bg-white/[0.06] px-3 py-2">
-          <p className="text-[10px] uppercase tracking-wider text-white/45">All events</p>
-          <p className="font-display text-lg font-black tabular-nums leading-tight">
+      <div className="px-3 py-2.5 border-b border-white/10 min-w-0">
+        <div className="rounded-xl bg-white/[0.06] px-3 py-2 min-w-0 overflow-hidden">
+          <p className="text-[10px] uppercase tracking-wider text-white/45 truncate">All events</p>
+          <p className="font-display text-lg font-black tabular-nums leading-tight" aria-live="polite">
             {overall.checkedIn}
             <span className="text-white/40 font-semibold text-sm"> / {overall.confirmed}</span>
           </p>
-          <p className="text-[11px] text-white/45">checked in · confirmed</p>
-        </div>
-        <div className="rounded-xl bg-white/[0.06] px-3 py-2">
-          <p className="text-[10px] uppercase tracking-wider text-white/45 truncate">{deskName}</p>
-          <p className="font-display text-lg font-black tabular-nums leading-tight" aria-live="polite">
-            {activeCount?.checkedIn ?? 0}
-            <span className="text-white/40 font-semibold text-sm"> / {activeCount?.confirmed ?? 0}</span>
-          </p>
-          <p className="text-[11px] text-white/45">checked in · confirmed</p>
+          <p className="text-[11px] text-white/45 truncate">checked in · confirmed</p>
         </div>
       </div>
 
-      {desks.length > 1 && (
-        <div className="flex gap-2 overflow-x-auto no-scrollbar px-3 py-2.5 border-b border-white/10">
-          <FilterGroup
-            variant="pill"
-            value={mode ?? desks[0].id}
-            options={desks}
-            onChange={(id) => {
-              setMode(id);
-              setResult(null);
-            }}
-            label="Event desk"
-            className="flex-nowrap"
-            itemClassName="h-10 shrink-0"
-          />
-        </div>
-      )}
-
-      <div className="relative flex-1 min-h-[38vh]">
+      <div className="relative flex-1 min-h-[38vh] min-w-0">
         <video
           ref={videoRef}
           aria-hidden="true"
@@ -547,31 +498,33 @@ export default function DeskPage() {
         )}
       </div>
 
-      <div className="border-t border-white/10">
-        <div className="flex gap-2 px-3 py-2">
+      <div className="border-t border-white/10 min-w-0">
+        <div className="flex gap-2 px-3 py-2 min-w-0">
           <button
             type="button"
             onClick={() => setSearchOpen((v) => !v)}
-            className="h-11 px-3 inline-flex items-center gap-2 rounded-lg bg-white/10 text-sm"
+            className="h-11 px-3 shrink-0 inline-flex items-center gap-2 rounded-lg bg-white/10 text-sm"
           >
             <Search className="w-4 h-4" /> Look up
           </button>
-          {torchNote && <p className="self-center text-xs text-champagne-gold">{torchNote}</p>}
+          {torchNote && (
+            <p className="self-center text-xs text-champagne-gold min-w-0 truncate">{torchNote}</p>
+          )}
         </div>
 
         {searchOpen && (
-          <form onSubmit={runSearch} className="px-3 pb-3 space-y-2">
-            <div className="flex gap-2">
+          <form onSubmit={runSearch} className="px-3 pb-3 space-y-2 min-w-0">
+            <div className="flex gap-2 min-w-0">
               <input
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Ticket ID, name, email, or phone"
                 aria-label="Look up a participant"
-                className="h-11 flex-1 rounded-lg bg-black/40 px-3 text-sm outline-none ring-1 ring-white/15 focus:ring-cyber-pink"
+                className="h-11 min-w-0 flex-1 rounded-lg bg-black/40 px-3 text-sm outline-none ring-1 ring-white/15 focus:ring-cyber-pink"
               />
               <button
                 type="submit"
-                className="h-11 px-4 rounded-lg bg-cyber-pink text-midnight-navy font-semibold"
+                className="h-11 px-4 shrink-0 rounded-lg bg-cyber-pink text-midnight-navy font-semibold"
                 disabled={searching}
               >
                 {searching ? "…" : "Find"}
@@ -584,9 +537,9 @@ export default function DeskPage() {
               {hits.map((h) => (
                 <li
                   key={`${h.eventId}:${h.email}`}
-                  className="flex items-center justify-between gap-3 rounded-xl bg-white/5 px-3 py-2.5"
+                  className="flex items-center justify-between gap-3 rounded-xl bg-white/5 px-3 py-2.5 min-w-0"
                 >
-                  <span className="min-w-0">
+                  <span className="min-w-0 overflow-hidden">
                     <span className="block text-sm font-medium truncate">{h.name}</span>
                     <span className="block text-xs text-white/60 truncate">
                       {h.eventName}
@@ -607,7 +560,7 @@ export default function DeskPage() {
                       Check in
                     </button>
                   ) : (
-                    <span className="text-xs text-white/50 shrink-0 text-right">
+                    <span className="text-xs text-white/50 shrink-0 text-right max-w-[40%] truncate">
                       {h.checkedInAt ? `In ${clock(h.checkedInAt)}` : h.status}
                     </span>
                   )}
@@ -621,20 +574,20 @@ export default function DeskPage() {
           role="status"
           aria-live="assertive"
           aria-atomic="true"
-          className={result ? toneClass(result.tone) : "bg-white/10"}
+          className={`min-w-0 overflow-hidden ${result ? toneClass(result.tone) : "bg-white/10"}`}
         >
           {!result && (
-            <p className="p-5 text-sm text-white/70">
+            <p className="p-5 text-sm text-white/70 break-words">
               {cameraOn
-                ? "Point the camera at a ticket QR."
+                ? "Point the camera at a ticket QR. Any fest event works."
                 : "Tap to start the camera, then point it at a ticket QR."}
             </p>
           )}
 
           {result?.kind === "banner" && (
-            <div className="p-5">
-              <p className="font-display text-3xl font-black leading-none">{result.title}</p>
-              <p className="mt-2 text-sm">{result.detail}</p>
+            <div className="p-5 min-w-0">
+              <p className="font-display text-3xl font-black leading-none break-words">{result.title}</p>
+              <p className="mt-2 text-sm break-words">{result.detail}</p>
               {result.retry && (
                 <button
                   type="button"
@@ -648,7 +601,7 @@ export default function DeskPage() {
                     }
                     void send(last.url, last.body).then((res) => {
                       if (!res) return;
-                      applyDesk(res.status, res.json, (last.body as { eventId?: string }).eventId ?? "");
+                      applyDesk(res.status, res.json, (last.body as { eventId?: string }).eventId);
                     });
                   }}
                   className="mt-3 h-11 px-4 rounded-lg bg-midnight-navy text-pearl-white text-sm font-semibold"
@@ -660,9 +613,9 @@ export default function DeskPage() {
           )}
 
           {result?.kind === "desk" && (
-            <div className="p-5">
-              <p className="font-display text-3xl font-black leading-none">{result.title}</p>
-              <p className="mt-2 text-base font-semibold">{result.detail}</p>
+            <div className="p-5 min-w-0">
+              <p className="font-display text-3xl font-black leading-none break-words">{result.title}</p>
+              <p className="mt-2 text-base font-semibold break-words">{result.detail}</p>
               {result.undoAt && undoLeft > 0 && (
                 <button
                   type="button"
@@ -676,22 +629,6 @@ export default function DeskPage() {
           )}
         </div>
       </div>
-
-      {/* Compact per-event strip */}
-      {counts && counts.events.length > 0 && (
-        <div className="border-t border-white/10 px-3 py-2 max-h-28 overflow-y-auto">
-          <ul className="space-y-1">
-            {counts.events.map((e) => (
-              <li key={e.eventId} className="flex items-center justify-between gap-2 text-[11px] text-white/55">
-                <span className="truncate">{e.name}</span>
-                <span className="tabular-nums shrink-0">
-                  {e.checkedIn}/{e.confirmed}
-                </span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
     </main>
   );
 }

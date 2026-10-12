@@ -108,6 +108,22 @@ describe("POST /api/checkin", () => {
     expect((await res.json()).name).toBe("Asha");
   });
 
+  it("lets a registration desk volunteer admit from the ticket alone (no event picker)", async () => {
+    role.current = { kind: "registration" };
+    const res = await POST(
+      new Request("http://t/api/checkin", {
+        method: "POST",
+        body: JSON.stringify({
+          payload: "PRV-AAAA1111|robo-climb|asha@example.com",
+        }),
+      })
+    );
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.name).toBe("Asha");
+    expect(body.eventId).toBe("robo-climb");
+  });
+
   it("rejects a coordinator admitting to an event they don't run", async () => {
     role.current = { kind: "coordinator", eventIds: ["chaos"] };
     const res = await post("PRV-AAAA1111|robo-climb|asha@example.com");
