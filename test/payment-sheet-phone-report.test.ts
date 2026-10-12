@@ -16,19 +16,20 @@ const fixture = JSON.parse(
 const plan = planFromSheet(fixture.payments, fixture.applications);
 
 describe("10 Oct payment sheet, phone pass", () => {
-  it("approves Likith by phone onto CODE RED", () => {
-    const row = plan.approve.find((a) => a.note?.includes("llikith179@gmail.com"));
+  it("holds Likith on CODE RED because ZERO HOUR is full", () => {
+    expect(plan.approve.find((a) => a.note?.includes("llikith179@gmail.com"))).toBeUndefined();
+    const row = plan.held.find((a) => a.email === "jockergk44@gmail.com");
     expect(row).toMatchObject({
       email: "jockergk44@gmail.com",
       eventId: "zero-hour",
       teamCode: "62JN3RM2GRBB",
       via: "phone",
+      flag: "event full / over cap",
       /* The row already carries a reference the student typed (letter O where
          the report has a zero). The sheet must not overwrite it. */
       transaction: null,
       note: "matched by phone (sheet email llikith179@gmail.com, site email jockergk44@gmail.com)",
     });
-    expect(plan.held.find((a) => a.email === "jockergk44@gmail.com")).toBeUndefined();
   });
 
   it("puts the phone-confirmed majority in already confirmed, not unmatched", () => {

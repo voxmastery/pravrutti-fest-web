@@ -442,13 +442,14 @@ export const events: Event[] = [
     fee: "Rs. 200/-",
     prizes: [5000, 3000, 2000],
     teamSize: { min: 2, max: 4, soloAllowed: false },
-    /* Raised from 25 to 30 teams on 8 Oct, Rathan and Aryan's ask. It had
-       filled at 25 (23 confirmed, 2 in review), so this reopens five places.
-       capacity is the head count at four a team. No hand switch: it takes
-       new teams until this cap or the fest deadline. */
+    /* Raised from 25 to 30 teams on 8 Oct. Closed by hand on 12 Oct. The
+       30-team cap stays, so nobody already registered is cut. full keeps it
+       shut. Listed and struck through. Teams already in keep their tickets,
+       payment, and manage-team actions. */
     capacity: 120,
     capacityUnit: "teams",
     maxTeams: 30,
+    full: true,
     duration: "3 hours",
     coordinators: {
       faculty: [],
@@ -644,8 +645,13 @@ export const events: Event[] = [
     fee: "Rs. 200/-",
     prizes: [7000, 5000, 3000],
     teamSize: { min: 1, max: 3, soloAllowed: true },
+    /* Closed by hand on 12 Oct. The 40-team cap (120 heads at three a team)
+       stays, so nobody already registered is cut. full keeps it shut. Listed
+       and struck through. Teams already in keep their tickets, payment, and
+       manage-team actions. */
     capacity: 120,
     capacityUnit: "teams",
+    full: true,
     duration: "3 hours",
     coordinators: {
       faculty: [],
@@ -750,8 +756,13 @@ export const events: Event[] = [
     fee: "Rs. 200/-",
     prizes: [7000, 5000, 3000],
     teamSize: { min: 2, max: 4, soloAllowed: false },
+    /* Closed by hand on 12 Oct. The 25-team cap (100 heads at four a team)
+       stays, so nobody already registered is cut. full keeps it shut. Listed
+       and struck through. Teams already in keep their tickets, payment, and
+       manage-team actions. */
     capacity: 100,
     capacityUnit: "teams",
+    full: true,
     duration: "3 hours",
     coordinators: {
       faculty: [],
@@ -907,8 +918,13 @@ export const events: Event[] = [
     fee: "Rs. 200/-",
     prizes: [7000, 5000, 3000],
     teamSize: { min: 4, max: 4, soloAllowed: false },
+    /* Closed by hand on 12 Oct. The 50-team cap (200 heads at four a team)
+       stays, so nobody already registered is cut. full keeps it shut. Listed
+       and struck through. Teams already in keep their tickets, payment, and
+       manage-team actions. */
     capacity: 200,
     capacityUnit: "teams",
+    full: true,
     duration: "3 hours",
     coordinators: {
       faculty: [],
@@ -926,14 +942,14 @@ export const events: Event[] = [
     fee: "Rs. 200/-",
     prizes: [7000, 5000, 3000],
     teamSize: { min: 3, max: 4, soloAllowed: false },
-    /* Closed itself at 40 teams (160 heads / 4). Raised to 42 on 10 Oct
-       when it held 41, then by another 10 the same day: 42 + 10 = 52.
-       capacity is the head count at four a team. No full switch, no
-       earlier close, and it stays on the list, so it takes new teams
-       until this cap or the fest deadline. */
+    /* Closed itself at 40 teams, then the cap was raised to 52. Closed by
+       hand on 12 Oct. The 52-team cap stays, so nobody already registered
+       is cut. full keeps it shut. Listed and struck through. Teams already
+       in keep their tickets, payment, and manage-team actions. */
     capacity: 208,
     capacityUnit: "teams",
     maxTeams: 52,
+    full: true,
     duration: "6 hours",
     eligibility: "Teams must consist of 3 to 4 members.",
     coordinators: {

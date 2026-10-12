@@ -64,24 +64,22 @@ describe("Respawn", () => {
   });
 });
 
-/* Cap is 52 teams: 42, then exactly 10 more on 10 Oct. No hand switch,
-   so 51 holding places is open and 52 is full. */
+/* Closed by hand on 12 Oct. The 52-team cap stays. Listed and struck
+   through. Existing registrations are not touched. */
 describe("HAMMER", () => {
-  it("is open below 52 teams and stays on the list until the fest close", () => {
+  it("takes no new teams and stays on the list", () => {
     const e = ev("HAMMER");
     expect(eventId(e.name)).toBe("hammer");
+    expect(e.name).toBe("HAMMER");
     expect(e.maxTeams).toBe(52);
     expect(e.capacity).toBe(208);
-    expect(e.full).toBeFalsy();
+    expect(e.full).toBe(true);
     expect(e.unlisted).toBeFalsy();
     expect(e.registrationCloses).toBeUndefined();
     expect(capOf(e)).toEqual({ limit: 52, unit: "teams" });
     expect(capacityLabel(e)).toBe("52 teams");
-    expect(isFull(e, { people: 0, teams: 51 })).toBe(false);
-    expect(isFull(e, { people: 0, teams: 52 })).toBe(true);
+    expect(isFull(e, { people: 0, teams: 0 })).toBe(true);
     expect(listedEvents).toContain(e);
-    expect(registrationState(Date.parse("2026-10-12T18:28:00.000Z"), festFor(e))).toBe("open");
-    expect(registrationState(Date.parse("2026-10-12T18:29:00.000Z"), festFor(e))).toBe("closed");
   });
 });
 
@@ -203,6 +201,25 @@ describe("BRIDGE IT", () => {
   });
 });
 
+/* Closed by hand on 12 Oct, the same shut as BRIDGE IT. Caps stay. */
+describe.each([
+  ["PITCH AT MACH", "pitch-at-mach", 100],
+  ["ZERO HOUR", "zero-hour", 200],
+  ["The Logic Circuit", "the-logic-circuit", 120],
+] as const)("%s", (name, id, capacity) => {
+  it("takes no new teams and stays on the list", () => {
+    const e = ev(name);
+    expect(e.name).toBe(name);
+    expect(eventId(e.name)).toBe(id);
+    expect(e.full).toBe(true);
+    expect(e.capacity).toBe(capacity);
+    expect(e.unlisted).toBeFalsy();
+    expect(e.registrationCloses).toBeUndefined();
+    expect(isFull(e, { people: 0, teams: 0 })).toBe(true);
+    expect(listedEvents).toContain(e);
+  });
+});
+
 /* Closed on 7 Oct at 19 teams: listed and struck through, not taken off
    the list. The desk held 14 confirmed and 5 in review, so 19 is the
    whole field and cuts nobody already in. */
@@ -237,23 +254,21 @@ describe("Pitch Pulse", () => {
   });
 });
 
-/* Raised from 25 to 30 teams on 8 Oct, Rathan and Aryan's ask. It had
-   filled at 25 (23 confirmed, 2 in review), so five places reopen. No
-   hand switch: new teams are taken until 30 or the fest deadline. */
+/* Closed by hand on 12 Oct. The 30-team cap stays. Listed and struck
+   through. Existing registrations are not touched. */
 describe("Terraform: The System Awakens", () => {
-  it("closes on its own at 30 teams and stays open below that", () => {
+  it("takes no new teams and stays on the list", () => {
     const e = ev("Terraform: The System Awakens");
     expect(eventId(e.name)).toBe("terraform-the-system-awakens");
     expect(e.name).toBe("Terraform: The System Awakens");
     expect(e.maxTeams).toBe(30);
     expect(e.capacity).toBe(120);
-    expect(e.full).toBeFalsy();
+    expect(e.full).toBe(true);
     expect(e.unlisted).toBeFalsy();
+    expect(e.registrationCloses).toBeUndefined();
     expect(capOf(e)).toEqual({ limit: 30, unit: "teams" });
     expect(capacityLabel(e)).toBe("30 teams");
-    expect(isFull(e, { people: 77, teams: 25 })).toBe(false);
-    expect(isFull(e, { people: 0, teams: 29 })).toBe(false);
-    expect(isFull(e, { people: 0, teams: 30 })).toBe(true);
+    expect(isFull(e, { people: 0, teams: 0 })).toBe(true);
     expect(listedEvents).toContain(e);
   });
 });
@@ -318,6 +333,11 @@ const STAYS_SHUT = [
   "Respawn",
   "FAULT x LOAD",
   "Discoverize (Research Paper Presentation)",
+  "PITCH AT MACH",
+  "ZERO HOUR",
+  "The Logic Circuit",
+  "HAMMER",
+  "Terraform: The System Awakens",
 ];
 
 describe("the extension", () => {
@@ -333,7 +353,7 @@ describe("the extension", () => {
     expect(ev("ROBO RACE").maxTeams).toBe(45);
     expect(ev("ROBO RACE").full).toBe(true);
     expect(ev("Terraform: The System Awakens").maxTeams).toBe(30);
-    expect(ev("Terraform: The System Awakens").full).toBeFalsy();
+    expect(ev("Terraform: The System Awakens").full).toBe(true);
   });
 });
 

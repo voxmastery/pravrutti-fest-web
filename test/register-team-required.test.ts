@@ -27,7 +27,9 @@ vi.mock("@/lib/pravrutti-data", async (importOriginal) => {
     /* The team-only rule is proved on ROBO RACE. Closing it on the live
        data must not change what that rule is proving. */
     events: actual.events.map((e) =>
-      actual.eventId(e.name) === "robo-race" ? { ...e, full: false } : e,
+      actual.eventId(e.name) === "robo-race" || actual.eventId(e.name) === "the-logic-circuit"
+        ? { ...e, full: false }
+        : e,
     ),
   };
 });

@@ -22,10 +22,16 @@ vi.mock("@/lib/blob-store", () => ({
 }));
 vi.mock("@/lib/identity", () => ({ resolveEmail: async () => null, authRequired: () => false }));
 vi.mock("@/lib/roles", () => ({ resolveRole: async () => ({ kind: "none" }), resolveRoleFor: async () => ({ kind: "none" }) }));
-vi.mock("@/lib/pravrutti-data", async (o) => ({
-  ...(await o<typeof import("@/lib/pravrutti-data")>()),
-  effectiveRegistrationOpen: () => true,
-}));
+vi.mock("@/lib/pravrutti-data", async (o) => {
+  const actual = await o<typeof import("@/lib/pravrutti-data")>();
+  return {
+    ...actual,
+    effectiveRegistrationOpen: () => true,
+    events: actual.events.map((e) =>
+      actual.eventId(e.name) === "the-logic-circuit" ? { ...e, full: false } : e,
+    ),
+  };
+});
 vi.mock("@/lib/received-email", () => ({ sendReceivedEmail: async () => ({ sent: true }) }));
 
 let POST: typeof import("@/app/api/register/route").POST;

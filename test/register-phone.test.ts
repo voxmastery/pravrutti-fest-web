@@ -22,11 +22,17 @@ vi.mock("@/lib/identity", () => ({ resolveEmail: async () => null, authRequired:
 
 // Registration closes on a fixed date, so leave it open rather than letting
 // these fail as 409s once that date passes.
-vi.mock("@/lib/pravrutti-data", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("@/lib/pravrutti-data")>()),
-  registrationOpen: () => true,
-  effectiveRegistrationOpen: () => true,
-}));
+vi.mock("@/lib/pravrutti-data", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/pravrutti-data")>();
+  return {
+    ...actual,
+    registrationOpen: () => true,
+    effectiveRegistrationOpen: () => true,
+    events: actual.events.map((e) =>
+      actual.eventId(e.name) === "the-logic-circuit" ? { ...e, full: false } : e,
+    ),
+  };
+});
 
 let POST: typeof import("@/app/api/register/route").POST;
 beforeAll(async () => {
