@@ -407,7 +407,15 @@ export default function DeskPage() {
   const desks = dash.events.map((e) => ({ id: e.eventId, label: e.name }));
   const deskName = desks.find((d) => d.id === mode)?.label ?? "Check-in";
 
-  if (me.ready && !me.signedIn) {
+  if (!me.ready || !dash.ready) {
+    return (
+      <main className="min-h-screen grid place-items-center text-white px-6 text-center bg-midnight-navy">
+        <p className="text-sm text-white/60">Loading registration desk…</p>
+      </main>
+    );
+  }
+
+  if (!me.signedIn) {
     return (
       <main className="min-h-screen grid place-items-center text-white px-6 text-center gap-4 bg-midnight-navy">
         <p>Sign in to use the registration desk.</p>
@@ -418,7 +426,7 @@ export default function DeskPage() {
     );
   }
 
-  if (dash.ready && !allowed) {
+  if (!allowed) {
     return (
       <main className="min-h-screen grid place-items-center text-white px-6 text-center gap-4 bg-midnight-navy">
         <p>This account isn&apos;t on the registration desk. Ask an organiser to add you.</p>
