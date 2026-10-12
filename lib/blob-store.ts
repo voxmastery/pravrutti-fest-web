@@ -13,8 +13,10 @@ import {
   sqlReadJson,
   sqlPutJson,
   sqlDeleteJson,
+  sqlCasUpdate,
   SQL_URL_PREFIX,
 } from "@/lib/sql-store";
+import { withKeyLock } from "@/lib/key-lock";
 import {
   memEnabled,
   memListAll,
@@ -140,9 +142,62 @@ export async function readJsonByPath(path: string) {
  */
 export async function putJson(path: string, data: unknown, overwrite: boolean) {
   if (useDevBlob()) return devPutJson(path, data);
-  if (sqlEnabled()) return sqlPutJson(path, data, overwrite);
+  if (sqlEnabled()) {
+    await sqlPutJson(path, data, overwrite);
+    await noteAppIndex(path, data);
+    return;
+  }
   if (memEnabled()) return memPutJson(path, data, overwrite);
   return noBackend();
+}
+
+export type CasDecision<T> = { write: boolean; next: T | null };
+export type CasResult<T> = { current: T | null; written: boolean; next: T | null };
+
+/**
+ * Apply a check-in only if the row still matches what the decision saw.
+ * On MySQL that is a row lock. On the dev and memory stores it is an
+ * in-process queue, which is all those backends have.
+ */
+export async function casUpdate<T>(
+  path: string,
+  decide: (current: T | null) => CasDecision<T> | Promise<CasDecision<T>>
+): Promise<CasResult<T>> {
+  if (useDevBlob()) {
+    return withKeyLock(path, async () => {
+      const current = (await devReadJson(path)) as T | null;
+      const decision = await decide(current);
+      if (!decision.write || decision.next == null) return { current, written: false, next: current };
+      await devPutJson(path, decision.next);
+      return { current, written: true, next: decision.next };
+    });
+  }
+  if (sqlEnabled()) {
+    const result = await sqlCasUpdate(path, decide);
+    if (result.written) await noteAppIndex(path, result.next);
+    return result;
+  }
+  if (memEnabled()) {
+    return withKeyLock(path, async () => {
+      const current = (await memReadJson(path)) as T | null;
+      const decision = await decide(current);
+      if (!decision.write || decision.next == null) return { current, written: false, next: current };
+      await memPutJson(path, decision.next, true);
+      return { current, written: true, next: decision.next };
+    });
+  }
+  return noBackend();
+}
+
+/** The index is an accelerator. A failure here must not fail the kv write. */
+async function noteAppIndex(path: string, data: unknown) {
+  if (!path.startsWith("app/")) return;
+  try {
+    const { syncAppIndex } = await import("@/lib/app-index");
+    await syncAppIndex(path, data);
+  } catch {
+    /* The next lookup falls back to a single JSON scan. */
+  }
 }
 
 /**
@@ -153,7 +208,16 @@ export async function putJson(path: string, data: unknown, overwrite: boolean) {
  */
 export async function deleteJson(path: string) {
   if (useDevBlob()) return devDeleteJson(path);
-  if (sqlEnabled()) return sqlDeleteJson(path);
+  if (sqlEnabled()) {
+    await sqlDeleteJson(path);
+    try {
+      const { removeAppIndex } = await import("@/lib/app-index");
+      await removeAppIndex(path);
+    } catch {
+      /* The kv row is already gone. A stale index row misses on the next read. */
+    }
+    return;
+  }
   if (memEnabled()) return memDeleteJson(path);
   return noBackend();
 }

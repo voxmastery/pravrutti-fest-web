@@ -160,10 +160,10 @@ export type Application = {
         verifies the money. */
     paymentSubmittedAt?: string;
   };
-  /** Set once when an organiser scans this ticket. Never overwritten —
-      a second scan reports the original time rather than replacing it. */
+  /** Set when a desk scans this ticket in. A second scan reports this time
+      rather than replacing it. Cleared only by an undo inside 30 seconds. */
   checkedInAt?: string;
-  /** Organiser email that performed the scan. */
+  /** Email of the organiser or coordinator who scanned them in. */
   checkedInBy?: string;
   /** When an organiser confirmed the money had actually arrived. */
   paymentVerifiedAt?: string;

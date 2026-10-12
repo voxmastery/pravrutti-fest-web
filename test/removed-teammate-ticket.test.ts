@@ -16,8 +16,6 @@ import { ticketPayload } from "@/lib/ticket-qr";
 const store = new Map<string, any>();
 
 vi.mock("@/lib/blob-store", () => ({
-  listAll: async () => [] as { url: string }[],
-  readPrivate: async () => null,
   applicationPath: (e: string, m: string) => `app/${e}/${m}.json`,
   paymentRefPath: (ref: string) => "payment-ref/" + ref.trim().toLowerCase() + ".json",
   teamPath: (e: string, c: string) => `team/${e}/${c}.json`,
@@ -28,10 +26,21 @@ vi.mock("@/lib/blob-store", () => ({
     if (store.has(p) && !ow) throw new Error("Blob already exists: overwrite not allowed");
     store.set(p, d);
   },
+  listAll: async (prefix: string) => {
+    if (!prefix.startsWith("app/") && !prefix.startsWith("gate/")) return [];
+    return [...store.keys()].filter((k) => k.startsWith(prefix)).map((pathname) => ({ url: pathname, pathname }));
+  },
+  readPrivate: async (url: string) => store.get(url) ?? null,
   listTeamMembers: async (eventId: string, code: string) =>
     [...store.entries()]
       .filter(([path, rec]) => path.startsWith(`member/${eventId}/`) && rec?.code === code && rec?.member)
       .map(([, rec]) => rec.member),
+  casUpdate: async (path: string, decide: (current: unknown) => Promise<{ write: boolean; next: unknown }> | { write: boolean; next: unknown }) => {
+    const current = store.get(path) ?? null;
+    const decision = await decide(current);
+    if (decision.write && decision.next != null) store.set(path, decision.next);
+    return { current, written: !!(decision.write && decision.next != null), next: decision.write ? decision.next : current };
+  },
 }));
 vi.mock("@/lib/identity", () => ({ resolveEmail: async () => null, authRequired: () => false }));
 vi.mock("@/lib/roles", async (o) => ({

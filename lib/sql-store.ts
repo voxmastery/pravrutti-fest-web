@@ -110,6 +110,47 @@ export async function sqlDeleteJson(path: string) {
   await getPool().execute(`DELETE FROM \`${TABLE}\` WHERE path = ?`, [path]);
 }
 
+export type CasResult<T> = { current: T | null; written: boolean; next: T | null };
+
+/**
+ * Read a row, decide, and write, while holding the row lock.
+ *
+ * Two Node processes can both pass a read-then-write. `FOR UPDATE` makes the
+ * second wait until the first commits, so it sees the stamp and does not
+ * write another one. The decision runs inside the lock for that reason.
+ */
+export async function sqlCasUpdate<T>(
+  path: string,
+  decide: (current: T | null) => { write: boolean; next: T | null } | Promise<{ write: boolean; next: T | null }>
+): Promise<CasResult<T>> {
+  return sqlWithTransaction(async (conn) => {
+    const [rows] = await conn.execute(
+      `SELECT data FROM \`${TABLE}\` WHERE path = ? FOR UPDATE`,
+      [path]
+    );
+    const row = (rows as { data: string }[])[0];
+    let current: T | null = null;
+    if (row) {
+      try {
+        current = JSON.parse(row.data) as T;
+      } catch {
+        current = null;
+      }
+    }
+    const decision = await decide(current);
+    if (!decision.write || decision.next == null) {
+      return { current, written: false, next: current };
+    }
+    const json = JSON.stringify(decision.next);
+    if (row) {
+      await conn.execute(`UPDATE \`${TABLE}\` SET data = ? WHERE path = ?`, [json, path]);
+    } else {
+      await conn.execute(`INSERT INTO \`${TABLE}\` (path, data) VALUES (?, ?)`, [path, json]);
+    }
+    return { current, written: true, next: decision.next };
+  });
+}
+
 /**
  * Parameterised statements, and plain queries for DDL.
  *
