@@ -72,4 +72,15 @@ describe("GET /api/admin/roster", () => {
     expect(body.organiser.counts.teams).toBe(1);
     expect(body.coordinator.counts.teams).toBe(1);
   });
+
+  it("shows a coordinator confirmed teams only", async () => {
+    /* A lead whose payment is in review holds a place, and an organiser
+       sees them — a coordinator does not, nor any in-review number. */
+    app("pending@x.com", { status: "pending", payment: "paid", fee: "Rs. 200/-", teamName: "Wasp", teamCode: "WASP00000001" });
+    const { body } = await get(`eventId=${EV}`);
+    expect(body.organiser.roster.map((r: any) => r.email)).toContain("pending@x.com");
+    expect(body.organiser.counts.inReviewTeams).toBe(1);
+    expect(body.coordinator.roster.every((r: any) => r.status === "confirmed")).toBe(true);
+    expect(body.coordinator.counts).toMatchObject({ teams: 1, registered: 2, inReview: 0, inReviewTeams: 0 });
+  });
 });

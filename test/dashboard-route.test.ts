@@ -238,17 +238,14 @@ describe("the roster judges a teammate by their lead", () => {
   });
 
   /* 3 Oct 2026 the organisers limited coordinators to confirmed people; on
-     5 Oct they put teams in review back — Pitch at Mach's coordinator read
-     "11 applications in review" on the event page and found none on their
-     desk. In review shows as in review; the coordinator's counts match the
-     event page's. */
-  it("shows a coordinator confirmed and in-review people, and counts both", async () => {
+     5 Oct they put teams in review back; on 12 Oct they asked for confirmed
+     teams only again. Chetan, in review, is off the coordinator's desk and
+     out of their counts. */
+  it("shows a coordinator confirmed teams only, and counts only those", async () => {
     role.current = { kind: "coordinator", eventIds: ["robo-climb"] };
     const body = await (await get("robo-climb")).json();
-    expect(body.roster.map((r: any) => r.name).sort()).toEqual(["Asha", "Bala", "Chetan"]);
-    expect(body.roster.find((r: any) => r.name === "Chetan")).toMatchObject({ status: "pending", live: true });
-    expect(body.counts.registered).toBe(3);
-    expect(body.counts.teams).toBe(2);
+    expect(body.roster.map((r: any) => r.name).sort()).toEqual(["Asha", "Bala"]);
+    expect(body.counts).toMatchObject({ registered: 2, teams: 1, inReview: 0, inReviewTeams: 0 });
   });
 
   /* Still not on a coordinator's desk: people holding no place. */
@@ -286,8 +283,8 @@ describe("the roster judges a teammate by their lead", () => {
     const by = (n: string) => body.roster.find((r: any) => r.name === n);
     expect(by("Farah")).toMatchObject({ status: "invited", team: "Robo Rangers", live: false, role: "member" });
     expect(by("Farah").group).toBe(by("Asha").group);
-    /* Asha, Bala and Chetan hold places; Farah does not yet. */
-    expect(body.counts.registered).toBe(3);
+    /* Asha and Bala are confirmed; Farah does not hold a place yet. */
+    expect(body.counts.registered).toBe(2);
   });
 
   /* After a hand-over the lead is whoever the team names, not whoever paid. */
@@ -314,6 +311,6 @@ describe("the roster judges a teammate by their lead", () => {
     role.current = { kind: "coordinator", eventIds: ["robo-climb"] };
     const body = await (await get("robo-climb")).json();
     const names = body.roster.map((r: any) => r.name).sort();
-    expect(names).toEqual(["Asha", "Bala", "Chetan", "Gita", "Hari"]);
+    expect(names).toEqual(["Asha", "Bala", "Gita", "Hari"]);
   });
 });

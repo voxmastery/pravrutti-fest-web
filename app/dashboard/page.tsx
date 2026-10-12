@@ -214,7 +214,7 @@ export default function DashboardPage() {
                 <Star className="h-5 w-5 shrink-0 text-cyber-pink" />
               </Link>
             )}
-            <EventDetail eventId={open} />
+            <EventDetail eventId={open} confirmedOnly />
           </>
         )}
       </DashboardShell>
@@ -459,8 +459,10 @@ function EventRow({ r, open, onToggle }: { r: Row; open: boolean; onToggle: () =
   );
 }
 
-/** The single-event roster, shared by both roles. */
-function EventDetail({ eventId }: { eventId: string }) {
+/** The single-event roster, shared by both roles. A coordinator's
+    (`confirmedOnly`) holds confirmed teams only — the server sends nothing
+    else — so the in-review numbers and the filters have nothing to show. */
+function EventDetail({ eventId, confirmedOnly = false }: { eventId: string; confirmedOnly?: boolean }) {
   const [data, setData] = useState<{ counts: Counts; roster: Entry[] } | null>(null);
   const [state, setState] = useState<"loading" | "ok" | "error">("loading");
   const [view, setView] = useState<View>("all");
@@ -512,28 +514,34 @@ function EventDetail({ eventId }: { eventId: string }) {
   return (
     <div className="pt-3">
       <div className="mb-3 flex flex-wrap gap-x-6 gap-y-2 text-sm">
-        <StatInline label="Teams" value={data.counts.teams} />
-        <StatInline label="Students" value={data.counts.registered} />
+        {!confirmedOnly && <StatInline label="Teams" value={data.counts.teams} />}
+        {!confirmedOnly && <StatInline label="Students" value={data.counts.registered} />}
         <StatInline label="Confirmed teams" value={data.counts.confirmedTeams} />
         <StatInline label="Confirmed students" value={data.counts.confirmed} />
-        <StatInline label="In review teams" value={data.counts.inReviewTeams ?? 0} />
-        <StatInline label="In review students" value={data.counts.inReview ?? 0} />
+        {!confirmedOnly && <StatInline label="In review teams" value={data.counts.inReviewTeams ?? 0} />}
+        {!confirmedOnly && <StatInline label="In review students" value={data.counts.inReview ?? 0} />}
         <StatInline label="Checked in" value={data.counts.checkedIn} />
         <StatInline label="Not arrived" value={data.counts.notArrived} />
       </div>
 
       {data.roster.length > 0 && (
         <div className="mb-3 space-y-1.5">
-          <FilterGroup
-            value={view}
-            onChange={setView}
-            label="Show who"
-            options={VIEWS.map((v) => ({
-              id: v.id,
-              label: `${v.label} (${v.id === "all" ? data.roster.length : data.roster.filter((p) => stageOf(p) === v.id).length})`,
-            }))}
-          />
-          <p className="text-xs text-white/40">{VIEWS.find((v) => v.id === view)?.hint}</p>
+          {confirmedOnly ? (
+            <p className="text-xs text-white/40">Confirmed teams only — verified and holding a ticket.</p>
+          ) : (
+            <>
+              <FilterGroup
+                value={view}
+                onChange={setView}
+                label="Show who"
+                options={VIEWS.map((v) => ({
+                  id: v.id,
+                  label: `${v.label} (${v.id === "all" ? data.roster.length : data.roster.filter((p) => stageOf(p) === v.id).length})`,
+                }))}
+              />
+              <p className="text-xs text-white/40">{VIEWS.find((v) => v.id === view)?.hint}</p>
+            </>
+          )}
           <div className="flex flex-wrap items-center gap-3 pt-1">
             <button
               type="button"
@@ -554,7 +562,7 @@ function EventDetail({ eventId }: { eventId: string }) {
       <Card className="max-h-[380px] gap-0 divide-y divide-white/[0.05] overflow-y-auto rounded-xl border-white/[0.08] bg-midnight-navy/60 py-0 shadow-none">
         {(() => {
           if (data.roster.length === 0)
-            return <p className="p-5 text-sm text-white/45">No registrations yet.</p>;
+            return <p className="p-5 text-sm text-white/45">{confirmedOnly ? "No confirmed teams yet." : "No registrations yet."}</p>;
           if (shown.length === 0)
             return <p className="p-5 text-sm text-white/45">Nobody here right now.</p>;
           return groupRoster(shown).map((g) => <RosterGroup key={g.key} g={g} view={view} />);
