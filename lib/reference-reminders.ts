@@ -1,7 +1,6 @@
 import { listAll, readPrivate, putJson, applicationPath, reminderClaimPath } from "@/lib/blob-store";
 import type { Application } from "@/lib/applications";
 import { sendReferenceReminder } from "@/lib/reference-reminder-email";
-import { reviewClosed } from "@/lib/registration-counts";
 import { isDiscoverize } from "@/lib/discoverize";
 
 /**
@@ -44,9 +43,6 @@ export function owesReference(a: Application): boolean {
      which they have not. Their coordinators chase them from Discoverize's own
      desk until this reminder has copy that fits. */
   if (isDiscoverize(a.eventId)) return false;
-  /* Review has closed on this event: they will not be accepted, so nobody
-     asks them to pay (lib/registration-counts, reviewClosed). */
-  if (reviewClosed(a.eventId)) return false;
   return a.status === "pending" && a.payment === "awaiting" && !a.paymentRef;
 }
 

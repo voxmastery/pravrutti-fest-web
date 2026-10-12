@@ -150,15 +150,4 @@ describe("POST /api/admin/reference-reminders", () => {
     expect(sent).toHaveLength(0);
     expect(store.get(`app/${EV}/owes@example.com.json`).referenceReminderCount).toBeUndefined();
   });
-
-  /* 12 Oct: review closed on every event but DENT - INNOVATE and
-     ELECTROXCAPE — nobody there is asked to pay any more. */
-  it("does not chase anyone on an event whose review has closed", async () => {
-    store.set("app/glide-x/owes.json", {
-      ticketId: "PRV-G", eventId: "glide-x", eventName: "Glide-X", email: "owes@example.com",
-      name: "A Student", status: "pending", payment: "awaiting", fee: "Rs. 200/-",
-    });
-    const body = await (await post({ dryRun: true })).json();
-    expect(body.due).toEqual([]);
-  });
 });

@@ -3,7 +3,6 @@ import { applicationPath, readJsonByPath } from "@/lib/blob-store";
 import { isLiveApplication, type Application, type AppStatus } from "@/lib/applications";
 import { resolveEmail } from "@/lib/identity";
 import { resolveRole, canViewEvent } from "@/lib/roles";
-import { isClosedOut } from "@/lib/review-closed";
 import { withDiscoverizeShortlist } from "@/lib/discoverize-shortlist";
 
 export type EventAccess = {
@@ -64,9 +63,7 @@ export async function resolveEventAccess(slug: string): Promise<EventAccess> {
      and its payer as owing the round fee — before its row is ever written
      that way (lib/discoverize-shortlist). Every other row is unchanged. */
   const record = stored ? await withDiscoverizeShortlist(stored) : null;
-  /* In review on an event whose review closed: not accepted, so it reads
-     as declined here too (lib/review-closed). */
-  const status = record && (await isClosedOut(record)) ? ("declined" as const) : record?.status ?? null;
+  const status = record?.status ?? null;
   const registered = isLiveApplication(status);
   const awaitingReference =
     status === "pending" && record?.payment === "awaiting" && !record?.paymentRef;

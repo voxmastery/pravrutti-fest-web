@@ -1,5 +1,4 @@
 import { countsAsRegistered, COVERED_BY_LEAD, type Application } from "@/lib/applications";
-import { events, eventId as slugFor } from "@/lib/pravrutti-data";
 
 /**
  * One way to count a field, in both the units people ask about.
@@ -57,48 +56,6 @@ export type RegistrationCounts = {
 export const isTeammate = (r: Pick<Application, "fee">) => r.fee === COVERED_BY_LEAD;
 
 /**
- * Events whose review stays open even once they are closed: an in-review
- * registration there can still be confirmed. On 12 Oct 2026 the organisers
- * closed every event but DENT - INNOVATE and ELECTROXCAPE, review included.
- * Discoverize stays here too: its shortlisted teams pay after registration
- * closes, so its review queue holds finalists, not latecomers.
- */
-export const REVIEW_OPEN_EVENTS: ReadonlySet<string> = new Set([
-  "dent-innovate",
-  "electroxcape",
-  "discoverize-research-paper-presentation",
-]);
-
-/** Whether in-review registrations on this event have been closed out:
-    the event is shut — switched to full, or past its own close — and is not
-    one of REVIEW_OPEN_EVENTS. Reopening an event reopens its review. */
-export function reviewClosed(eventId: string | null | undefined, now = Date.now()): boolean {
-  const id = String(eventId ?? "");
-  if (REVIEW_OPEN_EVENTS.has(id)) return false;
-  const e = events.find((x) => slugFor(x.name) === id);
-  if (!e) return false;
-  return !!e.full || (!!e.registrationCloses && now >= Date.parse(e.registrationCloses));
-}
-
-/**
- * The in-review rows that will not be accepted: pending on an event whose
- * review is closed, on a team (or a solo entry) nobody on which is
- * confirmed. A confirmed team stays whole — a teammate still pending on it
- * keeps their place. Shown to the student as declined ("Not confirmed"),
- * counted nowhere. An organiser who confirms someone on the team by hand
- * lifts it for that team.
- */
-export function closedOutRows<T extends Pick<Application, "eventId" | "status" | "teamCode" | "email">>(
-  rows: readonly T[],
-): Set<T> {
-  const teamOf = (r: T) => `${r.eventId}|${entryKey(r)}`;
-  const confirmedTeams = new Set(rows.filter((r) => r.status === "confirmed").map(teamOf));
-  return new Set(
-    rows.filter((r) => r.status === "pending" && reviewClosed(r.eventId) && !confirmedTeams.has(teamOf(r))),
-  );
-}
-
-/**
  * The rows that hold a place, judged per team.
  *
  * countsAsRegistered judges one row alone, and a teammate's row alone always
@@ -116,16 +73,14 @@ export function closedOutRows<T extends Pick<Application, "eventId" | "status" |
  */
 export function heldRows<T extends Application>(rows: readonly T[]): Set<T> {
   const teamOf = (r: T) => `${r.eventId}|${String(r.teamCode ?? "").trim().toUpperCase()}`;
-  /* In review on a closed event, on a team nobody confirmed: no place. */
-  const closedOut = closedOutRows(rows);
   const carried = new Set<string>();
   for (const r of rows)
-    if (r.teamCode && !closedOut.has(r) && countsAsRegistered(r) && (r.status === "confirmed" || !isTeammate(r)))
+    if (r.teamCode && countsAsRegistered(r) && (r.status === "confirmed" || !isTeammate(r)))
       carried.add(teamOf(r));
 
   const held = new Set<T>();
   for (const r of rows) {
-    if (!countsAsRegistered(r) || closedOut.has(r)) continue;
+    if (!countsAsRegistered(r)) continue;
     if (r.status === "confirmed" || !isTeammate(r) || !r.teamCode || carried.has(teamOf(r))) held.add(r);
   }
   return held;

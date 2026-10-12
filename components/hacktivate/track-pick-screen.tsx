@@ -276,7 +276,7 @@ function stepChip(screen: ScreenId, confirm: boolean, raced: boolean) {
   if (confirm) return { n: "03", label: "CONFIRM" };
   if (screen === "locked") return { n: "04", label: "SUCCESS" };
   if (raced) return { n: "05", label: "FULL / RACE" };
-  if (screen === "ineligible" || screen === "no_team") return { n: "06a", label: screen === "no_team" ? "NO TEAM" : "NOT CONFIRMED" };
+  if (screen === "ineligible" || screen === "no_team") return { n: "06a", label: screen === "no_team" ? "NO TEAM" : "IN REVIEW" };
   if (screen === "member") return { n: "06b", label: "NON-LEAD" };
   if (screen === "countdown") return { n: "01", label: "BEFORE 10:00" };
   if (screen === "paused") return { n: "02", label: "PAUSED" };
@@ -370,7 +370,7 @@ function TeamChip({ data }: { data: State }) {
       </div>
       <div className="flex shrink-0 flex-col items-end gap-1">
         <span className={`rounded-full border px-2 py-0.5 font-display text-[10px] tracking-[0.14em] ${confirmed ? "border-success/40 text-success-soft" : "border-soft-gold/50 text-champagne-gold"}`}>
-          {confirmed ? "CONFIRMED" : "NOT CONFIRMED"}
+          {confirmed ? "CONFIRMED" : data.team.status === "in_review" ? "IN REVIEW" : "NOT CONFIRMED"}
         </span>
         {role && (
           <span className="rounded-full border border-cyber-pink/40 px-2 py-0.5 font-display text-[10px] tracking-[0.14em] text-cyber-pink">

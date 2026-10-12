@@ -4,7 +4,6 @@ import { createHash } from "crypto";
 import { events, eventId } from "@/lib/pravrutti-data";
 import { venueFor } from "@/lib/event-venues";
 import { Application } from "@/lib/applications";
-import { isClosedOut } from "@/lib/review-closed";
 import { resolveEmail, authRequired } from "@/lib/identity";
 import { ticketQrDataUrl } from "@/lib/ticket-qr";
 import { withDiscoverizeShortlist } from "@/lib/discoverize-shortlist";
@@ -61,17 +60,12 @@ export async function POST(req: Request) {
     for (const r of batch) if (r) found.push(await withDiscoverizeShortlist(r as Application));
   }
 
-  /* In review on an event whose review has closed reads as declined — "Not
-     confirmed" — unless someone on the team is confirmed (lib/review-closed). */
-  const notAccepted = new Set<Application>();
-  for (const r of found as Application[]) if (await isClosedOut(r)) notAccepted.add(r);
-
   const out = await Promise.all(
     found.map(async (r: Application) => ({
       ticketId: r.ticketId,
       eventId: r.eventId,
       eventName: r.eventName,
-      status: notAccepted.has(r) ? ("declined" as const) : r.status,
+      status: r.status,
       payment: r.payment,
       fee: r.fee,
       /* Whether a transaction ID was ever recorded, not what it is: the page

@@ -3,7 +3,7 @@ import { createHash } from "crypto";
 import { listAll, readPrivate } from "@/lib/blob-store";
 import type { Application } from "@/lib/applications";
 import type { Team, TeamMember } from "@/lib/teams";
-import { closedOutRows, countRegistrations, entryKey, heldRows, isTeammate } from "@/lib/registration-counts";
+import { countRegistrations, entryKey, heldRows, isTeammate } from "@/lib/registration-counts";
 
 /**
  * An event's roster as the dashboard shows it, for one kind of viewer.
@@ -75,9 +75,6 @@ export async function buildEventRoster(eventId: string, view: RosterView) {
 
   const mine = records.filter((r) => r.eventId === eventId);
   const holding = heldRows(mine);
-  /* In review when the event's review closed: shown as declined, the way
-     the student's own ticket shows it. */
-  const closedOut = closedOutRows(mine);
 
   const [memberRows, teamRows] = await Promise.all([
     listAll(`team-member/${eventId}/`).then((bs) => Promise.all(bs.map((b) => readPrivate(b.url)))),
@@ -95,7 +92,7 @@ export async function buildEventRoster(eventId: string, view: RosterView) {
     college: r.college,
     email: r.email,
     phone: r.phone,
-    status: closedOut.has(r) ? "declined" : r.status,
+    status: r.status,
     checkedInAt: r.checkedInAt ?? null,
     team: r.teamCode ? r.teamName?.trim() || "Unnamed team" : null,
     group: createHash("sha256").update(`${eventId}|${entryKey(r)}`).digest("hex").slice(0, 12),
