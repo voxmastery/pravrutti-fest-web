@@ -5,9 +5,9 @@ import { leadMayInvite } from "@/lib/lead-decision";
 /**
  * Hacktivate closed at 11:59 PM IST on 1 October. That stops a new team.
  * A lead who is already in — confirmed or in review — can still add, and a
- * teammate can still join that team with the code, until the fest-wide
- * close. Past that close, adding stops. Discoverize's shortlisted-lead
- * exception is covered in discoverize-closed.
+ * teammate can still join that team with the code after the fest-wide
+ * close as well — that adds no new team. Discoverize's shortlisted-lead
+ * exception (for a lead who never registered) is covered in discoverize-closed.
  *
  * The clock is pinned. The real registration dates decide, so a fest-wide
  * extension cannot quietly reopen Hacktivate to new teams.
@@ -199,9 +199,20 @@ describe("Hacktivate after its own close", () => {
 describe("after the fest-wide close as well", () => {
   beforeEach(() => { clock.now = AFTER_FEST; });
 
-  it("still refuses a confirmed Hacktivate lead adding a teammate", async () => {
+  it("still lets a confirmed Hacktivate lead add a teammate", async () => {
     seedConfirmed();
-    expect((await addMate()).status).toBe(409);
+    const res = await addMate();
+    expect(res.status, JSON.stringify(await res.clone().json())).toBe(200);
+    expect(store.get(`app/${EV}/${MATE}.json`).status).toBe("confirmed");
+  });
+
+  it("still lets a teammate join the confirmed lead's team with the code", async () => {
+    seedConfirmed();
+    const res = await post({
+      action: "join", eventId: EV, code: CODE, email: "newcomer@example.com",
+      name: "New Comer", phone: "9876543212", college: "RUAS",
+    });
+    expect(res.status, JSON.stringify(await res.clone().json())).toBe(200);
   });
 
   it("still refuses a new team", async () => {

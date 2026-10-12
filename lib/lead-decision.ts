@@ -50,10 +50,10 @@ export async function leadIsRegistered(evId: string, team: Team | null): Promise
  * Whether this lead may add a teammate, as far as the registration window goes.
  *
  * An event's own earlier close, or the event being full, stops new teams.
- * It does not stop a team that is already in from filling its own slots:
- * the caller treats the fest-wide date as still open for a lead who is in
- * review or confirmed. Once that fest-wide date has passed, the only add
- * left is a shortlisted Discoverize lead who already registered.
+ * It does not stop a team that is already in from filling its own slots —
+ * the caller allows a lead who is in review or confirmed to keep adding
+ * after the fest-wide date as well. This helper is only the Discoverize
+ * shortlist exception for a lead who is not otherwise let through.
  *
  * A full roster, someone who is not the lead, and a duplicate email are
  * refused on their own; this only answers the window.

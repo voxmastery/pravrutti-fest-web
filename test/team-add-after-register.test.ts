@@ -138,19 +138,19 @@ describe("adding a member after the team has registered", () => {
     expect(res.status).toBe(403);
   });
 
-  it("refuses a registered lead once registration has closed", async () => {
+  it("still lets a registered lead add once registration has closed", async () => {
     seedRegisteredTeam();
     open.value = false;
-    expect((await addMate()).status).toBe(409);
-    expect(store.has(`member/${EV}/${MATE}.json`)).toBe(false);
+    expect((await addMate()).status).toBe(200);
+    expect(store.has(`member/${EV}/${MATE}.json`)).toBe(true);
   });
 
-  it("refuses a confirmed lead once registration has closed", async () => {
+  it("still lets a confirmed lead add once registration has closed", async () => {
     seedRegisteredTeam();
     store.get(`app/${EV}/${LEAD}.json`).status = "confirmed";
     store.get(`app/${EV}/${LEAD}.json`).payment = "paid";
     open.value = false;
-    expect((await addMate()).status).toBe(409);
+    expect((await addMate()).status).toBe(200);
   });
 
   /* The window closing is what stops a team that never got in. A lead who
@@ -187,13 +187,13 @@ describe("what the ticket page is told about inviting", () => {
     expect(body.team.canInvite).toBe(true);
   });
 
-  it("says a registered lead cannot invite once registration has closed", async () => {
+  it("says a registered lead can still invite once registration has closed", async () => {
     seedRegisteredTeam();
     identity.email = LEAD;
     open.value = false;
     const body = await (await mine()).json();
-    expect(body.team.canInvite).toBe(false);
-    expect(body.team.inviteBlockedReason).toMatch(/Registration closed/i);
+    expect(body.team.canInvite).toBe(true);
+    expect(body.team.inviteBlockedReason).toBeNull();
   });
 
   it("says they cannot invite once registration has closed and the lead is not registered", async () => {

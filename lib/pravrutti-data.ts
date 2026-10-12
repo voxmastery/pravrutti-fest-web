@@ -856,6 +856,12 @@ export const events: Event[] = [
     capacityUnit: "teams",
     /* Closes early: 11:59 PM IST on 1 October, organisers' call. */
     registrationCloses: "2026-10-01T18:29:59.000Z",
+    /* Cap 60 teams. Desk held ~68 holding places (59 confirmed team codes,
+       9 pending) on 12 Oct — Renuka's freeze. full stops new teams; nobody
+       already in is removed. Listed and struck through. */
+    maxTeams: 60,
+    capacity: 240,
+    full: true,
     sponsorPerks: [
       {
         sponsor: "ElevenLabs",

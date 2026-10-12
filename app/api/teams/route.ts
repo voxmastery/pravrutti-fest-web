@@ -89,8 +89,9 @@ function registrationWindowOpen(event: { registrationCloses?: string } | null | 
 
 /** Add is allowed while this event is still taking teams. After the event
     itself has closed, or once the fest-wide date has passed, a lead who is
-    already in (in review or confirmed) may still fill the team until the
-    fest closes. Past that, only a shortlisted Discoverize lead may add. */
+    already in (in review or confirmed) may still fill the team's own slots —
+    that adds no new team. Past the fest-wide close, a shortlisted Discoverize
+    lead who never registered still cannot; one who is already in can. */
 async function discoverizeShortlistedLead(evId: string, team: Team): Promise<boolean> {
   if (!isDiscoverize(evId)) return false;
   const email = String(team.createdByEmail ?? "").trim().toLowerCase();
@@ -102,15 +103,22 @@ async function discoverizeShortlistedLead(evId: string, team: Team): Promise<boo
 }
 
 function closedAddReason(event: { name?: string; registrationCloses?: string }) {
-  return `Registration closed on ${eventClosesDisplay(event)}. New members can't be added.`;
+  const when = eventClosesDisplay(event);
+  return when
+    ? `Registration closed on ${when}. New members can't be added.`
+    : "Registration has closed. New members can't be added.";
+}
+
+function sameEmail(a: string | null | undefined, b: string | null | undefined) {
+  return String(a ?? "").trim().toLowerCase() === String(b ?? "").trim().toLowerCase();
 }
 
 async function mayInviteOnto(evId: string, event: { registrationCloses?: string }, team: Team) {
   if (registrationWindowOpen(event)) return true;
   const leadIn = await leadIsRegistered(evId, team);
-  /* The event is closed to new teams. One that is already in keeps filling
-     its own slots until the fest-wide close, full flag or not. */
-  if (effectiveRegistrationOpen() && leadIn) return true;
+  /* A team that is already in keeps filling its own slots after an event
+     close, a full flag, or the fest-wide deadline — that adds no new team. */
+  if (leadIn) return true;
   return leadMayInvite({
     registrationOpen: false,
     leadRegistered: leadIn,
@@ -303,7 +311,7 @@ async function mineTeam(evId: string, bodyEmail: string) {
       {
         team: {
           ...toTeamPreview(team, members, maxTeamSizeFor(event), true),
-          isLead: String(team.createdByEmail).toLowerCase() === who.email.toLowerCase(),
+          isLead: sameEmail(team.createdByEmail, who.email),
           leadEmail: String(team.createdByEmail ?? "").toLowerCase(),
           canInvite,
           inviteBlockedReason: canInvite ? null : closedAddReason(event),
@@ -522,8 +530,6 @@ async function createTeam(body: any) {
 }
 
 async function joinTeam(body: any) {
-  if (!effectiveRegistrationOpen()) return jsonError(registrationUnavailableMessage(), 409);
-
   const evId = String(body?.eventId ?? "").trim();
   const event = findEvent(evId);
   if (!event) return jsonError("That event doesn't exist.", 400);
@@ -573,11 +579,12 @@ async function joinTeam(body: any) {
     return blobFailed(e, "team join precheck failed");
   }
 
-  /* A full event, or one that closed to new teams on its own date, still
-     lets people onto a team that is already in — that adds no team. A team
-     whose lead never registered is not in it. Joining that one would only
-     strand them, so it stops with the same answer a new team would get. */
+  /* A full event, an early close, or the fest-wide deadline still lets people
+     onto a team that is already in — that adds no team. A team whose lead
+     never registered is not in it. Joining that one would only strand them. */
   const leadIn = await leadIsRegistered(evId, team);
+  if (!leadIn && !effectiveRegistrationOpen())
+    return jsonError(registrationUnavailableMessage(), 409);
   if (!leadIn && !effectiveRegistrationOpen(undefined, festFor(event)))
     return jsonError(eventClosedMessage(event), 409);
   if (!leadIn && (await eventIsFull(event)))
@@ -586,7 +593,7 @@ async function joinTeam(body: any) {
   const maxMembers = maxTeamSizeFor(event);
   const roster = await listTeamMembers(evId, code);
   const alreadyMember = roster.some((m: any) => String(m.email ?? "").toLowerCase() === email);
-  if (alreadyMember && team.createdByEmail === email)
+  if (alreadyMember && sameEmail(team.createdByEmail, email))
     return jsonError("You're the team lead — continue to submit your application.", 409);
 
   if (!alreadyMember && roster.length >= maxMembers)
@@ -698,7 +705,7 @@ async function deleteTeam(body: any) {
   try {
     const team = await loadTeam(evId, code);
     if (!team) return jsonError("No team found for that code.", 404);
-    if (team.createdByEmail !== who.email)
+    if (!sameEmail(team.createdByEmail, who.email))
       return jsonError("Only the team lead can delete this team.", 403);
 
     /* Deleting only tombstones the team. It does not reach the teammates, who
@@ -744,7 +751,7 @@ async function otherTeams(body: any) {
       .filter((t) => t && !t.deletedAt && t.eventId && t.eventId !== evId)
       .filter(
         (t) =>
-          t.createdByEmail === who.email ||
+          sameEmail(t.createdByEmail, who.email) ||
           (Array.isArray(t.members) && t.members.some((m) => m?.email === who.email))
       )
       .map((t) => ({
@@ -752,7 +759,7 @@ async function otherTeams(body: any) {
         eventName: findEvent(t.eventId)?.name ?? t.eventId,
         code: t.code,
         name: t.name,
-        isLead: t.createdByEmail === who.email,
+        isLead: sameEmail(t.createdByEmail, who.email),
       }))
       .slice(0, 5);
     return NextResponse.json({ teams }, { headers: { "cache-control": "no-store" } });
@@ -792,7 +799,7 @@ async function addMember(body: any) {
   try {
     const team = await loadTeam(evId, code);
     if (!team) return jsonError("No team found for that code.", 404);
-    if (team.createdByEmail !== who.email)
+    if (!sameEmail(team.createdByEmail, who.email))
       return jsonError("Only the team lead can add members.", 403);
     /* A closed window stops adding, except a shortlisted Discoverize lead
        who already registered. Create and join keep their own checks. */
@@ -1037,7 +1044,7 @@ async function removeFromTeam(body: any, mode: "leave" | "remove") {
     if (mode === "remove") {
       const who = await resolveApplicantEmail(String(body?.email ?? ""));
       if ("error" in who) return who.error;
-      if (team.createdByEmail !== who.email)
+      if (!sameEmail(team.createdByEmail, who.email))
         return jsonError("Only the team lead can remove members.", 403);
       target = normalizeMemberEmail(body?.memberEmail);
       if (!isValidMemberEmail(target)) return jsonError("Pick a member to remove.", 400);

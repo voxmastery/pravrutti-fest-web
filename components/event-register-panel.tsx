@@ -220,9 +220,9 @@ export function EventRegisterPanel({
   /* The number is not on the event. It arrives with the call-button lookup,
      which is the same moment Request to join is allowed on screen. */
   const note = registerNoteText(event.registerNote, event.registerNoteCoordinator, phones);
-  /* Full, or closed to new teams on its own date. A team already in can
-     still be joined with its code until the fest-wide close. */
-  const showJoinExisting = viewerReady && dash.ready && !live && !staff && festOpen && (closedFull || closed);
+  /* Full, or closed to new teams on its own date (or after the fest-wide
+     deadline). A team already in can still be joined with its code. */
+  const showJoinExisting = viewerReady && dash.ready && !live && !staff && (closedFull || closed || !festOpen);
   const showClosed = viewerReady && !live && closed && !festOpen;
   /* Two different people are pending without a reference. One left for the
      portal and never told us how it went — they get the question. The other
