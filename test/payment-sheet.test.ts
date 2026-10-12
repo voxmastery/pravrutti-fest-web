@@ -170,8 +170,8 @@ describe("planFromSheet", () => {
     expect(plan.unpaid).toHaveLength(0);
   });
 
-  /* FAULT x LOAD is capped at 16 teams and is not marked full. The 17th
-     confirmed team is the one that would go over. */
+  /* FAULT x LOAD is capped at 16 teams and is also marked full. The 17th
+     confirmed team is the one that would go over the cap. */
   it("leaves a row out when confirming it would pass the team cap", () => {
     const confirmed = Array.from({ length: 16 }, (_, i) => app({
       eventId: "fault-x-load", eventName: "FAULT x LOAD", status: "confirmed", payment: "paid",

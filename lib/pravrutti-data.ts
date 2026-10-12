@@ -541,13 +541,15 @@ export const events: Event[] = [
     prizes: [5000, 3000, 2000],
     teamSize: { min: 3, max: 4, soloAllowed: false },
     /* Closed itself at 15 teams (60 heads / 4). On 10 Oct it held 14
-       confirmed and 1 in review, so the cap is 16: one more team, then
-       it fills. capacity is the head count at four a team. No full
-       switch, no earlier close, and it stays on the list, so it takes
-       that one team until the fest deadline. */
+       confirmed and 1 in review, so the cap was raised to 16. Closed by
+       hand on 12 Oct, Ganesh's call — the same shut as Respawn and Robo
+       Race. Cap stays 16 (64 heads at four a team). Listed and struck
+       through. No new team; teams already in keep their places and can
+       still be joined. Remove `full` to reopen. */
     capacity: 64,
     capacityUnit: "teams",
     maxTeams: 16,
+    full: true,
     duration: "3 hours",
     coordinators: {
       faculty: [],
