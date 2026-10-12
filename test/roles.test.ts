@@ -106,6 +106,18 @@ describe("roleForEmail", () => {
     });
   });
 
+  it("gives the new Triathlon coordinators only that desk", () => {
+    process.env.ORGANISER_EMAILS = "";
+    for (const email of ["snehajangid024@gmail.com", "dhruvdhote7@gmail.com"]) {
+      expect(roleForEmail(email)).toEqual({
+        kind: "coordinator",
+        eventIds: expectedEvents(["triathlon"]),
+      });
+      expect(canViewEvent(roleForEmail(email), "triathlon")).toBe(true);
+      expect(canViewEvent(roleForEmail(email), "glide-x")).toBe(false);
+    }
+  });
+
   it("gives roppashreeganesh@gmail.com only the Discoverize desk", () => {
     process.env.ORGANISER_EMAILS = "voxmastery@gmail.com";
     expect(roleForEmail("roppashreeganesh@gmail.com")).toEqual({

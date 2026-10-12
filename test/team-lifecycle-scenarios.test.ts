@@ -33,11 +33,13 @@ vi.mock("@/lib/pravrutti-data", async (o) => {
   return {
     ...actual,
     effectiveRegistrationOpen: () => true,
-    /* One case creates a second team on ROBO RACE. Closing that event on
-       the live data must not change what the lifecycle is proving. */
-    events: actual.events.map((e) =>
-      actual.eventId(e.name) === "robo-race" ? { ...e, full: false } : e,
-    ),
+    /* ROBO RACE and BRIDGE IT are closed on the live list. One case creates
+       a second team on ROBO RACE, and the rest use BRIDGE IT. Closing them
+       must not change what the lifecycle is proving. */
+    events: actual.events.map((e) => {
+      const id = actual.eventId(e.name);
+      return id === "robo-race" || id === "bridge-it" ? { ...e, full: false } : e;
+    }),
   };
 });
 vi.mock("@/lib/received-email", () => ({ sendReceivedEmail: async () => ({ sent: true }) }));

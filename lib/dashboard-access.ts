@@ -48,7 +48,12 @@ export const DESK_ACCESS: Record<string, string[]> = {
   "bracket-blitz": ["pradeepmadasamy55@gmail.com"],
   "zero-hour": ["sudeepapriyadarshini1826@gmail.com", "tanyashedde@gmail.com"],
   "hammer": ["hrithik18a@gmail.com", "mahadevlakshmanan@gmail.com"],
-  "triathlon": ["amantebriwal104@gmail.com", "snehajangid027@gmail.com"],
+  "triathlon": [
+    "amantebriwal104@gmail.com",
+    "snehajangid027@gmail.com",
+    "snehajangid024@gmail.com",
+    "dhruvdhote7@gmail.com",
+  ],
   "pitch-pulse": ["kirankumar.ee.et@msruas.ac.in", "25etcs002129@msruas.ac.in", "jesleneiniya@gmail.com"],
 };
 

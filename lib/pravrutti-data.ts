@@ -627,11 +627,8 @@ export const events: Event[] = [
     prizes: [10000, 7000, 5000],
     teamSize: { min: 2, max: 2, soloAllowed: false },
     capacityUnit: "teams",
-    /* Closed on 8 Oct, Rathan's call. Glide-X has no stated cap to lower,
-       so it is switched to full by hand — the same shut as RC-X. Listed and
-       struck through. No new team; teams already in keep their tickets,
-       payment, and manage-team actions. Remove `full` to reopen. */
-    full: true,
+    /* Reopened 12 Oct. No cap and no earlier close, so it takes new teams
+       until the fest-wide deadline. Listed. */
     duration: "3 hours",
     coordinators: {
       faculty: [],
@@ -772,8 +769,12 @@ export const events: Event[] = [
     /* A duo event: exactly two, not a range. teamLabel renders this as
        "Teams of 2", and the register dialog + API refuse a third. */
     teamSize: { min: 2, max: 2, soloAllowed: false },
+    /* Closed by hand on 12 Oct. The 80-team cap stays, so nobody already
+       registered is cut. full keeps it shut. Listed and struck through.
+       Teams already in keep their tickets, payment, and manage-team actions. */
     capacity: 80,
     capacityUnit: "teams",
+    full: true,
     duration: "3 hours",
     coordinators: {
       faculty: [],

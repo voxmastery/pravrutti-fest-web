@@ -22,6 +22,16 @@ vi.mock("@/lib/blob-store", () => ({
   putJson: async (p: string, d: unknown) => { store.set(p, d); },
 }));
 vi.mock("@/lib/mailer", () => ({ siteOrigin: () => "https://pravrutti.tech" }));
+vi.mock("@/lib/pravrutti-data", async (o) => {
+  const actual = await o<typeof import("@/lib/pravrutti-data")>();
+  return {
+    ...actual,
+    /* BRIDGE IT is closed on the live list. This file is about the redirect. */
+    events: actual.events.map((e) =>
+      actual.eventId(e.name) === "bridge-it" ? { ...e, full: false } : e,
+    ),
+  };
+});
 
 let GET: typeof import("@/app/invite/[token]/route").GET;
 beforeAll(async () => { ({ GET } = await import("@/app/invite/[token]/route")); });

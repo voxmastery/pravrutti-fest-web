@@ -170,17 +170,35 @@ describe("Kurukshetra – The Robo War", () => {
   });
 });
 
-/* Closed on 8 Oct, Rathan's call. No stated cap, so the hand switch is
-   the shut — listed and struck through, the same way as RC-X. */
+/* Reopened 12 Oct. No cap and no date of its own, so it follows the fest
+   deadline and stays on the list. */
 describe("Glide-X", () => {
-  it("takes no new teams and stays on the list", () => {
+  it("takes new teams until the fest deadline and stays on the list", () => {
     const e = ev("Glide-X");
     expect(eventId(e.name)).toBe("glide-x");
-    expect(e.full).toBe(true);
+    expect(e.full).toBeFalsy();
+    expect(e.unlisted).toBeFalsy();
+    expect(e.registrationCloses).toBeUndefined();
     expect(e.capacity).toBeUndefined();
     expect(e.maxTeams).toBeUndefined();
-    expect(isFull(e, { people: 0, teams: 0 })).toBe(true);
+    expect(isFull(e, { people: 0, teams: 0 })).toBe(false);
+    expect(registrationState(Date.parse("2026-10-12T18:28:00.000Z"), festFor(e))).toBe("open");
+    expect(registrationState(Date.parse("2026-10-12T18:29:00.000Z"), festFor(e))).toBe("closed");
+    expect(listedEvents).toContain(e);
+  });
+});
+
+/* Closed by hand on 12 Oct. The 80-team cap stays. Listed and struck
+   through. Existing registrations are not touched. */
+describe("BRIDGE IT", () => {
+  it("takes no new teams and stays on the list", () => {
+    const e = ev("BRIDGE IT");
+    expect(eventId(e.name)).toBe("bridge-it");
+    expect(e.full).toBe(true);
+    expect(e.capacity).toBe(80);
     expect(e.unlisted).toBeFalsy();
+    expect(e.registrationCloses).toBeUndefined();
+    expect(isFull(e, { people: 0, teams: 0 })).toBe(true);
     expect(listedEvents).toContain(e);
   });
 });
@@ -294,7 +312,7 @@ const STAYS_SHUT = [
   "AI ESCAPE ROOM",
   "LINE FOLLOWER",
   "Pitch Pulse",
-  "Glide-X",
+  "BRIDGE IT",
   "RC-X",
   "ROBO RACE",
   "Respawn",

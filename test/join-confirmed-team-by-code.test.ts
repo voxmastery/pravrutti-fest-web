@@ -37,10 +37,17 @@ vi.mock("@/lib/blob-store", () => ({
 }));
 vi.mock("@/lib/identity", () => ({ resolveEmail: async () => null, authRequired: () => false }));
 vi.mock("@/lib/roles", () => ({ resolveRole: async () => ({ kind: "none" }), resolveRoleFor: async () => ({ kind: "none" }) }));
-vi.mock("@/lib/pravrutti-data", async (o) => ({
-  ...(await o<typeof import("@/lib/pravrutti-data")>()),
-  effectiveRegistrationOpen: () => true,
-}));
+vi.mock("@/lib/pravrutti-data", async (o) => {
+  const actual = await o<typeof import("@/lib/pravrutti-data")>();
+  return {
+    ...actual,
+    effectiveRegistrationOpen: () => true,
+    /* BRIDGE IT is closed on the live list. This file is about joining. */
+    events: actual.events.map((e) =>
+      actual.eventId(e.name) === "bridge-it" ? { ...e, full: false } : e,
+    ),
+  };
+});
 vi.mock("@/lib/invite-email", () => ({
   inviteUrl: (t: string) => `https://x/invite/${t}`,
   sendInviteEmail: async () => ({ sent: true }),

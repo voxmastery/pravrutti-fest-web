@@ -130,11 +130,11 @@ describe("planFromSheet", () => {
 
   it("covers two registrations when the report shows two payments", () => {
     const rows = [
-      app({ eventId: "bridge-it", email: "multi@example.com", appliedAt: "2026-09-16T09:00:00.000Z" }),
+      app({ eventId: "hammer", email: "multi@example.com", appliedAt: "2026-09-16T09:00:00.000Z" }),
       app({ eventId: "the-logic-circuit", email: "multi@example.com", appliedAt: "2026-09-16T10:00:00.000Z", ticketId: "PRV-2" }),
     ];
     const plan = planFromSheet([pay("multi@example.com", "T1"), pay("multi@example.com", "T2")], rows);
-    expect(plan.approve.map((a) => a.eventId).sort()).toEqual(["bridge-it", "the-logic-circuit"]);
+    expect(plan.approve.map((a) => a.eventId).sort()).toEqual(["hammer", "the-logic-circuit"]);
     expect(plan.short).toEqual([]);
   });
 
