@@ -43,16 +43,16 @@ export function DiscoverizeGroupCard({ compact = false }: { compact?: boolean })
   };
 
   return (
-    <div className="rounded-xl border border-emerald-400/30 bg-emerald-400/[0.06] p-3 space-y-2.5">
-      <div className="flex items-start gap-2.5">
+    <div className="w-full min-w-0 overflow-hidden rounded-xl border border-emerald-400/30 bg-emerald-400/[0.06] p-3 space-y-2.5">
+      <div className="flex items-start gap-2.5 min-w-0">
         <span className="mt-0.5 shrink-0 text-emerald-300" aria-hidden="true">
           <MessageCircle className="w-4 h-4" />
         </span>
-        <div className="min-w-0">
-          <p className="text-[13px] font-semibold text-white leading-snug">
+        <div className="min-w-0 flex-1 overflow-hidden">
+          <p className="text-[13px] font-semibold text-white leading-snug break-words">
             Join the Discoverize WhatsApp group
           </p>
-          <p className="text-[12px] text-white/60 leading-relaxed">
+          <p className="text-[12px] text-white/60 leading-relaxed break-words">
             Every Discoverize update, including the presentation round, goes here first.
           </p>
         </div>

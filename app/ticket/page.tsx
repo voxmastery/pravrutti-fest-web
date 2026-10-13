@@ -132,17 +132,17 @@ function TicketTeamBlock({
   };
 
   return (
-    <div className="flex flex-wrap items-center gap-2 pt-0.5">
-      <Button type="button" variant="ghost" size="sm" onClick={handleCopy} aria-label="Copy team code" className="h-auto gap-1.5 px-1 text-sm text-white/70 hover:bg-transparent hover:text-white">
-        <span className="text-white/40">Team code</span>
-        <span className="tracking-widest text-white">{fallbackCode}</span>
+    <div className="flex flex-wrap items-start gap-2 pt-0.5 min-w-0">
+      <Button type="button" variant="ghost" size="sm" onClick={handleCopy} aria-label="Copy team code" className="h-auto max-w-full gap-1.5 px-1 text-sm text-white/70 hover:bg-transparent hover:text-white">
+        <span className="text-white/40 shrink-0">Team code</span>
+        <span className="tracking-widest text-white break-all text-left">{fallbackCode}</span>
         {copied ? (
-          <Check className="w-3.5 h-3.5" aria-hidden="true" />
+          <Check className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
         ) : (
-          <Copy className="w-3.5 h-3.5" aria-hidden="true" />
+          <Copy className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
         )}
       </Button>
-      <span className="text-xs text-white/35">
+      <span className="text-xs text-white/35 break-words min-w-0">
         {fallbackName ? `${fallbackName} · ` : ""}share so teammates can still join
       </span>
     </div>
@@ -286,13 +286,13 @@ export default function TicketPage() {
       <Navigation />
       <div className="absolute inset-0 z-[1] pointer-events-none crt-scanlines opacity-25" />
 
-      <div className="relative z-10 flex-1 w-full max-w-[720px] mx-auto px-6 py-28 lg:py-36">
-        <div className="text-center mb-10">
+      <div className="relative z-10 flex-1 w-full max-w-[720px] mx-auto px-4 sm:px-6 py-28 lg:py-36 min-w-0">
+        <div className="text-center mb-10 min-w-0">
           <span className="inline-flex items-center gap-3 text-xs font-display tracking-widest text-cyber-pink uppercase font-bold mb-5">
             <span className="w-8 h-px bg-neon-purple" />
             Your applications
           </span>
-          <h1 className="text-4xl md:text-6xl font-display tracking-wider font-black mb-4">
+          <h1 className="text-3xl sm:text-4xl md:text-6xl font-display tracking-wider font-black mb-4 break-words">
             MY <span className="text-stroke">TICKETS</span>
           </h1>
           <p className="text-pearl-white/60">
@@ -320,7 +320,7 @@ export default function TicketPage() {
             </Button>
           </div>
         ) : signedIn ? (
-          <div className="flex items-center gap-3 p-4 border border-royal-wine rounded-2xl bg-cosmic-purple/60 mb-8">
+          <div className="flex items-center gap-3 p-3 sm:p-4 border border-royal-wine rounded-2xl bg-cosmic-purple/60 mb-8 min-w-0 overflow-hidden">
             {me.image ? (
               /* eslint-disable-next-line @next/next/no-img-element */
               <img src={me.image} alt="" className="w-10 h-10 rounded-xl shrink-0" />
@@ -329,14 +329,16 @@ export default function TicketPage() {
                 {(me.name ?? "?")[0]}
               </span>
             )}
-            <div className="min-w-0 flex-1">
+            <div className="min-w-0 flex-1 overflow-hidden">
               <p className="font-bold text-sm truncate">{me.name}</p>
               <p className="text-xs text-pearl-white/50 truncate">{me.email}</p>
             </div>
             <Button
               variant="outline" onClick={me.signOut}
-              className="rounded-xl h-9 border-royal-wine text-pearl-white/60 hover:bg-royal-wine/30 text-[10px] font-bold uppercase tracking-wider cursor-pointer" >
-              <LogOut className="w-3.5 h-3.5 mr-1.5" /> Sign out
+              aria-label="Sign out"
+              className="shrink-0 rounded-xl h-9 px-2.5 sm:px-3 border-royal-wine text-pearl-white/60 hover:bg-royal-wine/30 text-[10px] font-bold uppercase tracking-wider cursor-pointer" >
+              <LogOut className="w-3.5 h-3.5 sm:mr-1.5" />
+              <span className="hidden sm:inline">Sign out</span>
             </Button>
           </div>
         ) : null}
@@ -394,15 +396,16 @@ export default function TicketPage() {
                     return (
                       <article
                         key={a.ticketId}
-                        className="min-w-0 rounded-2xl border border-white/[0.08] bg-white/[0.04] p-4 flex gap-4 hover:bg-white/[0.06] transition-colors" >
-                        <div className="min-w-0 flex-1 space-y-2">
-                          <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full border text-xs font-medium ${tone.chip}`}>
-                            <Icon className="w-3 h-3" /> {STATUS_COPY[a.status].label}
+                        className="min-w-0 w-full overflow-hidden rounded-2xl border border-white/[0.08] bg-white/[0.04] p-3 sm:p-4 flex gap-3 sm:gap-4 hover:bg-white/[0.06] transition-colors" >
+                        <div className="min-w-0 flex-1 space-y-2 overflow-hidden">
+                          <span className={`inline-flex max-w-full items-center gap-1.5 px-2.5 py-0.5 rounded-full border text-xs font-medium ${tone.chip}`}>
+                            <Icon className="w-3 h-3 shrink-0" />
+                            <span className="truncate">{STATUS_COPY[a.status].label}</span>
                           </span>
 
                           <a
                             href={`/events/${a.eventId}`}
-                            className="block font-semibold text-base text-white hover:text-champagne-gold transition-colors leading-snug" >
+                            className="block font-semibold text-base text-white hover:text-champagne-gold transition-colors leading-snug break-words" >
                             {a.eventName}
                           </a>
 
@@ -410,14 +413,14 @@ export default function TicketPage() {
                             <TicketValidityNote eventName={a.eventName} />
                           )}
 
-                          <p className="flex items-center gap-1.5 text-sm text-white/50">
-                            <MapPin className="w-3.5 h-3.5 shrink-0" />
-                            <span className="truncate">{a.venue ?? FEST.venue}</span>
+                          <p className="flex items-start gap-1.5 text-sm text-white/50 min-w-0">
+                            <MapPin className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+                            <span className="min-w-0 break-words">{a.venue ?? FEST.venue}</span>
                           </p>
 
-                          <p className="text-sm text-white/40">
+                          <p className="text-sm text-white/40 break-words">
                             {a.payment === "not_required" ? "No payment due" : a.payment === "awaiting" ? `${a.fee} · pay online` : a.payment === "paid" ? `${a.fee} paid` : `${a.fee} refunded`}
-                            <span className="text-white/25"> · {a.ticketId}</span>
+                            <span className="text-white/25 break-all"> · {a.ticketId}</span>
                           </p>
 
                           {/* Discoverize: free to enter, and what comes next
@@ -465,15 +468,15 @@ export default function TicketPage() {
                           {a.eventId === HACKTIVATE_EVENT_ID && (a.status === "confirmed" || a.status === "pending") && (
                             <a
                               href="/hacktivate/track"
-                              className="flex items-center justify-between gap-3 rounded-xl border border-cyber-pink/40 bg-cyber-pink/10 px-3 py-2.5 transition-colors hover:border-cyber-pink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyber-pink"
+                              className="flex items-start justify-between gap-3 min-w-0 rounded-xl border border-cyber-pink/40 bg-cyber-pink/10 px-3 py-2.5 transition-colors hover:border-cyber-pink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyber-pink"
                             >
-                              <span>
+                              <span className="min-w-0">
                                 <span className="block text-sm font-semibold text-champagne-gold">Pick your track</span>
-                                <span className="mt-0.5 block text-[12px] leading-snug text-white/60">
+                                <span className="mt-0.5 block text-[12px] leading-snug text-white/60 break-words">
                                   Opens 11 Oct, 10:00 AM IST. Your lead locks one track for the team.
                                 </span>
                               </span>
-                              <Cpu className="h-4 w-4 shrink-0 text-cyber-pink" aria-hidden="true" />
+                              <Cpu className="h-4 w-4 shrink-0 text-cyber-pink mt-0.5" aria-hidden="true" />
                             </a>
                           )}
 
@@ -553,12 +556,12 @@ export default function TicketPage() {
                           )}
                         </div>
 
-                        {/* Poster sits right, as it does on Luma's list rows */}
-                        <a href={`/events/${a.eventId}`} className="shrink-0">
+                        {/* Poster sits right; smaller on narrow phones so copy keeps room. */}
+                        <a href={`/events/${a.eventId}`} className="shrink-0 self-start">
                           <EventPoster
                             event={ev}
                             name={a.eventName}
-                            className="w-[80px] h-[80px] sm:w-[96px] sm:h-[96px] rounded-xl border border-white/[0.08]" />
+                            className="w-16 h-16 sm:w-20 sm:h-20 md:w-[96px] md:h-[96px] rounded-xl border border-white/[0.08]" />
                         </a>
                       </article>
                     );
@@ -575,8 +578,8 @@ export default function TicketPage() {
       <Dialog open={!!qrFor} onOpenChange={(o) => !o && setQrFor(null)}>
         <DialogContent
           aria-describedby={undefined}
-          className="max-w-[340px] rounded-2xl border border-white/[0.08] bg-cosmic-purple/95 backdrop-blur-xl text-white p-6" >
-          <DialogTitle className="font-semibold text-base text-center text-white leading-snug">
+          className="w-[min(100%-2rem,340px)] max-w-[340px] rounded-2xl border border-white/[0.08] bg-cosmic-purple/95 backdrop-blur-xl text-white p-5 sm:p-6 overflow-hidden" >
+          <DialogTitle className="font-semibold text-base text-center text-white leading-snug break-words px-6">
             {qrFor?.eventName}
           </DialogTitle>
           {qrFor?.qr && (
@@ -586,9 +589,9 @@ export default function TicketPage() {
               alt={`Entry QR for ${qrFor.eventName}`}
               className="w-52 h-52 mx-auto rounded-xl bg-white p-3" />
           )}
-          <div className="text-center space-y-0.5">
-            <p className="font-medium text-white">{qrFor?.name}</p>
-            <p className="text-sm text-white/50">{qrFor?.ticketId}</p>
+          <div className="text-center space-y-0.5 min-w-0 px-1">
+            <p className="font-medium text-white break-words">{qrFor?.name}</p>
+            <p className="text-sm text-white/50 break-all">{qrFor?.ticketId}</p>
           </div>
           {qrFor && <TicketValidityNote eventName={qrFor.eventName} className="text-center" />}
           <p className="text-xs text-white/40 text-center leading-relaxed">
@@ -634,11 +637,11 @@ function DiscoverizeRow({ a, email, onChanged }: { a: App; email: string | null;
         : "border-white/[0.10] bg-white/[0.04]";
 
   return (
-    <div className={`space-y-2.5 rounded-xl border px-3 py-2.5 ${tone}`}>
-      <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-champagne-gold">
+    <div className={`space-y-2.5 rounded-xl border px-3 py-2.5 min-w-0 overflow-hidden ${tone}`}>
+      <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-champagne-gold break-words">
         {DISCOVERIZE_STATE_LABEL[state]}
       </p>
-      <p className="text-[13px] leading-relaxed text-white/70">{DISCOVERIZE_STATE_BLURB[state]}</p>
+      <p className="text-[13px] leading-relaxed text-white/70 break-words">{DISCOVERIZE_STATE_BLURB[state]}</p>
 
       {state === "registered" && (
         <a href={ABSTRACT_FORM_URL} target="_blank" rel="noopener noreferrer" className="block">

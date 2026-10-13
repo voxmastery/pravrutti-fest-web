@@ -111,20 +111,20 @@ export function TeamInviteCard({
   };
 
   return (
-    <section className="rounded-2xl border border-royal-wine bg-cosmic-purple/70 backdrop-blur-md overflow-hidden cyber-box">
-      <div className="px-4 py-2.5 bg-midnight-navy/80 border-b border-royal-wine">
+    <section className="w-full min-w-0 rounded-2xl border border-royal-wine bg-cosmic-purple/70 backdrop-blur-md overflow-hidden cyber-box">
+      <div className="px-3 sm:px-4 py-2.5 bg-midnight-navy/80 border-b border-royal-wine">
         <Heading className="font-display text-[10px] font-black uppercase tracking-[0.22em] text-pearl-white/55">
           Your team code
         </Heading>
       </div>
-      <div className="p-4 space-y-3">
-        <div className="flex items-start gap-3">
+      <div className="p-3 sm:p-4 space-y-3 min-w-0">
+        <div className="flex items-start gap-3 min-w-0">
           <span className="w-9 h-9 shrink-0 rounded-full border border-royal-wine bg-midnight-navy flex items-center justify-center">
             <Users className="w-4 h-4 text-champagne-gold" aria-hidden="true" />
           </span>
-          <div className="min-w-0">
-            <p className="font-display text-sm font-bold text-pearl-white truncate">{team.name}</p>
-            <p className="text-xs text-pearl-white/60 leading-relaxed">
+          <div className="min-w-0 flex-1 overflow-hidden">
+            <p className="font-display text-sm font-bold text-pearl-white break-words">{team.name}</p>
+            <p className="text-xs text-pearl-white/60 leading-relaxed break-words">
               {team.isFull
                 ? `Team is full (${team.memberCount}/${team.maxMembers}).` : `Share this code — teammates can still join until ${team.maxMembers} including you. The team lead pays ₹${FEE_PER_HEAD}; joiners do not.`}
             </p>
@@ -153,15 +153,15 @@ export function TeamInviteCard({
             button left a 12-character code breaking across three lines on a
             phone, which is unreadable and unusable for something meant to be
             read aloud or typed by a teammate. */}
-        <div className="rounded-xl bg-midnight-navy border border-royal-wine px-3 py-3 space-y-2.5">
+        <div className="rounded-xl bg-midnight-navy border border-royal-wine px-3 py-3 space-y-2.5 min-w-0 overflow-hidden">
           <div className="min-w-0">
             <p className="text-[10px] uppercase tracking-widest text-pearl-white/40">Team code</p>
             <p className="text-[15px] sm:text-base font-medium tracking-[0.1em] text-pearl-white mt-1 break-all leading-snug">
               {team.code}
             </p>
           </div>
-          <div className="flex items-center justify-between gap-3">
-            <p className="text-xs text-pearl-white/45 whitespace-nowrap">
+          <div className="flex items-center justify-between gap-3 min-w-0">
+            <p className="text-xs text-pearl-white/45 min-w-0 truncate">
               {team.memberCount}/{team.maxMembers} members
             </p>
             <Button
@@ -173,16 +173,16 @@ export function TeamInviteCard({
           </div>
         </div>
         {people.length > 0 && (
-          <ul className="space-y-2" aria-label="Team members">
+          <ul className="space-y-2 min-w-0" aria-label="Team members">
             {people.map((person, i) => (
               <li
                 key={person.email}
-                className="flex items-start justify-between gap-3 min-w-0 rounded-xl border border-royal-wine/80 bg-midnight-navy/50 px-3 py-2.5" >
-                <div className="min-w-0">
+                className="flex items-start justify-between gap-3 min-w-0 overflow-hidden rounded-xl border border-royal-wine/80 bg-midnight-navy/50 px-3 py-2.5" >
+                <div className="min-w-0 flex-1 overflow-hidden">
                   <p className="text-sm font-bold text-pearl-white truncate">{person.name}</p>
                   <a
                     href={`mailto:${person.email}`}
-                    className="block text-xs text-pearl-white/50 truncate hover:text-champagne-gold transition-colors rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyber-pink" >
+                    className="block text-xs text-pearl-white/50 break-all hover:text-champagne-gold transition-colors rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyber-pink" >
                     {person.email}
                   </a>
                 </div>

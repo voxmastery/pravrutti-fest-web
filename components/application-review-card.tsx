@@ -44,8 +44,8 @@ const primaryBtn =
   "w-full h-[38px] rounded-2xl bg-cyber-pink text-white hover:bg-electric-magenta font-medium text-base cursor-pointer";
 
 const Row = ({ label, children }: { label: string; children: React.ReactNode }) => (
-  <div className="flex items-center justify-between gap-2 px-4 py-3">
-    <span className="text-[13px] text-white/50">{label}</span>
+  <div className="flex items-start justify-between gap-2 px-3 sm:px-4 py-3 min-w-0">
+    <span className="text-[13px] text-white/50 shrink-0 pt-0.5">{label}</span>
     {children}
   </div>
 );
@@ -91,18 +91,18 @@ export function ApplicationReviewCard({
   onClose: () => void;
 }) {
   return (
-    <div className="space-y-4 py-1 animate-step">
-      <div className="flex flex-col items-center text-center pt-2 space-y-3">
+    <div className="w-full min-w-0 space-y-4 py-1 animate-step overflow-hidden">
+      <div className="flex flex-col items-center text-center pt-2 space-y-3 min-w-0">
         <span className="w-12 h-12 rounded-full bg-soft-gold/10 border border-soft-gold/25 flex items-center justify-center">
           <Hourglass className="w-5 h-5 text-champagne-gold" />
         </span>
-        <div>
-          <h2 className="font-semibold text-lg text-white">Application under review</h2>
-          <p className="text-[13px] text-white/50 mt-0.5">{result.eventName}</p>
+        <div className="min-w-0 w-full px-1">
+          <h2 className="font-semibold text-lg text-white break-words">Application under review</h2>
+          <p className="text-[13px] text-white/50 mt-0.5 break-words">{result.eventName}</p>
         </div>
       </div>
 
-      <div className={`${card} divide-y divide-white/[0.08]`}>
+      <div className={`${card} divide-y divide-white/[0.08] min-w-0 overflow-hidden`}>
         <Row label="Status">
           <span className="text-[13px] font-medium text-champagne-gold/90">{statusLabel(result.payment, result.abstractUrl)}</span>
         </Row>
@@ -113,11 +113,11 @@ export function ApplicationReviewCard({
           </span>
         </Row>
         <Row label="Applicant">
-          <span className="text-[13px] font-medium text-white truncate max-w-[55%]">{result.name}</span>
+          <span className="text-[13px] font-medium text-white min-w-0 max-w-[65%] break-words text-right">{result.name}</span>
         </Row>
         {result.teamName ? (
           <Row label="Team">
-            <span className="text-[13px] font-medium text-white truncate max-w-[55%]">{result.teamName}</span>
+            <span className="text-[13px] font-medium text-white min-w-0 max-w-[65%] break-words text-right">{result.teamName}</span>
           </Row>
         ) : null}
         {result.teamCode ? (
@@ -125,11 +125,11 @@ export function ApplicationReviewCard({
             <button
               type="button"
               onClick={() => onCopyCode(result.teamCode!)}
-              className="inline-flex items-center gap-1.5 text-[13px] tracking-widest text-white/90 hover:text-white cursor-pointer"
+              className="inline-flex max-w-[65%] items-center gap-1.5 text-[13px] tracking-widest text-white/90 hover:text-white cursor-pointer break-all text-right"
               aria-label="Copy team code"
             >
-              {result.teamCode}
-              {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+              <span className="min-w-0 break-all">{result.teamCode}</span>
+              {copied ? <Check className="w-3.5 h-3.5 shrink-0" /> : <Copy className="w-3.5 h-3.5 shrink-0" />}
             </button>
           </Row>
         ) : null}
@@ -137,11 +137,11 @@ export function ApplicationReviewCard({
           <span className="text-[13px] font-medium text-white">{result.fee}</span>
         </Row>
         <Row label="Reference">
-          <span className="text-[13px] text-white/80">{result.ticketId}</span>
+          <span className="text-[13px] text-white/80 min-w-0 max-w-[65%] break-all text-right">{result.ticketId}</span>
         </Row>
       </div>
 
-      <p className="text-[13px] text-white/55 leading-relaxed text-center px-2">{explainer(result)}</p>
+      <p className="text-[13px] text-white/55 leading-relaxed text-center px-2 break-words">{explainer(result)}</p>
 
       {/* The next step, right where they are looking. The same button waits
           for them in My tickets, because nobody submits an abstract in the

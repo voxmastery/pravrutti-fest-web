@@ -185,12 +185,12 @@ export function TeamManage({
   if (!team.isLead) {
     if (!selfPerson) return null;
     return (
-      <div className="mt-2 space-y-2">
-        <div className="rounded-xl border border-white/[0.1] bg-white/[0.03] p-3 space-y-2.5">
+      <div className="mt-2 space-y-2 min-w-0 overflow-hidden">
+        <div className="rounded-xl border border-white/[0.1] bg-white/[0.03] p-3 space-y-2.5 min-w-0 overflow-hidden">
           <p className="text-[11px] font-semibold uppercase tracking-wider text-white/70">Your name</p>
-          <ul className="space-y-1.5">
-            <li className="rounded-lg bg-white/[0.05] px-3 py-2.5">
-              <div className="flex items-center gap-2.5">
+          <ul className="space-y-1.5 min-w-0">
+            <li className="rounded-lg bg-white/[0.05] px-3 py-2.5 min-w-0 overflow-hidden">
+              <div className="flex items-center gap-2.5 min-w-0">
                 <span className="min-w-0 flex-1 truncate text-[13px] text-white">{selfPerson.name}</span>
                 {editingEmail === selfPerson.email ? null : editControl(selfPerson)}
               </div>
@@ -295,14 +295,16 @@ export function TeamManage({
           <button
             type="button"
             onClick={() => copyLink(email)}
-            className="inline-flex items-center gap-1.5 text-[11px] text-white/45 hover:text-white/80 transition-colors cursor-pointer"
+            className="inline-flex max-w-full items-start gap-1.5 text-[11px] text-white/45 hover:text-white/80 transition-colors cursor-pointer text-left"
           >
             {copied === email ? (
-              <Check className="w-3 h-3" aria-hidden="true" />
+              <Check className="w-3 h-3 shrink-0 mt-0.5" aria-hidden="true" />
             ) : (
-              <Copy className="w-3 h-3" aria-hidden="true" />
+              <Copy className="w-3 h-3 shrink-0 mt-0.5" aria-hidden="true" />
             )}
-            {copied === email ? "Invite link copied" : `Copy ${email}'s invite link`}
+            <span className="min-w-0 break-all">
+              {copied === email ? "Invite link copied" : `Copy ${email}'s invite link`}
+            </span>
           </button>
         </li>
       ))}
@@ -310,29 +312,29 @@ export function TeamManage({
   ) : null;
 
   return (
-    <div className="mt-2 space-y-2">
+    <div className="mt-2 space-y-2 min-w-0 overflow-hidden">
       {addBlock}
       {warningBlock}
       {linkBlock}
       {roster.length > 0 && (
-        <div className="rounded-xl border border-white/[0.1] bg-white/[0.03] p-3 space-y-2.5">
+        <div className="rounded-xl border border-white/[0.1] bg-white/[0.03] p-3 space-y-2.5 min-w-0 overflow-hidden">
           <p className="text-[11px] font-semibold uppercase tracking-wider text-white/70">
             Remove or change lead
           </p>
-          <ul className="space-y-1.5">
+          <ul className="space-y-1.5 min-w-0">
             {roster.map((m) => {
               const own = m.email.toLowerCase() === me;
               return (
-              <li key={m.email} className="rounded-lg bg-white/[0.05] px-3 py-2.5 space-y-2">
-                <div className="flex items-center gap-2.5">
+              <li key={m.email} className="rounded-lg bg-white/[0.05] px-3 py-2.5 space-y-2 min-w-0 overflow-hidden">
+                <div className="flex items-center gap-2.5 min-w-0">
                   <span className="min-w-0 flex-1 truncate text-[13px] text-white">{m.name}</span>
                   <span className="shrink-0 text-[10px] uppercase tracking-wider text-white/35">
                     {m.status === "joined" ? "Joined" : "Invited"}
                   </span>
                 </div>
-                <details className="rounded-lg">
-                  <summary className="inline-flex h-11 cursor-pointer list-none items-center rounded-xl border border-white/15 bg-white/[0.06] px-3 text-xs font-medium text-white/85 [&::-webkit-details-marker]:hidden">
-                    Actions for {m.name}
+                <details className="rounded-lg min-w-0">
+                  <summary className="inline-flex max-w-full h-11 cursor-pointer list-none items-center rounded-xl border border-white/15 bg-white/[0.06] px-3 text-xs font-medium text-white/85 [&::-webkit-details-marker]:hidden">
+                    <span className="truncate">Actions for {m.name}</span>
                   </summary>
                   <div className="mt-2 flex flex-wrap gap-2">
                     {editingEmail === m.email ? null : editControl(m)}

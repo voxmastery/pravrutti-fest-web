@@ -11,7 +11,7 @@ export function TicketValidityNote({ eventName, className }: { eventName: string
 
   return (
     <p
-      className={`rounded-xl border border-soft-gold/30 bg-soft-gold/[0.07] px-3 py-2.5 text-[13px] leading-relaxed text-white/80 ${className ?? ""}`}
+      className={`min-w-0 break-words rounded-xl border border-soft-gold/30 bg-soft-gold/[0.07] px-3 py-2.5 text-[13px] leading-relaxed text-white/80 ${className ?? ""}`}
     >
       <span className="font-semibold text-champagne-gold">This ticket is only valid for {eventName}.</span>
       {rest ? ` ${rest}` : null}

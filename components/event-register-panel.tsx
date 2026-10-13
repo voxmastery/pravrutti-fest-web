@@ -338,25 +338,25 @@ export function EventRegisterPanel({
 
   return (
     <div className="space-y-3">
-      <section className="rounded-2xl border border-royal-wine bg-cosmic-purple/70 backdrop-blur-md overflow-hidden cyber-box">
-        <div className="px-4 py-2.5 bg-midnight-navy/80 border-b border-royal-wine">
+      <section className="w-full min-w-0 rounded-2xl border border-royal-wine bg-cosmic-purple/70 backdrop-blur-md overflow-hidden cyber-box">
+        <div className="px-3 sm:px-4 py-2.5 bg-midnight-navy/80 border-b border-royal-wine">
           <Heading className="font-display text-[10px] font-black uppercase tracking-[0.22em] text-pearl-white/55">
             Registration
           </Heading>
         </div>
 
-        <div className="p-4 space-y-4">
-          <div className="flex items-start gap-3">
+        <div className="p-3 sm:p-4 space-y-4 min-w-0">
+          <div className="flex items-start gap-3 min-w-0">
             <span className="w-9 h-9 shrink-0 rounded-full border border-royal-wine bg-midnight-navy flex items-center justify-center">
               <UserCheck className="w-4 h-4 text-champagne-gold" aria-hidden="true" />
             </span>
-            <div className="min-w-0">
-              <p className="font-display text-sm font-bold text-pearl-white">
+            <div className="min-w-0 flex-1 overflow-hidden">
+              <p className="font-display text-sm font-bold text-pearl-white break-words">
                 {discoverize && live
                   ? DISCOVERIZE_STATE_LABEL[roundState]
                   : viewerStatus === "pending" ? "In review" : "Approval required"}
               </p>
-              <p className="text-xs text-pearl-white/60 leading-relaxed">
+              <p className="text-xs text-pearl-white/60 leading-relaxed break-words">
                 {discoverize && live
                   ? DISCOVERIZE_STATE_BLURB[roundState]
                   : viewerStatus === "pending" ? "Organisers are reviewing your registration. You\u2019ll hear back before they issue a ticket." : "Your registration is reviewed by the organisers before it is confirmed."}
@@ -364,14 +364,16 @@ export function EventRegisterPanel({
             </div>
           </div>
 
-          <p className="flex items-center gap-2 text-sm text-pearl-white/80">
-            <IndianRupee className="w-3.5 h-3.5 shrink-0 text-cyber-pink" aria-hidden="true" />
+          <p className="flex items-start gap-2 text-sm text-pearl-white/80 min-w-0">
+            <IndianRupee className="w-3.5 h-3.5 shrink-0 text-cyber-pink mt-0.5" aria-hidden="true" />
             {/* Discoverize charges past its shortlist, not at the door. */}
+            <span className="min-w-0 break-words">
             {discoverize
               ? live && (roundState === "payment_pending" || roundState === "payment_submitted")
                 ? `${FEE_PER_HEAD} per team · shortlisted, paid online by the lead`
                 : `Free to enter · ${FEE_PER_HEAD} per team only if shortlisted`
               : `${FEE_PER_HEAD} per team · paid online by the lead`}
+            </span>
           </p>
 
           {closesText && regState === "open" && (
