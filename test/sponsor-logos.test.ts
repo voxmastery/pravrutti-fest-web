@@ -43,6 +43,15 @@ describe("sponsor logos", () => {
     const pcb = hk?.sponsorPerks?.find((p) => p.sponsor === "PCB Cupid");
     expect(pcb?.website).toBe("https://pcbcupid.com/");
     expect(pcb?.perks?.length).toBeGreaterThan(0);
+    const lion = hk?.sponsorPerks?.find((p) => p.sponsor === "Lion Circuits");
+    expect(lion?.website).toBe("https://www.lioncircuits.com/");
+    expect(lion?.perks?.length).toBeGreaterThan(0);
+  });
+
+  it("lists Lion Circuits on the sponsors wall", () => {
+    const lion = sponsors.find((s) => s.name === "Lion Circuits");
+    expect(lion?.website).toBe("https://www.lioncircuits.com/");
+    expect(lion?.logo).toBe("/sponsors/lioncircuits.svg");
   });
 });
 

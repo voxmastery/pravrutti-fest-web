@@ -11,6 +11,7 @@ const sponsorMeta: Record<string, { event: string; role: string; mark?: "compact
   /* No artwork yet, so the name is the mark. At the shared wordmark height
      it sat a size down from ElevenLabs and Seeed; this scale is only theirs. */
   "PCB Cupid": { event: "Hacktivate", role: "Components", mark: "display" },
+  "Lion Circuits": { event: "Hacktivate", role: "PCB manufacturing", mark: "display" },
   ".xyz": { event: "CHAOS", role: "Domains", mark: "compact" },
   "IEEE Smart Cities": { event: "Community", role: "Smart cities" },
 };
@@ -21,6 +22,7 @@ const wallOrder = [
   "ElevenLabs",
   "Seeed Studio",
   "PCB Cupid",
+  "Lion Circuits",
   ".xyz",
   "IEEE Smart Cities",
 ];

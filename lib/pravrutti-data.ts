@@ -225,6 +225,14 @@ export const sponsors: Sponsor[] = [
     wordmark: true,
   },
   {
+    /* Hacktivate hardware partner alongside PCB Cupid, 13 Oct 2026.
+       Orange wordmark from lioncircuits.com (LionCircuitsFullLogo.svg). */
+    name: "Lion Circuits",
+    logo: "/sponsors/lioncircuits.svg",
+    website: "https://www.lioncircuits.com/",
+    wordmark: true,
+  },
+  {
     name: "IEEE Smart Cities",
     logo: "",
     website: "https://smartcities.ieee.org/"
@@ -894,6 +902,14 @@ export const events: Event[] = [
         website: "https://pcbcupid.com/",
         perks: [
           "PCB Cupid kit available on site for Track 1 (Seconds Ahead)",
+        ],
+      },
+      {
+        sponsor: "Lion Circuits",
+        logo: "/sponsors/lioncircuits.svg",
+        website: "https://www.lioncircuits.com/",
+        perks: [
+          "Lion Circuits platform coupons for Hacktivate hardware teams",
         ],
       },
     ],
