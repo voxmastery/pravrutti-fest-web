@@ -3,10 +3,10 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { ArrowLeft, Flashlight, Search, SwitchCamera, Undo2, Users } from "lucide-react";
-import { BrowserQRCodeReader } from "@zxing/browser";
 import { useIdentity } from "@/lib/identity-context";
 import { useDashboardRole } from "@/hooks/use-dashboard-role";
 import { FilterGroup } from "@/components/dashboard/filter-group";
+import { startQrScanner, type QrScannerControls } from "@/lib/qr-scanner";
 
 type Tone = "ok" | "warn" | "err";
 
@@ -62,8 +62,9 @@ type Counts = { gate: number | null; events: { eventId: string; name: string; ch
 
 const GATE = "__gate__";
 const TIMEOUT_MS = 6000;
+const AFTER_SCAN_MS = 700;
 
-type CamControls = { stop: () => void; switchTorch?: (on: boolean) => Promise<void> };
+type CamControls = QrScannerControls;
 
 async function postJson(url: string, body: unknown) {
   const ctrl = new AbortController();
@@ -200,34 +201,30 @@ export default function ScanPage() {
 
   useEffect(() => {
     if (!cameraOn || !videoRef.current) return;
-    const reader = new BrowserQRCodeReader();
     let stop: (() => void) | undefined;
     let cancelled = false;
 
-    reader
-      .decodeFromConstraints(
-        { video: { facingMode: facing } },
-        videoRef.current,
-        (res) => {
-          if (!res || busy.current || holdRef.current) return;
-          const text = res.getText();
-          busy.current = true;
-          void handleScan(text).finally(() => {
-            setTimeout(() => {
-              busy.current = false;
-            }, 2000);
-          });
-        }
-      )
+    void startQrScanner({
+      video: videoRef.current,
+      facing,
+      onCode: (text) => {
+        if (busy.current || holdRef.current) return;
+        busy.current = true;
+        void handleScan(text).finally(() => {
+          setTimeout(() => {
+            busy.current = false;
+          }, AFTER_SCAN_MS);
+        });
+      },
+    })
       .then((controls) => {
         if (cancelled) {
           controls.stop();
           return;
         }
-        const cam = controls as CamControls;
-        controlsRef.current = cam;
+        controlsRef.current = controls;
         stop = () => controls.stop();
-        if (torchOn && cam.switchTorch) void cam.switchTorch(true);
+        if (torchOn && controls.switchTorch) void controls.switchTorch(true);
       })
       .catch(() => {
         setCameraOn(false);
