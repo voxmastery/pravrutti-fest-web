@@ -352,7 +352,7 @@ const STAYS_SHUT = [
   "The Logic Circuit",
   "HAMMER",
   "Terraform: The System Awakens",
-  /* 12 Oct: every event but DENT - INNOVATE and ELECTROXCAPE. */
+  /* 12 Oct batch, then DENT / ELECTROXCAPE on 13 Oct. */
   "KURUKSHETRA - THE ROBO WAR",
   "Campus Innovators 2.0",
   "Beyond the Blueprint 2.0",
@@ -360,6 +360,8 @@ const STAYS_SHUT = [
   "LEADS Innovation Challenge",
   "Bracket blitz",
   "TRIATHLON",
+  "DENT - INNOVATE",
+  "ELECTROXCAPE",
 ];
 
 describe("the extension", () => {
