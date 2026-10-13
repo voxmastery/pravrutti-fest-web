@@ -396,32 +396,46 @@ export default function TicketPage() {
                     return (
                       <article
                         key={a.ticketId}
-                        className="min-w-0 w-full overflow-hidden rounded-2xl border border-white/[0.08] bg-white/[0.04] p-3 sm:p-4 flex gap-3 sm:gap-4 hover:bg-white/[0.06] transition-colors" >
-                        <div className="min-w-0 flex-1 space-y-2 overflow-hidden">
-                          <span className={`inline-flex max-w-full items-center gap-1.5 px-2.5 py-0.5 rounded-full border text-xs font-medium ${tone.chip}`}>
-                            <Icon className="w-3 h-3 shrink-0" />
-                            <span className="truncate">{STATUS_COPY[a.status].label}</span>
-                          </span>
+                        className="min-w-0 w-full overflow-hidden rounded-2xl border border-white/[0.08] bg-white/[0.04] p-3 sm:p-4 flex flex-col gap-3 hover:bg-white/[0.06] transition-colors" >
+                        {/* Title row + poster only. Nested cards (team, pay,
+                            track) sit full-width below so they are not crushed
+                            into the column beside the poster on phones. */}
+                        <div className="flex gap-3 sm:gap-4 min-w-0">
+                          <div className="min-w-0 flex-1 space-y-2">
+                            <span className={`inline-flex max-w-full items-center gap-1.5 px-2.5 py-0.5 rounded-full border text-xs font-medium ${tone.chip}`}>
+                              <Icon className="w-3 h-3 shrink-0" />
+                              <span className="truncate">{STATUS_COPY[a.status].label}</span>
+                            </span>
 
-                          <a
-                            href={`/events/${a.eventId}`}
-                            className="block font-semibold text-base text-white hover:text-champagne-gold transition-colors leading-snug break-words" >
-                            {a.eventName}
+                            <a
+                              href={`/events/${a.eventId}`}
+                              className="block font-semibold text-base text-white hover:text-champagne-gold transition-colors leading-snug break-words" >
+                              {a.eventName}
+                            </a>
+
+                            <p className="flex items-start gap-1.5 text-sm text-white/50 min-w-0">
+                              <MapPin className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+                              <span className="min-w-0 break-words">{a.venue ?? FEST.venue}</span>
+                            </p>
+
+                            <p className="text-sm text-white/40 break-words">
+                              {a.payment === "not_required" ? "No payment due" : a.payment === "awaiting" ? `${a.fee} · pay online` : a.payment === "paid" ? `${a.fee} paid` : `${a.fee} refunded`}
+                              <span className="text-white/25 break-all"> · {a.ticketId}</span>
+                            </p>
+                          </div>
+
+                          <a href={`/events/${a.eventId}`} className="shrink-0 self-start">
+                            <EventPoster
+                              event={ev}
+                              name={a.eventName}
+                              className="w-16 h-16 sm:w-20 sm:h-20 md:w-[96px] md:h-[96px] rounded-xl border border-white/[0.08]" />
                           </a>
+                        </div>
 
+                        <div className="min-w-0 w-full space-y-2">
                           {(a.status === "confirmed" || a.status === "pending") && (
                             <TicketValidityNote eventName={a.eventName} />
                           )}
-
-                          <p className="flex items-start gap-1.5 text-sm text-white/50 min-w-0">
-                            <MapPin className="w-3.5 h-3.5 shrink-0 mt-0.5" />
-                            <span className="min-w-0 break-words">{a.venue ?? FEST.venue}</span>
-                          </p>
-
-                          <p className="text-sm text-white/40 break-words">
-                            {a.payment === "not_required" ? "No payment due" : a.payment === "awaiting" ? `${a.fee} · pay online` : a.payment === "paid" ? `${a.fee} paid` : `${a.fee} refunded`}
-                            <span className="text-white/25 break-all"> · {a.ticketId}</span>
-                          </p>
 
                           {/* Discoverize: free to enter, and what comes next
                               depends on how far through its rounds the team is.
@@ -555,14 +569,6 @@ export default function TicketPage() {
                             )
                           )}
                         </div>
-
-                        {/* Poster sits right; smaller on narrow phones so copy keeps room. */}
-                        <a href={`/events/${a.eventId}`} className="shrink-0 self-start">
-                          <EventPoster
-                            event={ev}
-                            name={a.eventName}
-                            className="w-16 h-16 sm:w-20 sm:h-20 md:w-[96px] md:h-[96px] rounded-xl border border-white/[0.08]" />
-                        </a>
                       </article>
                     );
                   })}
