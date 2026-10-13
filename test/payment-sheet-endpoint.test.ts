@@ -66,8 +66,12 @@ describe("POST /api/dashboard/payment-sheet", () => {
   });
 
   it("plans without writing anything", async () => {
-    /* CHAOS / HAMMER are marked full, so a plan on them would hold the row out of approve. */
-    row("paid@example.com", { eventId: "electroxcape", eventName: "ELECTROXCAPE" });
+    /* CHAOS / ELECTROXCAPE / DENT are marked full, so a plan on them would
+       hold the row out of approve. Discoverize is the only non-full event. */
+    row("paid@example.com", {
+      eventId: "discoverize-research-paper-presentation",
+      eventName: "Discoverize (Research Paper Presentation)",
+    });
     const res = await post({ action: "plan", rows: GRID });
     expect(res.status).toBe(200);
     expect(res.body.payments).toBe(1);
