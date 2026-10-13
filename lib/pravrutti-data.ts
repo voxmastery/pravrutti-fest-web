@@ -478,6 +478,10 @@ export const events: Event[] = [
     teamSize: { min: 4, max: 4, soloAllowed: false },
     capacity: 100,
     capacityUnit: "teams",
+    /* Closed by hand on 13 Oct, organisers' call. Cap stays; teams already
+       in keep their tickets, payment, and manage-team actions. Listed and
+       struck through. */
+    full: true,
     duration: "3 hours",
     eligibility: "ECE and related engineering students.",
     coordinators: {
@@ -749,7 +753,9 @@ export const events: Event[] = [
     capacity: 50,
     capacityUnit: "participants",
     /* Paused on 5 Oct, reopened on 6 Oct with its move to 15 Oct, 2:30 PM —
-       organisers' call. */
+       organisers' call. Closed by hand on 13 Oct; cap stays. Listed and
+       struck through. Existing registrations are not touched. */
+    full: true,
     duration: "3 hours",
     /* 15 Oct, 2:30 PM — moved from 14 Oct, 2:00 PM on 6 Oct, organisers' call. */
     day: 2,

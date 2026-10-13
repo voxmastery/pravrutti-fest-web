@@ -180,14 +180,14 @@ describe("Glide-X", () => {
   });
 });
 
-/* 12 Oct: only these two still take new teams. */
-describe("the two events left open", () => {
-  it("are DENT - INNOVATE and ELECTROXCAPE", () => {
+/* 13 Oct: DENT - INNOVATE and ELECTROXCAPE closed; nothing left open. */
+describe("no event left open", () => {
+  it("has every listed event marked full", () => {
     const open = events
       .filter((e) => !e.full && registrationState(Date.parse("2026-10-12T12:00:00.000Z"), festFor(e)) === "open")
       .map((e) => e.name)
       .sort();
-    expect(open).toEqual(["DENT - INNOVATE", "ELECTROXCAPE"]);
+    expect(open).toEqual([]);
   });
 });
 
@@ -314,12 +314,21 @@ describe("Discoverize", () => {
   });
 });
 
-/* Paused on 5 Oct, reopened on 6 Oct. */
+/* Paused on 5 Oct, reopened on 6 Oct, closed by hand on 13 Oct. */
 describe("DENT - INNOVATE", () => {
-  it("takes entries again, and is listed", () => {
-    expect(ev("DENT - INNOVATE").full).toBeFalsy();
-    expect(isFull(ev("DENT - INNOVATE"), { people: 0, teams: 0 })).toBe(false);
+  it("takes no new entries and stays on the list", () => {
+    expect(ev("DENT - INNOVATE").full).toBe(true);
+    expect(isFull(ev("DENT - INNOVATE"), { people: 0, teams: 0 })).toBe(true);
     expect(listedEvents).toContain(ev("DENT - INNOVATE"));
+  });
+});
+
+describe("ELECTROXCAPE", () => {
+  it("takes no new teams and stays on the list", () => {
+    const e = ev("ELECTROXCAPE");
+    expect(e.full).toBe(true);
+    expect(isFull(e, { people: 0, teams: 0 })).toBe(true);
+    expect(listedEvents).toContain(e);
   });
 });
 
