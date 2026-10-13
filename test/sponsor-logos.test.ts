@@ -34,12 +34,15 @@ describe("sponsor logos", () => {
         expect(p.website).toMatch(/^https:\/\/\S+$/);
       }
     }
-    const seeed = events
-      .find((e) => e.name === "Hacktivate")
-      ?.sponsorPerks?.find((p) => p.sponsor === "Seeed Studio");
+    const hk = events.find((e) => e.name === "Hacktivate");
+    const seeed = hk?.sponsorPerks?.find((p) => p.sponsor === "Seeed Studio");
     expect(seeed?.website).toBe("https://www.seeedstudio.com");
     expect(seeed?.perks).toContain(
       "Best Voice AI Build, prize by reSpeaker (Seeed Studio)",
     );
+    const pcb = hk?.sponsorPerks?.find((p) => p.sponsor === "PCB Cupid");
+    expect(pcb?.website).toBe("https://pcbcupid.com/");
+    expect(pcb?.perks?.length).toBeGreaterThan(0);
   });
 });
+

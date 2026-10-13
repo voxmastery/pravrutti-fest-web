@@ -220,8 +220,9 @@ export interface Club {
 export const sponsors: Sponsor[] = [
   {
     name: "PCB Cupid",
-    logo: "",
-    website: "https://pcbcupid.com/"
+    logo: "/sponsors/pcbcupid.svg",
+    website: "https://pcbcupid.com/",
+    wordmark: true,
   },
   {
     name: "IEEE Smart Cities",
@@ -879,6 +880,14 @@ export const events: Event[] = [
         website: "https://www.seeedstudio.com",
         perks: [
           "Best Voice AI Build, prize by reSpeaker (Seeed Studio)",
+        ],
+      },
+      {
+        sponsor: "PCB Cupid",
+        logo: "/sponsors/pcbcupid.svg",
+        website: "https://pcbcupid.com/",
+        perks: [
+          "PCB Cupid kit available on site for Track 1 (Seconds Ahead)",
         ],
       },
     ],
