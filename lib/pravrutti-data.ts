@@ -238,6 +238,14 @@ export const sponsors: Sponsor[] = [
     website: "https://smartcities.ieee.org/"
   },
   {
+    /* Fest sponsor, 14 Oct 2026. White horizontal wordmark from
+       MongoDB's own CDN (webimages.mongodb.com … horizontal_white.svg). */
+    name: "MongoDB",
+    logo: "/sponsors/mongodb.svg",
+    website: "https://www.mongodb.com/",
+    wordmark: true,
+  },
+  {
     /* Hacktivate's partner, 2 Oct 2026. White wordmark from
        elevenlabs.io/brand, written "ElevenLabs" as their guidelines ask. */
     name: "ElevenLabs",

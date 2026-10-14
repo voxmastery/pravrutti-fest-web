@@ -53,5 +53,11 @@ describe("sponsor logos", () => {
     expect(lion?.website).toBe("https://www.lioncircuits.com/");
     expect(lion?.logo).toBe("/sponsors/lioncircuits.svg");
   });
+
+  it("lists MongoDB on the sponsors wall", () => {
+    const mongo = sponsors.find((s) => s.name === "MongoDB");
+    expect(mongo?.website).toBe("https://www.mongodb.com/");
+    expect(mongo?.logo).toBe("/sponsors/mongodb.svg");
+  });
 });
 

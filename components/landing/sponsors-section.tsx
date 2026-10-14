@@ -12,6 +12,7 @@ const sponsorMeta: Record<string, { event: string; role: string; mark?: "compact
      it sat a size down from ElevenLabs and Seeed; this scale is only theirs. */
   "PCB Cupid": { event: "Hacktivate", role: "Components", mark: "display" },
   "Lion Circuits": { event: "Hacktivate", role: "PCB manufacturing", mark: "display" },
+  MongoDB: { event: "Community", role: "Database", mark: "display" },
   ".xyz": { event: "CHAOS", role: "Domains", mark: "compact" },
   "IEEE Smart Cities": { event: "Community", role: "Smart cities" },
 };
@@ -23,6 +24,7 @@ const wallOrder = [
   "Seeed Studio",
   "PCB Cupid",
   "Lion Circuits",
+  "MongoDB",
   ".xyz",
   "IEEE Smart Cities",
 ];
