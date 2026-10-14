@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { Check, Hourglass, Lock, Mic, Radio } from "lucide-react";
+import { ArrowUpRight, Check, Hourglass, Lock, Mic, Radio } from "lucide-react";
 import { useIdentity } from "@/lib/identity-context";
 import { PALETTE } from "@/lib/palette";
 import {
@@ -714,6 +714,16 @@ function Success({ data, headingRef }: { data: State; headingRef: React.RefObjec
         <Radio className="mt-0.5 h-4 w-4 shrink-0 text-cyber-pink" aria-hidden="true" />
         <span>{componentsReadyLine(pick.trackId)}</span>
       </p>
+      <Link
+        href="/hacktivate/kit"
+        className="mt-4 flex items-center justify-between gap-3 rounded-xl border border-soft-gold/40 bg-soft-gold/10 px-4 py-3 text-sm transition-colors hover:border-soft-gold"
+      >
+        <span>
+          <span className="block font-semibold text-champagne-gold">Kit &amp; components (PCB Cupid)</span>
+          <span className="mt-0.5 block text-[12px] text-white/55">Claim instructions, Arduino setup, full list</span>
+        </span>
+        <ArrowUpRight className="h-4 w-4 shrink-0 text-soft-gold" aria-hidden="true" />
+      </Link>
       <p className="mt-6 font-display text-sm tracking-[0.14em] text-cyber-pink">{SUCCESS_SURPRISES}</p>
     </>
   );

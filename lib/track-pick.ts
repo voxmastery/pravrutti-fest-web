@@ -40,7 +40,7 @@ export type TrackDef = {
 
 /** The component rule, word for word, on the Track 1 card and the success line. */
 export const OWN_COMPONENTS_RULE =
-  "Teams may bring and use their own components. A PCB Cupid kit is available on site for Track 1 (Seconds Ahead).";
+  "Teams may bring and use their own components. A PCB Cupid kit is available on site for Track 1 (Seconds Ahead) — claim and component list at /hacktivate/kit.";
 
 export const TRACKS: readonly TrackDef[] = [
   {

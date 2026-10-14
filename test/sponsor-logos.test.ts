@@ -41,7 +41,7 @@ describe("sponsor logos", () => {
       "Best Voice AI Build, prize by reSpeaker (Seeed Studio)",
     );
     const pcb = hk?.sponsorPerks?.find((p) => p.sponsor === "PCB Cupid");
-    expect(pcb?.website).toBe("https://pcbcupid.com/");
+    expect(pcb?.website).toBe("https://events.pcbcupid.com/events/hacktivate/");
     expect(pcb?.perks?.length).toBeGreaterThan(0);
     const lion = hk?.sponsorPerks?.find((p) => p.sponsor === "Lion Circuits");
     expect(lion?.website).toBe("https://www.lioncircuits.com/");

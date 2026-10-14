@@ -283,6 +283,16 @@ export function EventPageView({ event, slug }: { event: Event; slug: string }) {
           </div>
 
           <div className="order-[13] lg:order-none min-w-0 space-y-3">
+            {slug === "hacktivate" && (
+              <Link href="/hacktivate/kit" className="block">
+                <Button
+                  variant="outline"
+                  className="w-full h-12 rounded-xl border-cyber-pink/50 bg-cyber-pink/10 font-display text-xs font-bold uppercase tracking-widest text-champagne-gold hover:bg-cyber-pink/20 cursor-pointer"
+                >
+                  Kit, claim &amp; components (PCB Cupid)
+                </Button>
+              </Link>
+            )}
             {/* No rulebook yet for this event — offering a button that goes
                 nowhere is worse than not offering one. */}
             {event.brochureUrl ? (

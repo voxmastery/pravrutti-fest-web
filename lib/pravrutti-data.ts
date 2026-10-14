@@ -907,9 +907,12 @@ export const events: Event[] = [
       {
         sponsor: "PCB Cupid",
         logo: "/sponsors/pcbcupid.svg",
-        website: "https://pcbcupid.com/",
+        /* Kit claim + component list (Hardware Hackathon 1.0 flow), 14 Oct. */
+        website: "https://events.pcbcupid.com/events/hacktivate/",
         perks: [
-          "PCB Cupid kit available on site for Track 1 (Seconds Ahead)",
+          "On-site kit claim, Arduino setup, and full component list",
+          "Virtual ₹1,500 component budget with savings bonus points",
+          "Kit available on site for Track 1 (Seconds Ahead) — own parts also allowed",
         ],
       },
       {

@@ -494,6 +494,21 @@ export default function TicketPage() {
                             </a>
                           )}
 
+                          {a.eventId === HACKTIVATE_EVENT_ID && a.status === "confirmed" && (
+                            <a
+                              href="/hacktivate/kit"
+                              className="flex items-start justify-between gap-3 min-w-0 rounded-xl border border-soft-gold/35 bg-soft-gold/10 px-3 py-2.5 transition-colors hover:border-soft-gold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-soft-gold"
+                            >
+                              <span className="min-w-0">
+                                <span className="block text-sm font-semibold text-champagne-gold">Kit &amp; components</span>
+                                <span className="mt-0.5 block text-[12px] leading-snug text-white/60 break-words">
+                                  PCB Cupid claim instructions, Arduino setup, and the component list.
+                                </span>
+                              </span>
+                              <Cpu className="h-4 w-4 shrink-0 text-soft-gold mt-0.5" aria-hidden="true" />
+                            </a>
+                          )}
+
                           {a.teamCode && a.status !== "declined" && (
                             <TicketTeamBlock
                               eventId={a.eventId}
