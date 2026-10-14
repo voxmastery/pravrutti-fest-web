@@ -54,7 +54,13 @@ export const DESK_ACCESS: Record<string, string[]> = {
     "snehajangid024@gmail.com",
     "dhruvdhote7@gmail.com",
   ],
-  "pitch-pulse": ["kirankumar.ee.et@msruas.ac.in", "25etcs002129@msruas.ac.in", "jesleneiniya@gmail.com"],
+  /* harshith.9535269639 added 14 Oct at Jeslene's request. */
+  "pitch-pulse": [
+    "kirankumar.ee.et@msruas.ac.in",
+    "25etcs002129@msruas.ac.in",
+    "jesleneiniya@gmail.com",
+    "harshith.9535269639@gmail.com",
+  ],
 };
 
 /** Every address that can open some desk, lowercased. */
