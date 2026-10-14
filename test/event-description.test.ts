@@ -52,7 +52,7 @@ describe("parseDescription", () => {
   it("lets Hacktivate teams bring their own components", () => {
     const e = events.find((x) => x.name === "Hacktivate")!;
     expect(e.description).toContain(
-      "Teams may bring and use their own components. A PCB Cupid kit is available on site for Track 1 (Seconds Ahead).",
+      "Teams may bring and use their own components. A PCB Cupid kit is available on site for Track 1 (Seconds Ahead)",
     );
     expect(e.description).not.toMatch(/on-site stall|sourced on-site|component procurement|components are provided|kit-only|must use the PCB Cupid kit/i);
     expect(e.description).toContain("Meals, overnight refreshments, and a supervised rest area are provided.");

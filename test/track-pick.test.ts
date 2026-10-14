@@ -62,7 +62,7 @@ describe("track copy", () => {
     expect(track.title).toBe("Seconds Ahead");
     expect(track.theme).toBe("Predict road dangers before they happen, for a road user you are yourself.");
     expect(track.summary).toBe(
-      "Teams may bring and use their own components. A PCB Cupid kit is available on site for Track 1 (Seconds Ahead).",
+      "Teams may bring and use their own components. A PCB Cupid kit is available on site for Track 1 (Seconds Ahead) — claim and component list at /hacktivate/kit.",
     );
     expect(track.summary.toLowerCase()).not.toMatch(/kit-only|must use|provided on site/);
     expect(track.tags.join(" ").toLowerCase()).not.toMatch(/kit-only|kit on site/);
@@ -83,7 +83,7 @@ describe("track copy", () => {
 
   it("tells every track to get components ready, and Track 1 that the kit is optional", () => {
     expect(componentsReadyLine("01")).toBe(
-      "Track 1/3: Teams may bring and use their own components. A PCB Cupid kit is available on site for Track 1 (Seconds Ahead).",
+      "Track 1/3: Teams may bring and use their own components. A PCB Cupid kit is available on site for Track 1 (Seconds Ahead) — claim and component list at /hacktivate/kit.",
     );
     for (const track of TRACKS.filter((t) => t.id !== "01")) {
       expect(componentsReadyLine(track.id)).toBe(
