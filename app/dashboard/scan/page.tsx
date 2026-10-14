@@ -265,8 +265,12 @@ export default function ScanPage() {
     const r = await fetch(`/api/checkin/team?eventId=${encodeURIComponent(eventId)}&code=${encodeURIComponent(code)}`);
     const b = await r.json().catch(() => ({}));
     if (!r.ok) return;
-    setTeam({ eventId, code, name, members: b.members ?? [] });
-    setPicked({});
+    const members = (b.members ?? []) as TeamMember[];
+    setTeam({ eventId, code, name, members });
+    /* Pre-tick everyone still open so a desk volunteer can admit the group in one tap. */
+    const next: Record<string, boolean> = {};
+    for (const m of members) if (m.canCheckIn) next[m.email] = true;
+    setPicked(next);
   }
 
   async function send(url: string, body: unknown, remember = true) {
@@ -785,40 +789,110 @@ export default function ScanPage() {
             </div>
           )}
 
-          {team && (
-            <div className="p-5 max-h-[46vh] overflow-y-auto bg-midnight-navy text-pearl-white">
-              <p className="font-display text-2xl font-black">{team.name || "Team"}</p>
-              <p className="text-sm text-white/60">Tick the people standing here, then check them in.</p>
-              <ul className="mt-3 space-y-2">
-                {team.members.map((m) => (
-                  <li key={m.email} className="flex items-center gap-3 rounded-xl bg-white/5 px-3 py-2">
-                    <input
-                      type="checkbox"
-                      className="h-5 w-5"
-                      disabled={!m.canCheckIn}
-                      checked={!!picked[m.email]}
-                      onChange={(e) => setPicked((p) => ({ ...p, [m.email]: e.target.checked }))}
-                      aria-label={`Check in ${m.name}`}
-                    />
-                    <span className="min-w-0">
-                      <span className="block text-sm font-medium">{m.name}</span>
-                      <span className="block text-xs text-white/50">
-                        {m.checkedInAt ? `In ${clock(m.checkedInAt)}` : m.status}
-                      </span>
-                    </span>
-                  </li>
-                ))}
-              </ul>
-              <div className="mt-3 flex gap-2">
-                <button type="button" onClick={checkInTeam} className="h-11 px-4 rounded-lg bg-success text-midnight-navy text-sm font-semibold">
-                  Check in selected
-                </button>
-                <button type="button" onClick={() => setTeam(null)} className="h-11 px-4 rounded-lg bg-white/10 text-sm">
-                  Close
-                </button>
+          {team && (() => {
+            const open = team.members.filter((m) => m.canCheckIn);
+            const selected = open.filter((m) => picked[m.email]).length;
+            const allIn = open.length === 0 && team.members.some((m) => m.checkedInAt);
+            return (
+              <div className="p-5 max-h-[46vh] overflow-y-auto bg-midnight-navy text-pearl-white">
+                <p className="font-display text-2xl font-black">{team.name || "Team"}</p>
+                <p className="text-sm text-white/60">
+                  {allIn
+                    ? "Everyone here is already checked in."
+                    : open.length === 0
+                      ? "Nobody on this roster can be checked in yet."
+                      : "Tap the people standing here, then check them in."}
+                </p>
+                <ul className="mt-3 space-y-2">
+                  {team.members.map((m) => {
+                    const on = !!picked[m.email];
+                    if (!m.canCheckIn) {
+                      return (
+                        <li
+                          key={m.email}
+                          className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/5 px-3 py-3"
+                        >
+                          <span
+                            aria-hidden="true"
+                            className={`grid h-7 w-7 shrink-0 place-items-center rounded-md border text-sm font-bold ${
+                              m.checkedInAt
+                                ? "border-success/50 bg-success/20 text-success-soft"
+                                : "border-white/20 bg-white/5 text-white/35"
+                            }`}
+                          >
+                            {m.checkedInAt ? "✓" : "–"}
+                          </span>
+                          <span className="min-w-0">
+                            <span className="block text-sm font-medium">{m.name}</span>
+                            <span className="block text-xs text-white/50">
+                              {m.checkedInAt ? `In ${clock(m.checkedInAt)}` : m.status}
+                            </span>
+                          </span>
+                        </li>
+                      );
+                    }
+                    return (
+                      <li key={m.email}>
+                        <button
+                          type="button"
+                          onClick={() => setPicked((p) => ({ ...p, [m.email]: !p[m.email] }))}
+                          aria-pressed={on}
+                          className={`flex w-full items-center gap-3 rounded-xl border px-3 py-3 text-left transition-colors ${
+                            on
+                              ? "border-success/50 bg-success/15"
+                              : "border-white/15 bg-white/5 active:bg-white/10"
+                          }`}
+                        >
+                          <span
+                            aria-hidden="true"
+                            className={`grid h-7 w-7 shrink-0 place-items-center rounded-md border text-sm font-bold ${
+                              on
+                                ? "border-success bg-success text-midnight-navy"
+                                : "border-white/40 bg-transparent text-transparent"
+                            }`}
+                          >
+                            ✓
+                          </span>
+                          <span className="min-w-0">
+                            <span className="block text-sm font-medium">{m.name}</span>
+                            <span className="block text-xs text-white/50">{m.status}</span>
+                          </span>
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {open.length > 0 && (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const next: Record<string, boolean> = {};
+                          for (const m of open) next[m.email] = true;
+                          setPicked(next);
+                        }}
+                        className="h-11 px-4 rounded-lg bg-white/10 text-sm"
+                      >
+                        Select all
+                      </button>
+                      <button
+                        type="button"
+                        onClick={checkInTeam}
+                        disabled={selected === 0}
+                        className="h-11 px-4 rounded-lg bg-success text-midnight-navy text-sm font-semibold disabled:opacity-40"
+                      >
+                        Check in selected{selected ? ` (${selected})` : ""}
+                      </button>
+                    </>
+                  )}
+                  <button type="button" onClick={() => setTeam(null)} className="h-11 px-4 rounded-lg bg-white/10 text-sm">
+                    Close
+                  </button>
+                </div>
               </div>
-            </div>
-          )}
+            );
+          })()}
         </div>
       </div>
     </main>
