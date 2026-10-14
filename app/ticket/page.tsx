@@ -509,6 +509,21 @@ export default function TicketPage() {
                             </a>
                           )}
 
+                          {a.eventId === HACKTIVATE_EVENT_ID && a.status === "confirmed" && (
+                            <a
+                              href="/hacktivate/docs"
+                              className="flex items-start justify-between gap-3 min-w-0 rounded-xl border border-cyber-pink/35 bg-cyber-pink/10 px-3 py-2.5 transition-colors hover:border-cyber-pink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyber-pink"
+                            >
+                              <span className="min-w-0">
+                                <span className="block text-sm font-semibold text-champagne-gold">Upload schematics</span>
+                                <span className="mt-0.5 block text-[12px] leading-snug text-white/60 break-words">
+                                  PDF of schematics, board photos, or screenshots for the organisers.
+                                </span>
+                              </span>
+                              <Cpu className="h-4 w-4 shrink-0 text-cyber-pink mt-0.5" aria-hidden="true" />
+                            </a>
+                          )}
+
                           {a.teamCode && a.status !== "declined" && (
                             <TicketTeamBlock
                               eventId={a.eventId}

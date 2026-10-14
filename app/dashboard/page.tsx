@@ -18,7 +18,7 @@ import { downloadXlsx, exportFileName, exportRows } from "@/lib/roster-export";
 import { deskStage, type DeskStage } from "@/lib/desk-stage";
 import { events } from "@/lib/pravrutti-data";
 import { HACKTIVATE_EVENT_ID } from "@/lib/track-pick";
-import { AlertTriangle, Check, ChevronDown, ClipboardList, Download, FileSpreadsheet, Star, Cpu } from "lucide-react";
+import { AlertTriangle, Check, ChevronDown, ClipboardList, Download, FileSpreadsheet, FileUp, Star, Cpu } from "lucide-react";
 
 type Counts = {
   registered: number; teams: number;
@@ -192,18 +192,32 @@ export default function DashboardPage() {
               View event page
             </Link>
             {dash.events.some((e) => e.eventId === HACKTIVATE_EVENT_ID) && (
-              <Link
-                href="/dashboard/hacktivate/track-pick"
-                className="mb-6 flex items-center justify-between gap-4 rounded-2xl border border-cyber-pink/40 bg-cyber-pink/10 px-5 py-4 transition-colors hover:border-cyber-pink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyber-pink"
-              >
-                <span>
-                  <span className="block font-semibold text-champagne-gold">Hacktivate · Track Pick</span>
-                  <span className="block text-sm text-white/45">
-                    Live seats, who locked which track, export, and pause
+              <>
+                <Link
+                  href="/dashboard/hacktivate/track-pick"
+                  className="mb-4 flex items-center justify-between gap-4 rounded-2xl border border-cyber-pink/40 bg-cyber-pink/10 px-5 py-4 transition-colors hover:border-cyber-pink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyber-pink"
+                >
+                  <span>
+                    <span className="block font-semibold text-champagne-gold">Hacktivate · Track Pick</span>
+                    <span className="block text-sm text-white/45">
+                      Live seats, who locked which track, export, and pause
+                    </span>
                   </span>
-                </span>
-                <Cpu className="h-5 w-5 shrink-0 text-cyber-pink" />
-              </Link>
+                  <Cpu className="h-5 w-5 shrink-0 text-cyber-pink" />
+                </Link>
+                <Link
+                  href="/dashboard/hacktivate/docs"
+                  className="mb-6 flex items-center justify-between gap-4 rounded-2xl border border-soft-gold/40 bg-soft-gold/10 px-5 py-4 transition-colors hover:border-soft-gold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-soft-gold"
+                >
+                  <span>
+                    <span className="block font-semibold text-champagne-gold">Hacktivate · Schematic PDFs</span>
+                    <span className="block text-sm text-white/45">
+                      Download team uploads — schematics, screenshots, wiring diagrams
+                    </span>
+                  </span>
+                  <FileUp className="h-5 w-5 shrink-0 text-soft-gold" />
+                </Link>
+              </>
             )}
             {/* Discoverize's coordinators screen abstracts there, and this
                 roster only holds the teams already through to the final. */}
@@ -297,7 +311,7 @@ export default function DashboardPage() {
 
       <Link
         href="/dashboard/hacktivate/track-pick"
-        className="mb-6 flex items-center justify-between gap-4 rounded-2xl border border-cyber-pink/40 bg-cyber-pink/10 px-5 py-4 transition-colors hover:border-cyber-pink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyber-pink"
+        className="mb-4 flex items-center justify-between gap-4 rounded-2xl border border-cyber-pink/40 bg-cyber-pink/10 px-5 py-4 transition-colors hover:border-cyber-pink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyber-pink"
       >
         <span>
           <span className="block font-semibold text-champagne-gold">Hacktivate · Track Pick</span>
@@ -306,6 +320,19 @@ export default function DashboardPage() {
           </span>
         </span>
         <Cpu className="h-5 w-5 shrink-0 text-cyber-pink" />
+      </Link>
+
+      <Link
+        href="/dashboard/hacktivate/docs"
+        className="mb-6 flex items-center justify-between gap-4 rounded-2xl border border-soft-gold/40 bg-soft-gold/10 px-5 py-4 transition-colors hover:border-soft-gold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-soft-gold"
+      >
+        <span>
+          <span className="block font-semibold text-champagne-gold">Hacktivate · Schematic PDFs</span>
+          <span className="block text-sm text-white/45">
+            Download team uploads — schematics, screenshots, wiring diagrams
+          </span>
+        </span>
+        <FileUp className="h-5 w-5 shrink-0 text-soft-gold" />
       </Link>
 
       {/* The overview answers "how is the fest doing"; approving a specific
