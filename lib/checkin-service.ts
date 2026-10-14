@@ -8,6 +8,7 @@ import {
   putJson,
   readJsonByPath,
   readPrivate,
+  teamPath,
 } from "@/lib/blob-store";
 import {
   admissionBlock,
@@ -31,8 +32,18 @@ import {
 } from "@/lib/app-index";
 import { sqlEnabled } from "@/lib/sql-store";
 import { canViewEvent, type Role } from "@/lib/roles";
+import type { Team } from "@/lib/teams";
 
 export type ServiceResult = { status: number; body: Record<string, unknown> };
+
+/** One teammate stamped because their lead was checked in. */
+export type TeamCascadeRow = {
+  email: string;
+  name: string;
+  ok: boolean;
+  alreadyCheckedIn?: boolean;
+  error?: string;
+};
 
 const invalid = (): ServiceResult => ({
   status: 400,
@@ -163,6 +174,78 @@ async function stamp(record: Application, actor: string): Promise<ServiceResult>
   return { status: 200, body: admittedBody(record, now, false) };
 }
 
+/**
+ * Desk rule: scanning the team lead admits every confirmed teammate on that
+ * roster for the same event. Members scanning themselves do not pull the rest
+ * of the team — only the lead's stamp cascades. Re-scanning a lead who is
+ * already in still picks up teammates who were not admitted yet.
+ */
+async function isTeamLead(record: Application): Promise<boolean> {
+  const code = String(record.teamCode ?? "").trim().toUpperCase();
+  if (!code) return false;
+  const team = (await readJsonByPath(teamPath(record.eventId, code))) as Team | null;
+  if (!team || team.deletedAt) return false;
+  return String(team.createdByEmail ?? "").trim().toLowerCase() === record.email.toLowerCase();
+}
+
+async function cascadeTeammates(record: Application, actor: string): Promise<TeamCascadeRow[]> {
+  const code = String(record.teamCode ?? "").trim().toUpperCase();
+  if (!code) return [];
+  const members = await listTeamMembers(record.eventId, code);
+  const leadEmail = record.email.toLowerCase();
+  const rows: TeamCascadeRow[] = [];
+  for (const member of members) {
+    const email = String(member?.email ?? "").trim().toLowerCase();
+    if (!email || email === leadEmail) continue;
+    const name = String(member?.name ?? email);
+    const app = (await readJsonByPath(applicationPath(record.eventId, email))) as Application | null;
+    if (!app || app.eventId !== record.eventId) {
+      rows.push({ email, name, ok: false, error: "Not registered for this event." });
+      continue;
+    }
+    try {
+      const one = await stamp(app, actor);
+      if (one.body.ok === true) {
+        rows.push({
+          email,
+          name: typeof one.body.name === "string" ? one.body.name : app.name || name,
+          ok: true,
+          alreadyCheckedIn: one.body.alreadyCheckedIn === true,
+        });
+      } else {
+        rows.push({
+          email,
+          name: typeof one.body.name === "string" ? one.body.name : app.name || name,
+          ok: false,
+          error: typeof one.body.error === "string" ? one.body.error : "Not admitted",
+        });
+      }
+    } catch {
+      rows.push({ email, name, ok: false, error: "Check-in could not be saved. Try that scan again." });
+    }
+  }
+  return rows;
+}
+
+async function stampLeadAndTeam(record: Application, actor: string): Promise<ServiceResult> {
+  const result = await stamp(record, actor);
+  if (result.status !== 200 || result.body.ok !== true) return result;
+  if (!(await isTeamLead(record))) return result;
+  const teamCheckedIn = await cascadeTeammates(record, actor);
+  if (!teamCheckedIn.length) return result;
+  const teammatesAdmitted = teamCheckedIn.filter((r) => r.ok && !r.alreadyCheckedIn).length;
+  const teammatesAlreadyIn = teamCheckedIn.filter((r) => r.alreadyCheckedIn).length;
+  return {
+    status: 200,
+    body: {
+      ...result.body,
+      teamCheckedIn,
+      teammatesAdmitted,
+      teammatesAlreadyIn,
+    },
+  };
+}
+
 async function wrongEvent(record: Application, deskEventId: string): Promise<ServiceResult> {
   const regs = await appsByEmail(record.email);
   const events = (regs.length ? regs : [record]).map(publicRegistration);
@@ -219,7 +302,7 @@ async function checkInPayload(role: Role, raw: string, requestedEvent: string, a
     return notFound(resolved.ticketMismatch ? "No ticket found for this event." : "Not registered for this event.");
   }
   if (resolved.record.eventId !== target) return wrongEvent(resolved.record, target);
-  return stamp(resolved.record, actor);
+  return stampLeadAndTeam(resolved.record, actor);
 }
 
 async function checkInIdentity(role: Role, eventId: string, email: string | undefined, ticketId: string | undefined, actor: string): Promise<ServiceResult> {
@@ -233,7 +316,7 @@ async function checkInIdentity(role: Role, eventId: string, email: string | unde
     record = hits.find((a) => a.eventId === eventId && a.ticketId === ticketId) ?? null;
   }
   if (!record || record.eventId !== eventId) return notFound();
-  return stamp(record, actor);
+  return stampLeadAndTeam(record, actor);
 }
 
 export async function deskCheckIn(role: Role, body: unknown, actor: string): Promise<ServiceResult> {

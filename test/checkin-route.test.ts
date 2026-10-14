@@ -7,12 +7,20 @@ vi.mock("@/lib/blob-store", () => ({
   applicationPath: (evId: string, email: string) => `app/${evId}/${email}.json`,
   paymentRefPath: (ref: string) => "payment-ref/" + ref.trim().toLowerCase() + ".json",
   gatePath: (email: string) => `gate/${email}.json`,
+  teamPath: (evId: string, code: string) => `team/${evId}/${code}.json`,
   readJsonByPath: async (p: string) => store.get(p) ?? null,
   putJson: async (p: string, data: unknown) => { store.set(p, data); },
   listAll: async (prefix: string) =>
     [...store.keys()].filter((k) => k.startsWith(prefix)).map((pathname) => ({ url: pathname, pathname })),
   readPrivate: async (url: string) => store.get(url) ?? null,
-  listTeamMembers: async () => [],
+  listTeamMembers: async (eventId: string, code: string) => {
+    const out: any[] = [];
+    for (const [k, v] of store) {
+      if (!k.startsWith(`team-member/${eventId}/`)) continue;
+      if (v && v.code === code && v.member) out.push(v.member);
+    }
+    return out;
+  },
   casUpdate: async (path: string, decide: (current: unknown) => Promise<{ write: boolean; next: unknown }> | { write: boolean; next: unknown }) => {
     const current = store.get(path) ?? null;
     const decision = await decide(current);
@@ -283,6 +291,162 @@ describe("POST /api/checkin", () => {
     }));
     expect(res.status).toBe(409);
     expect(store.get("app/robo-climb/asha@example.com.json").checkedInAt).toBe("2020-01-01T00:00:00.000Z");
+  });
+
+  it("checks in every confirmed teammate when the lead is admitted", async () => {
+    store.set("app/robo-climb/asha@example.com.json", {
+      ticketId: "PRV-LEAD0001",
+      eventId: "robo-climb",
+      eventName: "Robo Climb",
+      status: "confirmed",
+      name: "Asha",
+      email: "asha@example.com",
+      teamCode: "TEAMLEAD01",
+      teamName: "Climbers",
+    });
+    store.set("app/robo-climb/bina@example.com.json", {
+      ticketId: "PRV-MEM00002",
+      eventId: "robo-climb",
+      eventName: "Robo Climb",
+      status: "confirmed",
+      name: "Bina",
+      email: "bina@example.com",
+      teamCode: "TEAMLEAD01",
+      teamName: "Climbers",
+      payment: "not_required",
+    });
+    store.set("app/robo-climb/cory@example.com.json", {
+      ticketId: "PRV-MEM00003",
+      eventId: "robo-climb",
+      eventName: "Robo Climb",
+      status: "confirmed",
+      name: "Cory",
+      email: "cory@example.com",
+      teamCode: "TEAMLEAD01",
+      teamName: "Climbers",
+      payment: "not_required",
+    });
+    store.set("team/robo-climb/TEAMLEAD01.json", {
+      code: "TEAMLEAD01",
+      eventId: "robo-climb",
+      name: "Climbers",
+      createdByEmail: "asha@example.com",
+      members: [],
+    });
+    store.set("team-member/robo-climb/asha.json", {
+      code: "TEAMLEAD01",
+      member: { name: "Asha", email: "asha@example.com", phone: "1", college: "X", joinedAt: "2026-01-01" },
+    });
+    store.set("team-member/robo-climb/bina.json", {
+      code: "TEAMLEAD01",
+      member: { name: "Bina", email: "bina@example.com", phone: "2", college: "X", joinedAt: "2026-01-02" },
+    });
+    store.set("team-member/robo-climb/cory.json", {
+      code: "TEAMLEAD01",
+      member: { name: "Cory", email: "cory@example.com", phone: "3", college: "X", joinedAt: "2026-01-03" },
+    });
+
+    const res = await post("PRV-LEAD0001|robo-climb|asha@example.com");
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.teammatesAdmitted).toBe(2);
+    expect(body.teamCheckedIn.map((r: { email: string }) => r.email).sort()).toEqual([
+      "bina@example.com",
+      "cory@example.com",
+    ]);
+    expect(store.get("app/robo-climb/asha@example.com.json").checkedInAt).toBeTruthy();
+    expect(store.get("app/robo-climb/bina@example.com.json").checkedInAt).toBeTruthy();
+    expect(store.get("app/robo-climb/cory@example.com.json").checkedInAt).toBeTruthy();
+  });
+
+  it("does not cascade when a teammate is scanned instead of the lead", async () => {
+    store.set("app/robo-climb/asha@example.com.json", {
+      ticketId: "PRV-LEAD0001",
+      eventId: "robo-climb",
+      eventName: "Robo Climb",
+      status: "confirmed",
+      name: "Asha",
+      email: "asha@example.com",
+      teamCode: "TEAMLEAD01",
+      teamName: "Climbers",
+    });
+    store.set("app/robo-climb/bina@example.com.json", {
+      ticketId: "PRV-MEM00002",
+      eventId: "robo-climb",
+      eventName: "Robo Climb",
+      status: "confirmed",
+      name: "Bina",
+      email: "bina@example.com",
+      teamCode: "TEAMLEAD01",
+      teamName: "Climbers",
+      payment: "not_required",
+    });
+    store.set("team/robo-climb/TEAMLEAD01.json", {
+      code: "TEAMLEAD01",
+      eventId: "robo-climb",
+      name: "Climbers",
+      createdByEmail: "asha@example.com",
+      members: [],
+    });
+    store.set("team-member/robo-climb/asha.json", {
+      code: "TEAMLEAD01",
+      member: { name: "Asha", email: "asha@example.com", phone: "1", college: "X", joinedAt: "2026-01-01" },
+    });
+    store.set("team-member/robo-climb/bina.json", {
+      code: "TEAMLEAD01",
+      member: { name: "Bina", email: "bina@example.com", phone: "2", college: "X", joinedAt: "2026-01-02" },
+    });
+
+    const res = await post("PRV-MEM00002|robo-climb|bina@example.com");
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.teammatesAdmitted).toBeUndefined();
+    expect(store.get("app/robo-climb/bina@example.com.json").checkedInAt).toBeTruthy();
+    expect(store.get("app/robo-climb/asha@example.com.json").checkedInAt).toBeUndefined();
+  });
+
+  it("skips pending teammates when cascading from the lead", async () => {
+    store.set("app/robo-climb/asha@example.com.json", {
+      ticketId: "PRV-LEAD0001",
+      eventId: "robo-climb",
+      eventName: "Robo Climb",
+      status: "confirmed",
+      name: "Asha",
+      email: "asha@example.com",
+      teamCode: "TEAMLEAD01",
+      teamName: "Climbers",
+    });
+    store.set("app/robo-climb/bina@example.com.json", {
+      ticketId: "PRV-MEM00002",
+      eventId: "robo-climb",
+      eventName: "Robo Climb",
+      status: "pending",
+      name: "Bina",
+      email: "bina@example.com",
+      teamCode: "TEAMLEAD01",
+      teamName: "Climbers",
+      payment: "not_required",
+    });
+    store.set("team/robo-climb/TEAMLEAD01.json", {
+      code: "TEAMLEAD01",
+      eventId: "robo-climb",
+      name: "Climbers",
+      createdByEmail: "asha@example.com",
+      members: [],
+    });
+    store.set("team-member/robo-climb/bina.json", {
+      code: "TEAMLEAD01",
+      member: { name: "Bina", email: "bina@example.com", phone: "2", college: "X", joinedAt: "2026-01-02" },
+    });
+
+    const res = await post("PRV-LEAD0001|robo-climb|asha@example.com");
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.ok).toBe(true);
+    expect(body.teammatesAdmitted).toBe(0);
+    expect(body.teamCheckedIn[0].ok).toBe(false);
+    expect(store.get("app/robo-climb/asha@example.com.json").checkedInAt).toBeTruthy();
+    expect(store.get("app/robo-climb/bina@example.com.json").checkedInAt).toBeUndefined();
   });
 });
 

@@ -276,6 +276,16 @@ export default function DeskPage() {
     return res;
   }
 
+  function teamCascadeNote(b: Record<string, any>): string {
+    const admitted = Number(b.teammatesAdmitted ?? 0);
+    const already = Number(b.teammatesAlreadyIn ?? 0);
+    if (admitted <= 0 && already <= 0) return "";
+    const parts: string[] = [];
+    if (admitted > 0) parts.push(`${admitted} teammate${admitted === 1 ? "" : "s"} in`);
+    if (already > 0) parts.push(`${already} already in`);
+    return ` · team: ${parts.join(", ")}`;
+  }
+
   function applyDesk(status: number, b: Record<string, any>, eventId?: string) {
     if (status >= 400 || b.ok === false) {
       const tone: Tone = b.tone === "warn" ? "warn" : "err";
@@ -291,12 +301,13 @@ export default function DeskPage() {
       beep(tone);
       return;
     }
+    const teamNote = teamCascadeNote(b);
     if (b.alreadyCheckedIn) {
       setResult({
         kind: "desk",
         tone: "warn",
         title: "ALREADY IN",
-        detail: `${b.name} · ${b.eventName ?? ""}${b.at ? ` · ${clock(b.at)}` : ""}${b.by ? ` · ${b.by}` : ""}`,
+        detail: `${b.name} · ${b.eventName ?? ""}${b.at ? ` · ${clock(b.at)}` : ""}${b.by ? ` · ${b.by}` : ""}${teamNote}`,
         name: b.name,
         eventId: b.eventId ?? eventId ?? "",
         eventName: b.eventName,
@@ -310,7 +321,7 @@ export default function DeskPage() {
       kind: "desk",
       tone: "ok",
       title: "ADMITTED",
-      detail: `${b.name} · ${b.eventName}${b.teamName ? ` · ${b.teamName}` : ""}`,
+      detail: `${b.name} · ${b.eventName}${b.teamName ? ` · ${b.teamName}` : ""}${teamNote}`,
       name: b.name,
       eventId: b.eventId ?? eventId ?? "",
       eventName: b.eventName,

@@ -383,12 +383,23 @@ export default function ScanPage() {
       beep(tone);
       return;
     }
+    const admitted = Number(b.teammatesAdmitted ?? 0);
+    const alreadyTeam = Number(b.teammatesAlreadyIn ?? 0);
+    const teamNote =
+      admitted > 0 || alreadyTeam > 0
+        ? ` · team: ${[
+            admitted > 0 ? `${admitted} teammate${admitted === 1 ? "" : "s"} in` : "",
+            alreadyTeam > 0 ? `${alreadyTeam} already in` : "",
+          ]
+            .filter(Boolean)
+            .join(", ")}`
+        : "";
     if (b.alreadyCheckedIn) {
       setResult({
         kind: "desk",
         tone: "warn",
         title: "ALREADY IN",
-        detail: `${b.name} · ${clock(b.at)}${b.by ? ` · ${b.by}` : ""}`,
+        detail: `${b.name} · ${clock(b.at)}${b.by ? ` · ${b.by}` : ""}${teamNote}`,
         name: b.name,
         eventId: b.eventId ?? eventId,
         eventName: b.eventName,
@@ -403,7 +414,7 @@ export default function ScanPage() {
       kind: "desk",
       tone: "ok",
       title: "ADMITTED",
-      detail: `${b.name} · ${b.eventName}${b.teamName ? ` · ${b.teamName}` : ""}`,
+      detail: `${b.name} · ${b.eventName}${b.teamName ? ` · ${b.teamName}` : ""}${teamNote}`,
       name: b.name,
       eventId: b.eventId ?? eventId,
       eventName: b.eventName,
