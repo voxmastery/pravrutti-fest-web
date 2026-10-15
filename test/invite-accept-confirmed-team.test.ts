@@ -182,6 +182,25 @@ describe("what accepting never does", () => {
     expect(mailed).toEqual([]);
   });
 
+  /* Cancelled is not a live place — they withdrew from an earlier team and
+     are joining this one. Leaving the cancelled row in place is how Astrea's
+     Tathagata Roy (Logic Circuit) sat on the roster with no QR. */
+  it("replaces a cancelled registration so they get a ticket on the new team", async () => {
+    seed("confirmed");
+    store.set(`app/${EV}/${MATE}.json`, {
+      ticketId: "PRV-OLD", eventId: EV, eventName: "BRIDGE IT", status: "cancelled",
+      payment: "not_required", fee: "Covered by team lead", name: "Ravi Kumar", email: MATE,
+      phone: "9876543211", college: "RUAS", teamName: "Old Team", teamCode: "OLDTEAM000001",
+      appliedAt: "2026-09-01T00:00:00.000Z", cancelledAt: "2026-09-02T00:00:00.000Z",
+    });
+    await accept();
+    expect(app().status).toBe("confirmed");
+    expect(app().teamCode).toBe(CODE);
+    expect(app().teamName).toBe("Bolt");
+    expect(app().ticketId).toBe("PRV-OLD");
+    expect(mailed).toEqual([MATE]);
+  });
+
   /* A bounced ticket email must not undo an acceptance the lead can already
      see on the roster. */
   it("keeps the confirmation even when the email fails", async () => {

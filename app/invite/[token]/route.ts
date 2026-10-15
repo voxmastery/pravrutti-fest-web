@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { events, eventId as slugFor } from "@/lib/pravrutti-data";
-import { Application, feeForApplicant } from "@/lib/applications";
+import { Application, feeForApplicant, isLiveApplication } from "@/lib/applications";
 import { Team, TeamMember } from "@/lib/teams";
 import {
   InvitePointer,
@@ -105,11 +105,18 @@ export async function GET(
 
     /* Their own application, so they get their own ticket and QR. A joiner
        owes nothing — the lead paid for the team — so this never enters the
-       payment queue. Skipped if one somehow already exists rather than
-       overwriting a record that may already be confirmed. */
+       payment queue.
+
+       A cancelled or declined row at this event is not a live place — they
+       withdrew from an earlier team (or were turned away) and are accepting
+       into this one. Skipping whenever *any* row exists left teammates like
+       Tathagata Roy on Astrea (Logic Circuit) with a cancelled ticket and no
+       QR after they accepted the new invite. Live or already-confirmed rows
+       are left alone. */
     if (event) {
-      const existing = await readJsonByPath(applicationPath(pointer.eventId, pointer.email));
-      if (!existing) {
+      const existing = (await readJsonByPath(applicationPath(pointer.eventId, pointer.email))) as Application | null;
+      const canReplace = !existing || !isLiveApplication(existing.status);
+      if (canReplace) {
         const { payment, fee } = feeForApplicant({
           eventFree: event.fee.toLowerCase().startsWith("free"),
           eventFee: event.fee,
@@ -122,7 +129,7 @@ export async function GET(
            on an organiser who has already decided. */
         const confirmed = team ? await leadIsConfirmed(pointer.eventId, team) : false;
         const app: Application = {
-          ticketId: newTicketId(),
+          ticketId: existing?.ticketId || newTicketId(),
           eventId: pointer.eventId,
           eventName: event.name,
           status: confirmed ? "confirmed" : "pending",
@@ -139,7 +146,7 @@ export async function GET(
           ...(confirmed ? { decidedAt: now } : {}),
         };
         const appPath = applicationPath(pointer.eventId, pointer.email);
-        await putJson(appPath, app, false);
+        await putJson(appPath, app, Boolean(existing));
 
         /* Best effort, like every other ticket mail: a confirmed place is
            already recorded, and losing the email must not lose the place.
