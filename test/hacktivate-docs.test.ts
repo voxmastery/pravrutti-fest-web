@@ -1,62 +1,44 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   DOCS_COPY,
-  HACKTIVATE_DOC_MAX_BYTES,
-  HACKTIVATE_DOC_MAX_PER_TEAM,
-  formatDocSize,
-  hacktivateDocPath,
-  sanitizePdfFileName,
+  hacktivateDemoPath,
+  normalizeDriveUrl,
+  validateDriveUrl,
 } from "@/lib/hacktivate-docs";
-import { isPdfMagic, validatePdfUpload, contentFingerprint, newDocId } from "@/lib/hacktivate-docs-node";
 import { canManageTrackPick, HACKTIVATE_EVENT_ID } from "@/lib/track-pick";
 
 const EVENT = HACKTIVATE_EVENT_ID;
 
-describe("hacktivate docs helpers", () => {
-  it("sanitises PDF names and rejects path traversal junk", () => {
-    expect(sanitizePdfFileName("My Schematic.PDF")).toBe("My Schematic.pdf");
-    expect(sanitizePdfFileName("../../etc/passwd.pdf")).toBe("passwd.pdf");
-    expect(sanitizePdfFileName("board photo (1).pdf")).toBe("board photo (1).pdf");
-    expect(sanitizePdfFileName("")).toBeNull();
-    expect(sanitizePdfFileName("...")).toBeNull();
-    expect(sanitizePdfFileName(".pdf")).toBeNull();
+describe("hacktivate demo Drive helpers", () => {
+  it("normalises Google Drive links and rejects other hosts", () => {
+    expect(normalizeDriveUrl("https://drive.google.com/file/d/abc123/view?usp=sharing")).toBe(
+      "https://drive.google.com/file/d/abc123/view",
+    );
+    expect(normalizeDriveUrl("drive.google.com/open?id=xyz")).toBe(
+      "https://drive.google.com/open?id=xyz",
+    );
+    expect(normalizeDriveUrl("https://docs.google.com/presentation/d/abc/edit")).toMatch(
+      /^https:\/\/docs\.google\.com\//,
+    );
+    expect(normalizeDriveUrl("https://dropbox.com/s/x")).toBeNull();
+    expect(normalizeDriveUrl("not a url")).toBeNull();
+    expect(normalizeDriveUrl("")).toBeNull();
   });
 
-  it("accepts only %PDF- magic and enforces size", () => {
-    const ok = Buffer.from("%PDF-1.4\n% schematic\n");
-    expect(isPdfMagic(ok)).toBe(true);
-    expect(isPdfMagic(Buffer.from("not a pdf"))).toBe(false);
-
-    const good = validatePdfUpload({ fileName: "schematic.pdf", bytes: ok });
+  it("validates empty vs bad vs good links", () => {
+    expect(validateDriveUrl("")).toMatchObject({ ok: false, code: "empty", message: DOCS_COPY.empty });
+    expect(validateDriveUrl("https://example.com/x")).toMatchObject({
+      ok: false,
+      code: "bad_link",
+      message: DOCS_COPY.badLink,
+    });
+    const good = validateDriveUrl("https://drive.google.com/file/d/abc/view");
     expect(good.ok).toBe(true);
-    if (good.ok) {
-      expect(good.fileName).toBe("schematic.pdf");
-      expect(good.contentBase64).toBe(ok.toString("base64"));
-      expect(contentFingerprint(good.contentBase64)).toMatch(/^[a-f0-9]{16}$/);
-    }
-
-    const empty = validatePdfUpload({ fileName: "a.pdf", bytes: Buffer.alloc(0) });
-    expect(empty).toMatchObject({ ok: false, code: "empty", message: DOCS_COPY.empty });
-
-    const huge = validatePdfUpload({
-      fileName: "a.pdf",
-      bytes: Buffer.concat([Buffer.from("%PDF-1.4"), Buffer.alloc(HACKTIVATE_DOC_MAX_BYTES)]),
-    });
-    expect(huge).toMatchObject({ ok: false, code: "too_large" });
-
-    const png = validatePdfUpload({
-      fileName: "shot.png",
-      bytes: Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a]),
-    });
-    expect(png).toMatchObject({ ok: false, code: "bad_type" });
+    if (good.ok) expect(good.driveUrl).toContain("drive.google.com");
   });
 
-  it("formats sizes and builds storage paths", () => {
-    expect(formatDocSize(500)).toBe("500 B");
-    expect(formatDocSize(2048)).toBe("2.0 KB");
-    expect(hacktivateDocPath("byteforge01", "abcd")).toBe("hacktivate-doc/BYTEFORGE01/abcd.json");
-    expect(newDocId()).toMatch(/^[a-f0-9]{16}$/);
-    expect(HACKTIVATE_DOC_MAX_PER_TEAM).toBe(5);
+  it("builds one storage path per team", () => {
+    expect(hacktivateDemoPath("byteforge01")).toBe("hacktivate-demo/BYTEFORGE01.json");
   });
 
   it("reuses Track Pick staff gate for Ganesh and Shravanth", () => {
@@ -73,8 +55,7 @@ vi.mock("@/lib/blob-store", () => ({
   teamPath: (e: string, c: string) => `team/${e}/${c}.json`,
   teamMemberPath: (e: string, m: string) => `team-member/${e}/${m.toLowerCase()}.json`,
   readJsonByPath: async (p: string) => store.get(p) ?? null,
-  putJson: async (p: string, data: unknown, overwrite: boolean) => {
-    if (!overwrite && store.has(p)) throw new Error("exists");
+  putJson: async (p: string, data: unknown) => {
     store.set(p, data);
   },
   deleteJson: async (p: string) => {
@@ -153,9 +134,7 @@ function seedTeam(opts: {
   }
 }
 
-const tinyPdf = () => Buffer.from("%PDF-1.4\n1 0 obj<<>>endobj\ntrailer<<>>\n%%EOF\n");
-
-describe("hacktivate docs service", () => {
+describe("hacktivate demo service", () => {
   beforeEach(() => {
     store.clear();
     session.email = null;
@@ -163,13 +142,12 @@ describe("hacktivate docs service", () => {
     session.role = { kind: "none", eventIds: [] };
   });
 
-  it("lets a confirmed teammate upload, lists for staff, and serves download bytes", async () => {
+  it("lets a confirmed teammate submit, lists for staff, and replaces on resubmit", async () => {
     const {
-      uploadParticipantPdf,
-      getParticipantDocs,
-      getStaffDocsBoard,
-      getDocForDownload,
-      deleteParticipantPdf,
+      submitDemoLink,
+      getParticipantDemo,
+      getStaffDemoBoard,
+      clearDemoLink,
     } = await import("@/lib/hacktivate-docs-service");
 
     seedTeam({
@@ -183,41 +161,38 @@ describe("hacktivate docs service", () => {
     session.email = "mate@byteforge.test";
     session.name = "Riya S";
 
-    const denied = await getParticipantDocs("pending@x.test");
-    expect(denied.canUpload).toBe(false);
+    const before = await getParticipantDemo("mate@byteforge.test");
+    expect(before.canSubmit).toBe(true);
+    expect(before.demo).toBeNull();
 
-    const before = await getParticipantDocs("mate@byteforge.test");
-    expect(before.canUpload).toBe(true);
-    expect(before.docs).toHaveLength(0);
-
-    const up = await uploadParticipantPdf("mate@byteforge.test", {
-      fileName: "schematic-v1.pdf",
-      bytes: tinyPdf(),
-    });
+    const up = await submitDemoLink(
+      "mate@byteforge.test",
+      "https://drive.google.com/file/d/abc123/view?usp=sharing",
+    );
     expect(up.ok).toBe(true);
     if (!up.ok) return;
-    expect(up.doc.teamCode).toBe("BYTEFORGE01");
-    expect(up.doc.fileName).toBe("schematic-v1.pdf");
-    expect(up.state.docs).toHaveLength(1);
+    expect(up.demo.teamCode).toBe("BYTEFORGE01");
+    expect(up.demo.driveUrl).toBe("https://drive.google.com/file/d/abc123/view");
 
-    const board = await getStaffDocsBoard();
+    const board = await getStaffDemoBoard();
     expect(board.total).toBe(1);
-    expect(board.docs[0]?.teamName).toBe("ByteForge");
+    expect(board.demos[0]?.teamName).toBe("ByteForge");
 
-    const dl = await getDocForDownload(up.doc.id, "BYTEFORGE01");
-    expect(dl.ok).toBe(true);
-    if (dl.ok) {
-      expect(dl.bytes.subarray(0, 5).toString("ascii")).toBe("%PDF-");
-      expect(dl.record.uploadedByEmail).toBe("mate@byteforge.test");
-    }
+    const again = await submitDemoLink(
+      "mate@byteforge.test",
+      "https://drive.google.com/file/d/xyz999/view",
+    );
+    expect(again.ok).toBe(true);
+    expect((await getStaffDemoBoard()).total).toBe(1);
+    expect((await getParticipantDemo("mate@byteforge.test")).demo?.driveUrl).toContain("xyz999");
 
-    const gone = await deleteParticipantPdf("mate@byteforge.test", up.doc.id);
-    expect(gone.ok).toBe(true);
-    expect((await getStaffDocsBoard()).total).toBe(0);
+    const cleared = await clearDemoLink("mate@byteforge.test");
+    expect(cleared.ok).toBe(true);
+    expect((await getStaffDemoBoard()).total).toBe(0);
   });
 
-  it("blocks in-review teams, non-PDFs, and the per-team cap", async () => {
-    const { uploadParticipantPdf } = await import("@/lib/hacktivate-docs-service");
+  it("blocks in-review teams and non-Drive URLs", async () => {
+    const { submitDemoLink } = await import("@/lib/hacktivate-docs-service");
 
     seedTeam({
       code: "REVIEW01",
@@ -226,41 +201,23 @@ describe("hacktivate docs service", () => {
       status: "pending",
     });
 
-    const review = await uploadParticipantPdf("lead@review.test", {
-      fileName: "early.pdf",
-      bytes: tinyPdf(),
-    });
+    const review = await submitDemoLink(
+      "lead@review.test",
+      "https://drive.google.com/file/d/abc/view",
+    );
     expect(review).toMatchObject({ ok: false, code: "not_confirmed", status: 403 });
 
     seedTeam({
-      code: "FULLTEAM1",
-      name: "Full Stack",
-      leadEmail: "lead@full.test",
-      leadName: "Lead",
+      code: "OKTEAM01",
+      name: "Ok Team",
+      leadEmail: "lead@ok.test",
     });
-
-    for (let i = 0; i < HACKTIVATE_DOC_MAX_PER_TEAM; i++) {
-      const r = await uploadParticipantPdf("lead@full.test", {
-        fileName: `part-${i}.pdf`,
-        bytes: tinyPdf(),
-      });
-      expect(r.ok).toBe(true);
-    }
-    const over = await uploadParticipantPdf("lead@full.test", {
-      fileName: "one-more.pdf",
-      bytes: tinyPdf(),
-    });
-    expect(over).toMatchObject({ ok: false, code: "team_full", status: 409 });
-
-    const bad = await uploadParticipantPdf("lead@full.test", {
-      fileName: "photo.jpg",
-      bytes: Buffer.from("JFIF"),
-    });
-    expect(bad).toMatchObject({ ok: false, code: "bad_type" });
+    const bad = await submitDemoLink("lead@ok.test", "https://youtube.com/watch?v=1");
+    expect(bad).toMatchObject({ ok: false, code: "bad_link", status: 400 });
   });
 });
 
-describe("hacktivate docs API routes", () => {
+describe("hacktivate demo API routes", () => {
   beforeEach(() => {
     store.clear();
     session.email = null;
@@ -268,7 +225,7 @@ describe("hacktivate docs API routes", () => {
     session.role = { kind: "none", eventIds: [] };
   });
 
-  it("participant POST stores a PDF and staff GET downloads it for organiser + coordinator", async () => {
+  it("participant POST stores a Drive link and staff GET lists it for organiser + coordinator", async () => {
     seedTeam({
       code: "APITEAM01",
       name: "Api Team",
@@ -281,47 +238,37 @@ describe("hacktivate docs API routes", () => {
     session.role = { kind: "organiser", eventIds: [] };
 
     const { POST } = await import("@/app/api/hacktivate/docs/route");
-    const form = new FormData();
-    form.append(
-      "file",
-      new File([tinyPdf()], "board.pdf", { type: "application/pdf" }),
+    const upRes = await POST(
+      new Request("http://local/api/hacktivate/docs", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ driveUrl: "https://drive.google.com/file/d/board/view" }),
+      }),
     );
-    const upRes = await POST(new Request("http://local/api/hacktivate/docs", { method: "POST", body: form }));
     expect(upRes.status).toBe(200);
     const upBody = await upRes.json();
     expect(upBody.ok).toBe(true);
-    expect(upBody.docs).toHaveLength(1);
-    const id = upBody.doc.id as string;
+    expect(upBody.demo.driveUrl).toContain("drive.google.com");
 
     const { GET: staffGet } = await import("@/app/api/dashboard/hacktivate/docs/route");
-    const list = await staffGet(new Request("http://local/api/dashboard/hacktivate/docs"));
+    const list = await staffGet();
     expect(list.status).toBe(200);
     const listBody = await list.json();
     expect(listBody.total).toBe(1);
-
-    const dl = await staffGet(
-      new Request(
-        `http://local/api/dashboard/hacktivate/docs?download=${id}&team=APITEAM01`,
-      ),
-    );
-    expect(dl.status).toBe(200);
-    expect(dl.headers.get("content-type")).toBe("application/pdf");
-    expect(dl.headers.get("content-disposition")).toMatch(/board\.pdf/);
-    const bytes = Buffer.from(await dl.arrayBuffer());
-    expect(bytes.subarray(0, 5).toString("ascii")).toBe("%PDF-");
+    expect(listBody.demos[0].teamCode).toBe("APITEAM01");
 
     session.email = "shravanth.polisetty@gmail.com";
     session.role = { kind: "coordinator", eventIds: ["hacktivate"] };
-    const coordList = await staffGet(new Request("http://local/api/dashboard/hacktivate/docs"));
+    const coordList = await staffGet();
     expect(coordList.status).toBe(200);
     expect((await coordList.json()).total).toBe(1);
 
     session.role = { kind: "coordinator", eventIds: ["pitch-pulse"] };
-    const denied = await staffGet(new Request("http://local/api/dashboard/hacktivate/docs"));
+    const denied = await staffGet();
     expect(denied.status).toBe(403);
   });
 
-  it("rejects unsigned participants and foreign event coordinators on upload GET", async () => {
+  it("rejects unsigned participants", async () => {
     const { GET } = await import("@/app/api/hacktivate/docs/route");
     session.email = null;
     const signedOut = await GET();

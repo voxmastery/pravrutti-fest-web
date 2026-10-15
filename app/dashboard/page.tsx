@@ -210,9 +210,9 @@ export default function DashboardPage() {
                   className="mb-6 flex items-center justify-between gap-4 rounded-2xl border border-soft-gold/40 bg-soft-gold/10 px-5 py-4 transition-colors hover:border-soft-gold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-soft-gold"
                 >
                   <span>
-                    <span className="block font-semibold text-champagne-gold">Hacktivate · Schematic PDFs</span>
+                    <span className="block font-semibold text-champagne-gold">Hacktivate · Demo videos</span>
                     <span className="block text-sm text-white/45">
-                      Download team uploads — schematics, screenshots, wiring diagrams
+                      Open team Google Drive links for demo videos
                     </span>
                   </span>
                   <FileUp className="h-5 w-5 shrink-0 text-soft-gold" />
@@ -327,9 +327,9 @@ export default function DashboardPage() {
         className="mb-6 flex items-center justify-between gap-4 rounded-2xl border border-soft-gold/40 bg-soft-gold/10 px-5 py-4 transition-colors hover:border-soft-gold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-soft-gold"
       >
         <span>
-          <span className="block font-semibold text-champagne-gold">Hacktivate · Schematic PDFs</span>
+          <span className="block font-semibold text-champagne-gold">Hacktivate · Demo videos</span>
           <span className="block text-sm text-white/45">
-            Download team uploads — schematics, screenshots, wiring diagrams
+            Open team Google Drive links for demo videos
           </span>
         </span>
         <FileUp className="h-5 w-5 shrink-0 text-soft-gold" />

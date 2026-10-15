@@ -6,8 +6,8 @@ import { HacktivateDocsScreen } from "@/components/hacktivate/docs-screen";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "Schematics & screenshots · Hacktivate · Pravrutti 2.0",
-  description: "Upload PDF schematics and screenshots for your Hacktivate team.",
+  title: "Demo video · Hacktivate · Pravrutti 2.0",
+  description: "Submit your Hacktivate demo video Google Drive link.",
 };
 
 export default function HacktivateDocsPage() {

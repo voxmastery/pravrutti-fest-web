@@ -5,7 +5,7 @@ import { DocsControlScreen } from "@/components/hacktivate/docs-control-screen";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "Schematic PDFs · Hacktivate · Pravrutti 2.0",
+  title: "Demo videos · Hacktivate · Pravrutti 2.0",
 };
 
 export default function HacktivateDocsControlPage() {

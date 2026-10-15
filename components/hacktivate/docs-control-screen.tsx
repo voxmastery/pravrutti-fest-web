@@ -2,16 +2,16 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { Download, Loader2, Search } from "lucide-react";
+import { ExternalLink, Loader2, Search } from "lucide-react";
 import { useIdentity } from "@/lib/identity-context";
-import { formatDocSize, type HacktivateDocMeta } from "@/lib/hacktivate-docs";
+import type { HacktivateDemoLink } from "@/lib/hacktivate-docs";
 
 type Board = {
   role: string;
   actorName: string;
   title: string;
   total: number;
-  docs: HacktivateDocMeta[];
+  demos: HacktivateDemoLink[];
 };
 
 export function DocsControlScreen() {
@@ -38,14 +38,14 @@ export function DocsControlScreen() {
       }
       const json = await res.json();
       if (!res.ok) {
-        setError(json.error ?? "Could not load schematic uploads.");
+        setError(json.error ?? "Could not load demo video links.");
         return;
       }
       setError(null);
       setForbidden(false);
       setBoard(json);
     } catch {
-      setError("Network dropped. Could not load schematic uploads.");
+      setError("Network dropped. Could not load demo video links.");
     } finally {
       setLoading(false);
     }
@@ -70,9 +70,9 @@ export function DocsControlScreen() {
 
   const rows = useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!q) return board?.docs ?? [];
-    return (board?.docs ?? []).filter((d) =>
-      [d.teamName, d.teamCode, d.fileName, d.uploadedByName, d.uploadedByEmail]
+    if (!q) return board?.demos ?? [];
+    return (board?.demos ?? []).filter((d) =>
+      [d.teamName, d.teamCode, d.driveUrl, d.submittedByName, d.submittedByEmail]
         .join(" ")
         .toLowerCase()
         .includes(q),
@@ -87,11 +87,11 @@ export function DocsControlScreen() {
             Hacktivate · Staff
           </p>
           <h1 className="mt-3 font-display text-4xl font-black tracking-wide sm:text-5xl">
-            Schematic PDFs
+            Demo videos
           </h1>
           <p className="mt-3 max-w-xl text-sm leading-relaxed text-pearl-white/65">
-            Download team uploads (schematics, screenshots, wiring diagrams). Visible to fest
-            organisers and Hacktivate coordinators.
+            Google Drive links submitted by teams. Visible to fest organisers and Hacktivate
+            coordinators.
           </p>
         </div>
         <div className="flex flex-wrap gap-3 text-sm">
@@ -115,7 +115,7 @@ export function DocsControlScreen() {
         <div className="mt-10 rounded-3xl border border-royal-wine bg-cosmic-purple/50 p-6">
           <p className="font-semibold text-champagne-gold">No access</p>
           <p className="mt-2 text-sm text-white/60">
-            Schematic downloads are for Hacktivate organisers and coordinators.
+            Demo video links are for Hacktivate organisers and coordinators.
           </p>
         </div>
       )}
@@ -130,8 +130,8 @@ export function DocsControlScreen() {
         <div className="mt-10 space-y-5">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <p className="text-sm text-white/50">
-              <span className="font-semibold text-champagne-gold tabular-nums">{board.total}</span> PDF
-              {board.total === 1 ? "" : "s"} · signed in as {board.actorName}
+              <span className="font-semibold text-champagne-gold tabular-nums">{board.total}</span>{" "}
+              team{board.total === 1 ? "" : "s"} · signed in as {board.actorName}
               {board.title ? ` · ${board.title}` : ""}
             </p>
             <label className="relative block w-full max-w-xs">
@@ -139,7 +139,7 @@ export function DocsControlScreen() {
               <input
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search team, file, uploader…"
+                placeholder="Search team, link, uploader…"
                 className="h-10 w-full rounded-2xl border border-white/15 bg-white/[0.04] pl-10 pr-3 text-sm text-pearl-white placeholder:text-white/30 focus:border-cyber-pink focus:outline-none"
               />
             </label>
@@ -148,33 +148,35 @@ export function DocsControlScreen() {
           {rows.length === 0 ? (
             <div className="rounded-3xl border border-royal-wine bg-cosmic-purple/50 p-6 text-sm text-white/50">
               {board.total === 0
-                ? "No teams have uploaded a PDF yet."
-                : "No uploads match that search."}
+                ? "No teams have submitted a demo video link yet."
+                : "No links match that search."}
             </div>
           ) : (
             <ul className="space-y-3">
-              {rows.map((doc) => (
+              {rows.map((demo) => (
                 <li
-                  key={doc.id}
+                  key={demo.teamCode}
                   className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-royal-wine bg-cosmic-purple/50 px-4 py-3.5"
                 >
                   <div className="min-w-0">
                     <p className="truncate text-sm font-semibold text-champagne-gold">
-                      {doc.teamName}{" "}
-                      <span className="font-normal text-white/40">· {doc.teamCode}</span>
+                      {demo.teamName}{" "}
+                      <span className="font-normal text-white/40">· {demo.teamCode}</span>
                     </p>
-                    <p className="mt-0.5 truncate text-sm text-pearl-white">{doc.fileName}</p>
+                    <p className="mt-0.5 truncate text-sm text-pearl-white/80">{demo.driveUrl}</p>
                     <p className="mt-0.5 text-[12px] text-white/45">
-                      {formatDocSize(doc.size)} · {new Date(doc.uploadedAt).toLocaleString("en-IN")} ·{" "}
-                      {doc.uploadedByName || doc.uploadedByEmail}
+                      {new Date(demo.submittedAt).toLocaleString("en-IN")} ·{" "}
+                      {demo.submittedByName || demo.submittedByEmail}
                     </p>
                   </div>
                   <a
-                    href={`/api/dashboard/hacktivate/docs?download=${encodeURIComponent(doc.id)}&team=${encodeURIComponent(doc.teamCode)}`}
+                    href={demo.driveUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className="inline-flex h-10 items-center gap-2 rounded-2xl border border-cyber-pink/45 bg-cyber-pink/10 px-4 text-sm font-semibold text-champagne-gold transition-colors hover:border-cyber-pink"
                   >
-                    <Download className="h-4 w-4" aria-hidden="true" />
-                    Download
+                    <ExternalLink className="h-4 w-4" aria-hidden="true" />
+                    Open Drive
                   </a>
                 </li>
               ))}

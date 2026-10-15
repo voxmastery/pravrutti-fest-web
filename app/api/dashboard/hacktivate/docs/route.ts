@@ -3,7 +3,7 @@ import { resolveEmail } from "@/lib/identity";
 import { resolveRole } from "@/lib/roles";
 import { DOCS_COPY } from "@/lib/hacktivate-docs";
 import { canManageTrackPick, knownStaffName, staffTitle } from "@/lib/track-pick";
-import { getDocForDownload, getStaffDocsBoard } from "@/lib/hacktivate-docs-service";
+import { getStaffDemoBoard } from "@/lib/hacktivate-docs-service";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -25,33 +25,12 @@ async function staff() {
   return { email, kind, title, name };
 }
 
-export async function GET(req: Request) {
+export async function GET() {
   const who = await staff();
   if ("error" in who && who.error) return who.error;
   if (!("email" in who)) return NextResponse.json({ error: "Sign in." }, { status: 401, headers: noStore });
 
-  const url = new URL(req.url);
-  const downloadId = url.searchParams.get("download");
-  if (downloadId) {
-    const teamCode = url.searchParams.get("team") ?? undefined;
-    const result = await getDocForDownload(downloadId, teamCode ?? undefined);
-    if (!result.ok) {
-      return NextResponse.json({ error: result.message }, { status: result.status, headers: noStore });
-    }
-    const { record, bytes } = result;
-    const safeName = record.fileName.replace(/[^\w.\- ()[\]]+/g, "_");
-    return new NextResponse(new Uint8Array(bytes), {
-      status: 200,
-      headers: {
-        ...noStore,
-        "content-type": "application/pdf",
-        "content-disposition": `attachment; filename="${safeName}"; filename*=UTF-8''${encodeURIComponent(record.fileName)}`,
-        "content-length": String(bytes.length),
-      },
-    });
-  }
-
-  const board = await getStaffDocsBoard();
+  const board = await getStaffDemoBoard();
   return NextResponse.json(
     {
       role: who.kind,

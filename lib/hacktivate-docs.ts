@@ -1,91 +1,84 @@
 /**
- * Hacktivate schematic / screenshot PDF uploads.
+ * Hacktivate demo-video Google Drive links.
  *
- * Teams upload PDFs (schematics, screenshots, etc.). Organisers and Hacktivate
- * coordinators list and download them from the dashboard. Bytes live in the
- * MySQL kv store as base64 JSON — the deploy filesystem is ephemeral.
- *
- * Client-safe: types, copy, path helpers, size formatting. Node validation
- * lives in lib/hacktivate-docs-node.ts; access checks reuse canManageTrackPick.
+ * Confirmed teams paste a Drive share link and submit. Organisers and
+ * Hacktivate coordinators open those links from the dashboard. One link per
+ * team (resubmit replaces). Stored in MySQL kv — not on the ephemeral disk.
  */
 
-export const HACKTIVATE_DOC_MAX_BYTES = 8 * 1024 * 1024;
-
-/** Soft cap so one team cannot flood the store. */
-export const HACKTIVATE_DOC_MAX_PER_TEAM = 5;
-
-export const HACKTIVATE_DOC_PREFIX = "hacktivate-doc/";
+export const HACKTIVATE_DEMO_PREFIX = "hacktivate-demo/";
 
 export const DOCS_COPY = {
   signIn: "Sign in with the Google account on your Hacktivate registration.",
   noTeam: "No Hacktivate team is linked to this email. Sign in with the account your lead registered.",
   notConfirmed:
-    "PDF upload is open to confirmed Hacktivate teams. Your team is still in review or not eligible.",
-  badType: "Only PDF files are accepted — export or print your schematics / screenshots to PDF first.",
-  tooLarge: "That PDF is larger than 8 MB. Compress it or split it into fewer pages.",
-  teamFull: "This team already has 5 PDFs. Remove one before uploading another.",
-  empty: "That file is empty.",
-  staffOnly: "Schematic downloads are for Hacktivate organisers and coordinators.",
-  notFound: "That PDF is not on file.",
-  badName: "Give the file a short .pdf name.",
+    "Demo video links are open to confirmed Hacktivate teams. Your team is still in review or not eligible.",
+  badLink:
+    "Paste a Google Drive link (drive.google.com or docs.google.com). Make sure sharing is set so organisers can open it.",
+  empty: "Paste your Google Drive link before submitting.",
+  staffOnly: "Demo video links are for Hacktivate organisers and coordinators.",
+  notFound: "That team has not submitted a demo video link.",
+  saved: "Demo video link saved.",
+  cleared: "Demo video link removed.",
 } as const;
 
-export type HacktivateDocMeta = {
-  id: string;
+export type HacktivateDemoLink = {
   teamCode: string;
   teamName: string;
-  fileName: string;
-  size: number;
-  uploadedByEmail: string;
-  uploadedByName: string;
-  uploadedAt: string;
+  driveUrl: string;
+  submittedByEmail: string;
+  submittedByName: string;
+  submittedAt: string;
 };
 
-export type HacktivateDocRecord = HacktivateDocMeta & {
-  contentBase64: string;
-  mimeType: "application/pdf";
-};
-
-export function hacktivateDocPath(teamCode: string, id: string): string {
-  const code = String(teamCode).trim().toUpperCase();
-  return `${HACKTIVATE_DOC_PREFIX}${code}/${id}.json`;
+export function hacktivateDemoPath(teamCode: string): string {
+  return `${HACKTIVATE_DEMO_PREFIX}${String(teamCode).trim().toUpperCase()}.json`;
 }
 
-export function hacktivateDocTeamPrefix(teamCode: string): string {
-  return `${HACKTIVATE_DOC_PREFIX}${String(teamCode).trim().toUpperCase()}/`;
+/** Accept only Google Drive / Docs share URLs. */
+export function normalizeDriveUrl(raw: string): string | null {
+  const trimmed = String(raw ?? "").trim();
+  if (!trimmed) return null;
+
+  let parsed: URL;
+  try {
+    parsed = new URL(trimmed.includes("://") ? trimmed : `https://${trimmed}`);
+  } catch {
+    return null;
+  }
+
+  if (parsed.protocol !== "http:" && parsed.protocol !== "https:") return null;
+
+  const host = parsed.hostname.toLowerCase();
+  const allowed =
+    host === "drive.google.com" ||
+    host === "docs.google.com" ||
+    host.endsWith(".drive.google.com");
+  if (!allowed) return null;
+
+  parsed.hash = "";
+  // Drop tracking noise; keep id / resource keys.
+  for (const key of [...parsed.searchParams.keys()]) {
+    if (key.startsWith("usp") || key === "authuser" || key === "resourcekey") {
+      /* keep resourcekey; drop usp/authuser */
+      if (key.startsWith("usp") || key === "authuser") parsed.searchParams.delete(key);
+    }
+  }
+
+  return parsed.toString();
 }
 
-/** Safe download / display name: keep basename, force .pdf, strip path bits. */
-export function sanitizePdfFileName(raw: string): string | null {
-  const base = String(raw ?? "")
-    .replace(/\\/g, "/")
-    .split("/")
-    .pop()
-    ?.trim()
-    .replace(/[^\w.\- ()[\]]+/g, "_")
-    .replace(/_+/g, "_")
-    .slice(0, 120);
-  if (!base) return null;
-  const withoutExt = base.replace(/\.pdf$/i, "").trim();
-  if (!withoutExt || /^\.+$/.test(withoutExt)) return null;
-  return `${withoutExt}.pdf`;
-}
+export type ValidateDriveResult =
+  | { ok: true; driveUrl: string }
+  | { ok: false; code: "empty" | "bad_link"; message: string };
 
-export function metaOf(record: HacktivateDocRecord): HacktivateDocMeta {
-  return {
-    id: record.id,
-    teamCode: record.teamCode,
-    teamName: record.teamName,
-    fileName: record.fileName,
-    size: record.size,
-    uploadedByEmail: record.uploadedByEmail,
-    uploadedByName: record.uploadedByName,
-    uploadedAt: record.uploadedAt,
-  };
-}
-
-export function formatDocSize(bytes: number): string {
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+export function validateDriveUrl(raw: string): ValidateDriveResult {
+  if (!String(raw ?? "").trim()) {
+    return { ok: false, code: "empty", message: DOCS_COPY.empty };
+  }
+  const driveUrl = normalizeDriveUrl(raw);
+  if (!driveUrl) {
+    return { ok: false, code: "bad_link", message: DOCS_COPY.badLink };
+  }
+  return { ok: true, driveUrl };
 }

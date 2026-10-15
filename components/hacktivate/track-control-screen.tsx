@@ -172,7 +172,7 @@ export function TrackControlScreen() {
             {organiser && <SideLink href="/dashboard/approve">Payments</SideLink>}
             {!organiser && <SideLink href="/dashboard">Teams</SideLink>}
             <SideLink href="/dashboard/hacktivate/track-pick" current>Track Pick</SideLink>
-            <SideLink href="/dashboard/hacktivate/docs">Schematic PDFs</SideLink>
+            <SideLink href="/dashboard/hacktivate/docs">Demo videos</SideLink>
             <SideLink href="/dashboard/scan">Check-in</SideLink>
           </nav>
         </aside>
