@@ -25,6 +25,7 @@ import { TeamManage } from "@/components/team-manage";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { TicketValidityNote } from "@/components/ticket-validity-note";
 import { CertificateActions } from "@/components/certificate-actions";
+import { EmailOtpSignIn } from "@/components/email-otp-sign-in";
 import { HACKTIVATE_EVENT_ID } from "@/lib/track-pick";
 import { Loader2, CalendarPlus, Hourglass, Check, RotateCcw, LogOut, MapPin, QrCode, ArrowLeft, Copy, Cpu } from "lucide-react";
 
@@ -300,7 +301,7 @@ export default function TicketPage() {
           <p className="text-pearl-white/60">
             {signedIn
               ? "Every event you've applied to, and the QR for the ones that are confirmed." : me.authEnabled
-              ? "Sign in with the Google account you applied with." : "Enter the email you applied with to see where each application stands."}
+              ? "Sign in with Google, or with a code sent to the email you registered with." : "Enter the email you applied with to see where each application stands."}
           </p>
         </div>
 
@@ -315,11 +316,14 @@ export default function TicketPage() {
               Signing in keeps your ticket tied to your inbox — you can reopen it on any device, and nobody
               else can pull up your applications.
             </p>
-            <Button
-              onClick={me.signIn}
-              className="w-full sm:w-auto rounded-xl h-12 px-8 bg-pearl-white hover:bg-white text-midnight-navy text-xs font-display font-black uppercase tracking-widest cursor-pointer inline-flex items-center gap-3" >
-              <GoogleMark /> Continue with Google
-            </Button>
+            <div className="mx-auto max-w-sm space-y-3">
+              <Button
+                onClick={me.signIn}
+                className="w-full rounded-xl h-12 px-8 bg-pearl-white hover:bg-white text-midnight-navy text-xs font-display font-black uppercase tracking-widest cursor-pointer inline-flex items-center gap-3" >
+                <GoogleMark /> Continue with Google
+              </Button>
+              <EmailOtpSignIn />
+            </div>
           </div>
         ) : signedIn ? (
           <div className="flex items-center gap-3 p-3 sm:p-4 border border-royal-wine rounded-2xl bg-cosmic-purple/60 mb-8 min-w-0 overflow-hidden">
@@ -328,12 +332,12 @@ export default function TicketPage() {
               <img src={me.image} alt="" className="w-10 h-10 rounded-xl shrink-0" />
             ) : (
               <span className="w-10 h-10 shrink-0 rounded-xl bg-neon-purple text-champagne-gold font-display font-black flex items-center justify-center text-sm">
-                {(me.name ?? "?")[0]}
+                {(me.name || me.email || "?")[0]?.toUpperCase()}
               </span>
             )}
             <div className="min-w-0 flex-1 overflow-hidden">
-              <p className="font-bold text-sm truncate">{me.name}</p>
-              <p className="text-xs text-pearl-white/50 truncate">{me.email}</p>
+              <p className="font-bold text-sm truncate">{me.name || me.email}</p>
+              {me.name ? <p className="text-xs text-pearl-white/50 truncate">{me.email}</p> : null}
             </div>
             <Button
               variant="outline" onClick={me.signOut}

@@ -6,7 +6,7 @@ import { useIdentity } from "@/lib/identity-context";
 import { FEST } from "@/lib/pravrutti-data";
 import { LogIn } from "lucide-react";
 import { isDev, setDevLogin } from "@/lib/dev-identity";
-import { events } from "@/lib/pravrutti-data";
+import { EmailOtpSignIn } from "@/components/email-otp-sign-in";
 
 function GoogleMark() {
   return (
@@ -21,9 +21,8 @@ function GoogleMark() {
 
 /**
  * Luma's sign-in is a small centred card, not a full page: brand icon, a
- * welcome line, then the providers. We only have Google, so that is the only
- * row — rendering dead email/passkey options is exactly the problem this
- * replaces.
+ * welcome line, then the providers. Google stays the primary row. Email OTP
+ * is the other, for a ticket registered to a college inbox.
  */
 export function SignInModal({ open, onClose }: { open: boolean; onClose: () => void }) {
   const me = useIdentity();
@@ -45,16 +44,19 @@ export function SignInModal({ open, onClose }: { open: boolean; onClose: () => v
           </DialogDescription>
         </div>
 
-        <div className="pt-4">
+        <div className="pt-4 space-y-3">
           {me.authEnabled ? (
-            <Button
-              onClick={() => {
-                me.signIn();
-                onClose();
-              }}
-              className="w-full h-[38px] rounded-2xl bg-white text-black hover:bg-white/90 font-medium text-base cursor-pointer inline-flex items-center gap-2.5" >
-              <GoogleMark /> Sign in with Google
-            </Button>
+            <>
+              <Button
+                onClick={() => {
+                  me.signIn();
+                  onClose();
+                }}
+                className="w-full h-[38px] rounded-2xl bg-white text-black hover:bg-white/90 font-medium text-base cursor-pointer inline-flex items-center gap-2.5" >
+                <GoogleMark /> Sign in with Google
+              </Button>
+              <EmailOtpSignIn onSignedIn={onClose} />
+            </>
           ) : (
             /* No auth backend configured — never render a button that would
                bounce the user into a NextAuth error page. */
@@ -68,7 +70,7 @@ export function SignInModal({ open, onClose }: { open: boolean; onClose: () => v
 
         <p className="text-[12px] text-white/35 text-center leading-relaxed pt-1">
           {me.authEnabled
-            ? "Your ticket stays tied to your Google inbox, so you can reopen it on any device." : "Sign-in isn't switched on yet. You can still browse events and register with your email."}
+            ? "Your ticket stays tied to the email you sign in with, so you can reopen it on any device." : "Sign-in isn't switched on yet. You can still browse events and register with your email."}
         </p>
 
         <DemoLogins />
