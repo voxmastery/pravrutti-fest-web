@@ -93,19 +93,149 @@ function mcp(server) {
   return { ready, call, close: () => child.kill() };
 }
 
-const files = execSync("git ls-files", { encoding: "utf8" }).split("\n").filter((f) => f && !EXCLUDE.test(f));
-fs.writeFileSync("/tmp/pravrutti-files.txt", files.join("\n"));
-execSync(`tar -czf ${ARCHIVE} -T /tmp/pravrutti-files.txt`);
-console.log(`archive: ${files.length} files, ${(fs.statSync(ARCHIVE).size / 1e6).toFixed(1)} MB`);
+const API = "https://developers.hostinger.com";
+const REPO = "voxmastery/pravrutti-fest-web";
 
-const h = mcp("hostinger-hosting");
-await h.ready;
+async function api(method, pathname, body) {
+  const res = await fetch(API + pathname, {
+    method,
+    headers: {
+      Authorization: `Bearer ${process.env.HOSTINGER_API_TOKEN}`,
+      Accept: "application/json",
+      ...(body !== undefined ? { "Content-Type": "application/json" } : {}),
+    },
+    body: body !== undefined ? JSON.stringify(body) : undefined,
+  });
+  const text = await res.text();
+  let data = text;
+  try { data = JSON.parse(text); } catch { /* plain text */ }
+  return { status: res.status, data };
+}
 
-const out = await h.call("hosting_deployJsApplication", { domain: DOMAIN, archivePath: ARCHIVE, removeArchive: true });
-const uuid = out.match(/"uuid":"([^"]+)"/)?.[1];
+function asList(data) {
+  if (Array.isArray(data)) return data;
+  if (Array.isArray(data?.data)) return data.data;
+  if (Array.isArray(data?.installations)) return data.installations;
+  return [];
+}
+
+function brief(data) {
+  const text = typeof data === "string" ? data : JSON.stringify(data);
+  return text.slice(0, 400);
+}
 
 /**
- * No uuid means the archive never landed.
+ * Ask Hostinger to clone main itself and build it.
+ *
+ * The archive upload (hosting_deployJsApplication) has been answering 500
+ * before the file finishes transferring. A git build never sends that archive.
+ * It does not turn on push-to-deploy; this script still starts each build.
+ */
+async function startGitBuild() {
+  const listed = await api("GET", "/api/hosting/v1/git/installations?status=active");
+  console.log("git installations:", listed.status);
+  if (listed.status >= 400) {
+    console.log(brief(listed.data));
+    return null;
+  }
+  const installations = asList(listed.data);
+  if (!installations.length) {
+    console.log("no active Git installation on this Hostinger account");
+    return null;
+  }
+  let repo = null;
+  for (const installation of installations) {
+    const repos = await api("GET", `/api/hosting/v1/git/installations/${installation.uuid}/repositories`);
+    if (repos.status >= 400) {
+      console.log("git repos:", repos.status, brief(repos.data));
+      continue;
+    }
+    repo = asList(repos.data).find((candidate) => String(candidate.full_name).toLowerCase() === REPO);
+    if (repo) {
+      repo = { ...repo, installationUuid: installation.uuid };
+      break;
+    }
+  }
+  if (!repo) {
+    console.log(`${REPO} is not in the connected Git installation`);
+    return null;
+  }
+
+  const stored = await api(
+    "GET",
+    `/api/hosting/v1/accounts/${USERNAME}/websites/${DOMAIN}/nodejs/builds/settings`,
+  );
+  const saved = stored.status === 200 ? (stored.data?.data ?? stored.data) : null;
+  console.log("stored build settings:", stored.status, saved?.app_type ?? "none");
+  const settings = {
+    node_version: saved?.node_version ?? 20,
+    app_type: saved?.app_type ?? "next",
+    root_directory: saved?.root_directory ?? ".",
+    output_directory: saved?.output_directory ?? ".next",
+    build_script: saved?.build_script ?? "build",
+    package_manager: saved?.package_manager ?? "npm",
+    ...(saved?.entry_file ? { entry_file: saved.entry_file } : {}),
+  };
+  const started = await api(
+    "POST",
+    `/api/hosting/v1/accounts/${USERNAME}/websites/${DOMAIN}/nodejs/builds`,
+    {
+      ...settings,
+      source_type: "git",
+      source_options: {
+        owner: repo.owner,
+        repository: repo.name,
+        branch: "main",
+        installation_uuid: repo.installationUuid,
+      },
+    },
+  );
+  console.log("git build:", started.status, brief(started.data));
+  return started.data?.uuid ?? started.data?.data?.uuid ?? null;
+}
+
+function findState(payload, uuid) {
+  const lists = [
+    Array.isArray(payload) ? payload : null,
+    payload?.data,
+    payload?.deployments?.data,
+    payload?.builds,
+  ].filter(Array.isArray);
+  for (const list of lists) {
+    const hit = list.find((row) => row.uuid === uuid);
+    if (hit) return hit.state ?? hit.status ?? null;
+  }
+  return null;
+}
+
+async function uploadArchive() {
+  const files = execSync("git ls-files", { encoding: "utf8" }).split("\n").filter((f) => f && !EXCLUDE.test(f));
+  fs.writeFileSync("/tmp/pravrutti-files.txt", files.join("\n"));
+  execSync(`tar -czf ${ARCHIVE} -T /tmp/pravrutti-files.txt`);
+  console.log(`archive: ${files.length} files, ${(fs.statSync(ARCHIVE).size / 1e6).toFixed(1)} MB`);
+
+  const h = mcp("hostinger-hosting");
+  await h.ready;
+  const out = await h.call("hosting_deployJsApplication", { domain: DOMAIN, archivePath: ARCHIVE, removeArchive: true });
+  h.close();
+  const uuid = out.match(/"uuid":"([^"]+)"/)?.[1] ?? null;
+  if (!uuid) {
+    console.error("archive upload failed:");
+    console.error(out.slice(0, 500));
+  }
+  return uuid;
+}
+
+let uuid = await startGitBuild();
+let source = "git";
+if (!uuid) {
+  source = "archive";
+  console.log("falling back to the archive upload");
+  uuid = await uploadArchive();
+}
+
+/**
+ * No uuid means nothing new was built.
  *
  * This used to log the error and carry on. The poll below then read "the
  * most recent deployment", which was the PREVIOUS one sitting at completed,
@@ -115,36 +245,39 @@ const uuid = out.match(/"uuid":"([^"]+)"/)?.[1];
  * GitHub runner could not reach the upload endpoint.
  */
 if (!uuid) {
-  console.error("deploy failed — the archive did not upload:");
-  console.error(out.slice(0, 500));
-  h.close();
   process.exit(1);
 }
-console.log("build:", uuid);
+console.log("build:", source, uuid);
 
-/* Watch THIS build, not whatever is newest. Polling the top of the list
-   cannot tell our deployment from the one before it. */
+/* Watch THIS build, not whatever is newest. */
 let state = "pending";
-for (let i = 0; i < 20 && state !== "completed" && state !== "failed"; i++) {
+for (let i = 0; i < 40 && state !== "completed" && state !== "failed"; i++) {
   await new Promise((r) => setTimeout(r, 20000));
-  const t = await h.call("hosting_listJsDeployments", { domain: DOMAIN, perPage: 5 });
-  try {
-    const mine = JSON.parse(t).deployments.data.find((d) => d.uuid === uuid);
-    if (mine) state = mine.state;
-  } catch { /* keep polling */ }
-  process.stdout.write(`  ${state}\r`);
+  const listed = await api(
+    "GET",
+    `/api/hosting/v1/accounts/${USERNAME}/websites/${DOMAIN}/nodejs/builds?per_page=5`,
+  );
+  state = findState(listed.data, uuid) ?? state;
+  process.stdout.write(`  ${state}\n`);
 }
-console.log("\nbuild state:", state);
+console.log("build state:", state);
 
 if (state !== "completed") {
   console.error(`deploy did not complete (state: ${state}) — not purging the cache.`);
-  if (state === "failed") console.error(await h.call("hosting_getNodeJSBuildLogsV1", { username: USERNAME, domain: DOMAIN, uuid }));
-  h.close();
+  if (state === "failed") {
+    const logs = await api(
+      "GET",
+      `/api/hosting/v1/accounts/${USERNAME}/websites/${DOMAIN}/nodejs/builds/${uuid}/logs?from_line=0`,
+    );
+    console.error(brief(logs.data));
+  }
   process.exit(1);
 }
 
-console.log("cache:", await h.call("hosting_clearWebsiteCacheV1", { username: USERNAME, domain: DOMAIN }));
-h.close();
+const cache = await api("DELETE", `/api/hosting/v1/accounts/${USERNAME}/websites/${DOMAIN}/cache/clear`);
+console.log("cache:", cache.status, brief(cache.data));
+const cdn = await api("DELETE", `/api/hosting/v1/accounts/${USERNAME}/websites/${DOMAIN}/cdn/purge`);
+console.log("cdn:", cdn.status, brief(cdn.data));
 
 // Prove the served HTML points only at chunks that exist — the failure this
 // whole script exists to prevent.
