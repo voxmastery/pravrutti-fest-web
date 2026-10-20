@@ -27,6 +27,9 @@ const nextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
+  outputFileTracingIncludes: {
+    "/api/certificate/download": ["./assets/certificates/**/*"],
+  },
   images: {
     unoptimized: true,
   },

@@ -18,7 +18,7 @@ import { downloadXlsx, exportFileName, exportRows } from "@/lib/roster-export";
 import { deskStage, type DeskStage } from "@/lib/desk-stage";
 import { events } from "@/lib/pravrutti-data";
 import { HACKTIVATE_EVENT_ID } from "@/lib/track-pick";
-import { AlertTriangle, Check, ChevronDown, ClipboardList, Download, FileSpreadsheet, FileUp, Star, Cpu } from "lucide-react";
+import { AlertTriangle, Award, Check, ChevronDown, ClipboardList, Download, FileSpreadsheet, FileUp, Star, Cpu } from "lucide-react";
 
 type Counts = {
   registered: number; teams: number;
@@ -190,6 +190,18 @@ export default function DashboardPage() {
               className="mb-4 inline-block rounded-lg text-sm text-cyber-pink hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyber-pink"
             >
               View event page
+            </Link>
+            <Link
+              href="/dashboard/certificate-feedback"
+              className="mb-4 flex items-center justify-between gap-4 rounded-2xl border border-royal-wine bg-cosmic-purple/60 px-5 py-4 transition-colors hover:border-cyber-pink/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyber-pink"
+            >
+              <span>
+                <span className="block font-semibold text-champagne-gold">Certificate feedback</span>
+                <span className="block text-sm text-white/45">
+                  What checked-in participants said before downloading their certificate
+                </span>
+              </span>
+              <Award className="h-5 w-5 shrink-0 text-cyber-pink" />
             </Link>
             {dash.events.some((e) => e.eventId === HACKTIVATE_EVENT_ID) && (
               <>
@@ -378,6 +390,19 @@ export default function DashboardPage() {
           </span>
         </span>
         <Star className="h-5 w-5 shrink-0 text-cyber-pink" />
+      </Link>
+
+      <Link
+        href="/dashboard/certificate-feedback"
+        className="mb-6 flex items-center justify-between gap-4 rounded-2xl border border-royal-wine bg-cosmic-purple/60 px-5 py-4 transition-colors hover:border-cyber-pink/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyber-pink"
+      >
+        <span>
+          <span className="block font-semibold text-champagne-gold">Certificate feedback</span>
+          <span className="block text-sm text-white/45">
+            Ratings and comments from participants who generated a certificate, with a CSV export
+          </span>
+        </span>
+        <Award className="h-5 w-5 shrink-0 text-cyber-pink" />
       </Link>
 
       <div className="mb-3 flex items-center justify-between gap-4">

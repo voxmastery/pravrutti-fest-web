@@ -102,6 +102,19 @@ await pool.query(
    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`
 );
 
+// Participation-certificate feedback. One row per person. Also created on
+// first use (lib/certificate-feedback.ts) because this script does not re-run
+// against the live database. Additive only.
+await pool.query(
+  `CREATE TABLE IF NOT EXISTS certificate_feedback (
+     email VARCHAR(191) NOT NULL,
+     name VARCHAR(191) NOT NULL,
+     answers LONGTEXT NOT NULL,
+     submitted_at VARCHAR(40) NOT NULL,
+     PRIMARY KEY (email)
+   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`
+);
+
 const all = [];
 let cursor;
 do {

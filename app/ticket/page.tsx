@@ -24,6 +24,7 @@ import { DiscoverizeFormTeam } from "@/components/discoverize-form-team";
 import { TeamManage } from "@/components/team-manage";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { TicketValidityNote } from "@/components/ticket-validity-note";
+import { CertificateActions } from "@/components/certificate-actions";
 import { HACKTIVATE_EVENT_ID } from "@/lib/track-pick";
 import { Loader2, CalendarPlus, Hourglass, Check, RotateCcw, LogOut, MapPin, QrCode, ArrowLeft, Copy, Cpu } from "lucide-react";
 
@@ -272,6 +273,7 @@ export default function TicketPage() {
                 <p className="text-sm text-pearl-white/50">{me.email}</p>
               </div>
               <TicketValidityNote eventName={focused.eventName} className="max-w-sm text-center" />
+              <CertificateActions />
             </>
           ) : (
             <Loader2 className="w-6 h-6 animate-spin text-cyber-pink" />
@@ -342,6 +344,8 @@ export default function TicketPage() {
             </Button>
           </div>
         ) : null}
+
+        {signedIn && <CertificateActions className="mb-8 flex flex-col items-center" />}
 
         {error && (
           <p className="text-xs text-cyber-pink border border-cyber-pink/40 bg-cyber-pink/10 rounded-xl p-3 mb-6">

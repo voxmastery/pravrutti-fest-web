@@ -31,6 +31,14 @@ export async function register() {
       .catch((e) => console.error("[track-pick] schema", e));
   }, 8_000);
 
+  /* Participation-certificate feedback. One new table, created the same way
+     as the others so a deploy does not need a manual migration. */
+  setTimeout(() => {
+    import("@/lib/certificate-feedback")
+      .then((m) => m.ensureCertificateFeedbackTable())
+      .catch((e) => console.error("[certificate-feedback] schema", e));
+  }, 9_000);
+
   const g = globalThis as typeof globalThis & { __pravruttiReminders?: boolean };
   if (g.__pravruttiReminders) return;
   const { schedulerEnabled, startReminderScheduler } = await import("@/lib/reference-reminder-scheduler");

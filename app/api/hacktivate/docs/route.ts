@@ -38,10 +38,7 @@ export async function POST(req: Request) {
     );
   }
 
-  return NextResponse.json(
-    { ok: true, message: DOCS_COPY.saved, demo: result.demo, ...result.state },
-    { headers: noStore },
-  );
+  return NextResponse.json({ ok: true, ...result.state }, { headers: noStore });
 }
 
 export async function DELETE() {
@@ -55,8 +52,5 @@ export async function DELETE() {
       { status: result.status, headers: noStore },
     );
   }
-  return NextResponse.json(
-    { ok: true, message: DOCS_COPY.cleared, ...result.state },
-    { headers: noStore },
-  );
+  return NextResponse.json({ ok: true, ...result.state }, { headers: noStore });
 }
