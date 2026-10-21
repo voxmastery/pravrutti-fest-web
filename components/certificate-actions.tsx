@@ -9,14 +9,17 @@ import { CERTIFICATE_QUESTIONS, parseCertificateAnswers } from "@/lib/certificat
 
 /**
  * One control on My Tickets. It renders nothing until the server says this
- * signed-in person checked in (themselves, or via their team lead). The
- * download never sends a name — the PDF is built from their registration.
+ * signed-in person checked in (themselves, or via a checked-in teammate).
+ * A failed status check stays visible so they can retry. The download never
+ * sends a name — the PDF is built from their registration.
  */
 export function CertificateActions({ className }: { className?: string }) {
   const me = useIdentity();
   const [eligible, setEligible] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [ready, setReady] = useState(false);
+  const [statusError, setStatusError] = useState(false);
+  const [attempt, setAttempt] = useState(0);
   const [open, setOpen] = useState(false);
   const [values, setValues] = useState<Record<string, string>>({});
   const [error, setError] = useState<string | null>(null);
@@ -25,20 +28,27 @@ export function CertificateActions({ className }: { className?: string }) {
   useEffect(() => {
     if (!me.ready || !me.signedIn) {
       setEligible(false);
+      setStatusError(false);
       setReady(me.ready);
       return;
     }
     let cancel = false;
     setReady(false);
+    setStatusError(false);
     fetch("/api/certificate")
-      .then((res) => (res.ok ? res.json() : null))
+      .then((res) => {
+        if (!res.ok) throw new Error(String(res.status));
+        return res.json();
+      })
       .then((data) => {
-        if (cancel || !data) return;
-        setEligible(data.eligible === true);
-        setSubmitted(data.submitted === true);
+        if (cancel) return;
+        setEligible(data?.eligible === true);
+        setSubmitted(data?.submitted === true);
       })
       .catch(() => {
-        if (!cancel) setEligible(false);
+        if (cancel) return;
+        setEligible(false);
+        setStatusError(true);
       })
       .finally(() => {
         if (!cancel) setReady(true);
@@ -46,7 +56,7 @@ export function CertificateActions({ className }: { className?: string }) {
     return () => {
       cancel = true;
     };
-  }, [me.ready, me.signedIn]);
+  }, [me.ready, me.signedIn, attempt]);
 
   const download = useCallback(async () => {
     setBusy(true);
@@ -108,7 +118,24 @@ export function CertificateActions({ className }: { className?: string }) {
     }
   }
 
-  if (!ready || !eligible) return null;
+  if (!ready) return null;
+  if (statusError) {
+    return (
+      <div className={className}>
+        <p className="text-center text-sm text-pearl-white/80">
+          Couldn&apos;t check your certificate status —{" "}
+          <button
+            type="button"
+            onClick={() => setAttempt((n) => n + 1)}
+            className="cursor-pointer font-semibold text-champagne-gold underline underline-offset-2"
+          >
+            Retry
+          </button>
+        </p>
+      </div>
+    );
+  }
+  if (!eligible) return null;
 
   return (
     <div className={className}>

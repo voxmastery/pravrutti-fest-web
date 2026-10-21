@@ -181,6 +181,113 @@ describe("certificate eligibility", () => {
     expect(decision).toEqual({ eligible: true, name: "Meera Nair" });
   });
 
+  it("qualifies a teammate when any confirmed member is checked in, under their own name", () => {
+    const decision = decideCertificate(
+      facts({
+        email: "nithya@example.com",
+        apps: [
+          {
+            eventId: "robo-race",
+            email: "nithya@example.com",
+            name: "Nithyashree G",
+            status: "confirmed",
+            teamCode: "BYTEFORGE01",
+            checkedInAt: null,
+          },
+        ],
+        memberships: [
+          { eventId: "robo-race", code: "BYTEFORGE01", name: "Nithyashree G", removed: false },
+        ],
+        teams: [
+          { eventId: "robo-race", code: "BYTEFORGE01", leadEmail: "lead@example.com", gone: false },
+        ],
+        leadCheckedIn: [
+          { eventId: "robo-race", code: "BYTEFORGE01", email: "lead@example.com", checkedIn: false, status: "confirmed" },
+          {
+            eventId: "robo-race",
+            code: "BYTEFORGE01",
+            email: "parinitha@example.com",
+            checkedIn: true,
+            status: "confirmed",
+          },
+        ],
+      }),
+    );
+    expect(decision).toEqual({ eligible: true, name: "Nithyashree G" });
+  });
+
+  it("ignores a cancelled, declined, removed, or other-team check-in", () => {
+    const base = {
+      email: "nithya@example.com",
+      apps: [
+        {
+          eventId: "robo-race",
+          email: "nithya@example.com",
+          name: "Nithyashree G",
+          status: "confirmed",
+          teamCode: "BYTEFORGE01",
+        },
+      ],
+      memberships: [
+        { eventId: "robo-race", code: "BYTEFORGE01", name: "Nithyashree G", removed: false },
+      ],
+      teams: [
+        { eventId: "robo-race", code: "BYTEFORGE01", leadEmail: "lead@example.com", gone: false },
+      ],
+    };
+    for (const status of ["cancelled", "declined", "pending"]) {
+      expect(
+        decideCertificate(
+          facts({
+            ...base,
+            leadCheckedIn: [
+              {
+                eventId: "robo-race",
+                code: "BYTEFORGE01",
+                email: "mate@example.com",
+                checkedIn: true,
+                status,
+              },
+            ],
+          }),
+        ).eligible,
+      ).toBe(false);
+    }
+    expect(
+      decideCertificate(
+        facts({
+          ...base,
+          leadCheckedIn: [
+            {
+              eventId: "robo-race",
+              code: "BYTEFORGE01",
+              email: "mate@example.com",
+              checkedIn: true,
+              status: "confirmed",
+              removed: true,
+            },
+          ],
+        }),
+      ).eligible,
+    ).toBe(false);
+    expect(
+      decideCertificate(
+        facts({
+          ...base,
+          leadCheckedIn: [
+            {
+              eventId: "robo-race",
+              code: "OTHERTEAM001",
+              email: "mate@example.com",
+              checkedIn: true,
+              status: "confirmed",
+            },
+          ],
+        }),
+      ).eligible,
+    ).toBe(false);
+  });
+
   it("does not qualify a teammate when the lead has not checked in", () => {
     const decision = decideCertificate(
       facts({
@@ -407,5 +514,11 @@ describe("certificate writes", () => {
     expect(read("app/api/certificate/route.ts")).not.toMatch(/body\.email|body\.name|searchParams/);
     expect(read("app/api/certificate/download/route.ts")).not.toMatch(/searchParams|req\.url/);
     expect(read("lib/certificate-service.ts")).toContain("resolveEmail");
+    expect(read("lib/certificate-service.ts")).toContain("listTeamMembers");
+    expect(read("lib/certificate-service.ts")).toContain('app?.status === "confirmed"');
+    const actions = read("components/certificate-actions.tsx");
+    expect(actions).toContain("Couldn&apos;t check your certificate status");
+    expect(actions).toMatch(/>\s*Retry\s*</);
+    expect(actions).toContain("setAttempt((n) => n + 1)");
   });
 });

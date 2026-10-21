@@ -4,10 +4,12 @@ import { cleanPersonName, normalizeTeamCode } from "@/lib/teams";
  * Who may download a participation certificate.
  *
  * A person qualifies when their own ticket for any event is checked in, or
- * when they are still on a team whose lead is checked in for that same event.
- * The name is always theirs — a checked-in registration first, otherwise the
- * name on their own application or team-member record. Nothing here reads a
- * caller-supplied name, and a lead's facts never include a teammate's.
+ * when they are still on a live team and any confirmed, non-removed member of
+ * that same team in that same event is checked in. A cancelled or declined
+ * member does not count, and neither does a deleted or moved team. The name
+ * is always theirs — a checked-in registration first, otherwise the name on
+ * their own application or team-member record. Nothing here reads a
+ * caller-supplied name, and nobody else's application supplies the name.
  */
 
 export type CertificateApp = {
@@ -38,6 +40,12 @@ export type LeadCheck = {
   eventId: string;
   email: string;
   checkedIn: boolean;
+  /** Team this check-in belongs to. Absent only on older fixtures that name the lead. */
+  code?: string;
+  /** Application status. Absent counts as confirmed so existing fixtures stay valid. */
+  status?: string;
+  /** Taken off the roster. Their stamp does not qualify anyone. */
+  removed?: boolean;
 };
 
 export type CertificateFacts = {
@@ -70,11 +78,6 @@ export function decideCertificate(facts: CertificateFacts): CertificateDecision 
   const teams = new Map(
     facts.teams.map((t) => [`${t.eventId}:${normalizeTeamCode(t.code)}`, t] as const),
   );
-  const leadIn = new Set(
-    facts.leadCheckedIn
-      .filter((l) => l.checkedIn)
-      .map((l) => `${l.eventId}:${l.email.trim().toLowerCase()}`),
-  );
 
   const links: { eventId: string; code: string; name: string }[] = [];
   for (const member of facts.memberships) {
@@ -93,8 +96,7 @@ export function decideCertificate(facts: CertificateFacts): CertificateDecision 
   for (const link of links) {
     const team = teams.get(`${link.eventId}:${link.code}`);
     if (!team || team.gone) continue;
-    const lead = team.leadEmail.trim().toLowerCase();
-    if (!lead || !leadIn.has(`${link.eventId}:${lead}`)) continue;
+    if (!teamHasCheckIn(link.eventId, link.code, team.leadEmail, facts.leadCheckedIn)) continue;
     eligible = true;
     const own = apps.find((a) => a.eventId === link.eventId);
     if (own) names.push(own.name);
@@ -105,6 +107,20 @@ export function decideCertificate(facts: CertificateFacts): CertificateDecision 
   const name = firstName(names);
   if (!name) return { eligible: false, name: null };
   return { eligible: true, name };
+}
+
+/** A confirmed teammate's stamp, on this team and this event, and still on the roster. */
+function teamHasCheckIn(eventId: string, code: string, leadEmail: string, flags: LeadCheck[]): boolean {
+  const normalized = normalizeTeamCode(code);
+  const lead = leadEmail.trim().toLowerCase();
+  return flags.some((flag) => {
+    if (!flag.checkedIn || flag.removed) return false;
+    if (flag.eventId !== eventId) return false;
+    if (flag.status && flag.status !== "confirmed") return false;
+    const flagCode = flag.code ? normalizeTeamCode(flag.code) : "";
+    if (flagCode) return flagCode === normalized;
+    return Boolean(lead) && flag.email.trim().toLowerCase() === lead;
+  });
 }
 
 function firstName(candidates: string[]): string | null {

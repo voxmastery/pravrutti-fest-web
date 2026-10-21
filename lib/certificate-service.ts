@@ -1,6 +1,6 @@
 import "server-only";
 import { events, eventId } from "@/lib/pravrutti-data";
-import { applicationPath, readJsonByPath, teamMemberPath, teamPath } from "@/lib/blob-store";
+import { applicationPath, listTeamMembers, readJsonByPath, teamMemberPath, teamPath } from "@/lib/blob-store";
 import { resolveEmail } from "@/lib/identity";
 import { sqlEnabled } from "@/lib/sql-store";
 import { normalizeTeamCode, type Team, type TeamMember } from "@/lib/teams";
@@ -235,18 +235,38 @@ async function readTeams(links: { eventId: string; code: string }[]): Promise<Ce
   return teams;
 }
 
+/**
+ * Check-in stamps for a live team.
+ *
+ * Any confirmed member still on the roster counts, not only the lead. A
+ * cancelled or declined ticket does not, and a removed member is absent from
+ * the roster. Deleted and moved teams are skipped before this runs.
+ */
 async function readLeadFlags(teams: CertificateTeam[]): Promise<LeadCheck[]> {
-  const needed = teams.filter((t) => !t.gone && t.leadEmail.trim());
   const flags: LeadCheck[] = [];
-  for (const batch of chunks(needed, 12)) {
+  for (const team of teams) {
+    if (team.gone) continue;
+    const code = normalizeTeamCode(team.code);
+    if (!code) continue;
+    const roster = await listTeamMembers(team.eventId, code);
+    const emails = new Set<string>();
+    for (const member of roster) {
+      const email = String(member?.email ?? "").trim().toLowerCase();
+      if (email) emails.add(email);
+    }
+    const lead = team.leadEmail.trim().toLowerCase();
+    if (lead) emails.add(lead);
     const rows = await Promise.all(
-      batch.map(async (team) => {
-        const lead = team.leadEmail.trim().toLowerCase();
-        const app = (await readJsonByPath(applicationPath(team.eventId, lead))) as Application | null;
+      [...emails].map(async (email) => {
+        const app = (await readJsonByPath(applicationPath(team.eventId, email))) as Application | null;
+        const sameEvent = app?.eventId === team.eventId;
+        const confirmed = sameEvent && app?.status === "confirmed";
         return {
           eventId: team.eventId,
-          email: lead,
-          checkedIn: Boolean(app?.checkedInAt) && app?.eventId === team.eventId,
+          email,
+          code,
+          status: app?.status,
+          checkedIn: Boolean(confirmed && app?.checkedInAt),
         };
       }),
     );

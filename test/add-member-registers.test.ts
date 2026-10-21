@@ -129,6 +129,39 @@ describe("a lead adding a teammate", () => {
     expect(mateApp().teamCode).toBe("OTHERTEAM001");
   });
 
+  it("keeps a check-in when a removed teammate is added again", async () => {
+    const at = "2026-10-20T12:00:00.000Z";
+    const by = "desk@pravrutti.test";
+    leadRow({ status: "confirmed", payment: "paid" });
+    store.set(`app/${EV}/${MATE}.json`, {
+      ticketId: "PRV-OLD",
+      eventId: EV,
+      eventName: "ROBO RACE",
+      status: "cancelled",
+      payment: "not_required",
+      fee: "Covered by team lead",
+      name: "Thanushree B R",
+      email: MATE,
+      phone: "7259438742",
+      college: "RUAS",
+      teamCode: CODE,
+      appliedAt: AT,
+      checkedInAt: at,
+      checkedInBy: by,
+    });
+    store.set(`member/${EV}/${MATE}.json`, {
+      code: "",
+      eventId: EV,
+      member: { name: "Thanushree B R", email: MATE },
+      removedAt: "2026-10-20T11:00:00.000Z",
+    });
+    expect((await add()).status).toBe(200);
+    expect(mateApp().status).toBe("confirmed");
+    expect(mateApp().checkedInAt).toBe(at);
+    expect(mateApp().checkedInBy).toBe(by);
+    expect(mateApp().email).toBe(MATE);
+  });
+
   it("only lets the lead add", async () => {
     who.email = "stranger@x.com";
     expect((await add()).status).toBe(403);

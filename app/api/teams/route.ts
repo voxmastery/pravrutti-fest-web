@@ -6,6 +6,7 @@ import {
   PHONE_HINT,
   feeForApplicant,
   isValidPhone,
+  carryCheckIn,
   isLiveApplication,
   normalizePhone,
 } from "@/lib/applications";
@@ -553,8 +554,10 @@ async function joinTeam(body: any) {
   let team: Team;
   /* Their own cancelled row is the one thing the write below may replace. */
   let replacingCancelled = false;
+  let priorApp: Application | null = null;
   try {
     const existingApp = (await readJsonByPath(applicationPath(evId, email))) as Application | null;
+    priorApp = existingApp;
     if (existingApp && isLiveApplication(existingApp.status)) {
       /* A lead who deleted their team still holds the registration (and the
          fee) for it. Joining somebody else's team under it would leave one
@@ -617,7 +620,10 @@ async function joinTeam(body: any) {
   }
 
   const confirmed = await leadIsConfirmed(evId, team);
-  const record = personApplication({ event, evId, name, email, phone, college, team, confirmed });
+  const record = carryCheckIn(
+    replacingCancelled ? priorApp : null,
+    personApplication({ event, evId, name, email, phone, college, team, confirmed }),
+  );
   const appPath = applicationPath(evId, email);
   try {
     await putJson(appPath, record, replacingCancelled);
@@ -867,13 +873,13 @@ async function addMember(body: any) {
        refused above. A team already confirmed has a ticket to send now; one
        still in review waits until the lead's payment is verified. */
     const confirmed = await leadIsConfirmed(evId, team);
-    const mateApp = {
+    const mateApp = carryCheckIn(priorApp as Application | null, {
       ...personApplication({
         event, evId, name: member.name, email: member.email, phone: member.phone,
         college: member.college, team, confirmed,
       }),
       addedByLead: true,
-    };
+    });
     const matePath = applicationPath(evId, fields.email);
     await putJson(matePath, mateApp, Boolean(priorApp));
     /* Already confirmed: they have a ticket now, not only an invite. A team

@@ -306,3 +306,18 @@ export function countsAsRegistered(a: {
 export function isLiveApplication(status: AppStatus | null | undefined): boolean {
   return status === "pending" || status === "confirmed";
 }
+
+/**
+ * A cancelled ticket is rewritten at the same path when the person is added
+ * again. The desk's stamp is not part of that new row — dropping it un-checks
+ * someone who already came through the door.
+ */
+export function carryCheckIn<T extends { checkedInAt?: string; checkedInBy?: string }>(
+  prior: { checkedInAt?: string | null; checkedInBy?: string | null } | null | undefined,
+  next: T,
+): T {
+  const at = typeof prior?.checkedInAt === "string" ? prior.checkedInAt.trim() : "";
+  if (!at) return next;
+  const by = typeof prior?.checkedInBy === "string" ? prior.checkedInBy.trim() : "";
+  return { ...next, checkedInAt: at, ...(by ? { checkedInBy: by } : {}) };
+}

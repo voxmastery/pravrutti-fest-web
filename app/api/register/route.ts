@@ -18,6 +18,7 @@ import {
   isValidPaymentRef,
   PAYMENT_REF_HINT,
   readJunoRegId,
+  carryCheckIn,
   isLiveApplication,
 } from "@/lib/applications";
 import { Team, normalizeTeamCode, isValidTeamCode } from "@/lib/teams";
@@ -486,7 +487,15 @@ export async function POST(req: Request) {
   const ticketId = keepingIntent && prior?.ticketId ? prior.ticketId : newTicketId();
   const appliedAt = keepingIntent && prior?.appliedAt ? prior.appliedAt : new Date().toISOString();
 
-  const record: Application = {
+  /* A cancelled application is a place they gave up, so applying again is
+     allowed and overwrites it. Any other existing record still collides — the
+     duplicate guard is what stops one person taking two places. The desk
+     stamp on that cancelled row is kept: remove and re-add rewrites this
+     same path, and dropping the stamp would un-check someone who already
+     came through the door. */
+  const replacingCancelled = prior?.status === "cancelled";
+
+  const fresh: Application = {
     ticketId,
     eventId: evId,
     eventName: event.name,
@@ -509,11 +518,7 @@ export async function POST(req: Request) {
        registration. The event page asks it; the final write clears it. */
     ...(stage === "intent" ? { stage: "intent" as const } : {}),
   };
-
-  /* A cancelled application is a place they gave up, so applying again is
-     allowed and overwrites it. Any other existing record still collides — the
-     duplicate guard is what stops one person taking two places. */
-  const replacingCancelled = prior?.status === "cancelled";
+  const record = carryCheckIn(replacingCancelled ? prior : null, fresh);
 
   try {
     await putJson(applicationPath(evId, email), record, replacingCancelled || keepingIntent);
